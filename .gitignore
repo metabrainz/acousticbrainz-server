@@ -52,3 +52,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# project specific stuff
+acousticbrainz/config.py

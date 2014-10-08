@@ -1,10 +1,10 @@
 BEGIN;
 
-REATE TABLE lowlevel (
+CREATE TABLE lowlevel (
     id      SERIAL,
     mbid        UUID NOT NULL,
     build_sha1  TEXT NOT NULL,
-    lossless    BOOLEAN DEFAULT ‘n’,
+    lossless    BOOLEAN DEFAULT 'n',
     data        JSON NOT NULL,
     submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

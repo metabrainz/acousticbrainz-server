@@ -6,7 +6,6 @@ import config
 from utils import validate_uuid
 from logging.handlers import RotatingFileHandler
 from flask import Flask, request, Response
-from flask.ext.jsonpify import jsonify
 from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 app = Flask(__name__)

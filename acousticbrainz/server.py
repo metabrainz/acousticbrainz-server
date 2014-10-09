@@ -24,7 +24,7 @@ SANITY_CHECK_KEYS = [
    [ 'rhythm' ],
    [ 'tonal' ],
 ]
-STATS_CACHE_TIMEOUT = 60 * 60 * 10 # ten minutes
+STATS_CACHE_TIMEOUT = 60 * 10 # ten minutes
 
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
@@ -40,7 +40,7 @@ app.config.from_object(config)
 
 # Error handling and logging
 handler = RotatingFileHandler(config.LOG_FILE)
-handler.setLevel(logging.WARNING)
+handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 
 def validate_uuid(string, version=4):
@@ -121,6 +121,15 @@ def submit_low_level(mbid):
     except ValueError, e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
+    try:
+        # if the user submitted a trackid key, rewrite to recording_id
+        if data['metadata']['tags'].has_key("musicbrainz_trackid"):
+            val = data['metadata']['tags']["musicbrainz_trackid"]
+            del data['metadata']['tags']["musicbrainz_trackid"]
+            data['metadata']['tags']["musicbrainz_recordingid"] = val
+    except KeyError:
+        pass
+
     # sanity check the incoming data
     err = sanity_check_json(data) 
     if err:
@@ -129,11 +138,6 @@ def submit_low_level(mbid):
     if not validate_uuid(mbid):
         raise BadRequest("Invalid MBID: %s" % e)
 
-    # if the user submitted a trackid key, rewrite to recording_id
-    if data['metadata']['tags'].has_key("musicbrainz_trackid"):
-        val = data['metadata']['tags']["musicbrainz_trackid"]
-        del data['metadata']['tags']["musicbrainz_trackid"]
-        data['metadata']['tags']["musicbrainz_recordingid"] = val
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
     if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
@@ -168,6 +172,8 @@ def submit_low_level(mbid):
                         (mbid, build_sha1, is_lossless_submit, json.dumps(data)))
             conn.commit()
             return ""
+
+        app.logger.info("Already have %s" % mbid)
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))

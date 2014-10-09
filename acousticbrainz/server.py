@@ -7,6 +7,35 @@ import uuid
 from logging.handlers import RotatingFileHandler
 from flask import Flask, request, Response, jsonify, render_template
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
+import memcache
+
+SANITY_CHECK_KEYS = [
+   [ 'metadata', 'version', 'essentia' ],
+   [ 'metadata', 'version', 'essentia_git_sha' ],
+   [ 'metadata', 'version', 'extractor' ],
+   [ 'metadata', 'version', 'essentia_build_sha' ],
+   [ 'metadata', 'audio_properties', 'length' ],
+   [ 'metadata', 'audio_properties', 'bit_rate' ],
+   [ 'metadata', 'audio_properties', 'codec' ],
+   [ 'metadata', 'tags', 'file_name' ],
+   [ 'metadata', 'tags', 'musicbrainz_recordingid' ],
+   [ 'lowlevel' ],
+   [ 'rhythm' ],
+   [ 'tonal' ],
+]
+
+def has_key(dict, keys):
+    for k in keys:
+        if not dict.has_key(k):
+            return False
+        dict = dict[k]
+    return True
+
+def sanity_check_json(data):
+    for check in SANITY_CHECK_KEYS:
+        if not has_key(data, check):
+            return "key '%s' was not found in submitted data." % ' : '.join(check)
+    return ""        
 
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
@@ -40,7 +69,26 @@ def validate_uuid(string, version=4):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    conn = None
+    mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+    count_lowlevel = mc.get("ac-num-lowlevel")
+    if not count_lowlevel:
+        conn = psycopg2.connect(config.PG_CONNECT)
+        cur = conn.cursor()
+        cur.execute("SELECT count(*) FROM lowlevel")
+        count_lowlevel = cur.fetchone()[0]
+        mc.set("ac-num-lowlevel", count_lowlevel)
+
+    count_lossless = mc.get("ac-num-lossless")
+    if not count_lossless:
+        if not conn:
+            conn = psycopg2.connect(config.PG_CONNECT)
+            cur = conn.cursor()
+        cur.execute("SELECT count(*) FROM lowlevel WHERE lossless = 't'")
+        count_lossless = cur.fetchone()[0]
+        mc.set("ac-num-lossless", count_lossless)
+        
+    return render_template("index.html", count_lowlevel=count_lowlevel, count_lossless=count_lossless)
 
 @app.route("/download")
 def download():
@@ -68,20 +116,28 @@ def submit_low_level(mbid):
     except ValueError, e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
-    try:
-        is_lossless_submit = data['metadata']['audio_properties']['lossless']
-        build_sha1 = data['metadata']['version']['essentia_build_sha']
-    except KeyError:
-        raise BadRequest("Submitted JSON document does not seem to be Essentia output.")
-
-    if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % e)
-
     # if the user submitted a trackid key, rewrite to recording_id
     if data['metadata']['tags'].has_key("musicbrainz_trackid"):
         val = data['metadata']['tags']["musicbrainz_trackid"]
         del data['metadata']['tags']["musicbrainz_trackid"]
         data['metadata']['tags']["musicbrainz_recordingid"] = val
+
+    # sanity check the incoming data
+    err = sanity_check_json(data) 
+    if err:
+        raise BadRequest(err)
+
+    if not validate_uuid(mbid):
+        raise BadRequest("Invalid MBID: %s" % e)
+
+    # Ensure the MBID form the URL matches the recording_id from the POST data
+    if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
+        raise BadRequest("The musicbrainz_trackid/musicbrainz_recordingid in the submitted data does not match "
+                         "the MBID that is part of this resource URL.")
+
+    # The data looks good, lets see about saving it
+    is_lossless_submit = data['metadata']['audio_properties']['lossless']
+    build_sha1 = data['metadata']['version']['essentia_build_sha']
 
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()

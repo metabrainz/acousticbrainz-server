@@ -38,7 +38,10 @@
       <div class="panel panel-default">
         <div class="panel-heading"><strong>Statistics</strong></div>
         <div class="panel-body">
-           Some number of thingys have been uploaded.
+             <table class="table table-bordered">
+                <tr><td>low-level tracks:</td><td>{{ count_lowlevel }}</td></tr>
+                <tr><td>lossless tracks:</td><td>{{ count_lossless }}</td></tr>
+             </table>
         </div>
       </div>
     </div>

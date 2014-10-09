@@ -54,6 +54,9 @@ def sample_data():
 def about():
     return render_template("about.html")
 
+@app.route("/api")
+def api():
+    return render_template("api.html")
 
 @app.route("/<mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):

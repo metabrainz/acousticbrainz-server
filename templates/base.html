@@ -5,7 +5,7 @@
   <head>
     {% block head %}
     <meta charset="utf-8">
-    <title>{% block title %}CritiqueBrainz{% endblock %}</title>
+    <title>{% block title %}AcousticBrainz{% endblock %}</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon"/>
@@ -35,7 +35,11 @@
       <div class="footer clearfix">
         <ul class="list-inline pull-left">
           <li><a href="http://blog.musicbrainz.org/tag/acousticbrainz/">Blog</a></li>
-          <li><a href="https://acousticbrainz.readthedocs.org/">Developers</a></li>
+          <li><a href="http://github.com/metabrainz/acousticbrainz-server/">GitHub</a></li>
+        </ul>
+        <ul class="list-inline pull-right">
+          <li><a href="http://www.upf.edu" alt="UPF"><img width="135" src="/static/img/upf.png"></li>
+          <li><a href="http://musicbrainz.org" alt="MusicBrainz"><img width="67" src="/static/img/musicbrainz.png"></a></li>
         </ul>
       </div>
       {% endblock %}

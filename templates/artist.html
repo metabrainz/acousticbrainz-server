@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ artist.name }} - CritiqueBrainz{% endblock %}
+
+{% block content %}
+<h2>
+  {{ artist.name }}
+  {% if artist.disambiguation %}
+    <small>({{ artist.disambiguation }})</small>
+  {% endif %}
+</h2>
+
+<div class="row">
+  <div class="col-sm-9">
+    <h4>{{ _('Discography') }}</h4>
+    <ul class="nav nav-tabs">
+      <li {% if release_type=='album' %}class="active"{% endif %}>
+        <a href="{{ url_for('artist.entity', id=artist.id) }}?release_type=album">{{ _('Albums') }}</a>
+      </li>
+      <li {% if release_type=='single' %}class="active"{% endif %}>
+        <a href="{{ url_for('artist.entity', id=artist.id) }}?release_type=single">{{ _('Singles') }}</a>
+      </li>
+      <li {% if release_type=='ep' %}class="active"{% endif %}>
+        <a href="{{ url_for('artist.entity', id=artist.id) }}?release_type=ep">{{ _('EPs') }}</a>
+      </li>
+      <li {% if release_type=='broadcast' %}class="active"{% endif %}>
+        <a href="{{ url_for('artist.entity', id=artist.id) }}?release_type=broadcast">{{ _('Broadcasts') }}</a>
+      </li>
+      <li {% if release_type=='other' %}class="active"{% endif %}>
+        <a href="{{ url_for('artist.entity', id=artist.id) }}?release_type=other">{{ _('Other releases') }}</a>
+      </li>
+    </ul>
+    {% if count==0 %}
+      <p class="lead" style="text-align:center; margin-top:20px;">{{ _('No releases found') }}</p>
+    {% else %}
+      <div id="release-groups" class="row">
+        {% for release_group in release_groups %}
+          <div class="col-sm-4 col-md-4 col-lg-3">
+            {% set has_reviews = (release_group.review_count > 0) %}
+            <div class="thumbnail clearfix {% if has_reviews %}reviewed{% endif %}">
+              {% if has_reviews %}
+                <div class="review-count">
+                  {{ ngettext('%(num)d review', '%(num)d reviews', release_group.review_count) }}
+                </div>
+              {% endif %}
+              <div class="cover-art-container">
+                <a href="{{ url_for('release_group.entity', id=release_group.id) }}"><img class="img-responsive"></a>
+                <script>
+                  $("img").last()
+                      .on("error", function () { $(this).attr("src", "/static/img/missing-art.png"); })
+                      .attr("src", "//coverartarchive.org/release-group/{{ release_group.id }}/front-250");
+                </script>
+              </div>
+              <div class="caption">
+                <div class="release-group-title">
+                  <a href="{{ url_for('release_group.entity', id=release_group.id) }}">{{ release_group.title }}</a>
+                </div>
+                {{ release_group['first-release-date'][:4] }}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        <div class="clearfix"></div>
+
+        {% if count > limit %}
+          <div class="col-md-12">
+            <ul class="pager">
+              {% if page > 1 %}
+                <li class="previous"><a href="{{ url_for('artist.entity', id=id, release_type=release_type, page=page-1) }}">&larr; {{ _('Previous') }}</a></li>
+              {% endif %}
+              {% if page-1 < count//limit %}
+                <li class="next"><a href="{{ url_for('artist.entity', id=id, release_type=release_type, page=page+1) }}">{{ _('Next') }} &rarr;</a></li>
+              {% endif %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-sm-3">
+    <h4>{{ _('Artist information') }}</h4>
+    {% if artist.type %}<p class="text-muted">{{ artist.type }}</p>{% endif %}
+
+    {% if artist.current_members %}
+      <b>
+        {% if artist.type and artist.type == 'Person' %}
+          {{ _('Member of') }}
+        {% else %}
+          {{ _('Members') }}
+        {% endif %}
+      </b>
+      <ul class="list-unstyled">
+        {% for member in artist.current_members %}
+          <li>
+            <a href="{{ url_for('artist.entity', id=member.artist.id) }}"
+              {% if member.begin %}title="{{ _('Member since %(date)s', date=member.begin) }}"{% endif %}>
+              {{ member.artist.name }}</a>
+            {% if member.artist.disambiguation %}<span class="text-muted">({{ member.artist.disambiguation }})</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if artist.former_members %}
+      <b>
+        {% if artist.type and artist.type == 'Person' %}
+          {{ _('Former member of') }}
+        {% else %}
+          {{ _('Former members') }}
+        {% endif %}
+      </b>
+      <ul class="list-unstyled">
+        {% for member in artist.former_members %}
+          <li>
+            <a href="{{ url_for('artist.entity', id=member.artist.id) }}">{{ member.artist.name }}</a>
+            {% if member.begin or member.end %}<span class="text-muted">({{ member.begin }} - {{ member.end }})</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if artist['external-urls'] %}
+      <b>{{ _('External links') }}</b>
+      <ul class="list-unstyled external-links">
+        {% for url in artist['external-urls'] %}
+          <li class="clearfix">
+            <div class="favicon-container">
+              {% if url.icon %}
+                <img src="{{ url_for('static', filename='favicons/'+url.icon) }}" />
+              {% else %}
+                <img src="{{ url_for('static', filename='favicons/external-16.png') }}" />
+              {% endif %}
+            </div>
+            <a href="{{ url.target }}">{{ url.name }}</a>
+            {% if url.disambiguation %}<span class="text-muted">({{ url.disambiguation }})</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="external-links">
+      <div class="favicon-container"><img src="{{ url_for('static', filename='favicons/musicbrainz-16.ico') }}" /></div>
+      <a href="//musicbrainz.org/artist/{{ artist.id }}"><em>{{ _('Edit on MusicBrainz') }}</em></a>
+    </div>
+  </div>
+</div>
+{% endblock %}

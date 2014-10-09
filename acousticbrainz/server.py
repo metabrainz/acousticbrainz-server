@@ -5,10 +5,17 @@ import logging
 import config
 import uuid
 from logging.handlers import RotatingFileHandler
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response, jsonify, render_template
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 
-app = Flask(__name__)
+STATIC_PATH = "/static"
+STATIC_FOLDER = "../static"
+TEMPLATE_FOLDER = "../templates"
+
+app = Flask(__name__,
+            static_url_path = STATIC_PATH,
+            static_folder = STATIC_FOLDER,
+            template_folder = TEMPLATE_FOLDER)
 
 # Configuration
 app.config.from_object(config)
@@ -33,7 +40,20 @@ def validate_uuid(string, version=4):
 
 @app.route("/")
 def index():
-    return "<html>Piss off!</html>"
+    return render_template("index.html")
+
+@app.route("/download")
+def download():
+    return render_template("download.html")
+
+@app.route("/sample-data")
+def sample_data():
+    return render_template("sample-data.html")
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
 
 @app.route("/<mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):

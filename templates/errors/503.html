@@ -1,0 +1,14 @@
+{% extends 'errors/base.html' %}
+
+{% block error_title %}{{ _('Service unavailable') }}{% endblock %}
+
+{% block error_description %}
+  <p>{{ _('CritiqueBrainz server is temporarily unavailable. Developers have been notified. You can try again later.') }}</p>
+{% endblock %}
+
+{% block error_info %}
+  {{ super() }}
+  {% if error.message %}
+    {{ error.message }}
+  {% endif %}
+{% endblock %}

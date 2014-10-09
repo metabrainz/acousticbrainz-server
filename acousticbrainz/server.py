@@ -17,25 +17,14 @@ SANITY_CHECK_KEYS = [
    [ 'metadata', 'audio_properties', 'length' ],
    [ 'metadata', 'audio_properties', 'bit_rate' ],
    [ 'metadata', 'audio_properties', 'codec' ],
+   [ 'metadata', 'audio_properties', 'lossless' ],
    [ 'metadata', 'tags', 'file_name' ],
    [ 'metadata', 'tags', 'musicbrainz_recordingid' ],
    [ 'lowlevel' ],
    [ 'rhythm' ],
    [ 'tonal' ],
 ]
-
-def has_key(dict, keys):
-    for k in keys:
-        if not dict.has_key(k):
-            return False
-        dict = dict[k]
-    return True
-
-def sanity_check_json(data):
-    for check in SANITY_CHECK_KEYS:
-        if not has_key(data, check):
-            return "key '%s' was not found in submitted data." % ' : '.join(check)
-    return ""        
+STATS_CACHE_TIMEOUT = 60 * 60 * 10 # ten minutes
 
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
@@ -67,6 +56,22 @@ def validate_uuid(string, version=4):
         return False
     return True
 
+def has_key(dict, keys):
+    for k in keys:
+        if not dict.has_key(k):
+            return False
+        dict = dict[k]
+    return True
+
+def sanity_check_json(data):
+    for check in SANITY_CHECK_KEYS:
+        if not has_key(data, check):
+            return "key '%s' was not found in submitted data." % ' : '.join(check)
+    return ""        
+
+def json_error(err):
+    return json.dumps(dict(error=err))
+
 @app.route("/")
 def index():
     conn = None
@@ -77,7 +82,7 @@ def index():
         cur = conn.cursor()
         cur.execute("SELECT count(*) FROM lowlevel")
         count_lowlevel = cur.fetchone()[0]
-        mc.set("ac-num-lowlevel", count_lowlevel)
+        mc.set("ac-num-lowlevel", count_lowlevel, time=STATS_CACHE_TIMEOUT)
 
     count_lossless = mc.get("ac-num-lossless")
     if not count_lossless:
@@ -86,7 +91,7 @@ def index():
             cur = conn.cursor()
         cur.execute("SELECT count(*) FROM lowlevel WHERE lossless = 't'")
         count_lossless = cur.fetchone()[0]
-        mc.set("ac-num-lossless", count_lossless)
+        mc.set("ac-num-lossless", count_lossless, time=STATS_CACHE_TIMEOUT)
         
     return render_template("index.html", count_lowlevel=count_lowlevel, count_lossless=count_lossless)
 
@@ -116,12 +121,6 @@ def submit_low_level(mbid):
     except ValueError, e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
-    # if the user submitted a trackid key, rewrite to recording_id
-    if data['metadata']['tags'].has_key("musicbrainz_trackid"):
-        val = data['metadata']['tags']["musicbrainz_trackid"]
-        del data['metadata']['tags']["musicbrainz_trackid"]
-        data['metadata']['tags']["musicbrainz_recordingid"] = val
-
     # sanity check the incoming data
     err = sanity_check_json(data) 
     if err:
@@ -129,6 +128,12 @@ def submit_low_level(mbid):
 
     if not validate_uuid(mbid):
         raise BadRequest("Invalid MBID: %s" % e)
+
+    # if the user submitted a trackid key, rewrite to recording_id
+    if data['metadata']['tags'].has_key("musicbrainz_trackid"):
+        val = data['metadata']['tags']["musicbrainz_trackid"]
+        del data['metadata']['tags']["musicbrainz_trackid"]
+        data['metadata']['tags']["musicbrainz_recordingid"] = val
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
     if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
@@ -147,6 +152,7 @@ def submit_low_level(mbid):
 
         # if we don't have it, add it
         if not cur.rowcount:
+            app.logger.info("Saved %s" % mbid)
             cur.execute("INSERT INTO lowlevel (mbid, build_sha1, lossless, data)"
                         "VALUES (%s, %s, %s, %s)",
                         (mbid, build_sha1, is_lossless_submit, json.dumps(data)))
@@ -156,6 +162,7 @@ def submit_low_level(mbid):
         # if we have a lossy version and this submission is a lossless one, replace it
         row = cur.fetchone()
         if is_lossless_submit and not row[0]:
+            app.logger.info("Updating %s" % mbid)
             cur.execute("UPDATE lowlevel (mbid, build_sha1, lossless, data, submitted)"
                         "VALUES (%s, %s, %s, %s, now())",
                         (mbid, build_sha1, is_lossless_submit, json.dumps(data)))

@@ -8,6 +8,7 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, request, Response, jsonify, render_template
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 import memcache
+from hashlib import sha256
 
 SANITY_CHECK_KEYS = [
    [ 'metadata', 'version', 'essentia' ],
@@ -148,6 +149,8 @@ def submit_low_level(mbid):
     # The data looks good, lets see about saving it
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     build_sha1 = data['metadata']['version']['essentia_build_sha']
+    data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    data_sha256 = sha256(data_json).hexdigest()
 
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
@@ -158,9 +161,9 @@ def submit_low_level(mbid):
         # if we don't have too many yet, add it
         if not cur.rowcount <= MAX_NUMBER_DUPES:
             app.logger.info("Saved %s" % mbid)
-            cur.execute("INSERT INTO lowlevel (mbid, build_sha1, lossless, data)"
-                        "VALUES (%s, %s, %s, %s)",
-                        (mbid, build_sha1, is_lossless_submit, json.dumps(data)))
+            cur.execute("INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
+                        "VALUES (%s, %s, %s, %s, %s)",
+                        (mbid, build_sha1, data_sha256, is_lossless_submit, data_json))
             conn.commit()
             return ""
 

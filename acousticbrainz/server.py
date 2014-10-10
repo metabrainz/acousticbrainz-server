@@ -25,6 +25,7 @@ SANITY_CHECK_KEYS = [
    [ 'tonal' ],
 ]
 STATS_CACHE_TIMEOUT = 60 * 10 # ten minutes
+MAX_NUMBER_DUPES     = 5
 
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
@@ -154,8 +155,8 @@ def submit_low_level(mbid):
         # Checking to see if we already have this data
         cur.execute("SELECT lossless FROM lowlevel WHERE mbid = %s", (mbid, ))
 
-        # if we don't have it, add it
-        if not cur.rowcount:
+        # if we don't have too many yet, add it
+        if not cur.rowcount <= MAX_NUMBER_DUPES:
             app.logger.info("Saved %s" % mbid)
             cur.execute("INSERT INTO lowlevel (mbid, build_sha1, lossless, data)"
                         "VALUES (%s, %s, %s, %s)",
@@ -164,14 +165,14 @@ def submit_low_level(mbid):
             return ""
 
         # if we have a lossy version and this submission is a lossless one, replace it
-        row = cur.fetchone()
-        if is_lossless_submit and not row[0]:
-            app.logger.info("Updating %s" % mbid)
-            cur.execute("UPDATE lowlevel (mbid, build_sha1, lossless, data, submitted)"
-                        "VALUES (%s, %s, %s, %s, now())",
-                        (mbid, build_sha1, is_lossless_submit, json.dumps(data)))
-            conn.commit()
-            return ""
+#        row = cur.fetchone()
+#        if is_lossless_submit and not row[0]:
+#            app.logger.info("Updating %s" % mbid)
+#            cur.execute("UPDATE lowlevel (mbid, build_sha1, lossless, data, submitted)"
+#                        "VALUES (%s, %s, %s, %s, now())",
+#                        (mbid, build_sha1, is_lossless_submit, json.dumps(data)))
+#            conn.commit()
+#            return ""
 
         app.logger.info("Already have %s" % mbid)
 

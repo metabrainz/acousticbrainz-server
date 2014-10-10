@@ -69,7 +69,7 @@ def sanity_check_json(data):
     for check in SANITY_CHECK_KEYS:
         if not has_key(data, check):
             return "key '%s' was not found in submitted data." % ' : '.join(check)
-    return ""        
+    return ""
 
 def json_error(err):
     return json.dumps(dict(error=err))
@@ -78,35 +78,42 @@ def json_error(err):
 def index():
     conn = None
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-    count_lowlevel = mc.get("ac-num-lowlevel")
-    if not count_lowlevel:
+    stats_keys = ["ac-num-lowlevel", "ac-num-lossless", "ac-num-unique", "ac-num-unique-lossless"]
+    stats = mc.get_multi(stats_keys)
+
+    # Always recalculate and update all stats at once.
+    if sorted(stats_keys) != sorted(stats.keys()):
         conn = psycopg2.connect(config.PG_CONNECT)
         cur = conn.cursor()
+
         cur.execute("SELECT count(*) FROM lowlevel")
         count_lowlevel = cur.fetchone()[0]
-        mc.set("ac-num-lowlevel", count_lowlevel, time=STATS_CACHE_TIMEOUT)
 
-    count_lossless = mc.get("ac-num-lossless")
-    if not count_lossless:
-        if not conn:
-            conn = psycopg2.connect(config.PG_CONNECT)
-            cur = conn.cursor()
         cur.execute("SELECT count(*) FROM lowlevel WHERE lossless = 't'")
         count_lossless = cur.fetchone()[0]
-        mc.set("ac-num-lossless", count_lossless, time=STATS_CACHE_TIMEOUT)
 
-    count_unique = mc.get("ac-num-unique")
-    if not count_unique:
-        if not conn:
-            conn = psycopg2.connect(config.PG_CONNECT)
-            cur = conn.cursor()
         cur.execute("SELECT count(distinct mbid) FROM lowlevel")
         count_unique = cur.fetchone()[0]
-        mc.set("ac-num-unique", count_unique, time=STATS_CACHE_TIMEOUT)
-        
-    return render_template("index.html", count_lowlevel=count_lowlevel, 
+
+        cur.execute("SELECT count(distinct mbid) FROM lowlevel WHERE lossless = 't'")
+        count_unique_lossless = cur.fetchone()[0]
+
+        mc.set_multi({
+            "ac-num-lowlevel": count_lowlevel,
+            "ac-num-lossless": count_lossless,
+            "ac-num-unique": count_unique,
+            "ac-num-unique-lossless": count_unique_lossless,
+        }, time=STATS_CACHE_TIMEOUT)
+    else:
+        count_lowlevel = stats.get("ac-num-lowlevel")
+        count_lossless = stats.get("ac-num-lossless")
+        count_unique = stats.get("ac-num-unique")
+        count_unique_lossless = stats.get("ac-num-unique-lossless")
+
+    return render_template("index.html", count_lowlevel=count_lowlevel,
                                          count_lossless=count_lossless,
-                                         count_unique=count_unique)
+                                         count_unique=count_unique,
+                                         count_unique_lossless=count_unique_lossless)
 
 @app.route("/download")
 def download():
@@ -144,7 +151,7 @@ def submit_low_level(mbid):
         pass
 
     # sanity check the incoming data
-    err = sanity_check_json(data) 
+    err = sanity_check_json(data)
     if err:
         raise BadRequest(err)
 

@@ -93,8 +93,19 @@ def index():
         cur.execute("SELECT count(*) FROM lowlevel WHERE lossless = 't'")
         count_lossless = cur.fetchone()[0]
         mc.set("ac-num-lossless", count_lossless, time=STATS_CACHE_TIMEOUT)
+
+    count_unique = mc.get("ac-num-unique")
+    if not count_unique:
+        if not conn:
+            conn = psycopg2.connect(config.PG_CONNECT)
+            cur = conn.cursor()
+        cur.execute("SELECT count(distinct mbid) FROM lowlevel")
+        count_unique = cur.fetchone()[0]
+        mc.set("ac-num-unique", count_unique, time=STATS_CACHE_TIMEOUT)
         
-    return render_template("index.html", count_lowlevel=count_lowlevel, count_lossless=count_lossless)
+    return render_template("index.html", count_lowlevel=count_lowlevel, 
+                                         count_lossless=count_lossless,
+                                         count_unique=count_unique)
 
 @app.route("/download")
 def download():
@@ -156,7 +167,7 @@ def submit_low_level(mbid):
         cur.execute("SELECT lossless FROM lowlevel WHERE mbid = %s", (mbid, ))
 
         # if we don't have too many yet, add it
-        if not cur.rowcount <= MAX_NUMBER_DUPES:
+        if cur.rowcount <= MAX_NUMBER_DUPES:
             app.logger.info("Saved %s" % mbid)
             cur.execute("INSERT INTO lowlevel (mbid, build_sha1, lossless, data)"
                         "VALUES (%s, %s, %s, %s)",

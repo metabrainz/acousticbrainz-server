@@ -94,8 +94,19 @@ def index():
         cur.execute("SELECT count(*) FROM lowlevel WHERE lossless = 't'")
         count_lossless = cur.fetchone()[0]
         mc.set("ac-num-lossless", count_lossless, time=STATS_CACHE_TIMEOUT)
+
+    count_unique = mc.get("ac-num-unique")
+    if not count_unique:
+        if not conn:
+            conn = psycopg2.connect(config.PG_CONNECT)
+            cur = conn.cursor()
+        cur.execute("SELECT count(distinct mbid) FROM lowlevel")
+        count_unique = cur.fetchone()[0]
+        mc.set("ac-num-unique", count_unique, time=STATS_CACHE_TIMEOUT)
         
-    return render_template("index.html", count_lowlevel=count_lowlevel, count_lossless=count_lossless)
+    return render_template("index.html", count_lowlevel=count_lowlevel, 
+                                         count_lossless=count_lossless,
+                                         count_unique=count_unique)
 
 @app.route("/download")
 def download():

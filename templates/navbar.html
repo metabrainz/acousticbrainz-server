@@ -1,6 +1,6 @@
 <nav class="navbar navbar-default navbar-static-top" role="navigation">
   <div class="container">
-    <!-- Brand and toggle get grouped for better mobile display -->
+    {#- Brand and toggle get grouped for better mobile display -#}
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#cb-navbar-collapse">
         <span class="sr-only">Toggle navigation</span>
@@ -11,9 +11,9 @@
       <a class="navbar-brand" href="{{ url_for('index') }}">AcousticBrainz</a>
     </div>
 
-    <!-- Collect the nav links, forms, and other content for toggling -->
+    {#- Collect the nav links, forms, and other content for toggling -#}
     <div class="collapse navbar-collapse" id="cb-navbar-collapse">
-      {% if not error %} {# Not showing this stuff on error pages. If attempt to load user info failes there, page will not render. #}
+      {%- if not error -%} {# Not showing this stuff on error pages. If attempt to load user info failes there, page will not render. #}
         <ul class="nav navbar-nav">
           <li><a href="{{ url_for('download') }}">Download</a></li>
           <li><a href="{{ url_for('sample_data') }}">Sample Data</a></li>

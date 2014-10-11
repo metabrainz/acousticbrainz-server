@@ -1,9 +1,8 @@
-{% from 'macros.html' import print_error %}
+{%- from 'macros.html' import print_error -%}
 <!DOCTYPE html>
 <html>
-
   <head>
-    {% block head %}
+    {%- block head -%}
     <meta charset="utf-8">
     <title>{% block title %}AcousticBrainz{% endblock %}</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -12,25 +11,21 @@
 
     <link href='https://fonts.googleapis.com/css?family=Bitter:700' rel='stylesheet' type='text/css'>
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" media="screen">
-    {% endblock %}
-
-    <!-- This needs to be before body because it's used during cover art loading. -->
-    <script src="{{ url_for('static', filename='js/jquery-2.1.0.min.js') }}"></script>
+    {%- endblock -%}
   </head>
 
   <body>
-    {% include 'navbar.html' %}
+    {%- include 'navbar.html' -%}
 
     <div class="container">
-
-      {% block wrapper %}
-        {% block content %}
+      {%- block wrapper -%}
+        {%- block content -%}
         <!-- Page content -->
-        {% endblock %}
-      {% endblock %}
+        {%- endblock -%}
+      {%- endblock -%}
       <div class="clearfix"></div>
 
-      {% block footer %}
+      {%- block footer -%}
       <hr />
       <div class="footer clearfix">
         <ul class="list-inline pull-left">
@@ -42,13 +37,13 @@
           <li><a href="http://musicbrainz.org" alt="MusicBrainz"><img width="67" height="46" src="/static/img/musicbrainz.png"></a></li>
         </ul>
       </div>
-      {% endblock %}
-
+      {%- endblock -%}
     </div>
 
-    {% block scripts %}
-      <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-    {% endblock %}
-
+    {%- block scripts -%}
+      {# commented out for now, since unused:
+         <script src="{{ url_for('static', filename='js/jquery-2.1.0.min.js') }}"></script>
+         <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> #}
+    {%- endblock -%}
   </body>
 </html>

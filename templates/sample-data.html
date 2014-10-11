@@ -1,22 +1,19 @@
-{% extends 'base.html' %}
-{% block content %}
+{%- extends 'base.html' -%}
+{%- block content -%}
 <div id="homepage">
-
   <h4>Sample data</h4>
-
   <div id="project-description" class="row">
     <div class="col-md-12">
       <p>
-          AcousticBrainz stores two levels of data: Low-level and high level. 
-      </p>
-      <p> Both types of information are JSON documents,
-          two documents per each <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a> for 
-          a <a href="https://musicbrainz.org/doc/Recording">recording</a>.
-      </p>
-      <p>
-          The low-level data includes metadata, spectral information, replay gain, rhythm data (including beats per minute),
-          and tonal information (including keys and scales). The low-level data is stable, compared to the higher level data.
-          This hopefully means that we will not have to recompute this data from audio files too frequently. 
+        AcousticBrainz stores two levels of data: Low-level and high level. 
+      </p><p>
+        Both types of information are JSON documents,
+        two documents per each <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a> for 
+        a <a href="https://musicbrainz.org/doc/Recording">recording</a>.
+      </p><p>
+        The low-level data includes metadata, spectral information, replay gain, rhythm data (including beats per minute),
+        and tonal information (including keys and scales). The low-level data is stable, compared to the higher level data.
+        This hopefully means that we will not have to recompute this data from audio files too frequently. 
       </p>
       <div style="background-color: #f8f8f8;">
          <pre style="height: 300px">
@@ -682,10 +679,10 @@
 </pre>
       </div>
       <p>
-          The high level data includes information about moods, genres, vocals and music type. The high-level data
-          can be computed form the low-level data, without requiring access to original audio files. The high-level
-          data is less stable that the low-level data, since it contains more experimental algorithms. We anticipate
-          re-calculating the high level data until the code that calcluates this data becomes fully stable.
+        The high level data includes information about moods, genres, vocals and music type. The high-level data
+        can be computed form the low-level data, without requiring access to original audio files. The high-level
+        data is less stable that the low-level data, since it contains more experimental algorithms. We anticipate
+        re-calculating the high level data until the code that calcluates this data becomes fully stable.
       </p>
       <div style="background-color: #f8f8f8;">
          <pre style="height: 300px">
@@ -693,10 +690,8 @@ TO BE ADDED.
 </pre>
       </div>
       </p>
-      <p>
-      </p>
     </div>
   </div>
 
 </div>
-{% endblock %}
+{%- endblock -%}

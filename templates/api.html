@@ -1,36 +1,31 @@
-{% extends 'base.html' %}
-{% block content %}
+{%- extends 'base.html' -%}
+{%- block content -%}
 <div id="homepage">
-
   <h4>AcousticBrainz API</h4>
-
   <div id="project-description" class="row">
     <div class="col-md-8">
       <p>
-      Before diving into the API details, please have a look at the <a href="/sample-data">sample data</a> page.
-      </p>
-      <p>
-      To fetch the JSON documents for a given MusicBrainz recording ID, you can construct the
-      following URLs:
+        Before diving into the API details, please have a look at the <a href="/sample-data">sample data</a> page.
+      </p><p>
+        To fetch the JSON documents for a given MusicBrainz recording ID, you can construct the
+        following URLs:
       </p>
 <pre>
    GET http://acousticbrainz.org/&lt;MBID&gt;/low-level
    GET http://acousticbrainz.org/&lt;MBID&gt;/high-level
 </pre>
       <p>
-      examples:
+        examples:
       </p>
 <pre>
    GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level</a>
    GET http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level
 </pre>
-      </p>
-      <p>
-      NOTE: The API end points for the high-level data and for submitting data to AcousticBrainz have not been
-      completed yet. Soon, very soon!
+      </p><p>
+        NOTE: The API end points for the high-level data and for submitting data to AcousticBrainz have not been
+        completed yet. Soon, very soon!
       </p>
     </div>
   </div>
-
 </div>
-{% endblock %}
+{%- endblock -%}

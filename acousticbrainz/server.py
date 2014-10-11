@@ -76,44 +76,31 @@ def json_error(err):
 
 @app.route("/")
 def index():
-    conn = None
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-    stats_keys = ["ac-num-lowlevel", "ac-num-lossless", "ac-num-unique", "ac-num-unique-lossless"]
-    stats = mc.get_multi(stats_keys)
+    stats_keys = ["lossy", "lossy-unique", "lossless", "lossless-unique"]
+    stats = mc.get_multi(stats_keys, key_prefix="ac-num-")
 
     # Always recalculate and update all stats at once.
     if sorted(stats_keys) != sorted(stats.keys()):
+        stats_parameters = dict([(a, 0) for a in stats_keys])
         conn = psycopg2.connect(config.PG_CONNECT)
         cur = conn.cursor()
 
-        cur.execute("SELECT count(*) FROM lowlevel")
-        count_lowlevel = cur.fetchone()[0]
+        cur.execute("SELECT lossless, count(*) FROM lowlevel GROUP BY lossless")
+        for row in cur.fetchall():
+            if row[0]: stats_parameters['lossless'] = row[1]
+            if not row[0]: stats_parameters['lossy'] = row[1]
 
-        cur.execute("SELECT count(*) FROM lowlevel WHERE lossless = 't'")
-        count_lossless = cur.fetchone()[0]
+        cur.execute("SELECT lossless, count(*) FROM (SELECT DISTINCT ON (mbid) mbid, lossless FROM lowlevel ORDER BY mbid, lossless DESC) q GROUP BY lossless;")
+        for row in cur.fetchall():
+            if row[0]: stats_parameters['lossless-unique'] = row[1]
+            if not row[0]: stats_parameters['lossy-unique'] = row[1]
 
-        cur.execute("SELECT count(distinct mbid) FROM lowlevel")
-        count_unique = cur.fetchone()[0]
-
-        cur.execute("SELECT count(distinct mbid) FROM lowlevel WHERE lossless = 't'")
-        count_unique_lossless = cur.fetchone()[0]
-
-        mc.set_multi({
-            "ac-num-lowlevel": count_lowlevel,
-            "ac-num-lossless": count_lossless,
-            "ac-num-unique": count_unique,
-            "ac-num-unique-lossless": count_unique_lossless,
-        }, time=STATS_CACHE_TIMEOUT)
+        mc.set_multi(stats_parameters, key_prefix="ac-num-", time=STATS_CACHE_TIMEOUT)
     else:
-        count_lowlevel = stats.get("ac-num-lowlevel")
-        count_lossless = stats.get("ac-num-lossless")
-        count_unique = stats.get("ac-num-unique")
-        count_unique_lossless = stats.get("ac-num-unique-lossless")
+        stats_parameters = stats
 
-    return render_template("index.html", count_lowlevel=count_lowlevel,
-                                         count_lossless=count_lossless,
-                                         count_unique=count_unique,
-                                         count_unique_lossless=count_unique_lossless)
+    return render_template("index.html", stats=stats_parameters)
 
 @app.route("/download")
 def download():

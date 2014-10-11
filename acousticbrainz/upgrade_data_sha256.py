@@ -53,6 +53,13 @@ def finalize_schema():
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     cur.execute("ALTER TABLE lowlevel ALTER COLUMN data_sha256 SET NOT NULL")
+
+    cur.execute("WITH duplicate_sha AS (SELECT data_sha256 FROM lowlevel GROUP BY data_sha256 HAVING count(*) > 1),
+                      groups AS (SELECT data_sha256, id, submitted, row_number() OVER (partition by data_sha256 order by submitted asc) AS rn
+                                   FROM lowlevel JOIN duplicate_sha USING (data_sha256))
+                 DELETE FROM lowlevel WHERE id IN (SELECT id FROM groups WHERE rn > 1)")
+    cur.execute("DROP INDEX data_sha256_ndx_lowlevel")
+    cur.execute("CREATE UNIQUE INDEX data_sha256_ndx_lowlevel ON lowlevel (data_sha256)")
     conn.commit()
     conn.close()
 

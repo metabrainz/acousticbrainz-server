@@ -174,10 +174,12 @@ def submit_low_level(mbid):
     cur = conn.cursor()
     try:
         # Checking to see if we already have this data
-        cur.execute("SELECT lossless FROM lowlevel WHERE mbid = %s", (mbid, ))
+        cur.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
-        # if we don't have too many yet, add it
-        if cur.rowcount <= MAX_NUMBER_DUPES:
+        # if we don't have this data already, add it
+        sha_values = [v[0] for v in cur.fetchall()]
+
+        if not data_sha256 in sha_values:
             app.logger.info("Saved %s" % mbid)
             cur.execute("INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
                         "VALUES (%s, %s, %s, %s, %s)",
@@ -185,17 +187,7 @@ def submit_low_level(mbid):
             conn.commit()
             return ""
 
-        # if we have a lossy version and this submission is a lossless one, replace it
-#        row = cur.fetchone()
-#        if is_lossless_submit and not row[0]:
-#            app.logger.info("Updating %s" % mbid)
-#            cur.execute("UPDATE lowlevel (mbid, build_sha1, lossless, data, submitted)"
-#                        "VALUES (%s, %s, %s, %s, now())",
-#                        (mbid, build_sha1, is_lossless_submit, json.dumps(data)))
-#            conn.commit()
-#            return ""
-
-        app.logger.info("Already have %s" % mbid)
+        app.logger.info("Already have %s" % data_sha256)
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))

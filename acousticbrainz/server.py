@@ -154,27 +154,63 @@ def submit_low_level(mbid):
     # The data looks good, lets see about saving it
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     build_sha1 = data['metadata']['version']['essentia_build_sha']
-    data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    data_sha256 = sha256(data_json).hexdigest()
+
+    data_keys = ['main_data', 'metadata_version', 'metadata_audio', 'metadata_tags']
+    split_data = dict([(k, ("", "")) for k in data_keys])
+
+    split_data['main_data'][1] = json.dumps(dict([(k, data[k]) for k in data.keys() if k != 'metadata']), sort_keys=True, separators=(',', ':'))
+    split_data['metadata_version'][1] = json.dumps(data['metadata']['version'], sort_keys=True, separators=(',', ':'))
+    split_data['metadata_audio'][1] = json.dumps(data['metadata']['audio_properties'], sort_keys=True, separators=(',', ':'))
+    split_data['metadata_tags'][1] = json.dumps(data['metadata']['tags'], sort_keys=True, separators=(',', ':'))
+
+    for k in split_data.keys():
+        split_data[k][0] = sha256(split_data[k][1]).hexdigest()
 
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     try:
-        # Checking to see if we already have this data
-        cur.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
+        cur.execute("SELECT data_sha256, id from raw_json WHERE data_sha256 IN (%s, %s, %s, %s)",
+                    tuple([data[k][0] for k in split_data.keys()]))
+        existing_data = dict([(row[0], row[1]) for row in cur.fetchall()])
 
-        # if we don't have this data already, add it
-        sha_values = [v[0] for v in cur.fetchall()]
+        for name, value in split_data.iteritems():
+            (data_sha256, json_data) = value
+            if existing_data.get(data_sha256) is None:
+                cur.execute("INSERT INTO raw_json (data_sha256, data) VALUES (%s, %s) RETURNING id",
+                            (data_sha256, json_data))
+                existing_data[data_sha256] = cur.fetchone()[0]
 
-        if not data_sha256 in sha_values:
+        vals = [existing_data[data[key][0]] for key in data_keys]
+        cur.execute(
+            """SELECT id FROM lowlevel_data
+                WHERE main_data = %s
+                  AND metadata_version = %s
+                  AND metadata_audio = %s
+                  AND metadata_tags = %s""",
+            tuple(vals)
+        )
+
+        if cur.rowcount == 0:
+            # If no ID exists, insert a new one
+            cur.execute(
+                """INSERT INTO lowlevel_data
+                       (main_data, metadata_version, metadata_audio, metadata_tags)
+                       VALUES (%s, %s, %s, %s) RETURNING id""",
+                tuple(vals)
+            )
+        data_id = cur.fetchone()[0]
+
+        cur.execute("SELECT TRUE FROM lowlevel WHERE mbid = %s, build_sha1 = %s, lossless = %s, data = %s",
+                    (mbid, build_sha1, is_lossless_submit, data_id))
+        if cur.rowcount == 0:
             app.logger.info("Saved %s" % mbid)
-            cur.execute("INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
-                        "VALUES (%s, %s, %s, %s, %s)",
-                        (mbid, build_sha1, data_sha256, is_lossless_submit, data_json))
+            cur.execute("INSERT INTO lowlevel (mbid, build_sha1, lossless, data)"
+                        "VALUES (%s, %s, %s, %s)",
+                        (mbid, build_sha1, is_lossless_submit, data_id))
             conn.commit()
             return ""
-
-        app.logger.info("Already have %s" % data_sha256)
+        else:
+            app.logger.info("Already have %s" % mbid)
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
@@ -193,7 +229,7 @@ def get_low_level(mbid):
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     try:
-        cur.execute("SELECT data::text FROM lowlevel WHERE mbid = %s", (mbid, ))
+        cur.execute("SELECT json::text FROM lowlevel JOIN lowlevel_data_json ON lowlevel.id = lowlevel_data_json.id WHERE mbid = %s", (mbid, ))
         if not cur.rowcount:
             raise NotFound
 

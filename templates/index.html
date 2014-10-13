@@ -41,20 +41,22 @@
                <tbody>
                  <tr>
                    <th>Unique</th>
-                   <td>{{ stats['lossy-unique'] }}</td>
-                   <td>{{ stats['lossless-unique'] }}</td>
-                   <td><strong>{{ stats['lossy-unique'] + stats['lossless-unique'] }}</strong></td>
+                   <td>{{ stats['lowlevel-lossy-unique'] }}</td>
+                   <td>{{ stats['lowlevel-lossless-unique'] }}</td>
+                   <td><strong>{{ stats['lowlevel-lossy-unique'] + stats['lowlevel-lossless-unique'] }}</strong></td>
                  </tr>
                  <tr>
                    <th>All</th>
-                   <td>{{ stats['lossy'] }}</td>
-                   <td>{{ stats['lossless'] }}</td>
-                   <td><strong>{{ stats['lossy'] + stats['lossless'] }}</strong></td>
+                   <td>{{ stats['lowlevel-lossy'] }}</td>
+                   <td>{{ stats['lowlevel-lossless'] }}</td>
+                   <td><strong>{{ stats['lowlevel-lossy'] + stats['lowlevel-lossless'] }}</strong></td>
                  </tr>
                </tbody>
              </table>
              <p style="text-align: center">
-                <small>updated every 10 minutes</small>
+                <small>updated every 10 minutes</small><br />
+                <small>last updated: {{ last_collected.strftime("%Y-%m-%d %H:%M") }}</small><br />
+                <small><a href="{{ url_for('statistics_graph') }}">more on the detailed statistics page</a></small>
              </p>
         </div>
       </div>

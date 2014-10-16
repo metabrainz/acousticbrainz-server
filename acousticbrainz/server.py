@@ -94,7 +94,7 @@ def index():
         update_db = False
         if cur.rowcount > 0:
             (now, last_collected) = cur.fetchone()
-        if cur.rowcount == 0 or now - last_collected > datetime.timedelta(hours=1):
+        if cur.rowcount == 0 or now - last_collected > datetime.timedelta(minutes=59):
             update_db = True
 
 

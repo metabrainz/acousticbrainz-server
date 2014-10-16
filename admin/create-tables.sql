@@ -21,10 +21,10 @@ CREATE TABLE statistics (
 -- high level tables
 
 CREATE TABLE highlevel (
-    id          SERIAL,
+    id          INTEGER, -- FK to lowlevel.id
     mbid        UUID NOT NULL,
     build_sha1  TEXT NOT NULL,
-    data        INTEGER NOT NULL,
+    data        INTEGER NOT NULL, -- FK to highlevel_json.data
     submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

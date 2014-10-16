@@ -16,7 +16,7 @@ d3.json('{{ url_for('statistics_data') }}', function(data) {
   nv.addGraph(function() {
       var chart = nv.models.lineChart();
 
-      chart.yAxis.tickFormat(d3.format(',.2f'));
+      chart.yAxis.tickFormat(d3.format('d'));
 
       chart.xAxis.tickFormat(function(d) {
           return d3.time.format('%x %H:%M')(new Date(d))

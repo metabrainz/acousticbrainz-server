@@ -6,6 +6,7 @@ import config
 import uuid
 import datetime
 import time
+from operator import itemgetter
 from logging.handlers import RotatingFileHandler
 from flask import Flask, request, Response, jsonify, render_template
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
@@ -158,7 +159,7 @@ def statistics_data():
     total_unique['values'] = [{'x': k, 'y': total_unique['values'][k]} for k in sorted(total_unique['values'].keys())]
     total_all['values'] = [{'x': k, 'y': total_all['values'][k]} for k in sorted(total_all['values'].keys())]
     ret.extend([total_unique, total_all])
-    return Response(json.dumps(ret), content_type='application/json')
+    return Response(json.dumps(sorted(ret, key=itemgetter('key'))), content_type='application/json')
 
 def make_timestamp(dt):
     return time.mktime(dt.utctimetuple()) * 1000

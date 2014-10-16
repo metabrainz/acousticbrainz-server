@@ -9,8 +9,8 @@
 {%- endblock -%}
 {%- block scripts -%}
 {{ super() }}
-<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.12/d3.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.js"></script>
+<script src="{{ url_for('static', filename="js/d3.v3.js") }}"></script>
+<script src="{{ url_for('static', filename="js/nv.d3.js") }}"></script>
 <script>
 d3.json('{{ url_for('statistics_data') }}', function(data) {
   nv.addGraph(function() {
@@ -40,5 +40,5 @@ d3.json('{{ url_for('statistics_data') }}', function(data) {
 {%- endblock -%}
 {%- block head -%}
 {{ super () }}
-<link href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.css" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/nv.d3.css') }}" rel="stylesheet" media="screen">
 {%- endblock -%}

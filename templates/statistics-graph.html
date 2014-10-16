@@ -1,0 +1,44 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+<div id="graph">
+  <h4><strong>Detailed Statistics Chart</strong></h4>
+  <div id="graph" class="row">
+    <div id="timeline-chart"><svg style='height:500px; width:100%;'> </svg></div>
+  </div>
+</div>
+{%- endblock -%}
+{%- block scripts -%}
+{{ super() }}
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.12/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.js"></script>
+<script>
+d3.json('{{ url_for('statistics_data') }}', function(data) {
+  nv.addGraph(function() {
+      var chart = nv.models.lineWithFocusChart();
+
+      chart.yAxis.tickFormat(d3.format(',.2f'));
+      chart.y2Axis.tickFormat(d3.format(',.2f'));
+
+      chart.xAxis.tickFormat(function(d) { 
+          return d3.time.format('%x')(new Date(d)) 
+      });
+      chart.x2Axis.tickFormat(function(d) { 
+          return d3.time.format('%x')(new Date(d)) 
+      });
+
+      d3.select('#timeline-chart svg')
+      .datum(data)
+      .transition().duration(500)
+      .call(chart);
+
+  nv.utils.windowResize(chart.update);
+
+  return chart;
+  });
+});
+</script>
+{%- endblock -%}
+{%- block head -%}
+{{ super () }}
+<link href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.css" rel="stylesheet">
+{%- endblock -%}

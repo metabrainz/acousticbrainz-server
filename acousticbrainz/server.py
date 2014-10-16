@@ -4,6 +4,8 @@ import psycopg2
 import logging
 import config
 import uuid
+import datetime
+import time
 from logging.handlers import RotatingFileHandler
 from flask import Flask, request, Response, jsonify, render_template
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
@@ -77,30 +79,72 @@ def json_error(err):
 @app.route("/")
 def index():
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-    stats_keys = ["lossy", "lossy-unique", "lossless", "lossless-unique"]
+    stats_keys = ["lowlevel-lossy", "lowlevel-lossy-unique", "lowlevel-lossless", "lowlevel-lossless-unique"]
     stats = mc.get_multi(stats_keys, key_prefix="ac-num-")
+    last_collected = mc.get('last-collected')
 
-    # Always recalculate and update all stats at once.
-    if sorted(stats_keys) != sorted(stats.keys()):
+    # Recalculate everything together, always.
+    if sorted(stats_keys) != sorted(stats.keys()) or last_collected is None:
         stats_parameters = dict([(a, 0) for a in stats_keys])
+
         conn = psycopg2.connect(config.PG_CONNECT)
         cur = conn.cursor()
+        cur.execute("SELECT now() as now, collected FROM statistics ORDER BY collected DESC LIMIT 1")
+        update_db = False
+        if cur.rowcount > 0:
+            (now, last_collected) = cur.fetchone()
+        if cur.rowcount == 0 or now - last_collected > datetime.timedelta(hours=1):
+            update_db = True
+
 
         cur.execute("SELECT lossless, count(*) FROM lowlevel GROUP BY lossless")
         for row in cur.fetchall():
-            if row[0]: stats_parameters['lossless'] = row[1]
-            if not row[0]: stats_parameters['lossy'] = row[1]
+            if row[0]: stats_parameters['lowlevel-lossless'] = row[1]
+            if not row[0]: stats_parameters['lowlevel-lossy'] = row[1]
 
         cur.execute("SELECT lossless, count(*) FROM (SELECT DISTINCT ON (mbid) mbid, lossless FROM lowlevel ORDER BY mbid, lossless DESC) q GROUP BY lossless;")
         for row in cur.fetchall():
-            if row[0]: stats_parameters['lossless-unique'] = row[1]
-            if not row[0]: stats_parameters['lossy-unique'] = row[1]
+            if row[0]: stats_parameters['lowlevel-lossless-unique'] = row[1]
+            if not row[0]: stats_parameters['lowlevel-lossy-unique'] = row[1]
+
+        if update_db:
+            for key, value in stats_parameters.iteritems():
+                cur.execute("INSERT INTO statistics (collected, name, value) VALUES (now(), %s, %s) RETURNING collected", (key, value))
+            conn.commit()
+
+        cur.execute("SELECT now()")
+        last_collected = cur.fetchone()[0]
+        value = stats_parameters
 
         mc.set_multi(stats_parameters, key_prefix="ac-num-", time=STATS_CACHE_TIMEOUT)
+        mc.set('last-collected', last_collected, time=STATS_CACHE_TIMEOUT)
     else:
-        stats_parameters = stats
+        value = stats
 
-    return render_template("index.html", stats=stats_parameters)
+    return render_template("index.html", stats=value, last_collected=last_collected)
+
+@app.route("/statistics-graph")
+def statistics_graph():
+    return render_template("statistics-graph.html")
+
+@app.route("/statistics-data")
+def statistics_data():
+    conn = psycopg2.connect(config.PG_CONNECT)
+    cur = conn.cursor()
+    cur.execute("SELECT name, array_agg(collected ORDER BY collected ASC) AS times, array_agg(value ORDER BY collected ASC) AS values FROM statistics GROUP BY name");
+    stats_key_map = {
+        "lowlevel-lossy": "Lossy (all)",
+        "lowlevel-lossy-unique": "Lossy (unique)",
+        "lowlevel-lossless": "Lossless (all)",
+        "lowlevel-lossless-unique": "Lossless (unique)"
+    }
+    ret = []
+    for val in cur:
+        ret.append({"key": stats_key_map.get(val[0], val[0]), "values": [{'x': v[0], 'y': v[1]} for v in zip([make_timestamp(v) for v in val[1]], val[2])]})
+    return Response(json.dumps(ret), content_type='application/json')
+
+def make_timestamp(dt):
+    return time.mktime(dt.timetuple()) * 1000
 
 @app.route("/download")
 def download():

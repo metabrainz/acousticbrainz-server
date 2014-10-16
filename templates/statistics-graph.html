@@ -2,6 +2,7 @@
 {%- block content -%}
 <div id="graph">
   <h4><strong>Detailed Statistics Chart</strong></h4>
+  <p>Use the small chart below to select a smaller section of the graph to view.</p>
   <div id="graph" class="row">
     <div id="timeline-chart"><svg style='height:500px; width:100%;'> </svg></div>
   </div>
@@ -14,12 +15,16 @@
 <script>
 d3.json('{{ url_for('statistics_data') }}', function(data) {
   nv.addGraph(function() {
-      var chart = nv.models.lineChart();
+      var chart = nv.models.lineWithFocusChart();
 
       chart.yAxis.tickFormat(d3.format('d'));
+      chart.y2Axis.tickFormat(d3.format('d'));
 
       chart.xAxis.tickFormat(function(d) {
           return d3.time.format('%x %H:%M')(new Date(d))
+      });
+      chart.x2Axis.tickFormat(function(d) {
+          return d3.time.format('%x')(new Date(d))
       });
 
       d3.select('#timeline-chart svg')

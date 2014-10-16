@@ -139,12 +139,29 @@ def statistics_data():
         "lowlevel-lossless-unique": "Lossless (unique)"
     }
     ret = []
+    total_unique = {"key": "Total (unique)", "values": {}}
+    total_all = {"key": "Total (all)", "values": {}}
     for val in cur:
-        ret.append({"key": stats_key_map.get(val[0], val[0]), "values": [{'x': v[0], 'y': v[1]} for v in zip([make_timestamp(v) for v in val[1]], val[2])]})
+        pairs = zip([make_timestamp(v) for v in val[1]], val[2])
+        ret.append({"key": stats_key_map.get(val[0], val[0]), "values": [{'x': v[0], 'y': v[1]} for v in pairs]})
+        second = {}
+        if val[0] in ["lowlevel-lossy", "lowlevel-lossless"]:
+            second = total_all
+        elif val[0] in ["lowlevel-lossy-unique", "lowlevel-lossless-unique"]:
+            second = total_unique
+        for pair in pairs:
+            if pair[0] in second['values']:
+                second['values'][pair[0]] = second['values'][pair[0]] + pair[1]
+            else:
+                second['values'][pair[0]] = pair[1]
+
+    total_unique['values'] = [{'x': k, 'y': total_unique['values'][k]} for k in sorted(total_unique['values'].keys())]
+    total_all['values'] = [{'x': k, 'y': total_all['values'][k]} for k in sorted(total_all['values'].keys())]
+    ret.extend([total_unique, total_all])
     return Response(json.dumps(ret), content_type='application/json')
 
 def make_timestamp(dt):
-    return time.mktime(dt.timetuple()) * 1000
+    return time.mktime(dt.utctimetuple()) * 1000
 
 @app.route("/download")
 def download():

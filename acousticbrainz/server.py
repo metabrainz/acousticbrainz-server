@@ -196,6 +196,12 @@ def submit_low_level(mbid):
             val = data['metadata']['tags']["musicbrainz_trackid"]
             del data['metadata']['tags']["musicbrainz_trackid"]
             data['metadata']['tags']["musicbrainz_recordingid"] = val
+
+        if data['metadata']['audio_properties']['lossless']:
+            data['metadata']['audio_properties']['lossless'] = True
+        else:
+            data['metadata']['audio_properties']['lossless'] = False
+
     except KeyError:
         pass
 
@@ -238,6 +244,8 @@ def submit_low_level(mbid):
 
         app.logger.info("Already have %s" % data_sha256)
 
+    except psycopg2.ProgrammingError, e:
+        raise BadRequest(str(e))
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
     except psycopg2.OperationalError, e:

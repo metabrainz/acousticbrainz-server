@@ -55,6 +55,3 @@ target/
 
 # project specific stuff
 acousticbrainz/config.py
-
-# ignore local virtualenv's
-ve

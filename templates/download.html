@@ -1,14 +1,63 @@
 {%- extends 'base.html' -%}
 {%- block content -%}
 <div id="homepage">
-  <h4>Downloads</h4>
-  <div id="project-description" class="row">
-    <div class="col-md-12">
-      <p>
-        At this point we do not have any downloads. In the next few days we should be clients available.
-        Towards the end of October 2014, we will publish the first data dump.
-      </p>
-    </div>
+  <h4>Client downloads</h4>
+  <div class="col-md-12">
+    <p>
+    In order to contribute to AcousticBrainz, you will need to have a music collection that contains MBIDs.
+    This usually means that your collection will need to have been tagged with a MusicBrainz aware tagger
+    like <a href="https://musicbrainz.org/doc/MusicBrainz_Picard">Picard</a>.
+    </p>
+    <p>
+    If you have a collection of music files with MBIDs, please download one of the tools below to help 
+    us bootstrap this project. This project is still in its infancy, so many things are not nearly
+    as polished as we would like them to be. This means that you'll like need a little more technical
+    experience in order to submit files to AcousticBrainz. We will work to improve this with full
+    blown applications for Linux, Mac and Windows -- to be released soon.
+    </p>
+    <p>
+    The easiest way to contibute right now is to download the following virtual machine. Alternatively,
+    you can download and build the source code on your own machine -- beware if you're not fully 
+    comfortable with git and compiling software you should use the VM or wait for some of our future
+    GUI based software releases.
+    </p>
+    <h5>Experimental Virtual Machine</h5>
+    <p>
+    If you'd like to download our virtual machine that contains a minimal Linux setup and automatically
+    uploads track results to AcousticBrainz, start by downloading the virtual machine:
+    </p>
+    <ul>
+    <li>Direct download: <a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/vm/acousticbrainz-submitter-vm-20141018.ova"
+    >acousticbrainz-submitter-vm-20141018.ova</a> (1.0GB) or</li>
+    <li>BitTorrent: <a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/torrent/acousticbrainz-submitter-vm-20141018.ova.torrent"
+    >acousticbrainz-submitter-vm-20141018.ova.torrent</a> (21Kb)</li>
+    </ui>
+    <p>
+    The md5 sum for the ova file is: a9c4576a23f42c2bbc55eb01f96c6ea9
+    </p>
+    <p>
+    To run this virtual machine, you will need to <a href="https://www.virtualbox.org/wiki/Downloads">download 
+    and install VirtualBox</a>. Once you have finished installing VirtualBox, you can open the downloaded ova file.
+    IMPORTANT: Do not start the virtual machine yet!
+    </p>
+    <p>Before you start the virtual machine, select the virtual machine and click on Settings for that virtual machine.
+    In the Settings dialog, look for the Shared Folders section. In that section, look for a folder icon with a plus
+    on it -- click that to add a new shared folder. Select your music collection folder, and the check the Auto-mount and
+    Read-only checkboxes (important!). Then close the settings dialog.
+    </p>
+    <p>
+    Now you start the virtual machine by clicking the start button. If everything went well, the system should be 
+    analyzing your collection and submitting the track information to AcousticBrainz. Sadly, we don't have much feedback
+    about the submittion progress yet -- we'll work on that next. (If you're comfortable with Linux, you can log in with user
+    ab, password ab and then: <pre>tail -f submit.log</pre> to see the progress messages.
+    </p>
+  </div>
+  <h4>Data downloads</h4>
+  <div class="col-md-12">
+    <p>
+      At this point we do not have any downloads. In the next few days we should be clients available.
+      Towards the end of October 2014, we will publish the first data dump.
+    </p>
   </div>
 </div>
 {%- endblock -%}

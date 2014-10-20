@@ -168,6 +168,10 @@ def make_timestamp(dt):
 def download():
     return render_template("download.html")
 
+@app.route("/contribute")
+def contribute():
+    return render_template("contribute.html")
+
 @app.route("/sample-data")
 def sample_data():
     return render_template("sample-data.html")

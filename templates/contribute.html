@@ -1,0 +1,44 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+<div id="homepage">
+  <h4>Contributing to AcousticBrainz</h4>
+  <div class="col-md-12">
+    <p>
+    In order to contribute to AcousticBrainz, you will need to have a music collection that contains MBIDs.
+    This usually means that your collection will need to have been tagged with a MusicBrainz aware tagger
+    like <a href="http://picard.musicbrainz.org/">Picard</a>. If you have a collection of lossless FLAC
+    files that would be ideal, but having lossly MP3s/AAC/ogg files also helps the project.
+    </p>
+    <p>
+    If you have a collection of music files with MBIDs, please <a href="/download">one of the submission tools</a> to help 
+    us bootstrap this project. This project is still in its infancy, so many things are not nearly
+    as polished as we would like them to be. This means that you'll like need a little more technical
+    experience in order to submit files to AcousticBrainz. We will work to improve this with full
+    blown applications for Linux, Mac and Windows -- to be released soon.
+    </p>
+    <p>
+    The easiest way to contibute right now is to download the <a href="/download">virtual machine</a>. Alternatively,
+    you can download and build the source code on your own machine -- beware if you're not fully 
+    comfortable with git and compiling software you should use the VM or wait for some of our future
+    GUI based software releases.
+    </p>
+    <h5>Experimental Virtual Machine</h5>
+    <p>
+    To submit your files with our virtual machine, you will need to 
+    <a href="https://www.virtualbox.org/wiki/Downloads">download and install VirtualBox</a>. Once you have finished 
+    installing VirtualBox, you can open the downloaded ova file. <strong>IMPORTANT</strong>: Do not start the virtual machine yet!
+    </p>
+    <p>Before you start the virtual machine, select the virtual machine and click on Settings for that virtual machine.
+    In the Settings dialog, look for the Shared Folders section. In that section, look for a folder icon with a plus
+    on it -- click that to add a new shared folder. Select your music collection folder, and the check the Auto-mount and
+    Read-only checkboxes (important!). Then close the settings dialog.
+    </p>
+    <p>
+    Now you start the virtual machine by clicking the start button. If everything went well, the system should be 
+    analyzing your collection and submitting the track information to AcousticBrainz. Sadly, we don't have much feedback
+    about the submittion progress yet -- we'll work on that next. (If you're comfortable with Linux, you can log in with user
+    ab, password ab and then: <pre>tail -f submit.log</pre> to see the progress messages.
+    </p>
+  </div>
+</div>
+{%- endblock -%}

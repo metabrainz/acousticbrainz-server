@@ -22,8 +22,17 @@
    GET http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level
 </pre>
       </p><p>
-        NOTE: The API end points for the high-level data and for submitting data to AcousticBrainz have not been
+        NOTE: The API end points for the high-level data have not been
         completed yet. Soon, very soon!
+      </p><p>
+        The submit API end-point is:
+      </p>
+      <pre>
+        POST http://acousticbrainz.org/&lt;MBID&gt;/low-level
+      </pre>
+      <p>
+        It expects a JSON payload, containing the output of a feature extractor 
+        (see <a href="/contribute">the contribute page</a>).
       </p>
     </div>
   </div>

@@ -281,5 +281,33 @@ def get_low_level(mbid):
 
     return InternalServerError("whoops, looks like a cock-up on our part!")
 
+@app.route("/<mbid>/high-level", methods=["GET"])
+def get_high_level(mbid):
+    """Endpoint for fetching high-level information to AcousticBrainz"""
+
+    if not validate_uuid(mbid):
+        raise BadRequest("Invalid MBID: %s" % e)
+
+    conn = psycopg2.connect(config.PG_CONNECT)
+    cur = conn.cursor()
+    try:
+        cur.execute("""SELECT data::text 
+                         FROM highlevel 
+                         JOIN highlevel_json 
+                           ON highlevel.id = highlevel_json.id 
+                        WHERE mbid = %s""", (mbid, ))
+        if not cur.rowcount:
+            raise NotFound
+
+        row = cur.fetchone()
+        return Response(row[0], content_type='application/json')
+
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    return InternalServerError("whoops, looks like a cock-up on our part!")
+
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=8080)
+    app.run(debug=True, host="0.0.0.0", port=8080)

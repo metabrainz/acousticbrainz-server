@@ -7,17 +7,18 @@ import urllib2
 import json
 import os
 from time import sleep
+import subprocess
 from operator import itemgetter
 import psycopg2
 import config
 from threading import Thread
 import random
 from hashlib import sha256, sha1
+from tempfile import NamedTemporaryFile, gettempdir, gettempprefix
 
 MAX_THREADS = 4
-#HIGH_LEVEL_EXTRACTOR_BINARY = "extractor_streaming_high_level"
-# For testing purposes
-HIGH_LEVEL_EXTRACTOR_BINARY = "/bin/sh"
+HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
+PROFILE = "profile.conf"
 
 class HighLevel(Thread):
     """
@@ -36,13 +37,32 @@ class HighLevel(Thread):
            Invoke essentia high level extractor and return its JSON output
         """
 
-        # TBC -- once we have an extractor to play with. For now, just pause randomly
-        sleep(2 + 2 * random.random())
-       
-        # On error return an empty JSON document
-        #return '{ "error" : "high level extractor failure" }'
+        try:
+            f = NamedTemporaryFile(delete=False)
+            name = f.name
+            f.write(self.ll_data)
+            f.close()
+        except IOError:
+            return '{ "error" : "IO Error while writing temp file" }'
 
-        return '{ "fake" : true }'
+        out_file = os.path.join(gettempdir(), "%s-%d" % (gettempprefix(), os.getpid()))
+
+        try:
+            subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY), name, out_file, PROFILE])
+        except subprocess.CalledProcessError:
+            return '{ "error" : "Cannot call high level extractor" }'
+            
+        try:
+            f = open(out_file)
+            hl_data = f.read()
+            f.close()
+            os.unlink(out_file)
+        except IOError:
+            return '{ "error" : "IO Error while removing temp file" }'
+
+        print hl_data
+
+        return hl_data
 
     def get_data(self):
         return self.hl_data
@@ -127,7 +147,7 @@ while True:
                 # Calculate the sha for the data
                 try:
                     jdata = json.loads(hl_data)
-                except ValueError:
+                except TypeError:
                     jdata = dict(error = "high level extractor produced bad JSON")
 
                 sha = json.dumps(jdata, sort_keys=True, separators=(',', ':'))

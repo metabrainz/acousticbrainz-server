@@ -168,7 +168,8 @@ while True:
     # If we're at max threads, wait for one to complete
     while True:
         if len(pool) == 0 and len(docs) == 0:
-            print "processed %s documents, none remain. Sleeping." % num_processed
+            if num_processed > 0:
+                print "processed %s documents, none remain. Sleeping." % num_processed
             num_processed = 0
             # Let's be nice and not keep any connections to the DB open while we nap
             conn.close()

@@ -15,8 +15,6 @@ from threading import Thread
 import random
 from hashlib import sha256, sha1
 import tempfile
-import logging
-from logging.handlers import RotatingFileHandler
 
 MAX_THREADS = 4
 SLEEP_DURATION = 30 # number of seconds to wait between runs
@@ -25,12 +23,6 @@ HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
 PROFILE_CONF_TEMPLATE = "profile.conf.in"
 PROFILE_CONF = "profile.conf"
 PROFILE_SHA1_PATTERN = "@EXTRACTOR_BINARY_SHA@"
-
-logging.basicConfig(format='%(asctime)s: %(message)s', level=logging.INFO)
-handler = RotatingFileHandler(config.HL_LOG_FILE, maxBytes=config.LOG_SIZE, backupCount=config.LOG_FILES_SAVED)
-handler.setLevel(logging.INFO)
-log = logging.getLogger('hl_analysis')
-log.addHandler(handler)
 
 class HighLevel(Thread):
     """
@@ -55,7 +47,7 @@ class HighLevel(Thread):
             f.write(self.ll_data)
             f.close()
         except IOError:
-            log.info("IO Error while writing temp file")
+            print "IO Error while writing temp file"
             return "{}"
 
         # Securely generate a temporary filename
@@ -67,7 +59,7 @@ class HighLevel(Thread):
         try:
             subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY), name, out_file, PROFILE_CONF], stdout=fnull, stderr=fnull)
         except subprocess.CalledProcessError:
-            log.info("Cannot call high level extractor")
+            print "Cannot call high level extractor"
             return "{}"
 
         fnull.close()
@@ -78,7 +70,7 @@ class HighLevel(Thread):
             f.close()
             os.unlink(out_file)
         except IOError:
-            log.info("IO Error while removing temp file")
+            print "IO Error while removing temp file"
             return "{}"
 
         return hl_data
@@ -113,7 +105,7 @@ def create_profile(in_file, out_file, sha1):
         profile = f.read()
         f.close()
     except IOError, e:
-        log.info("Cannot read profile template %s: %s" % (in_file, e))
+        print "Cannot read profile template %s: %s" % (in_file, e)
         sys.exit(-1)
 
     profile = profile.replace(PROFILE_SHA1_PATTERN, sha1)
@@ -123,7 +115,7 @@ def create_profile(in_file, out_file, sha1):
         f.write(profile)
         f.close()
     except IOError, e:
-        log.info("Cannot write profile %s: %s" % (out_file, e))
+        print "Cannot write profile %s: %s" % (out_file, e)
         sys.exit(-1)
 
 def get_build_sha1(binary):
@@ -135,11 +127,12 @@ def get_build_sha1(binary):
         bin = f.read()
         f.close()
     except IOError, e:
-        log.info("Cannot calculate the SHA256 of the high level binary: %s" % e)
+        print "Cannot calculate the SHA256 of the high level binary: %s" % e
         sys.exit(-1)
 
     return sha1(bin).hexdigest() 
 
+print "High level extractor daemon starting"
 build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
 create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
     
@@ -169,13 +162,13 @@ while True:
         mbid, doc, id = docs.pop()
         th = HighLevel(mbid, doc, id)
         th.start()
-        log.info("start %s" % mbid)
+        print "start %s" % mbid
         pool[mbid] = th
 
     # If we're at max threads, wait for one to complete
     while True:
         if len(pool) == 0 and len(docs) == 0:
-            log.info("processed %s documents, none remain. Sleeping." % num_processed)
+            print "processed %s documents, none remain. Sleeping." % num_processed
             num_processed = 0
             # Let's be nice and not keep any connections to the DB open while we nap
             conn.close()
@@ -195,14 +188,14 @@ while True:
                 try:
                     jdata = json.loads(hl_data)
                 except ValueError:
-                    log.info("error %s: Cannot parse result document" % mbid)
-                    log.info(hl_data)
+                    print "error %s: Cannot parse result document" % mbid
+                    print hl_data
                     jdata = {}
 
                 norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
                 sha = sha256(norm_data).hexdigest()
 
-                log.info("done  %s" % mbid)
+                print "done  %s" % mbid
                 if not conn:
                     conn = psycopg2.connect(config.PG_CONNECT)
 

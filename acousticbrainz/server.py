@@ -291,10 +291,10 @@ def get_high_level(mbid):
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     try:
-        cur.execute("""SELECT data::text 
-                         FROM highlevel 
-                         JOIN highlevel_json 
-                           ON highlevel.id = highlevel_json.id 
+        cur.execute("""SELECT hlj.data::text 
+                         FROM highlevel hl
+                         JOIN highlevel_json hlj
+                           ON hl.id = hlj.id 
                         WHERE mbid = %s""", (mbid, ))
         if not cur.rowcount:
             raise NotFound

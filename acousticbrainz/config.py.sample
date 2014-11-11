@@ -2,4 +2,8 @@
 # See http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
 PG_CONNECT = "dbname=acousticbrainz user=acousticbrainz password=acousticbrainz host=localhost port=5432"
 
-LOG_FILE = "/var/log/acousticbrainz.log"
+LOG_SIZE = 1024 * 20000 # 20MB maximum log file size
+LOG_FILES_SAVED = 3     # number of log files to compress and save
+
+LOG_FILE = "./acousticbrainz.log"
+HL_LOG_FILE = "./hl_analysis.log"

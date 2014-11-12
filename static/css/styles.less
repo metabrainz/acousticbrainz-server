@@ -1,0 +1,375 @@
+// Core variables and mixins
+@import "bootstrap/variables";
+@import "bootstrap/mixins";
+
+// Reset
+@import "bootstrap/normalize";
+@import "bootstrap/print";
+
+// Core CSS
+@import "bootstrap/scaffolding";
+@import "bootstrap/type";
+//@import "bootstrap/code.less";
+@import "bootstrap/grid";
+@import "bootstrap/tables";
+@import "bootstrap/forms";
+@import "bootstrap/buttons";
+
+// Components
+@import "bootstrap/component-animations";
+@import "bootstrap/glyphicons";
+@import "bootstrap/dropdowns";
+@import "bootstrap/button-groups";
+@import "bootstrap/input-groups";
+@import "bootstrap/navs";
+@import "bootstrap/navbar";
+//@import "bootstrap/breadcrumbs.less";
+@import "bootstrap/pagination";
+@import "bootstrap/pager";
+@import "bootstrap/labels.less";
+//@import "bootstrap/badges.less";
+//@import "bootstrap/jumbotron.less";
+@import "bootstrap/thumbnails";
+@import "bootstrap/alerts";
+//@import "bootstrap/progress-bars.less";
+//@import "bootstrap/media.less";
+//@import "bootstrap/list-group.less";
+@import "bootstrap/panels";
+//@import "bootstrap/responsive-embed.less";
+@import "bootstrap/wells";
+//@import "bootstrap/close.less";
+
+// Components w/ JavaScript
+//@import "bootstrap/modals.less";
+@import "bootstrap/tooltip";
+//@import "bootstrap/popovers.less";
+//@import "bootstrap/carousel.less";
+
+// Utility classes
+@import "bootstrap/utilities";
+@import "bootstrap/responsive-utilities";
+
+
+@icon-font-path:"/static/fonts/";
+
+
+// General suff
+
+@ab-reddish: #AB0B17;
+@ab-blueish: #1D187A;
+
+@text-color: rgb(90, 90, 90);
+
+@brand-primary: @ab-blueish;
+
+@link-color: #3755b9;
+@link-hover-color: #fc6714;
+
+@pager-border-radius: @border-radius-base;
+
+body {
+  padding-bottom: 25px;
+}
+
+.table {
+  > thead > tr > th { border-bottom-width: 1px; }
+}
+
+.nav {
+  > li {
+    > a { color: @ab-blueish; }
+  }
+}
+
+
+// Navbar
+@grid-float-breakpoint: @screen-md-min; // Point at which the navbar becomes uncollapsed
+@navbar-default-border: @ab-reddish;
+@navbar-default-brand-color: @ab-blueish;
+.navbar {
+  border-width: 0 0 2px;
+  .navbar-brand {
+    font-family: 'Bitter', serif;
+    font-weight: bold;
+  }
+  form { // Search form
+    margin-top: 12px;
+    .input-sm {
+      height: 25px;
+      padding: 5px 8px;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 3px;
+    }
+    select.input-sm {
+      height: 25px;
+      line-height: 30px;
+    }
+    button .glyphicon { top: 0; }
+  }
+}
+
+// Footer
+.footer {
+  #language-selector {
+    > button { background: none; border-color: #adadad; }
+  }
+}
+
+
+img.avatar {
+  display: inline;
+  vertical-align: bottom;
+  border: 1px solid #ddd;
+  padding: 1px;
+  background: #fff;
+}
+
+.external-links {
+  .favicon-container {
+    width: 22px;
+    .pull-left();
+  }
+}
+
+ul.sharing {
+  padding: 0;
+  margin-top: 10px;
+  list-style: none;
+  .clearfix();
+  > li {
+    float: left;
+  }
+}
+
+
+// Home page
+#homepage{
+  .btn-primary { margin-top: 10px; }
+  #popular-list {
+    @popular-review-height: 120px;
+    .review {
+      height: @popular-review-height;
+      margin-top: 20px;
+      .cover-art-container {
+        width: @popular-review-height;
+        height: @popular-review-height;
+        margin-right: 15px;
+        img {
+          max-width: @popular-review-height;
+          max-height: @popular-review-height;
+        }
+      }
+      .album, .reviewer {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .preview {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        max-height: 60px;  // fallback
+        -webkit-line-clamp: 3; // number of lines to show
+        -webkit-box-orient: vertical;
+      }
+    }
+  }
+  #recent-list {
+    margin-top: 25px;
+    @recent-review-height: 50px;
+    .review {
+      height: @recent-review-height;
+      margin-bottom: 10px;
+      color: @text-color;
+      text-decoration: none;
+      .cover-art-container {
+        width: @recent-review-height;
+        height: @recent-review-height;
+        margin-right: 10px;
+        img {
+          max-width: @recent-review-height;
+          max-height: @recent-review-height;
+        }
+      }
+      .album { padding-top: 4px; }
+      .album, .reviewer {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
+
+
+// Artist page
+#release-groups {
+  margin-top: 20px;
+  .reviewed {
+    border-color: fadeout(@ab-blueish, 40%);
+    box-shadow: 0px 0px 5px 0px @ab-blueish;
+  }
+  .thumbnail {
+    @media (min-width: @screen-sm) {
+      @media (min-width: @screen-sm) { height: 157px; }
+      @media (min-width: @screen-md) { height: 212px; }
+      @media (min-width: @screen-lg) { height: 189px; }
+      img {
+        @media (min-width: @screen-sm) { max-height: 147px; }
+        @media (min-width: @screen-md) { max-height: 202px; }
+        @media (min-width: @screen-lg) { max-height: 179px; }
+      }
+      .caption {
+        height: 54px;
+        position: absolute;
+        background: rgba(0, 0, 0, 0.57);
+        font-weight: bold;
+        font-size: small;
+        color: #fff;
+        @media (min-width: @screen-sm) { top: 98px; width: 147px; }
+        @media (min-width: @screen-md) { top: 153px; width: 202px; }
+        @media (min-width: @screen-lg) { top: 130px; width: 179px; }
+        a { color: #fff; }
+      }
+    }
+
+    @media (max-width: @screen-xs-max) {
+      height: 90px;
+      .cover-art-container {
+        width: 80px;
+        float: left;
+        margin-right: 8px;
+      }
+      img {
+        max-height: 80px;
+      }
+      .caption { margin-top: 9px; }
+    }
+
+    img {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .review-count {
+      position: absolute;
+      padding-left: 5px;
+      padding-right: 5px;
+      padding-top: 2px;
+      padding-bottom: 2px;
+      background: rgba(0, 0, 0, 0.57);
+      font-weight: bold;
+      font-size: small;
+      color: #fff;
+    }
+
+    .caption {
+      .release-group-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+
+// Release group page
+a#write-review { margin-top: 20px; }
+a#edit-review { margin-top: 20px; }
+#release-group-details {
+  #spotify-play-button, #cover-art {
+    margin-top: 10px;
+    @media (max-width: @screen-xs-max) {
+      display: flex;
+      flex-direction: row;
+      margin: 0 auto;
+      margin-top: 10px;
+    }
+  }
+  #spotify-play-button {
+    max-width: 250px;
+    .text-muted {
+      font-style: italic;
+    }
+  }
+  #tracklist {
+    .track {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+
+// Review entity page
+#review-entity {
+  #title { margin-bottom: 0px; }
+  #review-content {
+    #sidebar {
+      #cover-art { margin-top: 20px; }
+      #spotify-play-button {
+        margin-top: 10px;
+        max-width: 250px;
+      }
+      #spotify-play-button, #cover-art {
+        @media (max-width: @screen-xs-max) {
+          display: flex;
+          flex-direction: row;
+          margin: 0 auto;
+          margin-top: 10px;
+        }
+      }
+    }
+    .btn.disabled { cursor: pointer; pointer-events: all; }
+    #reporting {
+      @media (min-width: @grid-float-breakpoint) {
+        text-align: right;
+      }
+    }
+  }
+}
+
+
+// Review editor
+#review-editor {
+  #agreement {
+    font-size: @font-size-base - 2;
+  }
+}
+
+
+// Spotify matching page
+@tooltip-color: #fff;
+@tooltip-bg: @brand-success;
+@tooltip-opacity: 1;
+#spotify-search-results {
+  .thumbnail:hover {
+    border-color: fadeout(@brand-success, 40%);
+    box-shadow: 0px 0px 5px 0px @brand-success;
+  }
+  .cover-art-container {
+    height: 253px;
+    img {
+      display: block;
+      margin: 0 auto;
+      max-height: 253px;
+    }
+  }
+  .caption {
+    .title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: bold;
+    }
+  }
+}
+
+
+// User profile
+#profile-navigation { margin-top: 16px; margin-bottom: 22px; }

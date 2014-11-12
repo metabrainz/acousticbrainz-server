@@ -62,27 +62,37 @@ def dump_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
     cur = conn.cursor()
 
     with tarfile.open("%s/acousticbrainz-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
+        last_mbid = ""
+        index = 0
         cur.execute("""SELECT mbid, data::text FROM lowlevel ll""")
         for row in cur.fetchone():
+            print row
             mbid = row[0]
             json = row[1]
+
+            if mbid == last_mbid:
+                index += 1
+            else:
+                index = 0
+
+            print "%s - %d" % (mbid, index)
 
             # Creating directory structure for the documents
             path = os.path.join(location, mbid[0:1], mbid[0:2])
             create_path(path)
 
-            f = open(os.path.join(path, mbid + "-lowlevel.json"), 'w')
-            f.write(ll_json)
+            filename = os.path.join(path, mbid + "-lowlevel-%d.json" % index)
+            print "write %s" % filename
+            f = open(filename, "w")
+            f.write(json)
             f.close()
 
-            f = open(os.path.join(path, mbid + "-highlevel.json"), 'w')
-            f.write(hl_json)
-            f.close()
+            last_mbid = mbid
 
         tar.add(path, arcname='data')
 
         # Copying legal text
-        tar.add("licenses/CC0.txt", arcname='COPYING')
+        tar.add("../licenses/COPYING-PublicDomain", arcname='COPYING')
 
         print(" + %s" % mbid)
 

@@ -104,7 +104,7 @@ def create_profile(in_file, out_file, sha1):
         f = open(in_file)
         profile = f.read()
         f.close()
-    except IOError, e:
+    except IOError as e:
         print "Cannot read profile template %s: %s" % (in_file, e)
         sys.exit(-1)
 
@@ -114,7 +114,7 @@ def create_profile(in_file, out_file, sha1):
         f = open(out_file, "w")
         f.write(profile)
         f.close()
-    except IOError, e:
+    except IOError as e:
         print "Cannot write profile %s: %s" % (out_file, e)
         sys.exit(-1)
 
@@ -126,7 +126,7 @@ def get_build_sha1(binary):
         f = open(binary, "r")
         bin = f.read()
         f.close()
-    except IOError, e:
+    except IOError as e:
         print "Cannot calculate the SHA256 of the high level binary: %s" % e
         sys.exit(-1)
 

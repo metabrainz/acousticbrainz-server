@@ -56,3 +56,4 @@ target/
 # project specific stuff
 acousticbrainz/config.py
 acousticbrainz/bin/profile.conf
+acousticbrainz/bin/profile.conf.in

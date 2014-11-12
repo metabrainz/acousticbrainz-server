@@ -294,7 +294,7 @@ def get_high_level(mbid):
         cur.execute("""SELECT hlj.data::text 
                          FROM highlevel hl
                          JOIN highlevel_json hlj
-                           ON hl.id = hlj.id 
+                           ON hl.data = hlj.id 
                         WHERE mbid = %s""", (mbid, ))
         if not cur.rowcount:
             raise NotFound

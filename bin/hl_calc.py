@@ -132,86 +132,90 @@ def get_build_sha1(binary):
 
     return sha1(bin).hexdigest() 
 
-print "High level extractor daemon starting"
-build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
-create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
-    
-conn = None
-num_processed = 0
+def main():
+    print "High level extractor daemon starting"
+    build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
+    create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
+        
+    conn = None
+    num_processed = 0
 
-pool = {}
-docs = []
-while True:
-    # Check to see if we need more database rows
-    if len(docs) == 0:
-        # Fetch more rows from the DB
-        if not conn:
-            conn = psycopg2.connect(config.PG_CONNECT)
-        docs = get_documents(conn)
-
-        # We will fetch some rows that are already in progress. Remove those.
-        in_progress = pool.keys()
-        filtered = []
-        for mbid, doc, id in docs:
-            if not mbid in in_progress:
-                filtered.append((mbid, doc, id))
-        docs = filtered
-
-    if len(docs):
-        # Start one document
-        mbid, doc, id = docs.pop()
-        th = HighLevel(mbid, doc, id)
-        th.start()
-        print "start %s" % mbid
-        pool[mbid] = th
-
-    # If we're at max threads, wait for one to complete
+    pool = {}
+    docs = []
     while True:
-        if len(pool) == 0 and len(docs) == 0:
-            if num_processed > 0:
-                print "processed %s documents, none remain. Sleeping." % num_processed
-            num_processed = 0
-            # Let's be nice and not keep any connections to the DB open while we nap
-            conn.close()
-            conn = None
-            sleep(SLEEP_DURATION)
+        # Check to see if we need more database rows
+        if len(docs) == 0:
+            # Fetch more rows from the DB
+            if not conn:
+                conn = psycopg2.connect(config.PG_CONNECT)
+            docs = get_documents(conn)
 
-        for mbid in pool.keys():
-            if not pool[mbid].is_alive():
+            # We will fetch some rows that are already in progress. Remove those.
+            in_progress = pool.keys()
+            filtered = []
+            for mbid, doc, id in docs:
+                if not mbid in in_progress:
+                    filtered.append((mbid, doc, id))
+            docs = filtered
 
-                # Fetch the data and clean up the thread object
-                hl_data = pool[mbid].get_data()
-                ll_id = pool[mbid].get_ll_id()
-                pool[mbid].join()
-                del pool[mbid]
+        if len(docs):
+            # Start one document
+            mbid, doc, id = docs.pop()
+            th = HighLevel(mbid, doc, id)
+            th.start()
+            print "start %s" % mbid
+            pool[mbid] = th
 
-                # Calculate the sha for the data
-                try:
-                    jdata = json.loads(hl_data)
-                except ValueError:
-                    print "error %s: Cannot parse result document" % mbid
-                    print hl_data
-                    jdata = {}
+        # If we're at max threads, wait for one to complete
+        while True:
+            if len(pool) == 0 and len(docs) == 0:
+                if num_processed > 0:
+                    print "processed %s documents, none remain. Sleeping." % num_processed
+                num_processed = 0
+                # Let's be nice and not keep any connections to the DB open while we nap
+                conn.close()
+                conn = None
+                sleep(SLEEP_DURATION)
 
-                norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
-                sha = sha256(norm_data).hexdigest()
+            for mbid in pool.keys():
+                if not pool[mbid].is_alive():
 
-                print "done  %s" % mbid
-                if not conn:
-                    conn = psycopg2.connect(config.PG_CONNECT)
+                    # Fetch the data and clean up the thread object
+                    hl_data = pool[mbid].get_data()
+                    ll_id = pool[mbid].get_ll_id()
+                    pool[mbid].join()
+                    del pool[mbid]
 
-                cur = conn.cursor()
-                cur.execute("""INSERT INTO highlevel_json (data, data_sha256) 
-                                    VALUES (%s, %s) 
-                                 RETURNING id""", (norm_data, sha))
-                id = cur.fetchone()[0]
-                cur.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
-                                    VALUES (%s, %s, %s, %s, now())""", (ll_id, mbid, build_sha1, id))
-                conn.commit()
-                num_processed += 1
+                    # Calculate the sha for the data
+                    try:
+                        jdata = json.loads(hl_data)
+                    except ValueError:
+                        print "error %s: Cannot parse result document" % mbid
+                        print hl_data
+                        jdata = {}
 
-        if len(pool) == MAX_THREADS:
-            # tranquilo!
-            sleep(.1)
-        else:
-            break
+                    norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
+                    sha = sha256(norm_data).hexdigest()
+
+                    print "done  %s" % mbid
+                    if not conn:
+                        conn = psycopg2.connect(config.PG_CONNECT)
+
+                    cur = conn.cursor()
+                    cur.execute("""INSERT INTO highlevel_json (data, data_sha256) 
+                                        VALUES (%s, %s) 
+                                     RETURNING id""", (norm_data, sha))
+                    id = cur.fetchone()[0]
+                    cur.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
+                                        VALUES (%s, %s, %s, %s, now())""", (ll_id, mbid, build_sha1, id))
+                    conn.commit()
+                    num_processed += 1
+
+            if len(pool) == MAX_THREADS:
+                # tranquilo!
+                sleep(.1)
+            else:
+                break
+
+if __name__ == "__main__":
+    main()

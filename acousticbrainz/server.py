@@ -215,7 +215,7 @@ def submit_low_level(mbid):
         raise BadRequest(err)
 
     if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % e)
+        raise BadRequest("Invalid MBID: %s" % mbid)
 
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
@@ -262,7 +262,7 @@ def get_low_level(mbid):
     """Endpoint for fetching low-level information to AcousticBrainz"""
 
     if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % e)
+        raise BadRequest("Invalid MBID: %s" % mbid)
 
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
@@ -286,7 +286,7 @@ def get_high_level(mbid):
     """Endpoint for fetching high-level information to AcousticBrainz"""
 
     if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % e)
+        raise BadRequest("Invalid MBID: %s" % mbid)
 
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()

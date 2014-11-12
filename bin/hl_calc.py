@@ -127,7 +127,7 @@ def get_build_sha1(binary):
         bin = f.read()
         f.close()
     except IOError as e:
-        print "Cannot calculate the SHA256 of the high level binary: %s" % e
+        print "Cannot calculate the SHA1 of the high level binary: %s" % e
         sys.exit(-1)
 
     return sha1(bin).hexdigest() 

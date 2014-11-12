@@ -215,7 +215,7 @@ def submit_low_level(mbid):
         raise BadRequest(err)
 
     if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % e)
+        raise BadRequest("Invalid MBID: %s" % mbid)
 
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
@@ -262,7 +262,7 @@ def get_low_level(mbid):
     """Endpoint for fetching low-level information to AcousticBrainz"""
 
     if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % e)
+        raise BadRequest("Invalid MBID: %s" % mbid)
 
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
@@ -281,5 +281,33 @@ def get_low_level(mbid):
 
     return InternalServerError("whoops, looks like a cock-up on our part!")
 
+@app.route("/<mbid>/high-level", methods=["GET"])
+def get_high_level(mbid):
+    """Endpoint for fetching high-level information to AcousticBrainz"""
+
+    if not validate_uuid(mbid):
+        raise BadRequest("Invalid MBID: %s" % mbid)
+
+    conn = psycopg2.connect(config.PG_CONNECT)
+    cur = conn.cursor()
+    try:
+        cur.execute("""SELECT hlj.data::text 
+                         FROM highlevel hl
+                         JOIN highlevel_json hlj
+                           ON hl.data = hlj.id 
+                        WHERE mbid = %s""", (mbid, ))
+        if not cur.rowcount:
+            raise NotFound
+
+        row = cur.fetchone()
+        return Response(row[0], content_type='application/json')
+
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    return InternalServerError("whoops, looks like a cock-up on our part!")
+
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=8080)
+    app.run(debug=True, host="0.0.0.0", port=8080)

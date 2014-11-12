@@ -55,5 +55,9 @@ target/
 
 # project specific stuff
 acousticbrainz/config.py
-acousticbrainz/bin/profile.conf
-acousticbrainz/bin/profile.conf.in
+bin/profile.conf
+bin/profile.conf.in
+ve
+*.swp
+bin/streaming_extractor_music_svm
+bin/svm_models

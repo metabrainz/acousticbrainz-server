@@ -15,6 +15,7 @@ from threading import Thread
 import random
 from hashlib import sha256, sha1
 import tempfile
+import yaml
 
 MAX_THREADS = 4
 SLEEP_DURATION = 30 # number of seconds to wait between runs
@@ -22,7 +23,6 @@ HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
 
 PROFILE_CONF_TEMPLATE = "profile.conf.in"
 PROFILE_CONF = "profile.conf"
-PROFILE_SHA1_PATTERN = "@EXTRACTOR_BINARY_SHA@"
 
 class HighLevel(Thread):
     """
@@ -99,21 +99,34 @@ def get_documents(conn):
     cur.close()
     return docs
 
+
 def create_profile(in_file, out_file, sha1):
+    """
+        Prepare a profile file for use with essentia. Sanity check to make sure important values are present.
+    """
+
     try:
-        f = open(in_file)
-        profile = f.read()
-        f.close()
+        with open(in_file, 'r') as f:
+            doc = yaml.load(f)
     except IOError as e:
-        print "Cannot read profile template %s: %s" % (in_file, e)
+        print "Cannot read profile %s: %s" % (in_file, e)
         sys.exit(-1)
 
-    profile = profile.replace(PROFILE_SHA1_PATTERN, sha1)
+    try:
+        models_ver = doc['mergeValues']['metadata']['version']['highlevel']['models_essentia_git_sha']
+    except KeyError as e:
+        print "key error"
+        models_ver = ""
+
+    if not models_ver:
+        print "profile.conf.in needs to have 'metadata : version : highlevel : models_essentia_git_sha' defined."
+        sys.exit(-1)
+
+    doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
 
     try:
-        f = open(out_file, "w")
-        f.write(profile)
-        f.close()
+        with open(out_file, 'w') as yaml_file:
+            yaml_file.write( yaml.dump(doc, default_flow_style=False))
     except IOError as e:
         print "Cannot write profile %s: %s" % (out_file, e)
         sys.exit(-1)

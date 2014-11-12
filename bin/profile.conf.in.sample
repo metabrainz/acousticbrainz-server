@@ -25,6 +25,6 @@ mergeValues:
     metadata:
         version:
             highlevel:
-                essentia_build_sha: @EXTRACTOR_BINARY_SHA@
+                essentia_build_sha:
 #               TODO: You must fill this out before using!
                 models_essentia_git_sha:

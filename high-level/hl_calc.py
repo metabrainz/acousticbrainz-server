@@ -89,7 +89,7 @@ def get_documents(conn):
         Fetch a number of low level documents to process from the DB
     """
     cur = conn.cursor()
-    cur.execute("""SELECT ll.mbid, ll.data, ll.id
+    cur.execute("""SELECT ll.mbid, ll.data::text, ll.id
                      FROM lowlevel AS ll 
                 LEFT JOIN highlevel AS hl 
                        ON ll.id = hl.id 
@@ -115,7 +115,6 @@ def create_profile(in_file, out_file, sha1):
     try:
         models_ver = doc['mergeValues']['metadata']['version']['highlevel']['models_essentia_git_sha']
     except KeyError as e:
-        print "key error"
         models_ver = ""
 
     if not models_ver:

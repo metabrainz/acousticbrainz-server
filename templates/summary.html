@@ -1,0 +1,16 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+<div id="homepage">
+  <h4>Details for track {{ mbid }}</strong></h4>
+  <div>
+     <table class="table table-striped table-bordered">
+        <thead><th colspan="2">Tonal & Rhythm</th></thead>
+        <tr><td>key</td><td>{{ lowlevel.tonal.key_key }}</td></td></tr>
+        <tr><td>scale</td><td> {{ lowlevel.tonal.chords_scale }}</td></tr>
+        <tr><td>danceability</td><td> {{ lowlevel.rhythm.danceability }}</td></tr>
+        <tr><td>bpm</td><td> {{ lowlevel.rhythm.bpm }}</td></tr>
+        <tr><td>beat count</td><td> {{ lowlevel.rhythm.beats_count }}</td></tr>
+     </table>
+  </div>
+</div>
+{%- endblock -%}

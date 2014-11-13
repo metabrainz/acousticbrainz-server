@@ -307,7 +307,35 @@ def get_high_level(mbid):
     except psycopg2.OperationalError, e:
         raise ServiceUnavailable(str(e))
 
-    return InternalServerError("whoops, looks like a cock-up on our part!")
+    return InternalServerError("Bummer, dude.")
+
+@app.route("/<mbid>", methods=["GET"])
+def get_summary(mbid):
+
+    if not validate_uuid(mbid):
+        raise BadRequest("Invalid MBID: %s" % mbid)
+
+    conn = psycopg2.connect(config.PG_CONNECT)
+    cur = conn.cursor()
+    try:
+        cur.execute("""SELECT ll.data, hlj.data 
+                         FROM highlevel hl, lowlevel ll, highlevel_json hlj
+                        WHERE hl.data = hlj.id 
+                          AND hl.id = ll.id
+                          AND ll.mbid = %s""", (mbid, ))
+        if not cur.rowcount:
+            return render_template("summary.html", mbid="")
+
+        row = cur.fetchone()
+        print row[0]
+        return render_template("summary.html", lowlevel=row[0], highlevel=row[1], mbid=mbid)
+
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    return InternalServerError("whoops!")
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8080)

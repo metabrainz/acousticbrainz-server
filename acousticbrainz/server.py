@@ -327,7 +327,6 @@ def get_summary(mbid):
             return render_template("summary.html", mbid="")
 
         row = cur.fetchone()
-        print row[0]
         return render_template("summary.html", lowlevel=row[0], highlevel=row[1], mbid=mbid)
 
     except psycopg2.IntegrityError, e:

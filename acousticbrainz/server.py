@@ -30,6 +30,7 @@ SANITY_CHECK_KEYS = [
 ]
 STATS_CACHE_TIMEOUT = 60 * 10 # ten minutes
 MAX_NUMBER_DUPES     = 5
+UNSURE = "unsure"
 
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
@@ -76,6 +77,39 @@ def sanity_check_json(data):
 
 def json_error(err):
     return json.dumps(dict(error=err))
+
+def interpret(data, threshold):
+    if data['probability'] >= threshold:
+        return data['value'].replace("_", " ")
+    return UNSURE
+
+def interpret_high_level(hl):
+    genres = []
+    genres.append(("Genre - tzanetakis' method", interpret(hl['highlevel']['genre_tzanetakis'], .6)))
+    genres.append(("Genre - electronic classification", interpret(hl['highlevel']['genre_electronic'], .6)))
+    genres.append(("Genre - dortmund method", interpret(hl['highlevel']['genre_dortmund'], .6)))
+    genres.append(("Genre - rosamerica method", interpret(hl['highlevel']['genre_rosamerica'], .6)))
+
+    moods = []
+    moods.append(("Mood - electronic", interpret(hl['highlevel']['mood_electronic'], .6)))
+    moods.append(("Mood - party", interpret(hl['highlevel']['mood_party'], .6)))
+    moods.append(("Mood - aggressive", interpret(hl['highlevel']['mood_aggressive'], .6)))
+    moods.append(("Mood - acoustic", interpret(hl['highlevel']['mood_acoustic'], .6)))
+    moods.append(("Mood - happy", interpret(hl['highlevel']['mood_happy'], .6)))
+    moods.append(("Mood - sad", interpret(hl['highlevel']['mood_sad'], .6)))
+    moods.append(("Mood - relaxed", interpret(hl['highlevel']['mood_relaxed'], .6)))
+    moods.append(("Mood - mirex method", interpret(hl['highlevel']['moods_mirex'], .6)))
+
+    other = []
+    other.append(("Voice", interpret(hl['highlevel']['voice_instrumental'], .6)))
+    other.append(("Gender", interpret(hl['highlevel']['gender'], .6)))
+    other.append(("Danceability", interpret(hl['highlevel']['danceability'], .6)))
+    other.append(("Tonal", interpret(hl['highlevel']['tonal_atonal'], .6)))
+    other.append(("Timbre", interpret(hl['highlevel']['timbre'], .6)))
+    other.append(("ISMIR04 Rhythm", interpret(hl['highlevel']['ismir04_rhythm'], .6)))
+
+    return (genres, moods, other)
+
 
 @app.route("/")
 def index():
@@ -327,7 +361,9 @@ def get_summary(mbid):
             return render_template("summary.html", mbid="")
 
         row = cur.fetchone()
-        return render_template("summary.html", lowlevel=row[0], highlevel=row[1], mbid=mbid)
+        genres, moods, other = interpret_high_level(row[1])
+        return render_template("summary.html", lowlevel=row[0], highlevel=row[1], mbid=mbid, 
+                               genres=genres, moods=moods, other=other)
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))

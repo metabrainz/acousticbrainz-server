@@ -3,8 +3,13 @@
 <div id="homepage">
   <h4>Details for track {{ mbid }}</strong></h4>
   {% if mbid == "" %}
-      <div>We do not have data for this track. <a href="/conribute">Please upload it!</a></div>
+      <div>We do not have data for this track. <a href="/contribute">Please upload it!</a></div>
   {% else %}
+      <div class="warning bg-warning">
+         This page sucks. Hackers: Please made it better! 
+         <a href="https://github.com/metabrainz/acousticbrainz-server/blob/master/acousticbrainz/server.py">server.py</a>
+         <a href="https://github.com/metabrainz/acousticbrainz-server/blob/master/templates/summary.html">summary.html</a>
+      </div>
       <div>
          <table class="table table-striped table-bordered">
             <thead><th colspan="2">Tonal & Rhythm</th></thead>
@@ -13,6 +18,27 @@
             <tr><td>danceability</td><td> {{ lowlevel.rhythm.danceability }}</td></tr>
             <tr><td>bpm</td><td> {{ lowlevel.rhythm.bpm }}</td></tr>
             <tr><td>beat count</td><td> {{ lowlevel.rhythm.beats_count }}</td></tr>
+         </table>
+
+         <table class="table table-striped table-bordered">
+            <thead><th colspan="2">Voice, timbre, gender, etc.</th></thead>
+            {% for row in other %}
+                <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr>
+            {% endfor %}
+         </table>
+
+         <table class="table table-striped table-bordered">
+            <thead><th colspan="2">Moods</th></thead>
+            {% for row in moods %}
+                <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr>
+            {% endfor %}
+         </table>
+
+         <table class="table table-striped table-bordered">
+            <thead><th colspan="2">Genres</th></thead>
+            {% for row in genres %}
+                <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td></tr>
+            {% endfor %}
          </table>
       </div>
   {% endif %}

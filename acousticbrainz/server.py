@@ -393,6 +393,7 @@ def get_summary(mbid):
                         WHERE hl.data = hlj.id 
                           AND hl.mbid = %s""", (mbid, ))
         if cur.rowcount:
+            row = cur.fetchone()
             highlevel = row[0]
             genres, moods, other = interpret_high_level(highlevel)
         else:

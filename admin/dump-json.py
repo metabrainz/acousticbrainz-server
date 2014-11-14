@@ -69,20 +69,25 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
         last_mbid = ""
         index = 0
         count = 0
-        print "  run query.."
+        print "  run queries..."
         cur.execute("""SELECT id FROM lowlevel ll ORDER BY mbid""")
         while True:
             id_list = cur.fetchmany(size = DUMP_CHUNK_SIZE)
             if not id_list:
                 break
 
+
             id_list = tuple([ i[0] for i in id_list ])
 
+            count = 0
             cur2.execute("SELECT mbid, data::text FROM lowlevel WHERE id IN %s ORDER BY mbid", (id_list,))
             while True:
                 row = cur2.fetchone()
                 if not row:
                     break
+
+                if count == 0:
+                    print "\r  write %s" % last_mbid,
 
                 mbid = row[0]
                 json = row[1]
@@ -104,7 +109,6 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
                 last_mbid = mbid
                 count += 1
 
-            print "\r  write %s" % last_mbid,
 
 
         # Copying legal text

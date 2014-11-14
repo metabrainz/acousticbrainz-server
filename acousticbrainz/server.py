@@ -214,6 +214,10 @@ def sample_data():
 def about():
     return render_template("about.html")
 
+@app.route("/faq")
+def faq():
+    return render_template("faq.html")
+
 @app.route("/api")
 def api():
     return render_template("api.html")

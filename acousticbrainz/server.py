@@ -12,6 +12,7 @@ from flask import Flask, request, Response, jsonify, render_template
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 import memcache
 from hashlib import sha256
+import argparse
 
 SANITY_CHECK_KEYS = [
    [ 'metadata', 'version', 'essentia' ],
@@ -377,4 +378,9 @@ def get_summary(mbid):
     return InternalServerError("whoops!")
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    parser = argparse.ArgumentParser(description='AcousticBrainz dev server')
+    parser.add_argument("-d", "--debug", help="Turn on debugging mode to see stack traces in the error pages", default=True, action='store_true')
+    parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 127.0.0.1", default="127.0.0.1", type=str)
+    parser.add_argument("-p", "--port", help="Which port to listen on. Default: 8080", default="8080", type=int)
+    args = parser.parse_args()
+    app.run(debug=True, host=args.host, port=args.port)

@@ -383,7 +383,7 @@ def get_summary(mbid):
                         WHERE hl.data = hlj.id 
                           AND hl.mbid = %s""", (mbid, ))
         if cur.rowcount:
-            highlevel = row[1]
+            highlevel = row[0]
 
             if not lowlevel['metadata']['tags'].has_key('tracktotal'):
                 lowlevel['metadata']['tags']['tracktotal'] = "?"

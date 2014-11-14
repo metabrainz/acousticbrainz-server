@@ -50,9 +50,9 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
         else:
             os.remove(entry)
 
-def dump_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
+def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
     """
-        Create JSON dumps with all low and high level documents
+        Create JSON dumps with all low level documents
     """
 
     temp_dir = '%s/temp' % location
@@ -61,12 +61,15 @@ def dump_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
 
-    with tarfile.open("%s/acousticbrainz-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
+    with tarfile.open("%s/acousticbrainz-lowlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
         last_mbid = ""
         index = 0
-        cur.execute("""SELECT mbid, data::text FROM lowlevel ll""")
-        for row in cur.fetchone():
-            print row
+        cur.execute("""SELECT mbid, data::text FROM lowlevel ll ORDER BY mbid""")
+        while True:
+            row = cur.fetchone()
+            if not row:
+                break
+
             mbid = row[0]
             json = row[1]
 
@@ -75,26 +78,21 @@ def dump_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
             else:
                 index = 0
 
-            print "%s - %d" % (mbid, index)
-
-            # Creating directory structure for the documents
-            path = os.path.join(location, mbid[0:1], mbid[0:2])
-            create_path(path)
-
-            filename = os.path.join(path, mbid + "-lowlevel-%d.json" % index)
-            print "write %s" % filename
+            filename = os.path.join(location, mbid + "-%d.json" % index)
+            print "\rwrite %s" % filename,
             f = open(filename, "w")
             f.write(json)
             f.close()
+       
+            arcname = os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), "lowlevel", mbid[0:1], mbid[0:2], mbid + "-%d.json" % index)
+            tar.add(filename, arcname=arcname)
+            os.unlink(filename)
 
             last_mbid = mbid
 
-        tar.add(path, arcname='data')
 
         # Copying legal text
-        tar.add("../licenses/COPYING-PublicDomain", arcname='COPYING')
-
-        print(" + %s" % mbid)
+        tar.add("../licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
 
     shutil.rmtree(temp_dir)  # Cleanup
 
@@ -103,7 +101,64 @@ def dump_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
         remove_old_archives(location, "acousticbrainz-[0-9]+-json.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
-    print("Done!")
+    print("\nDone!")
+
+def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
+    """
+        Create JSON dumps with all high level documents
+    """
+
+    temp_dir = '%s/temp' % location
+    create_path(temp_dir)
+
+    conn = psycopg2.connect(config.PG_CONNECT)
+    cur = conn.cursor()
+
+    with tarfile.open("%s/acousticbrainz-highlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
+        last_mbid = ""
+        index = 0
+        cur.execute("""SELECT mbid, hlj.data::text FROM highlevel hl, highlevel_json hlj WHERE hl.data = hlj.id ORDER BY mbid""")
+        while True:
+            row = cur.fetchone()
+            if not row:
+                break
+
+            mbid = row[0]
+            json = row[1]
+
+            if mbid == last_mbid:
+                index += 1
+            else:
+                index = 0
+
+            filename = os.path.join(location, mbid + "-%d.json" % index)
+            print "\rwrite %s" % filename,
+            f = open(filename, "w")
+            f.write(json)
+            f.close()
+       
+            arcname = os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), "highlevel", mbid[0:1], mbid[0:2], mbid + "-%d.json" % index)
+            tar.add(filename, arcname=arcname)
+            os.unlink(filename)
+
+            last_mbid = mbid
+
+
+        # Copying legal text
+        tar.add("../licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
+
+    shutil.rmtree(temp_dir)  # Cleanup
+
+    if rotate:
+        print("Removing old sets of archives (except two latest)...")
+        remove_old_archives(location, "acousticbrainz-[0-9]+-json.tar.bz2",
+                            is_dir=False, sort_key=lambda x: os.path.getmtime(x))
+
+    print("\nDone!")
 
 if __name__ == "__main__":
-    dump_json()
+    print "Dumping lowlevel data"
+    dump_lowlevel_json()
+
+    print "Dumping highlevel data"
+    dump_highlevel_json()

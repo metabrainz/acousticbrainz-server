@@ -64,6 +64,7 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
     with tarfile.open("%s/acousticbrainz-lowlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
         last_mbid = ""
         index = 0
+        print "  run query.."
         cur.execute("""SELECT mbid, data::text FROM lowlevel ll ORDER BY mbid""")
         while True:
             row = cur.fetchone()
@@ -117,6 +118,7 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
     with tarfile.open("%s/acousticbrainz-highlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
         last_mbid = ""
         index = 0
+        print "  run query.."
         cur.execute("""SELECT mbid, hlj.data::text FROM highlevel hl, highlevel_json hlj WHERE hl.data = hlj.id ORDER BY mbid""")
         while True:
             row = cur.fetchone()
@@ -157,8 +159,8 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
     print("\nDone!")
 
 if __name__ == "__main__":
-    print "Dumping lowlevel data"
-    dump_lowlevel_json()
-
     print "Dumping highlevel data"
     dump_highlevel_json()
+
+    print "Dumping lowlevel data"
+    dump_lowlevel_json()

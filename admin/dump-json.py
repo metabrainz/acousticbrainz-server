@@ -84,11 +84,11 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
                 if not row:
                     break
 
-                if count == 0:
-                    print "\r  write %s" % last_mbid,
-
                 mbid = row[0]
                 json = row[1]
+
+                if count == 0:
+                    print "\r  write %s" % mbid,
 
                 if mbid == last_mbid:
                     index += 1
@@ -106,7 +106,6 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
 
                 last_mbid = mbid
                 count += 1
-
 
         # Copying legal text
         tar.add("../licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
@@ -178,7 +177,6 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
 
                 last_mbid = mbid
                 count += 1
-
 
         # Copying legal text
         tar.add("../licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))

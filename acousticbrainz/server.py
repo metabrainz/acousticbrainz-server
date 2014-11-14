@@ -29,7 +29,8 @@ SANITY_CHECK_KEYS = [
    [ 'rhythm' ],
    [ 'tonal' ],
 ]
-STATS_CACHE_TIMEOUT = 60 * 10 # ten minutes
+STATS_CACHE_TIMEOUT = 60 * 10     # ten minutes
+LAST_MBIDS_CACHE_TIMEOUT = 60 # 1 minute (this query is cheap)
 MAX_NUMBER_DUPES     = 5
 UNSURE = "unsure"
 
@@ -157,7 +158,18 @@ def index():
     else:
         value = stats
 
-    return render_template("index.html", stats=value, last_collected=last_collected)
+    last_submitted_mbids = mc.get('last-submitted-mbids')
+    if not last_submitted_mbids:
+        conn = psycopg2.connect(config.PG_CONNECT)
+        cur = conn.cursor()
+        cur.execute("SELECT mbid FROM lowlevel ORDER BY id DESC LIMIT 5")
+        last_submitted_mbids = cur.fetchall()
+        last_submitted_mbids = [ i[0] for i in last_submitted_mbids ]
+        mc.set('last-submitted-mbids', last_submitted_mbids, time=LAST_MBIDS_CACHE_TIMEOUT)
+
+    print last_submitted_mbids
+
+    return render_template("index.html", stats=value, last_collected=last_collected, last_submitted_mbids=last_submitted_mbids)
 
 @app.route("/statistics-graph")
 def statistics_graph():
@@ -366,8 +378,22 @@ def get_summary(mbid):
             return render_template("summary.html", mbid="")
 
         row = cur.fetchone()
-        genres, moods, other = interpret_high_level(row[1])
-        return render_template("summary.html", lowlevel=row[0], highlevel=row[1], mbid=mbid, 
+        lowlevel = row[0]
+        highlevel = row[1]
+
+        if not lowlevel['metadata']['tags'].has_key('tracktotal'):
+            lowlevel['metadata']['tags']['tracktotal'] = "?"
+        if not lowlevel['metadata']['tags'].has_key('artist'):
+            lowlevel['metadata']['tags']['artist'] = "[unknown]"
+        if not lowlevel['metadata']['tags'].has_key('release'):
+            lowlevel['metadata']['tags']['release'] = "[unknown]"
+        if not lowlevel['metadata']['tags'].has_key('title'):
+            lowlevel['metadata']['tags']['title'] = "[unknown]"
+        if not lowlevel['metadata']['tags'].has_key('tracknumber'):
+            lowlevel['metadata']['tags']['tracknumber'] = "[unknown]"
+
+        genres, moods, other = interpret_high_level(highlevel)
+        return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid, 
                                genres=genres, moods=moods, other=other)
 
     except psycopg2.IntegrityError, e:

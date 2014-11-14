@@ -1,7 +1,7 @@
 {%- extends 'base.html' -%}
 {%- block content -%}
 <div id="homepage">
-  <h4><strong>Welcome to AcousticBrainz!</strong></h4>
+  <h3><strong>Welcome to AcousticBrainz!</strong></h3>
   <div id="project-description" class="row">
     <div class="col-md-8">
       <p>
@@ -26,6 +26,15 @@
       </p><p>
         All of the data contained in AcousticBrainz is licensed under the <a href="http://creativecommons.org/publicdomain/zero/1.0/">CC0 license</a> (public domain).
       </p>
+      <h5>Examples</h5>
+      <p>
+      If you're wondering what this collected data actually looks like, have a look at the last 5 tracks that have been submitted:
+      </p>
+      <ul class="list-inline" style="width: 100%">
+         {% for mbid in last_submitted_mbids %}
+             <li><a href="/{{ mbid }}"><strong>track {{ loop.index }}</strong></a></li>
+         {% endfor %}
+      </ul>
     </div>
     <div class="col-md-4">
       <div class="panel panel-default">

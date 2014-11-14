@@ -1,7 +1,7 @@
 {%- extends 'base.html' -%}
 {%- block content -%}
 <div id="homepage">
-  <h4>Details for track {{ mbid }}</strong></h4>
+  <h4>Details for track {{ mbid }}</h4>
   {% if mbid == "" %}
       <div>We do not have data for this track. <a href="/contribute">Please upload it!</a></div>
   {% else %}

@@ -65,6 +65,7 @@ class HighLevel(Thread):
             return "{}"
 
         fnull.close()
+        os.unlink(name)
             
         try:
             f = open(out_file)

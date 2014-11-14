@@ -64,6 +64,7 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
     with tarfile.open("%s/acousticbrainz-lowlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
         last_mbid = ""
         index = 0
+        count = 0
         print "  run query.."
         cur.execute("""SELECT mbid, data::text FROM lowlevel ll ORDER BY mbid""")
         while True:
@@ -80,7 +81,8 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
                 index = 0
 
             filename = os.path.join(location, mbid + "-%d.json" % index)
-            print "\rwrite %s" % filename,
+            if count % 1000 == 0:
+                print "\r  write %s" % filename,
             f = open(filename, "w")
             f.write(json)
             f.close()
@@ -90,6 +92,7 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
             os.unlink(filename)
 
             last_mbid = mbid
+            count += 1
 
 
         # Copying legal text
@@ -118,6 +121,7 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
     with tarfile.open("%s/acousticbrainz-highlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
         last_mbid = ""
         index = 0
+        count = 0
         print "  run query.."
         cur.execute("""SELECT mbid, hlj.data::text FROM highlevel hl, highlevel_json hlj WHERE hl.data = hlj.id ORDER BY mbid""")
         while True:
@@ -134,7 +138,8 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
                 index = 0
 
             filename = os.path.join(location, mbid + "-%d.json" % index)
-            print "\rwrite %s" % filename,
+            if count % 1000 == 0:
+                print "\r  write %s" % filename,
             f = open(filename, "w")
             f.write(json)
             f.close()
@@ -144,6 +149,7 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
             os.unlink(filename)
 
             last_mbid = mbid
+            count += 1
 
 
         # Copying legal text

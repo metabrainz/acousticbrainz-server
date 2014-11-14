@@ -11,6 +11,7 @@ import psycopg2
 import config
 from datetime import datetime
 from time import gmtime, strftime
+import argparse
 
 DUMP_CHUNK_SIZE = 1000
 
@@ -191,8 +192,19 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
     print("\nDone!")
 
 if __name__ == "__main__":
-    print "Dumping highlevel data"
-    dump_highlevel_json()
+    parser = argparse.ArgumentParser(description='Create JSON data dump')
+    parser.add_argument("-nh", "--no-highlevel", help="Don't dump high level data", default=False, action='store_true')
+    parser.add_argument("-nl", "--no-lowlevel", help="Don't tump low level data", default=False, action='store_true')
+    args = parser.parse_args()
 
-    print "Dumping lowlevel data"
-    dump_lowlevel_json()
+
+    if args.no_highlevel and args.no_lowlevel:
+        print "wut? check your options, mate!"
+
+    if not args.no_highlevel:
+        print "Dumping highlevel data"
+        dump_highlevel_json()
+
+    if not args.no_lowlevel:
+        print "Dumping lowlevel data"
+        dump_lowlevel_json()

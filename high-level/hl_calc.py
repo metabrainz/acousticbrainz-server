@@ -16,8 +16,10 @@ import random
 from hashlib import sha256, sha1
 import tempfile
 import yaml
+import argparse
 
-MAX_THREADS = 4
+DEFAULT_NUM_THREADS = 1
+
 SLEEP_DURATION = 30 # number of seconds to wait between runs
 HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
 
@@ -144,8 +146,8 @@ def get_build_sha1(binary):
 
     return sha1(bin).hexdigest() 
 
-def main():
-    print "High level extractor daemon starting"
+def main(num_threads):
+    print "High level extractor daemon starting with %d threads" % num_threads
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
         
@@ -223,11 +225,14 @@ def main():
                     conn.commit()
                     num_processed += 1
 
-            if len(pool) == MAX_THREADS:
+            if len(pool) == num_threads:
                 # tranquilo!
                 sleep(.1)
             else:
                 break
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Extract high level data from lowlevel data')
+    parser.add_argument("-t", "--threads", help="Number of threads to start", default=DEFAULT_NUM_THREADS, type=int)
+    args = parser.parse_args()
+    main(args.threads)

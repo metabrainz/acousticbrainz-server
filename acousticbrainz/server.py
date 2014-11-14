@@ -78,35 +78,35 @@ def sanity_check_json(data):
 def json_error(err):
     return json.dumps(dict(error=err))
 
-def interpret(data, threshold):
+def interpret(text, data, threshold):
     if data['probability'] >= threshold:
-        return data['value'].replace("_", " ")
-    return UNSURE
+        return (text, data['value'].replace("_", " "), "%.3f" % data['probability'])
+    return (text, UNSURE,"%.3f" %  data['probability'])
 
 def interpret_high_level(hl):
     genres = []
-    genres.append(("Genre - tzanetakis' method", interpret(hl['highlevel']['genre_tzanetakis'], .6)))
-    genres.append(("Genre - electronic classification", interpret(hl['highlevel']['genre_electronic'], .6)))
-    genres.append(("Genre - dortmund method", interpret(hl['highlevel']['genre_dortmund'], .6)))
-    genres.append(("Genre - rosamerica method", interpret(hl['highlevel']['genre_rosamerica'], .6)))
+    genres.append(interpret("Genre - tzanetakis' method", hl['highlevel']['genre_tzanetakis'], .6))
+    genres.append(interpret("Genre - electronic classification", hl['highlevel']['genre_electronic'], .6))
+    genres.append(interpret("Genre - dortmund method", hl['highlevel']['genre_dortmund'], .6))
+    genres.append(interpret("Genre - rosamerica method", hl['highlevel']['genre_rosamerica'], .6))
 
     moods = []
-    moods.append(("Mood - electronic", interpret(hl['highlevel']['mood_electronic'], .6)))
-    moods.append(("Mood - party", interpret(hl['highlevel']['mood_party'], .6)))
-    moods.append(("Mood - aggressive", interpret(hl['highlevel']['mood_aggressive'], .6)))
-    moods.append(("Mood - acoustic", interpret(hl['highlevel']['mood_acoustic'], .6)))
-    moods.append(("Mood - happy", interpret(hl['highlevel']['mood_happy'], .6)))
-    moods.append(("Mood - sad", interpret(hl['highlevel']['mood_sad'], .6)))
-    moods.append(("Mood - relaxed", interpret(hl['highlevel']['mood_relaxed'], .6)))
-    moods.append(("Mood - mirex method", interpret(hl['highlevel']['moods_mirex'], .6)))
+    moods.append(interpret("Mood - electronic", hl['highlevel']['mood_electronic'], .6))
+    moods.append(interpret("Mood - party", hl['highlevel']['mood_party'], .6))
+    moods.append(interpret("Mood - aggressive", hl['highlevel']['mood_aggressive'], .6))
+    moods.append(interpret("Mood - acoustic", hl['highlevel']['mood_acoustic'], .6))
+    moods.append(interpret("Mood - happy", hl['highlevel']['mood_happy'], .6))
+    moods.append(interpret("Mood - sad", hl['highlevel']['mood_sad'], .6))
+    moods.append(interpret("Mood - relaxed", hl['highlevel']['mood_relaxed'], .6))
+    moods.append(interpret("Mood - mirex method", hl['highlevel']['moods_mirex'], .6))
 
     other = []
-    other.append(("Voice", interpret(hl['highlevel']['voice_instrumental'], .6)))
-    other.append(("Gender", interpret(hl['highlevel']['gender'], .6)))
-    other.append(("Danceability", interpret(hl['highlevel']['danceability'], .6)))
-    other.append(("Tonal", interpret(hl['highlevel']['tonal_atonal'], .6)))
-    other.append(("Timbre", interpret(hl['highlevel']['timbre'], .6)))
-    other.append(("ISMIR04 Rhythm", interpret(hl['highlevel']['ismir04_rhythm'], .6)))
+    other.append(interpret("Voice", hl['highlevel']['voice_instrumental'], .6))
+    other.append(interpret("Gender", hl['highlevel']['gender'], .6))
+    other.append(interpret("Danceability", hl['highlevel']['danceability'], .6))
+    other.append(interpret("Tonal", hl['highlevel']['tonal_atonal'], .6))
+    other.append(interpret("Timbre", hl['highlevel']['timbre'], .6))
+    other.append(interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm'], .6))
 
     return (genres, moods, other)
 

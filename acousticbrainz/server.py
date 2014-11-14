@@ -369,30 +369,40 @@ def get_summary(mbid):
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     try:
-        cur.execute("""SELECT ll.data, hlj.data 
-                         FROM highlevel hl, lowlevel ll, highlevel_json hlj
-                        WHERE hl.data = hlj.id 
-                          AND hl.id = ll.id
-                          AND ll.mbid = %s""", (mbid, ))
+        cur.execute("""SELECT data
+                         FROM lowlevel 
+                        WHERE mbid = %s""", (mbid, ))
         if not cur.rowcount:
             return render_template("summary.html", mbid="")
 
         row = cur.fetchone()
         lowlevel = row[0]
-        highlevel = row[1]
 
-        if not lowlevel['metadata']['tags'].has_key('tracktotal'):
-            lowlevel['metadata']['tags']['tracktotal'] = "?"
-        if not lowlevel['metadata']['tags'].has_key('artist'):
-            lowlevel['metadata']['tags']['artist'] = "[unknown]"
-        if not lowlevel['metadata']['tags'].has_key('release'):
-            lowlevel['metadata']['tags']['release'] = "[unknown]"
-        if not lowlevel['metadata']['tags'].has_key('title'):
-            lowlevel['metadata']['tags']['title'] = "[unknown]"
-        if not lowlevel['metadata']['tags'].has_key('tracknumber'):
-            lowlevel['metadata']['tags']['tracknumber'] = "[unknown]"
+        cur.execute("""SELECT hlj.data 
+                         FROM highlevel hl, highlevel_json hlj
+                        WHERE hl.data = hlj.id 
+                          AND hl.mbid = %s""", (mbid, ))
+        if cur.rowcount:
+            highlevel = row[1]
 
-        genres, moods, other = interpret_high_level(highlevel)
+            if not lowlevel['metadata']['tags'].has_key('tracktotal'):
+                lowlevel['metadata']['tags']['tracktotal'] = "?"
+            if not lowlevel['metadata']['tags'].has_key('artist'):
+                lowlevel['metadata']['tags']['artist'] = "[unknown]"
+            if not lowlevel['metadata']['tags'].has_key('release'):
+                lowlevel['metadata']['tags']['release'] = "[unknown]"
+            if not lowlevel['metadata']['tags'].has_key('title'):
+                lowlevel['metadata']['tags']['title'] = "[unknown]"
+            if not lowlevel['metadata']['tags'].has_key('tracknumber'):
+                lowlevel['metadata']['tags']['tracknumber'] = "[unknown]"
+
+            genres, moods, other = interpret_high_level(highlevel)
+        else:
+            genres = None
+            moods = None
+            other = None
+            highlevel = None
+
         return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid, 
                                genres=genres, moods=moods, other=other)
 

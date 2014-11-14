@@ -28,26 +28,33 @@
             <tr><td>beat count</td><td>{{ lowlevel.rhythm.beats_count }}</td></tr>
          </table>
 
-         <table class="table table-striped table-bordered">
-            <thead><th style="width: 30%;">Voice, timbre, gender, etc.</th><th style="width: 25%;">value</th><th>probability</th></thead>
-            {% for row in other %}
-               <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
-            {% endfor %}
-         </table>
+         {% if other %}
+             <table class="table table-striped table-bordered">
+                <thead><th style="width: 30%;">Voice, timbre, gender, etc.</th><th style="width: 25%;">value</th><th>probability</th></thead>
+                {% for row in other %}
+                   <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+                {% endfor %}
+             </table>
 
-         <table class="table table-striped table-bordered">
-            <thead><th style="width: 30%;">Moods</th><th style="width: 25%;">value</th><th>probability</th></thead>
-            {% for row in moods %}
-               <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
-            {% endfor %}
-         </table>
+             <table class="table table-striped table-bordered">
+                <thead><th style="width: 30%;">Moods</th><th style="width: 25%;">value</th><th>probability</th></thead>
+                {% for row in moods %}
+                   <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+                {% endfor %}
+             </table>
 
-         <table class="table table-striped table-bordered">
-            <thead><th style="width: 30%;">Genres</th><th style="width: 25%;">value</th><th>probability</th></thead>
-            {% for row in genres %}
-               <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
-            {% endfor %}
-         </table>
+             <table class="table table-striped table-bordered">
+                <thead><th style="width: 30%;">Genres</th><th style="width: 25%;">value</th><th>probability</th></thead>
+                {% for row in genres %}
+                   <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+                {% endfor %}
+             </table>
+         {% else %}
+             <div class="warning bg-warning" style="padding: 1em; border: 1px solid #888; margin-bottom: 1em">
+             Sorry, we have not had a chance to calculate the high level data for this track yet. It should be calculated
+             soon. In the meantime, have a look at our <a href="/sample-data">sample data</a>.
+             </div>
+         {% endif %}
       </div>
   {% endif %}
 </div>

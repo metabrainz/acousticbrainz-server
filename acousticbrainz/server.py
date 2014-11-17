@@ -181,7 +181,9 @@ def index():
                               data->'metadata'->'tags'->'artist'->>0,
                               data->'metadata'->'tags'->'title'->>0
                          FROM lowlevel
-                     ORDER BY id DESC LIMIT 5""")
+                     ORDER BY id DESC 
+                        LIMIT 5 
+                       OFFSET 10""")
         last_submitted_data = cur.fetchall()
         last_submitted_data = [ (r[0],
                                  r[1].decode("UTF-8"),

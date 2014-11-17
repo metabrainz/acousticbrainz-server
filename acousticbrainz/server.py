@@ -10,7 +10,7 @@ import time
 import os
 from operator import itemgetter
 from logging.handlers import RotatingFileHandler
-from flask import Flask, request, Response, jsonify, render_template
+from flask import Flask, request, Response, jsonify, render_template, redirect
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 import memcache
 from hashlib import sha256
@@ -244,9 +244,9 @@ def contribute():
 def goals():
     return render_template("goals.html")
 
-@app.route("/about")
-def about():
-    return render_template("about.html")
+@app.route("/api")
+def api():
+    return redirect("/data")
 
 @app.route("/faq")
 def faq():

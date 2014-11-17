@@ -190,8 +190,6 @@ def index():
                               ]
         mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 
-    print last_submitted_data
-
     return render_template("index.html", stats=value, last_collected=last_collected, last_submitted_data=last_submitted_data)
 
 @app.route("/statistics-graph")
@@ -242,9 +240,9 @@ def download():
 def contribute():
     return render_template("contribute.html")
 
-@app.route("/sample-data")
-def sample_data():
-    return render_template("sample-data.html")
+@app.route("/goals")
+def goals():
+    return render_template("goals.html")
 
 @app.route("/about")
 def about():
@@ -254,9 +252,9 @@ def about():
 def faq():
     return render_template("faq.html")
 
-@app.route("/api")
-def api():
-    return render_template("api.html")
+@app.route("/data")
+def data():
+    return render_template("data.html")
 
 @app.route("/<mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):

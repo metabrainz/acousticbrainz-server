@@ -1,30 +1,48 @@
 {%- extends 'base.html' -%}
 {%- block content -%}
 <div id="homepage">
-  <h3>Downloads</h3>
-  <p>
-  We're working hard on creating a user friendly GUI submission tool for AcousticBrainz. Sadly, it isn't ready
-  just yet -- we hope to release it very soon.
-  </p>
-  <h3>Do it yourself install</h3>
+  <h3>Client Downloads</h3>
   <div class="col-md-12">
+  <p>We have two clients (graphical and command-line) available for people
+  to use to submit audio features to the AcousticBrainz database.
+  These clients calculate a JSON file containing data about the audio and
+  upload it to AcousticBrainz. We do not upload your audio.</p>
+
+  <p>All of these downloads are self-contained and include a static binary
+  to perform the audio analysis. See our <a href="/faq">FAQ</a> for more
+  information on why we use static binaries.</p>
+
+  <p>To submit audio to AcousticBrainz, files must be tagged with
+  <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz Identifiers</a>.
+  If they are not tagged, we recommend <a href="https://picard.musicbrainz.org/">Picard</a></p>
+
+  <h4>Windows</h4>
+  <ul><li><a href="/static/download/acousticbrainz-gui-win-0.1.zip">acousticbrainz-gui-win-0.1.zip</a> for Windows (32 bit and 64 bit)</li></ul>
+
+  <h4>OSX</h4>
+  <ul><li><a href="/static/download/acousticbrainz-gui-0.1.dmg">acousticbrainz-gui-0.1.dmg</a> for OSX 10.7 and higher (64 bit only)</li>
+      <li><a href="/static/download/acousticbrainz-client-osx-0.1.tar.gz">acousticbrainz-client-osx-0.1.tar.gz</a> for OSX 10.7 and higher (64 bit only)</li></ul>
+
+  <h4>Linux</h4>
+  <ul><li><a href="/static/download/acousticbrainz-client-linux32-0.1.tar.gz">acousticbrainz-client-linux32-0.1.tar.gz</a> for linux (32 bit)</li>
+      <li><a href="/static/download/acousticbrainz-client-linux64-0.1.tar.gz">acousticbrainz-client-linux64-0.1.tar.gz</a> for linux (64 bit)</li></ul>
+
+  <h4>Do it yourself install</h4>
     <p>
-    If you prefer to build your own install of this software, you'll need Python (version 2.6 or later), along 
-    with the <code>requests</code> library. Follow the instructions in 
-    <a href="http://github.com/MTG/acousticbrainz-client">acousticbrainz-client</a>.
-    </p>
+      You can build your own version of the submission tools. Download one of the following clients and follow the instructions in the README file:
+      <ul><li><a href="https://github.com/MTG/acousticbrainz-client">acousticbrainz-client</a></li>
+          <li><a href="https://github.com/MTG/acousticbrainz-gui">acousticbrainz-gui</a></li></ul>
     <p>
-    Part of the source installation requires a static extractor binary. We have these versions for Linux, Mac & Windows
-    available:
+    Part of the source installation requires a static extractor binary. We have these versions for Linux, Mac & Windows available:
     </p>
     <ul>
-       <li><a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/extractors/essentia-extractor-21ef5f41f15ed1f80c8f9b36802430055d3b93e9-linux-i686.tar.gz">linux i386 extractor static binary</a> (4.9Mb)</li>
-       <li><a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/extractors/essentia-extractor-21ef5f41f15ed1f80c8f9b36802430055d3b93e9-linux-x86_64.tar.gz">linux x86_64 extractor static binary</a> (5.6Mb)</li>
-       <li><a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/extractors/essentia-extractor-f95df8bca8b62111462a03a06d9a9e5ad07b8ff8-osx-i386.tar.gz">mac 32 bit extractor static binary</a> (4.62Mb)</li>
-       <li><a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/extractors/essentia-extractor-f95df8bca8b62111462a03a06d9a9e5ad07b8ff8-osx-i386.tar.gz">mac 64 bit extractor static binary</a> (4.62Mb)</li>
-       <li><a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/extractors/essentia-extractor-f95df8bca8b62111462a03a06d9a9e5ad07b8ff8-win-x86_64.zip">win 64 bit extractor static binary</a> (6.72Mb)</li>
-       <li><a href="ftp://vm.musicbrainz.org/pub/acousticbrainz/extractors/essentia-extractor-f95df8bca8b62111462a03a06d9a9e5ad07b8ff8-win-i686.zip">win 32 bit extractor static binary</a> (6.32Mb)</li>
+       <li><a href="/static/download/essentia-extractor-linux-i686.tar.gz">linux i386 extractor static binary</a></li>
+       <li><a href="/static/download/essentia-extractor-linux-x86_64.tar.gz">linux x86_64 extractor static binary</a></li>
+       <li><a href="/static/download/essentia-extractor-osx-i386.tar.gz">mac 64 bit extractor static binary</a></li>
+       <li><a href="/static/download/essentia-extractor-win-i686.zip">win 32 bit extractor static binary</a></li>
     </ul>
+
+    <p><a href="/static/download/sha1sum">SHA1 sums</a></p>
   </div>
   <h3>Data downloads</h3>
   <div class="col-md-12">

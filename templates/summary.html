@@ -6,11 +6,12 @@
       <div>We do not have data for this track. <a href="/contribute">Please upload it!</a></div>
   {% else %}
       <div class="warning bg-warning" style="padding: 1em; border: 2px solid red; margin-bottom: 1em">
-         This page sucks. Hackers: Please make it bettr! 
+         This page sucks. Hackers: Please make it bettr!
          <a href="https://github.com/metabrainz/acousticbrainz-server/blob/master/acousticbrainz/server.py">server.py</a>
          <a href="https://github.com/metabrainz/acousticbrainz-server/blob/master/templates/summary.html">summary.html</a>
       </div>
       <div>
+        <div class="col-md-8">
          <table class="table table-striped table-bordered">
             <thead><th style="width: 30%;">Track information</th><th>value</th></thead>
             <tr><td>artist</td><td>{{ lowlevel.metadata.tags.artist[0] }}</td></td></tr>
@@ -18,7 +19,14 @@
             <tr><td>title</td><td>{{ lowlevel.metadata.tags.title[0] }}</td></td></tr>
             <tr><td>track number</td><td>{{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}</td></td></tr>
          </table>
+     </div>
+        <div class="col-md-4">
+            {% if lowlevel.metadata.tags.artist and lowlevel.metadata.tags.title %}
+            <iframe src="http://toma.hk/embed.php?artist={{lowlevel.metadata.tags.artist[0]}}&title={{lowlevel.metadata.tags.title[0]}}" width="200" scrolling="no" height="200" frameborder="0" allowtransparency="true" ></iframe>
+            {% endif %}
+        </div>
 
+        <div class="col-md-12">
          <table class="table table-striped table-bordered">
             <thead><th style="width: 30%;">Tonal & Rhythm</th><th>value</th></thead>
             <tr><td>key</td><td>{{ lowlevel.tonal.key_key }}</td></td></tr>
@@ -29,31 +37,39 @@
          </table>
 
          {% if other %}
+            <div class="col-md-12">
              <table class="table table-striped table-bordered">
                 <thead><th style="width: 30%;">Voice, timbre, gender, etc.</th><th style="width: 25%;">value</th><th>probability</th></thead>
                 {% for row in other %}
                    <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
                 {% endfor %}
              </table>
+            </div>
 
+            <div class="col-md-12">
              <table class="table table-striped table-bordered">
                 <thead><th style="width: 30%;">Moods</th><th style="width: 25%;">value</th><th>probability</th></thead>
                 {% for row in moods %}
                    <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
                 {% endfor %}
              </table>
+            </div>
 
+            <div class="col-md-12">
              <table class="table table-striped table-bordered">
                 <thead><th style="width: 30%;">Genres</th><th style="width: 25%;">value</th><th>probability</th></thead>
                 {% for row in genres %}
                    <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
                 {% endfor %}
              </table>
+            </div>
          {% else %}
+            <div class="col-md-12">
              <div class="warning bg-warning" style="padding: 1em; border: 1px solid #888; margin-bottom: 1em">
              Sorry, we have not had a chance to calculate the high level data for this track yet. It should be calculated
              soon. In the meantime, have a look at our <a href="/sample-data">sample data</a>.
              </div>
+            </div>
          {% endif %}
       </div>
   {% endif %}

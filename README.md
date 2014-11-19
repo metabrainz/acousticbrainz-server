@@ -7,7 +7,7 @@ Requirements
 ------------
 
 * [Python](https://www.python.org/) 2.7.x
-* Python modules listed in `requirements.txt` (can be install with `pip install -r requirements.txt`, see below)
+* Python modules listed in `requirements.txt` (can be installed with `pip`, see below)
 * [PostgreSQL](http://www.postgresql.org/) >=9.2 (needs the JSON data type)
 
 Install
@@ -19,7 +19,7 @@ activate it:
     virtualenv venv
     . ./venv/bin/activate
 
-Then use pip to install the required Python dependencies:
+Then use `pip` to install the required Python dependencies:
 
     pip install -r requirements.txt
 

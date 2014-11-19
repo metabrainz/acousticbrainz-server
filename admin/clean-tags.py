@@ -8,7 +8,7 @@ import json
 from hashlib import sha256
 
 DUMP_CHUNK_SIZE = 1000
-whitelist_tags = set(json.load(open("tagwhitelist.json")))
+#whitelist_tags = set(json.load(open("tagwhitelist.json")))
 
 def rewrite_lowlevel():
     conn = psycopg2.connect(config.PG_CONNECT)
@@ -40,7 +40,8 @@ def rewrite_lowlevel():
             tags = data["metadata"]["tags"]
             filename = tags["file_name"]
             for k in tags.keys():
-                if k not in whitelist_tags:
+                k = k.lower()
+                if k.find('lyric') >= 0 or k.find('comment') >= 0:
                     del tags[k]
             tags["file_name"] = filename
             data["metadata"]["tags"] = tags
@@ -49,8 +50,8 @@ def rewrite_lowlevel():
             data_sha256 = sha256(data_json).hexdigest()
 
             cur3.execute(query, (data_json, data_sha256, id))
+            conn3.commit()
 
-        conn3.commit()
 
 def rewrite_highlevel():
     conn = psycopg2.connect(config.PG_CONNECT)
@@ -81,7 +82,9 @@ def rewrite_highlevel():
             tags = data["metadata"]["tags"]
             filename = tags["file_name"]
             for k in tags.keys():
-                if k not in whitelist_tags:
+                k = k.lower()
+                if k.find('lyric') >= 0 or k.find('comment') >= 0:
+                    print "Stripping tag %s" % k
                     del tags[k]
             tags["file_name"] = filename
             data["metadata"]["tags"] = tags
@@ -90,8 +93,8 @@ def rewrite_highlevel():
             data_sha256 = sha256(data_json).hexdigest()
 
             cur3.execute(query, (data_json, data_sha256, id))
+            conn3.commit()
 
-        conn3.commit()
 
 # Go through the database rewriting metadata blocks to
 if __name__ == "__main__":

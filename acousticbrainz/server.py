@@ -209,7 +209,7 @@ def statistics_data():
     return Response(json.dumps(sorted(ret, key=itemgetter('key'))), content_type='application/json; charset=utf-8')
 
 def make_timestamp(dt):
-    return time.mktime(dt.utctimetuple()) * 1000
+    return time.mktime(dt.utctimetuple())*1000 + dt.microsecond/1000
 
 @app.route("/download")
 def download():

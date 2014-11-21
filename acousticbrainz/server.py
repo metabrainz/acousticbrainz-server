@@ -12,6 +12,7 @@ from flask import Flask, request, Response, jsonify, render_template
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 import memcache
 from hashlib import sha256
+from urllib import quote_plus
 import argparse
 
 SANITY_CHECK_KEYS = [
@@ -387,6 +388,12 @@ def get_summary(mbid):
             lowlevel['metadata']['tags']['title'] = "[unknown]"
         if not lowlevel['metadata']['tags'].has_key('tracknumber'):
             lowlevel['metadata']['tags']['tracknumber'] = "[unknown]"
+
+        # quote special characters "url-encoding"
+        lowlevel['metadata']['tags']['artist_quoted'] = quote_plus(
+                lowlevel['metadata']['tags']['artist'][0].encode("UTF-8"))
+        lowlevel['metadata']['tags']['title_quoted'] = quote_plus(
+                lowlevel['metadata']['tags']['title'][0].encode("UTF-8"))
 
         cur.execute("""SELECT hlj.data 
                          FROM highlevel hl, highlevel_json hlj

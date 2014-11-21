@@ -9,10 +9,10 @@
         <div class="col-md-8">
          <table class="table table-striped table-bordered">
             <thead><th style="width: 30%;">Track information</th><th>value</th></thead>
-            <tr><td>artist</td><td>{{ lowlevel.metadata.tags.artist[0] }}</td></td></tr>
-            <tr><td>release</td><td>{{ lowlevel.metadata.tags.album[0] }}</td></td></tr>
-            <tr><td>title</td><td>{{ lowlevel.metadata.tags.title[0] }}</td></td></tr>
-            <tr><td>track number</td><td>{{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}</td></td></tr>
+            <tr><td>artist</td><td><a href="https://musicbrainz.org/artist/{{ lowlevel.metadata.tags.musicbrainz_artistid[0] }}">{{ lowlevel.metadata.tags.artist[0] }}</a></td></tr>
+            <tr><td>release</td><td><a href="https://musicbrainz.org/release/{{ lowlevel.metadata.tags.musicbrainz_albumid[0] }}">{{ lowlevel.metadata.tags.album[0] }}</a></td></tr>
+            <tr><td>title</td><td><a href="https://musicbrainz.org/recording/{{ lowlevel.metadata.tags.musicbrainz_recordingid[0] }}">{{ lowlevel.metadata.tags.title[0] }}</a></td></tr>
+            <tr><td>track number</td><td>{{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}</td></tr>
          </table>
         </div>
         <div class="col-md-4">

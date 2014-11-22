@@ -30,11 +30,11 @@
       <p>
       If you're wondering what this collected data actually looks like, have a look at the last 5 tracks that have been submitted:
       </p>
-      <ul class="list-inline" style="width: 100%">
-         {% for mbid in last_submitted_mbids %}
-             <li><a href="/{{ mbid }}"><strong>track {{ loop.index }}</strong></a></li>
+      <ol class="list" style="width: 100%">
+         {% for mbid, artist, recording in last_submitted_data %}
+             <li><a href="/{{ mbid }}"><strong>{{ artist }} / {{ recording }}</strong></a></li>
          {% endfor %}
-      </ul>
+      </ol>
     </div>
     <div class="col-md-4">
       <div class="panel panel-default">

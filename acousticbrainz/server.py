@@ -172,18 +172,21 @@ def index():
     else:
         value = stats
 
-    last_submitted_mbids = mc.get('last-submitted-mbids')
-    if not last_submitted_mbids:
+    last_submitted_data = mc.get('last-submitted-data')
+    if not last_submitted_data:
         conn = psycopg2.connect(config.PG_CONNECT)
         cur = conn.cursor()
-        cur.execute("SELECT mbid FROM lowlevel ORDER BY id DESC LIMIT 5")
-        last_submitted_mbids = cur.fetchall()
-        last_submitted_mbids = [ i[0] for i in last_submitted_mbids ]
-        mc.set('last-submitted-mbids', last_submitted_mbids, time=LAST_MBIDS_CACHE_TIMEOUT)
+        cur.execute("""SELECT mbid, 
+                              data->'metadata'->'tags'->'artist'->>0, 
+                              data->'metadata'->'tags'->'title'->>0 
+                         FROM lowlevel 
+                     ORDER BY id DESC LIMIT 5""")
+        last_submitted_data = cur.fetchall()
+        mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 
-    print last_submitted_mbids
+    print last_submitted_data
 
-    return render_template("index.html", stats=value, last_collected=last_collected, last_submitted_mbids=last_submitted_mbids)
+    return render_template("index.html", stats=value, last_collected=last_collected, last_submitted_data=last_submitted_data)
 
 @app.route("/statistics-graph")
 def statistics_graph():

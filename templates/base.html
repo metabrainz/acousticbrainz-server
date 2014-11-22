@@ -31,7 +31,7 @@
         <ul class="list-inline pull-left">
           <li><a href="http://blog.musicbrainz.org/tag/acousticbrainz/">Blog</a></li>
           <li><a href="http://github.com/metabrainz/acousticbrainz-server/">GitHub</a></li>
-          <li><a href="https://twitter.com/AcousticBrainz">@AcousticBrainz</a></li>
+          <li><a class="twitter-follow-button" href="https://twitter.com/AcousticBrainz" data-show-count="true" data-lang="en" data-dnt="true" data-show-screen-name="true">@AcousticBrainz</a></li>
         </ul>
         <ul class="list-inline pull-right">
           <li><a href="http://mtg.upf.edu" alt="UPF"><img width="108" height="45" src="/static/img/mtg_upf.png"></a></li>
@@ -44,6 +44,16 @@
     {%- block scripts -%}
       <script src="{{ url_for('static', filename='js/jquery-2.1.0.min.js') }}"></script>
       <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+      <script type="text/javascript">
+window.twttr = (function (d, s, id) {
+  var t, js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src= "https://platform.twitter.com/widgets.js";
+  fjs.parentNode.insertBefore(js, fjs);
+  return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+}(document, "script", "twitter-wjs"));
+      </script>
     {%- endblock -%}
   </body>
 </html>

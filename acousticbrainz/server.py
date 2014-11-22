@@ -182,6 +182,7 @@ def index():
                          FROM lowlevel 
                      ORDER BY id DESC LIMIT 5""")
         last_submitted_data = cur.fetchall()
+        last_submitted_data = [ (r[0], r[1].encode("UTF-8"), r[2].encode("UTF-8")) for r in last_submitted_data ]
         mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 
     print last_submitted_data

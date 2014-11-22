@@ -380,13 +380,13 @@ def get_summary(mbid):
         if not lowlevel['metadata']['tags'].has_key('tracktotal'):
             lowlevel['metadata']['tags']['tracktotal'] = "?"
         if not lowlevel['metadata']['tags'].has_key('artist'):
-            lowlevel['metadata']['tags']['artist'] = "[unknown]"
+            lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
         if not lowlevel['metadata']['tags'].has_key('release'):
-            lowlevel['metadata']['tags']['release'] = "[unknown]"
+            lowlevel['metadata']['tags']['release'] = ["[unknown]"]
         if not lowlevel['metadata']['tags'].has_key('title'):
-            lowlevel['metadata']['tags']['title'] = "[unknown]"
+            lowlevel['metadata']['tags']['title'] = ["[unknown]"]
         if not lowlevel['metadata']['tags'].has_key('tracknumber'):
-            lowlevel['metadata']['tags']['tracknumber'] = "[unknown]"
+            lowlevel['metadata']['tags']['tracknumber'] = ["[unknown]"]
 
         cur.execute("""SELECT hlj.data 
                          FROM highlevel hl, highlevel_json hlj

@@ -22,7 +22,7 @@
             <tr>
               <td>artist</td>
               <td>
-                  {% if lowlevel.metadata.tags.musicbrainz_albumid[0] %}
+                  {% if lowlevel.metadata.tags.musicbrainz_artistid[0] %}
                     <a href="https://musicbrainz.org/artist/{{ lowlevel.metadata.tags.musicbrainz_artistid[0] }}">{{ lowlevel.metadata.tags.artist[0] }}</a>
                   {% else %}
                     {{ lowlevel.metadata.tags.artist[0] }}

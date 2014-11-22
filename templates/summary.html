@@ -40,16 +40,18 @@
               </td>
             </tr>
             <tr><td>title</td><td><a href="https://musicbrainz.org/recording/{{ lowlevel.metadata.tags.musicbrainz_recordingid[0] }}">{{ lowlevel.metadata.tags.title[0] }}</a></td></tr>
-            <tr>
-              <td>track number</td>
-              <td>
-                {% if lowlevel.metadata.tags.tracktotal[0] %}
-                  {{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}
-                {% else %}
-                  {{ lowlevel.metadata.tags.tracknumber[0] }}
-                {% endif %}
-              </td>
-            </tr>
+            {% if lowlevel.metadata.tags.tracknumber[0] %}
+              <tr>
+                <td>track number</td>
+                <td>
+                  {% if lowlevel.metadata.tags.tracktotal[0] %}
+                    {{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}
+                  {% else %}
+                    {{ lowlevel.metadata.tags.tracknumber[0] }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endif %}
          </table>
         </div>
         <div class="col-md-4">

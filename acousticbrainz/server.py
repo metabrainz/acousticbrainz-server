@@ -6,6 +6,7 @@ import config
 import uuid
 import datetime
 import time
+import os
 from operator import itemgetter
 from logging.handlers import RotatingFileHandler
 from flask import Flask, request, Response, jsonify, render_template
@@ -43,6 +44,9 @@ app = Flask(__name__,
             static_url_path = STATIC_PATH,
             static_folder = STATIC_FOLDER,
             template_folder = TEMPLATE_FOLDER)
+
+whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
+whitelist_tags = set(json.load(open(whitelist_file)))
 
 # Configuration
 app.config.from_object(config)
@@ -113,6 +117,15 @@ def interpret_high_level(hl):
 
     return (genres, moods, other)
 
+def clean_metadata(data):
+    """ Check that tags are in our whitelist. If not, throw them away """
+    tags = data["metadata"]["tags"]
+    for k in tags.keys():
+        k = k.lower()
+        if k not in whitelist_tags:
+            del tags[k]
+    data["metadata"]["tags"] = tags
+    return data
 
 @app.route("/")
 def index():
@@ -246,6 +259,8 @@ def submit_low_level(mbid):
     except ValueError, e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
+    clean_metadata(data)
+
     try:
         # if the user submitted a trackid key, rewrite to recording_id
         if data['metadata']['tags'].has_key("musicbrainz_trackid"):
@@ -343,10 +358,10 @@ def get_high_level(mbid):
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     try:
-        cur.execute("""SELECT hlj.data::text 
+        cur.execute("""SELECT hlj.data::text
                          FROM highlevel hl
                          JOIN highlevel_json hlj
-                           ON hl.data = hlj.id 
+                           ON hl.data = hlj.id
                         WHERE mbid = %s""", (mbid, ))
         if not cur.rowcount:
             raise NotFound
@@ -371,7 +386,7 @@ def get_summary(mbid):
     cur = conn.cursor()
     try:
         cur.execute("""SELECT data
-                         FROM lowlevel 
+                         FROM lowlevel
                         WHERE mbid = %s""", (mbid, ))
         if not cur.rowcount:
             return render_template("summary.html", mbid="")
@@ -395,9 +410,9 @@ def get_summary(mbid):
         lowlevel['metadata']['tags']['title_quoted'] = quote_plus(
                 lowlevel['metadata']['tags']['title'][0].encode("UTF-8"))
 
-        cur.execute("""SELECT hlj.data 
+        cur.execute("""SELECT hlj.data
                          FROM highlevel hl, highlevel_json hlj
-                        WHERE hl.data = hlj.id 
+                        WHERE hl.data = hlj.id
                           AND hl.mbid = %s""", (mbid, ))
         if cur.rowcount:
             row = cur.fetchone()
@@ -409,7 +424,7 @@ def get_summary(mbid):
             other = None
             highlevel = None
 
-        return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid, 
+        return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
                                genres=genres, moods=moods, other=other)
 
     except psycopg2.IntegrityError, e:

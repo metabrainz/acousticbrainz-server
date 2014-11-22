@@ -1,4 +1,6 @@
-["acoustid_fingerprint",
+[
+    "file_name",
+    "acoustid_fingerprint",
     "acoustid_id",
     "album",
     "albumartist",
@@ -54,6 +56,7 @@
     "musicbrainz_releasegroupid",
     "musicbrainz_releasetrackid",
     "musicbrainz_trackid",
+    "musicbrainz_recordingid",
     "musicbrainz_trmid",
     "musicbrainz_workid",
     "musicip_puid",

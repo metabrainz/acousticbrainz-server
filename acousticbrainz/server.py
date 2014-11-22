@@ -259,7 +259,7 @@ def submit_low_level(mbid):
     except ValueError, e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
-    clean_metadata(data)
+    data = clean_metadata(data)
 
     try:
         # if the user submitted a trackid key, rewrite to recording_id

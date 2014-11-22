@@ -1,4 +1,14 @@
 {%- extends 'base.html' -%}
+
+{%- block title -%}
+{% if mbid == "" %}
+  Track Details
+{% else %}
+  Track "{{ lowlevel.metadata.tags.title[0] }}" by {{ lowlevel.metadata.tags.artist[0] }}
+{% endif %}
+- AcousticBrainz
+{%- endblock -%}
+
 {%- block content -%}
 <div id="homepage">
   <h3>Details for track {{ mbid }}</h3>

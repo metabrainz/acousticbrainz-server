@@ -402,16 +402,12 @@ def get_summary(mbid):
 
         row = cur.fetchone()
         lowlevel = row[0]
-        if not lowlevel['metadata']['tags'].has_key('tracktotal'):
-            lowlevel['metadata']['tags']['tracktotal'] = "?"
         if not lowlevel['metadata']['tags'].has_key('artist'):
             lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
         if not lowlevel['metadata']['tags'].has_key('release'):
             lowlevel['metadata']['tags']['release'] = ["[unknown]"]
         if not lowlevel['metadata']['tags'].has_key('title'):
             lowlevel['metadata']['tags']['title'] = ["[unknown]"]
-        if not lowlevel['metadata']['tags'].has_key('tracknumber'):
-            lowlevel['metadata']['tags']['tracknumber'] = ["[unknown]"]
 
         # quote special characters "url-encoding"
         lowlevel['metadata']['tags']['artist_quoted'] = quote_plus(

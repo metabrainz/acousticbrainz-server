@@ -1,0 +1,12 @@
+{%- extends 'base.html' -%}
+{%- block title -%}{{ title }} - AcousticBrainz{%- endblock -%}
+{%- block content -%}
+<div id="homepage">
+  <h3>{{ title }}</h3>
+    <div class="col-md-12">
+      <div style="background-color: #f8f8f8;">
+         <pre>{{ data }}</pre>
+      </div>
+    </div>
+</div>
+{%- endblock -%}

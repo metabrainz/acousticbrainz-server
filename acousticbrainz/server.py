@@ -333,9 +333,10 @@ def submit_low_level(mbid):
 
     return ""
 
-@app.route("/<mbid>/low-level", methods=["GET"])
-def get_low_level(mbid):
-    """Endpoint for fetching low-level information to AcousticBrainz"""
+def load_low_level(mbid):
+    """
+        Load the low level data from disk for a given mbid
+    """
 
     if not validate_uuid(mbid):
         raise BadRequest("Invalid MBID: %s" % mbid)
@@ -348,7 +349,7 @@ def get_low_level(mbid):
             raise NotFound
 
         row = cur.fetchone()
-        return Response(row[0], content_type='application/json')
+        return row[0]
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
@@ -357,9 +358,23 @@ def get_low_level(mbid):
 
     return InternalServerError("whoops, looks like a cock-up on our part!")
 
-@app.route("/<mbid>/high-level", methods=["GET"])
-def get_high_level(mbid):
-    """Endpoint for fetching high-level information to AcousticBrainz"""
+@app.route("/<mbid>/low-level/view", methods=["GET"])
+def view_low_level(mbid):
+    data = load_low_level(mbid)
+    data = json.dumps(json.loads(data), indent=4, sort_keys=True)
+    return render_template("json-display.html", title="Low-level JSON for %s" % mbid, data=data)
+
+@app.route("/<mbid>/low-level", methods=["GET"])
+def get_low_level(mbid):
+    """Endpoint for fetching low-level information to AcousticBrainz"""
+
+    data = load_low_level(mbid)
+    return Response(data, content_type='application/json')
+
+def load_high_level(mbid):
+    """
+        Load high level data
+    """
 
     if not validate_uuid(mbid):
         raise BadRequest("Invalid MBID: %s" % mbid)
@@ -376,7 +391,7 @@ def get_high_level(mbid):
             raise NotFound
 
         row = cur.fetchone()
-        return Response(row[0], content_type='application/json')
+        return row[0]
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
@@ -384,6 +399,19 @@ def get_high_level(mbid):
         raise ServiceUnavailable(str(e))
 
     return InternalServerError("Bummer, dude.")
+
+@app.route("/<mbid>/high-level/view", methods=["GET"])
+def view_high_level(mbid):
+    data = load_high_level(mbid)
+    data = json.dumps(json.loads(data), indent=4, sort_keys=True)
+    return render_template("json-display.html", title="High-level JSON for %s" % mbid, data=data)
+
+@app.route("/<mbid>/high-level", methods=["GET"])
+def get_high_level(mbid):
+    """Endpoint for fetching high-level information to AcousticBrainz"""
+
+    data = load_high_level(mbid)
+    return Response(data, content_type='application/json')
 
 @app.route("/<mbid>", methods=["GET"])
 def get_summary(mbid):
@@ -419,15 +447,17 @@ def get_summary(mbid):
                          FROM highlevel hl, highlevel_json hlj
                         WHERE hl.data = hlj.id
                           AND hl.mbid = %s""", (mbid, ))
+        genres = None
+        moods = None
+        other = None
+        highlevel = None
         if cur.rowcount:
             row = cur.fetchone()
             highlevel = row[0]
-            genres, moods, other = interpret_high_level(highlevel)
-        else:
-            genres = None
-            moods = None
-            other = None
-            highlevel = None
+            try:
+                genres, moods, other = interpret_high_level(highlevel)
+            except KeyError:
+                pass
 
         return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
                                genres=genres, moods=moods, other=other)

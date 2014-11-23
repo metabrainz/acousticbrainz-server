@@ -37,6 +37,9 @@
                   {% else %}
                     {{ lowlevel.metadata.tags.album[0] }}
                   {% endif %}
+                  {% if lowlevel.metadata.tags.musicbrainz_releasegroupid[0] %}
+                    <span class="critiquebrainz">(<a href="https://critiquebrainz.org/release-group/{{ lowlevel.metadata.tags.musicbrainz_releasegroupid[0] }}">reviews at CritiqueBrainz</a>)</span>
+                  {% endif %}
               </td>
             </tr>
             <tr><td>title</td><td><a href="https://musicbrainz.org/recording/{{ lowlevel.metadata.tags.musicbrainz_recordingid[0] }}">{{ lowlevel.metadata.tags.title[0] }}</a></td></tr>

@@ -47,11 +47,17 @@
               <tr>
                 <td>track number</td>
                 <td>
+                  {% if lowlevel.metadata.tags.musicbrainz_releasetrackid[0] -%}
+                    <a href="https://musicbrainz.org/track/{{ lowlevel.metadata.tags.musicbrainz_releasetrackid[0] }}">
+                  {%- endif -%}
                   {% if lowlevel.metadata.tags.tracktotal[0] %}
                     {{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}
                   {% else %}
                     {{ lowlevel.metadata.tags.tracknumber[0] }}
                   {% endif %}
+                  {%- if lowlevel.metadata.tags.musicbrainz_releasetrackid[0] -%}
+                    </a>
+                  {%- endif %}
                 </td>
               </tr>
             {% endif %}

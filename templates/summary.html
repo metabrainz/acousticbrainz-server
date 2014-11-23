@@ -22,7 +22,7 @@
             <tr>
               <td>artist</td>
               <td>
-                  {% if lowlevel.metadata.tags.musicbrainz_artistid[0] %}
+                  {% if lowlevel.metadata.tags.musicbrainz_artistid %}
                     <a href="https://musicbrainz.org/artist/{{ lowlevel.metadata.tags.musicbrainz_artistid[0] }}">{{ lowlevel.metadata.tags.artist[0] }}</a>
                   {% else %}
                     {{ lowlevel.metadata.tags.artist[0] }}
@@ -32,30 +32,30 @@
             <tr>
               <td>release</td>
               <td>
-                  {% if lowlevel.metadata.tags.musicbrainz_albumid[0] %}
+                  {% if lowlevel.metadata.tags.musicbrainz_albumid %}
                     <a href="https://musicbrainz.org/release/{{ lowlevel.metadata.tags.musicbrainz_albumid[0] }}">{{ lowlevel.metadata.tags.album[0] }}</a>
                   {% else %}
                     {{ lowlevel.metadata.tags.album[0] }}
                   {% endif %}
-                  {% if lowlevel.metadata.tags.musicbrainz_releasegroupid[0] %}
+                  {% if lowlevel.metadata.tags.musicbrainz_releasegroupid %}
                     <span class="critiquebrainz">(<a href="https://critiquebrainz.org/release-group/{{ lowlevel.metadata.tags.musicbrainz_releasegroupid[0] }}">reviews at CritiqueBrainz</a>)</span>
                   {% endif %}
               </td>
             </tr>
             <tr><td>title</td><td><a href="https://musicbrainz.org/recording/{{ lowlevel.metadata.tags.musicbrainz_recordingid[0] }}">{{ lowlevel.metadata.tags.title[0] }}</a></td></tr>
-            {% if lowlevel.metadata.tags.tracknumber[0] %}
+            {% if lowlevel.metadata.tags.tracknumber %}
               <tr>
                 <td>track number</td>
                 <td>
-                  {% if lowlevel.metadata.tags.musicbrainz_releasetrackid[0] -%}
+                  {% if lowlevel.metadata.tags.musicbrainz_releasetrackid -%}
                     <a href="https://musicbrainz.org/track/{{ lowlevel.metadata.tags.musicbrainz_releasetrackid[0] }}">
                   {%- endif -%}
-                  {% if lowlevel.metadata.tags.tracktotal[0] %}
+                  {% if lowlevel.metadata.tags.tracktotal %}
                     {{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}
                   {% else %}
                     {{ lowlevel.metadata.tags.tracknumber[0] }}
                   {% endif %}
-                  {%- if lowlevel.metadata.tags.musicbrainz_releasetrackid[0] -%}
+                  {%- if lowlevel.metadata.tags.musicbrainz_releasetrackid -%}
                     </a>
                   {%- endif %}
                 </td>

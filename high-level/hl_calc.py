@@ -66,7 +66,7 @@ class HighLevel(Thread):
 
         fnull.close()
         os.unlink(name)
-            
+
         try:
             f = open(out_file)
             hl_data = f.read()
@@ -93,9 +93,9 @@ def get_documents(conn):
     """
     cur = conn.cursor()
     cur.execute("""SELECT ll.mbid, ll.data::text, ll.id
-                     FROM lowlevel AS ll 
-                LEFT JOIN highlevel AS hl 
-                       ON ll.id = hl.id 
+                     FROM lowlevel AS ll
+                LEFT JOIN highlevel AS hl
+                       ON ll.id = hl.id
                     WHERE hl.mbid IS NULL
                     LIMIT 100""")
     docs = cur.fetchall()
@@ -145,13 +145,13 @@ def get_build_sha1(binary):
         print "Cannot calculate the SHA1 of the high level binary: %s" % e
         sys.exit(-1)
 
-    return sha1(bin).hexdigest() 
+    return sha1(bin).hexdigest()
 
 def main(num_threads):
     print "High level extractor daemon starting with %d threads" % num_threads
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
-        
+
     conn = None
     num_processed = 0
 
@@ -169,7 +169,7 @@ def main(num_threads):
             in_progress = pool.keys()
             filtered = []
             for mbid, doc, id in docs:
-                if not mbid in in_progress:
+                if mbid not in in_progress:
                     filtered.append((mbid, doc, id))
             docs = filtered
 
@@ -217,8 +217,8 @@ def main(num_threads):
                         conn = psycopg2.connect(config.PG_CONNECT)
 
                     cur = conn.cursor()
-                    cur.execute("""INSERT INTO highlevel_json (data, data_sha256) 
-                                        VALUES (%s, %s) 
+                    cur.execute("""INSERT INTO highlevel_json (data, data_sha256)
+                                        VALUES (%s, %s)
                                      RETURNING id""", (norm_data, sha))
                     id = cur.fetchone()[0]
                     cur.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)

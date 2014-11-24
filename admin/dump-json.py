@@ -100,7 +100,7 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
                 f = open(filename, "w")
                 f.write(json)
                 f.close()
-           
+
                 arcname = os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), "lowlevel", mbid[0:1], mbid[0:2], mbid + "-%d.json" % index)
                 tar.add(filename, arcname=arcname)
                 os.unlink(filename)
@@ -146,9 +146,9 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
             id_list = tuple([ i[0] for i in id_list ])
 
             count = 0
-            cur2.execute("""SELECT mbid, hlj.data::text 
-                             FROM highlevel hl, highlevel_json hlj 
-                            WHERE hl.data = hlj.id 
+            cur2.execute("""SELECT mbid, hlj.data::text
+                             FROM highlevel hl, highlevel_json hlj
+                            WHERE hl.data = hlj.id
                               AND hl.id IN %s
                             ORDER BY mbid""", (id_list, ))
             while True:
@@ -171,7 +171,7 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
                 f = open(filename, "w")
                 f.write(json)
                 f.close()
-           
+
                 arcname = os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), "highlevel", mbid[0:1], mbid[0:2], mbid + "-%d.json" % index)
                 tar.add(filename, arcname=arcname)
                 os.unlink(filename)

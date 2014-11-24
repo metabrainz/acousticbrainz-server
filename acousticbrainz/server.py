@@ -72,7 +72,7 @@ def validate_uuid(string, version=4):
 
 def has_key(dict, keys):
     for k in keys:
-        if not dict.has_key(k):
+        if k not in dict:
             return False
         dict = dict[k]
     return True
@@ -177,16 +177,16 @@ def index():
     if not last_submitted_data:
         conn = psycopg2.connect(config.PG_CONNECT)
         cur = conn.cursor()
-        cur.execute("""SELECT mbid, 
-                              data->'metadata'->'tags'->'artist'->>0, 
-                              data->'metadata'->'tags'->'title'->>0 
-                         FROM lowlevel 
+        cur.execute("""SELECT mbid,
+                              data->'metadata'->'tags'->'artist'->>0,
+                              data->'metadata'->'tags'->'title'->>0
+                         FROM lowlevel
                      ORDER BY id DESC LIMIT 5""")
         last_submitted_data = cur.fetchall()
-        last_submitted_data = [ (r[0], 
-                                 r[1].decode("UTF-8"), 
-                                 r[2].decode("UTF-8")) 
-                                 for r in last_submitted_data 
+        last_submitted_data = [ (r[0],
+                                 r[1].decode("UTF-8"),
+                                 r[2].decode("UTF-8"))
+                                 for r in last_submitted_data
                               ]
         mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 
@@ -272,7 +272,7 @@ def submit_low_level(mbid):
 
     try:
         # if the user submitted a trackid key, rewrite to recording_id
-        if data['metadata']['tags'].has_key("musicbrainz_trackid"):
+        if "musicbrainz_trackid" in data['metadata']['tags']:
             val = data['metadata']['tags']["musicbrainz_trackid"]
             del data['metadata']['tags']["musicbrainz_trackid"]
             data['metadata']['tags']["musicbrainz_recordingid"] = val
@@ -314,7 +314,7 @@ def submit_low_level(mbid):
         # if we don't have this data already, add it
         sha_values = [v[0] for v in cur.fetchall()]
 
-        if not data_sha256 in sha_values:
+        if data_sha256 not in sha_values:
             app.logger.info("Saved %s" % mbid)
             cur.execute("INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
                         "VALUES (%s, %s, %s, %s, %s)",
@@ -430,18 +430,20 @@ def get_summary(mbid):
 
         row = cur.fetchone()
         lowlevel = row[0]
-        if not lowlevel['metadata']['tags'].has_key('artist'):
+        if 'artist' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
-        if not lowlevel['metadata']['tags'].has_key('release'):
+        if 'release' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['release'] = ["[unknown]"]
-        if not lowlevel['metadata']['tags'].has_key('title'):
+        if 'title' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
-        # quote special characters "url-encoding"
-        lowlevel['metadata']['tags']['artist_quoted'] = quote_plus(
-                lowlevel['metadata']['tags']['artist'][0].encode("UTF-8"))
-        lowlevel['metadata']['tags']['title_quoted'] = quote_plus(
-                lowlevel['metadata']['tags']['title'][0].encode("UTF-8"))
+        # Tomahawk player stuff
+        if not ('artist' in lowlevel['metadata']['tags'] and 'title' in lowlevel['metadata']['tags']):
+            tomahawk_url = None
+        else:
+            tomahawk_url = "http://toma.hk/embed.php?artist={artist}&title={title}".format(
+                artist=quote_plus(lowlevel['metadata']['tags']['artist'][0].encode("UTF-8")),
+                title=quote_plus(lowlevel['metadata']['tags']['title'][0].encode("UTF-8")))
 
         cur.execute("""SELECT hlj.data
                          FROM highlevel hl, highlevel_json hlj
@@ -460,7 +462,7 @@ def get_summary(mbid):
                 pass
 
         return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
-                               genres=genres, moods=moods, other=other)
+                               genres=genres, moods=moods, other=other, tomahawk_url=tomahawk_url)
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))

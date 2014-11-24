@@ -6,17 +6,17 @@
   <div id="project-description" class="row">
     <div class="col-md-12">
       <p>
-        AcousticBrainz stores two levels of data: Low-level and high level. 
+        AcousticBrainz stores two levels of data: Low-level and high level.
       </p><p>
         Both types of information are JSON documents,
-        two documents per each <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a> for 
+        two documents per each <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a> for
         a <a href="https://musicbrainz.org/doc/Recording">recording</a>.
       </p><p>
-        The low-level data includes acoustic descriptors characterizing overall loudness, dynamics and spectral shape of a 
-        signal, rhythm descriptors (including beats per minute), and tonal information (including keys and scales). The 
-        low-level data is stable, compared to the higher level data. This hopefully means that we will not have to recompute 
+        The low-level data includes acoustic descriptors characterizing overall loudness, dynamics and spectral shape of a
+        signal, rhythm descriptors (including beats per minute), and tonal information (including keys and scales). The
+        low-level data is stable, compared to the higher level data. This hopefully means that we will not have to recompute
         this data from audio files too frequently. More detailed information about the low-level data is provided in
-        <a href="http://essentia.upf.edu/documentation/streaming_extractor_music.html#music-descriptors">the official documentation 
+        <a href="http://essentia.upf.edu/documentation/streaming_extractor_music.html#music-descriptors">the official documentation
         for Essentia toolkit</a>.
 
       </p>
@@ -3395,11 +3395,11 @@
 </pre>
       </div>
       <p>
-        The high level data includes information about moods, genres, vocals and music type automatically inferred 
-        from low-level data by pre-trained classifiers. The high-level data can be computed from the low-level data, 
-        without requiring access to original audio files. The high-level data is less stable that the low-level data, 
-        since it contains more experimental algorithms. We anticipate re-calculating the high level data until it 
-        becomes fully stable. 
+        The high level data includes information about moods, genres, vocals and music type automatically inferred
+        from low-level data by pre-trained classifiers. The high-level data can be computed from the low-level data,
+        without requiring access to original audio files. The high-level data is less stable that the low-level data,
+        since it contains more experimental algorithms. We anticipate re-calculating the high level data until it
+        becomes fully stable.
       </p>
       <div style="background-color: #f8f8f8;">
          <pre style="height: 300px">

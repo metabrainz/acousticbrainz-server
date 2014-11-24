@@ -64,8 +64,8 @@
          </table>
         </div>
         <div class="col-md-4">
-            {% if lowlevel.metadata.tags.artist and lowlevel.metadata.tags.title %}
-            <iframe src="http://toma.hk/embed.php?artist={{lowlevel.metadata.tags.artist_quoted}}&title={{lowlevel.metadata.tags.title_quoted}}" width="200" scrolling="no" height="200" frameborder="0" allowtransparency="true" ></iframe>
+            {% if tomahawk_url %}
+            <iframe src="{{ tomahawk_url }}" width="200" scrolling="no" height="200" frameborder="0" allowtransparency="true" ></iframe>
             {% endif %}
         </div>
      </div>

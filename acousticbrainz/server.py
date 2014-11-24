@@ -437,11 +437,13 @@ def get_summary(mbid):
         if not lowlevel['metadata']['tags'].has_key('title'):
             lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
-        # quote special characters "url-encoding"
-        lowlevel['metadata']['tags']['artist_quoted'] = quote_plus(
-                lowlevel['metadata']['tags']['artist'][0].encode("UTF-8"))
-        lowlevel['metadata']['tags']['title_quoted'] = quote_plus(
-                lowlevel['metadata']['tags']['title'][0].encode("UTF-8"))
+        # Tomahawk player stuff
+        if not (lowlevel['metadata']['tags'].has_key('artist') and lowlevel['metadata']['tags'].has_key('title')):
+            tomahawk_url = None
+        else:
+            tomahawk_url = "http://toma.hk/embed.php?artist={artist}&title={title}".format(
+                artist=quote_plus(lowlevel['metadata']['tags']['artist'][0].encode("UTF-8")),
+                title=quote_plus(lowlevel['metadata']['tags']['title'][0].encode("UTF-8")))
 
         cur.execute("""SELECT hlj.data
                          FROM highlevel hl, highlevel_json hlj
@@ -460,7 +462,7 @@ def get_summary(mbid):
                 pass
 
         return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
-                               genres=genres, moods=moods, other=other)
+                               genres=genres, moods=moods, other=other, tomahawk_url=tomahawk_url)
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))

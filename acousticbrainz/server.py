@@ -177,16 +177,16 @@ def index():
     if not last_submitted_data:
         conn = psycopg2.connect(config.PG_CONNECT)
         cur = conn.cursor()
-        cur.execute("""SELECT mbid, 
-                              data->'metadata'->'tags'->'artist'->>0, 
-                              data->'metadata'->'tags'->'title'->>0 
-                         FROM lowlevel 
+        cur.execute("""SELECT mbid,
+                              data->'metadata'->'tags'->'artist'->>0,
+                              data->'metadata'->'tags'->'title'->>0
+                         FROM lowlevel
                      ORDER BY id DESC LIMIT 5""")
         last_submitted_data = cur.fetchall()
-        last_submitted_data = [ (r[0], 
-                                 r[1].decode("UTF-8"), 
-                                 r[2].decode("UTF-8")) 
-                                 for r in last_submitted_data 
+        last_submitted_data = [ (r[0],
+                                 r[1].decode("UTF-8"),
+                                 r[2].decode("UTF-8"))
+                                 for r in last_submitted_data
                               ]
         mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 

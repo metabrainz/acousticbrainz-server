@@ -169,7 +169,7 @@ def main(num_threads):
             in_progress = pool.keys()
             filtered = []
             for mbid, doc, id in docs:
-                if not mbid in in_progress:
+                if mbid not in in_progress:
                     filtered.append((mbid, doc, id))
             docs = filtered
 

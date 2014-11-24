@@ -314,7 +314,7 @@ def submit_low_level(mbid):
         # if we don't have this data already, add it
         sha_values = [v[0] for v in cur.fetchall()]
 
-        if not data_sha256 in sha_values:
+        if data_sha256 not in sha_values:
             app.logger.info("Saved %s" % mbid)
             cur.execute("INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
                         "VALUES (%s, %s, %s, %s, %s)",

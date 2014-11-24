@@ -437,6 +437,10 @@ def get_summary(mbid):
         if 'title' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
+        # Format track length readably (mm:ss)
+        lowlevel['metadata']['audio_properties']['length_formatted'] = \
+            time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
+
         # Tomahawk player stuff
         if not ('artist' in lowlevel['metadata']['tags'] and 'title' in lowlevel['metadata']['tags']):
             tomahawk_url = None

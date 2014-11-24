@@ -72,7 +72,7 @@ def validate_uuid(string, version=4):
 
 def has_key(dict, keys):
     for k in keys:
-        if not dict.has_key(k):
+        if k not in dict:
             return False
         dict = dict[k]
     return True
@@ -272,7 +272,7 @@ def submit_low_level(mbid):
 
     try:
         # if the user submitted a trackid key, rewrite to recording_id
-        if data['metadata']['tags'].has_key("musicbrainz_trackid"):
+        if "musicbrainz_trackid" in data['metadata']['tags']:
             val = data['metadata']['tags']["musicbrainz_trackid"]
             del data['metadata']['tags']["musicbrainz_trackid"]
             data['metadata']['tags']["musicbrainz_recordingid"] = val
@@ -430,15 +430,15 @@ def get_summary(mbid):
 
         row = cur.fetchone()
         lowlevel = row[0]
-        if not lowlevel['metadata']['tags'].has_key('artist'):
+        if 'artist' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
-        if not lowlevel['metadata']['tags'].has_key('release'):
+        if 'release' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['release'] = ["[unknown]"]
-        if not lowlevel['metadata']['tags'].has_key('title'):
+        if 'title' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
         # Tomahawk player stuff
-        if not (lowlevel['metadata']['tags'].has_key('artist') and lowlevel['metadata']['tags'].has_key('title')):
+        if not ('artist' in lowlevel['metadata']['tags'] and 'title' in lowlevel['metadata']['tags']):
             tomahawk_url = None
         else:
             tomahawk_url = "http://toma.hk/embed.php?artist={artist}&title={title}".format(

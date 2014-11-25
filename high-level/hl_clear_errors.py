@@ -12,3 +12,4 @@ cur.execute("""DELETE FROM highlevel WHERE id IN (
                    FROM highlevel hl, highlevel_json hlj
                   WHERE hl.data = hlj.id
                     AND hlj.data::text = '{}')""")
+conn.commit()

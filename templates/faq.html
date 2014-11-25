@@ -5,6 +5,17 @@
   <h3>Frequently Asked Questions</h3>
   <div class="col-md-12">
     <p>
+    <strong>Q:</strong> Does the AcousticBrainz client upload my audio files? Do you store audio files?</br>
+    <strong>A:</strong> No to both. The AcousticBrainz client analyzes your files and calculates the audio features
+    from it, but it does not alter your files in any way. These audio features are then uploaded to the server. No actual
+    audio files are uploaded or stored on the server. Never ever.
+    </p>
+    <p>
+    We invite you to examine the <a href="https://github.com/metabrainz/acousticbrainz-server/blob/master/acousticbrainz/server.py">code that runs the server</a>. 
+    There is only one API end-point that allows submission of anything and it has to be a JSON document of a certain format.
+    Audio files are rejected by the server.
+    </p>
+    <p>
     <strong>Q:</strong> Why does AcousticBrainz prefer that people use the provided static extractor builds, rather than
     letting others build their own versions?</br>
     <strong>A:</strong> Besides building your own version being a major pain, it is possible for different combinations

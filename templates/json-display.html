@@ -1,12 +1,17 @@
 {%- extends 'base.html' -%}
 {%- block title -%}{{ title }} - AcousticBrainz{%- endblock -%}
+
 {%- block content -%}
 <div id="homepage">
   <h3>{{ title }}</h3>
     <div class="col-md-12">
-      <div style="background-color: #f8f8f8;">
-         <pre>{{ data }}</pre>
-      </div>
+      <pre><code class="json">{{ data }}</code></pre>
     </div>
 </div>
+{%- endblock -%}
+
+{%- block scripts -%}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
+<script>hljs.initHighlightingOnLoad();</script>
 {%- endblock -%}

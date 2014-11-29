@@ -10,10 +10,14 @@
 <script type="text/javascript" src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 <script type="text/javascript" charset="utf-8">
   var socket = io.connect('http://' + document.domain + ':' + location.port);
+  var feed = $('#live-feed');
   socket.emit('connect');
   socket.on('new submission', function(msg) {
-    console.log(msg);
-    $('#live-feed').prepend('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>');
+    feed.prepend('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>');
+    var items = feed.children();
+    if (items.length > 30) {
+      items.last().remove();
+    }
   });
 </script>
 {%- endblock -%}

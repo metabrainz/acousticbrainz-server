@@ -1,0 +1,19 @@
+{%- extends 'base.html' -%}
+{%- block title -%}Live submissions - AcousticBrainz{%- endblock -%}
+{%- block content -%}
+<h3>Live submissions</h3>
+<ul id="live-feed"></ul>
+{%- endblock -%}
+
+{%- block scripts -%}
+{{ super() }}
+<script type="text/javascript" src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script type="text/javascript" charset="utf-8">
+  var socket = io.connect('http://' + document.domain + ':' + location.port);
+  socket.emit('connect');
+  socket.on('new submission', function(msg) {
+    console.log(msg);
+    $('#feed').prepend('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>');
+  });
+</script>
+{%- endblock -%}

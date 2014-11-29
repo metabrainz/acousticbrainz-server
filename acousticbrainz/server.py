@@ -504,5 +504,4 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 127.0.0.1", default="127.0.0.1", type=str)
     parser.add_argument("-p", "--port", help="Which port to listen on. Default: 8080", default="8080", type=int)
     args = parser.parse_args()
-    app.config["DEBUG"] = args.debug
     socketio.run(app, host=args.host, port=args.port)

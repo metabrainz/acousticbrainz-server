@@ -13,7 +13,7 @@
   socket.emit('connect');
   socket.on('new submission', function(msg) {
     console.log(msg);
-    $('#feed').prepend('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>');
+    $('#live-feed').prepend('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>');
   });
 </script>
 {%- endblock -%}

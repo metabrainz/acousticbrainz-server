@@ -16,7 +16,7 @@
     $('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>')
         .hide().prependTo(feed).fadeIn("slow");
     var items = feed.children();
-    if (items.length > 2) {
+    if (items.length > 20) {
       items.last().fadeOut("slow", function() { $(this).remove(); });
     }
   });

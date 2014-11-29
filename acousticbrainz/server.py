@@ -198,10 +198,6 @@ def index():
 
     return render_template("index.html", stats=value, last_collected=last_collected, last_submitted_data=last_submitted_data)
 
-@app.route("/live")
-def live():
-    return render_template("live.html")
-
 @app.route("/statistics-graph")
 def statistics_graph():
     return render_template("statistics-graph.html")

@@ -426,7 +426,7 @@ def get_summary(mbid):
                          FROM lowlevel
                         WHERE mbid = %s""", (mbid, ))
         if not cur.rowcount:
-            return render_template("summary.html", mbid="")
+            return render_template("summary.html", mbid=""), 404
 
         row = cur.fetchone()
         lowlevel = row[0]

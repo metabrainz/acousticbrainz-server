@@ -16,6 +16,8 @@ import memcache
 from hashlib import sha256
 from urllib import quote_plus
 import argparse
+from flask_socketio import SocketIO, emit
+
 
 SANITY_CHECK_KEYS = [
    [ 'metadata', 'version', 'essentia' ],
@@ -45,6 +47,8 @@ app = Flask(__name__,
             static_url_path = STATIC_PATH,
             static_folder = STATIC_FOLDER,
             template_folder = TEMPLATE_FOLDER)
+
+socketio = SocketIO(app)
 
 whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 whitelist_tags = set(json.load(open(whitelist_file)))
@@ -258,6 +262,10 @@ def faq():
 def data():
     return render_template("data.html")
 
+@socketio.on('connect')
+def websocket_connect():
+    return "Connected."
+
 @app.route("/<mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz"""
@@ -320,6 +328,17 @@ def submit_low_level(mbid):
                         "VALUES (%s, %s, %s, %s, %s)",
                         (mbid, build_sha1, data_sha256, is_lossless_submit, data_json))
             conn.commit()
+
+            # Sending broadcast via WebSocket
+            if 'artist' not in data['metadata']['tags']:
+                data['metadata']['tags']['artist'] = ["[unknown]"]
+            if 'title' not in data['metadata']['tags']:
+                data['metadata']['tags']['title'] = ["[unknown]"]
+            socketio.emit('new submission', {
+                'mbid': mbid,
+                'artist': data['metadata']['tags']['artist'],
+                'title': data['metadata']['tags']['title'],
+            })
             return ""
 
         app.logger.info("Already have %s" % data_sha256)
@@ -480,5 +499,11 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--debug", help="Turn on debugging mode to see stack traces in the error pages", default=True, action='store_true')
     parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 127.0.0.1", default="127.0.0.1", type=str)
     parser.add_argument("-p", "--port", help="Which port to listen on. Default: 8080", default="8080", type=int)
+
     args = parser.parse_args()
-    app.run(debug=True, host=args.host, port=args.port)
+    app.config["DEBUG"] = args.debug
+
+    from gevent import monkey
+    monkey.patch_all()
+
+    socketio.run(app, host=args.host, port=args.port)

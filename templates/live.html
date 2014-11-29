@@ -13,10 +13,11 @@
   var feed = $('#live-feed');
   socket.emit('connect');
   socket.on('new submission', function(msg) {
-    feed.prepend('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>');
+    $('<li><a href="/' + msg.mbid +'">' + msg.title + ' by ' + msg.artist + '</a></li>')
+        .hide().prependTo(feed).fadeIn("slow");
     var items = feed.children();
-    if (items.length > 30) {
-      items.last().remove();
+    if (items.length > 2) {
+      items.last().fadeOut("slow", function() { $(this).remove(); });
     }
   });
 </script>

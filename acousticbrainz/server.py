@@ -16,7 +16,7 @@ import memcache
 from hashlib import sha256
 from urllib import quote_plus
 import argparse
-from flask_socketio import SocketIO, emit
+from flask_uwsgi_websocket import GeventWebSocket
 
 
 SANITY_CHECK_KEYS = [
@@ -47,8 +47,6 @@ app = Flask(__name__,
             static_url_path = STATIC_PATH,
             static_folder = STATIC_FOLDER,
             template_folder = TEMPLATE_FOLDER)
-
-socketio = SocketIO(app)
 
 whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 whitelist_tags = set(json.load(open(whitelist_file)))
@@ -131,6 +129,32 @@ def clean_metadata(data):
             del tags[k]
     data["metadata"]["tags"] = tags
     return data
+
+
+# WebSocket stuff
+
+web_socket = GeventWebSocket(app)
+ws_clients = {}
+
+def ws_broadcast(message):
+    """Sends specified message to all clients connected via WebSocket."""
+    message = json.dumps(message)
+    for id in ws_clients:
+        ws_clients[id].send(message)
+
+@web_socket.route('/websocket')
+def ws_connect(ws):
+    ws_clients[ws.id] = ws
+
+    while True:
+        msg = ws.receive()
+        if msg is not None:
+            continue
+        else:
+            break
+
+    del ws_clients[ws.id]
+
 
 @app.route("/")
 def index():
@@ -262,10 +286,6 @@ def faq():
 def data():
     return render_template("data.html")
 
-@socketio.on('connect')
-def websocket_connect():
-    return "Connected."
-
 @app.route("/<mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz"""
@@ -334,7 +354,7 @@ def submit_low_level(mbid):
                 data['metadata']['tags']['artist'] = ["[unknown]"]
             if 'title' not in data['metadata']['tags']:
                 data['metadata']['tags']['title'] = ["[unknown]"]
-            socketio.emit('new submission', {
+            ws_broadcast({
                 'mbid': mbid,
                 'artist': data['metadata']['tags']['artist'],
                 'title': data['metadata']['tags']['title'],
@@ -502,8 +522,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     app.config["DEBUG"] = args.debug
-
-    from gevent import monkey
-    monkey.patch_all()
-
-    socketio.run(app, host=args.host, port=args.port)
+    app.run(gevent=100, host=args.host, port=args.port)

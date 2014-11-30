@@ -80,18 +80,17 @@
 
 {%- block scripts -%}
 {{ super() }}
-<script type="text/javascript" src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 <script type="text/javascript" charset="utf-8">
-  var socket = io.connect('http://' + document.domain + ':' + location.port);
   var feed = $('#live-feed');
-  socket.emit('connect');
-  socket.on('new submission', function(msg) {
-    $('<li><a href="/' + msg.mbid +'"><strong>' + msg.title + ' by ' + msg.artist + '</strong></a></li>')
+  var socket = new WebSocket('ws://' + document.domain + ':' + location.port + '/websocket');
+  socket.onmessage = function (event) {
+    var data = JSON.parse(event.data);
+    $('<li><a href="/' + data.mbid +'"><strong>' + data.title + ' by ' + data.artist + '</strong></a></li>')
         .hide().prependTo(feed).fadeIn("slow");
     var items = feed.children();
     if (items.length > 5) {
       items.last().fadeOut("slow", function() { $(this).remove(); });
     }
-  });
+  }
 </script>
 {%- endblock -%}

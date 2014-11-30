@@ -10,7 +10,6 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon"/>
 
     <link href='https://fonts.googleapis.com/css?family=Bitter:700' rel='stylesheet' type='text/css'>
-    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" media="screen">
     {% if config.COMPILE_LESS %}
       <link href="{{ url_for('static', filename='css/styles.less') }}" rel="stylesheet/less" type="text/css">
       <script src="{{ url_for('static', filename='js/less.min.js') }}"></script>

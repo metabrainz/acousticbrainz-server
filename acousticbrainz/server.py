@@ -8,6 +8,7 @@ import uuid
 import datetime
 import time
 import os
+import urllib2
 from operator import itemgetter
 from logging.handlers import RotatingFileHandler
 from flask import Flask, request, Response, jsonify, render_template, redirect
@@ -441,6 +442,34 @@ def get_summary(mbid):
         lowlevel['metadata']['audio_properties']['length_formatted'] = \
             time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
 
+        # Cover Art Archive data
+        caa = {'front': None, 'release': None, 'release_group': None}
+        if 'musicbrainz_albumid' in lowlevel['metadata']['tags']:
+            try:
+                caa['release'] = json.load(urllib2.urlopen(
+                    "https://coverartarchive.org/release/" +
+                    lowlevel['metadata']['tags']['musicbrainz_albumid'][0]))
+                for img in caa['release']['images']:
+                    if img['front']:
+                            caa['front'] = img
+                            break
+            except urllib2.HTTPError:
+                # @TODO: Should this error be logged?
+                pass
+        if 'musicbrainz_releasegroupid' in lowlevel['metadata']['tags']:
+            try:
+                caa['release_group'] = json.load(urllib2.urlopen(
+                    "https://coverartarchive.org/release-group/" +
+                    lowlevel['metadata']['tags']['musicbrainz_releasegroupid'][0]))
+                if not caa['front']:
+                    for img in caa['release_group']['images']:
+                        if img['front']:
+                            caa['front'] = img
+                            break
+            except urllib2.HTTPError:
+                # @TODO: Should this error be logged?
+                pass
+
         # Tomahawk player stuff
         if not ('artist' in lowlevel['metadata']['tags'] and 'title' in lowlevel['metadata']['tags']):
             tomahawk_url = None
@@ -465,8 +494,10 @@ def get_summary(mbid):
             except KeyError:
                 pass
 
-        return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
-                               genres=genres, moods=moods, other=other, tomahawk_url=tomahawk_url)
+        return render_template("summary.html", mbid=mbid,
+            lowlevel=lowlevel, highlevel=highlevel,
+            genres=genres, moods=moods, other=other,
+            caa=caa, tomahawk_url=tomahawk_url)
 
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))

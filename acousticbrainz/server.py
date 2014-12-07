@@ -4,12 +4,12 @@ import json
 import psycopg2
 import logging
 import config
-import uuid
 import datetime
 import time
 import os
 from operator import itemgetter
 from logging.handlers import RotatingFileHandler
+from acousticbrainz.utils import validate_uuid
 from flask import Flask, request, Response, render_template, redirect
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 import memcache
@@ -56,19 +56,6 @@ app.config.from_object(config)
 handler = RotatingFileHandler(config.LOG_FILE)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
-
-def validate_uuid(string, version=4):
-    """Validates UUID of a specified version (default version is 4).
-
-    Returns:
-        True if UUID is valid.
-        False otherwise.
-    """
-    try:
-        _ = uuid.UUID(string, version=version)
-    except ValueError:
-        return False
-    return True
 
 def has_key(dict, keys):
     for k in keys:

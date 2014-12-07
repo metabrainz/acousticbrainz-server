@@ -8,9 +8,10 @@ import datetime
 import time
 from operator import itemgetter
 from logging.handlers import RotatingFileHandler
+from data import load_low_level, load_high_level
 from utils import validate_uuid, sanity_check_json, clean_metadata, interpret_high_level
 from flask import Flask, request, Response, render_template, redirect
-from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
+from werkzeug.exceptions import BadRequest, ServiceUnavailable, InternalServerError
 import memcache
 from hashlib import sha256
 from urllib import quote_plus
@@ -244,31 +245,6 @@ def submit_low_level(mbid):
 
     return ""
 
-def load_low_level(mbid):
-    """
-        Load the low level data from disk for a given mbid
-    """
-
-    if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % mbid)
-
-    conn = psycopg2.connect(config.PG_CONNECT)
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT data::text FROM lowlevel WHERE mbid = %s", (mbid, ))
-        if not cur.rowcount:
-            raise NotFound
-
-        row = cur.fetchone()
-        return row[0]
-
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
-
-    return InternalServerError("whoops, looks like a cock-up on our part!")
-
 @app.route("/<mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
     data = load_low_level(mbid)
@@ -281,35 +257,6 @@ def get_low_level(mbid):
 
     data = load_low_level(mbid)
     return Response(data, content_type='application/json')
-
-def load_high_level(mbid):
-    """
-        Load high level data
-    """
-
-    if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % mbid)
-
-    conn = psycopg2.connect(config.PG_CONNECT)
-    cur = conn.cursor()
-    try:
-        cur.execute("""SELECT hlj.data::text
-                         FROM highlevel hl
-                         JOIN highlevel_json hlj
-                           ON hl.data = hlj.id
-                        WHERE mbid = %s""", (mbid, ))
-        if not cur.rowcount:
-            raise NotFound
-
-        row = cur.fetchone()
-        return row[0]
-
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
-
-    return InternalServerError("Bummer, dude.")
 
 @app.route("/<mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):

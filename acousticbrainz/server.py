@@ -70,9 +70,6 @@ def sanity_check_json(data):
             return "key '%s' was not found in submitted data." % ' : '.join(check)
     return ""
 
-def json_error(err):
-    return json.dumps(dict(error=err))
-
 def interpret(text, data, threshold):
     if data['probability'] >= threshold:
         return (text, data['value'].replace("_", " "), "%.3f" % data['probability'])

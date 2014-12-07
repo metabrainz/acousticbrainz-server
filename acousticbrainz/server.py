@@ -10,7 +10,7 @@ import time
 import os
 from operator import itemgetter
 from logging.handlers import RotatingFileHandler
-from flask import Flask, request, Response, jsonify, render_template, redirect
+from flask import Flask, request, Response, render_template, redirect
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 import memcache
 from hashlib import sha256

@@ -23,7 +23,7 @@ def data():
 
 @data_bp.route("/<mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):
-    """Endpoint for submitting low-level information to AcousticBrainz"""
+    """Endpoint for submitting low-level information to AcousticBrainz."""
 
     raw_data = request.get_data()
     try:
@@ -34,7 +34,7 @@ def submit_low_level(mbid):
     data = clean_metadata(data)
 
     try:
-        # if the user submitted a trackid key, rewrite to recording_id
+        # If the user submitted a trackid key, rewrite to recording_id
         if "musicbrainz_trackid" in data['metadata']['tags']:
             val = data['metadata']['tags']["musicbrainz_trackid"]
             del data['metadata']['tags']["musicbrainz_trackid"]
@@ -56,11 +56,11 @@ def submit_low_level(mbid):
     if not validate_uuid(mbid):
         raise BadRequest("Invalid MBID: %s" % mbid)
 
-
     # Ensure the MBID form the URL matches the recording_id from the POST data
     if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
-        raise BadRequest("The musicbrainz_trackid/musicbrainz_recordingid in the submitted data does not match "
-                         "the MBID that is part of this resource URL.")
+        raise BadRequest("The musicbrainz_trackid/musicbrainz_recordingid in"
+                         "the submitted data does not match the MBID that is"
+                         "part of this resource URL.")
 
     # The data looks good, lets see about saving it
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
@@ -99,32 +99,26 @@ def submit_low_level(mbid):
 
 @data_bp.route("/<mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
-    data = load_low_level(mbid)
-    data = json.dumps(json.loads(data), indent=4, sort_keys=True)
+    data = json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True)
     return render_template("json-display.html", title="Low-level JSON for %s" % mbid, data=data)
 
 
 @data_bp.route("/<mbid>/low-level", methods=["GET"])
 def get_low_level(mbid):
-    """Endpoint for fetching low-level information to AcousticBrainz"""
-
-    data = load_low_level(mbid)
-    return Response(data, content_type='application/json')
+    """Endpoint for fetching low-level information to AcousticBrainz."""
+    return Response(load_low_level(mbid), content_type='application/json')
 
 
 @data_bp.route("/<mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):
-    data = load_high_level(mbid)
-    data = json.dumps(json.loads(data), indent=4, sort_keys=True)
+    data = json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True)
     return render_template("json-display.html", title="High-level JSON for %s" % mbid, data=data)
 
 
 @data_bp.route("/<mbid>/high-level", methods=["GET"])
 def get_high_level(mbid):
-    """Endpoint for fetching high-level information to AcousticBrainz"""
-
-    data = load_high_level(mbid)
-    return Response(data, content_type='application/json')
+    """Endpoint for fetching high-level information to AcousticBrainz."""
+    return Response(load_high_level(mbid), content_type='application/json')
 
 
 @data_bp.route("/<mbid>", methods=["GET"])
@@ -136,9 +130,7 @@ def get_summary(mbid):
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
-        cur.execute("""SELECT data
-                         FROM lowlevel
-                        WHERE mbid = %s""", (mbid, ))
+        cur.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
         if not cur.rowcount:
             return render_template("summary.html", mbid="")
 
@@ -163,10 +155,10 @@ def get_summary(mbid):
                 artist=quote_plus(lowlevel['metadata']['tags']['artist'][0].encode("UTF-8")),
                 title=quote_plus(lowlevel['metadata']['tags']['title'][0].encode("UTF-8")))
 
-        cur.execute("""SELECT hlj.data
-                         FROM highlevel hl, highlevel_json hlj
-                        WHERE hl.data = hlj.id
-                          AND hl.mbid = %s""", (mbid, ))
+        cur.execute("SELECT hlj.data "
+                    "FROM highlevel hl, highlevel_json hlj "
+                    "WHERE hl.data = hlj.id "
+                    "AND hl.mbid = %s", (mbid, ))
         genres = None
         moods = None
         other = None

@@ -8,27 +8,27 @@ _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
 
 SANITY_CHECK_KEYS = [
-    [ 'metadata', 'version', 'essentia' ],
-    [ 'metadata', 'version', 'essentia_git_sha' ],
-    [ 'metadata', 'version', 'extractor' ],
-    [ 'metadata', 'version', 'essentia_build_sha' ],
-    [ 'metadata', 'audio_properties', 'length' ],
-    [ 'metadata', 'audio_properties', 'bit_rate' ],
-    [ 'metadata', 'audio_properties', 'codec' ],
-    [ 'metadata', 'audio_properties', 'lossless' ],
-    [ 'metadata', 'tags', 'file_name' ],
-    [ 'metadata', 'tags', 'musicbrainz_recordingid' ],
-    [ 'lowlevel' ],
-    [ 'rhythm' ],
-    [ 'tonal' ],
-    ]
+    ['metadata', 'version', 'essentia'],
+    ['metadata', 'version', 'essentia_git_sha'],
+    ['metadata', 'version', 'extractor'],
+    ['metadata', 'version', 'essentia_build_sha'],
+    ['metadata', 'audio_properties', 'length'],
+    ['metadata', 'audio_properties', 'bit_rate'],
+    ['metadata', 'audio_properties', 'codec'],
+    ['metadata', 'audio_properties', 'lossless'],
+    ['metadata', 'tags', 'file_name'],
+    ['metadata', 'tags', 'musicbrainz_recordingid'],
+    ['lowlevel'],
+    ['rhythm'],
+    ['tonal'],
+]
 
 
-def _has_key(dict, keys):
+def _has_key(dictionary, keys):
     for k in keys:
-        if k not in dict:
+        if k not in dictionary:
             return False
-        dict = dict[k]
+        dictionary = dictionary[k]
     return True
 
 
@@ -40,7 +40,7 @@ def sanity_check_json(data):
 
 
 def clean_metadata(data):
-    """ Check that tags are in our whitelist. If not, throw them away """
+    """Check that tags are in our whitelist. If not, throw them away."""
     tags = data["metadata"]["tags"]
     for k in tags.keys():
         k = k.lower()
@@ -52,8 +52,8 @@ def clean_metadata(data):
 
 def _interpret(text, data, threshold):
     if data['probability'] >= threshold:
-        return (text, data['value'].replace("_", " "), "%.3f" % data['probability'])
-    return (text, UNSURE,"%.3f" %  data['probability'])
+        return text, data['value'].replace("_", " "), "%.3f" % data['probability']
+    return text, UNSURE,"%.3f" %  data['probability']
 
 
 def interpret_high_level(hl):
@@ -81,7 +81,7 @@ def interpret_high_level(hl):
     other.append(_interpret("Timbre", hl['highlevel']['timbre'], .6))
     other.append(_interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm'], .6))
 
-    return (genres, moods, other)
+    return genres, moods, other
 
 
 def validate_uuid(string, version=4):

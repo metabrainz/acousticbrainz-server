@@ -9,9 +9,9 @@ TEMPLATE_FOLDER = "../templates"
 
 def create_app():
     app = Flask(__name__,
-                static_url_path = STATIC_PATH,
-                static_folder = STATIC_FOLDER,
-                template_folder = TEMPLATE_FOLDER)
+                static_url_path=STATIC_PATH,
+                static_folder=STATIC_FOLDER,
+                template_folder=TEMPLATE_FOLDER)
 
     # Configuration
     app.config.from_object('acousticbrainz.config')

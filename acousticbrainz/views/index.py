@@ -6,8 +6,8 @@ import memcache
 index_bp = Blueprint('index', __name__)
 
 
-STATS_CACHE_TIMEOUT = 60 * 10     # ten minutes
-LAST_MBIDS_CACHE_TIMEOUT = 60 # 1 minute (this query is cheap)
+STATS_CACHE_TIMEOUT = 60 * 10  # ten minutes
+LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 
 @index_bp.route("/")
@@ -29,7 +29,6 @@ def index():
             (now, last_collected) = cur.fetchone()
         if cur.rowcount == 0 or now - last_collected > datetime.timedelta(minutes=59):
             update_db = True
-
 
         cur.execute("SELECT lossless, count(*) FROM lowlevel GROUP BY lossless")
         for row in cur.fetchall():
@@ -67,26 +66,29 @@ def index():
                         LIMIT 5
                        OFFSET 10""")
         last_submitted_data = cur.fetchall()
-        last_submitted_data = [ (r[0],
-                                 r[1].decode("UTF-8"),
-                                 r[2].decode("UTF-8"))
-                                for r in last_submitted_data
+        last_submitted_data = [
+            (r[0], r[1].decode("UTF-8"), r[2].decode("UTF-8"))
+            for r in last_submitted_data
         ]
         mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 
     return render_template("index.html", stats=value, last_collected=last_collected, last_submitted_data=last_submitted_data)
 
+
 @index_bp.route("/download")
 def download():
     return render_template("download.html")
+
 
 @index_bp.route("/contribute")
 def contribute():
     return render_template("contribute.html")
 
+
 @index_bp.route("/goals")
 def goals():
     return render_template("goals.html")
+
 
 @index_bp.route("/faq")
 def faq():

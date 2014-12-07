@@ -5,9 +5,7 @@ from flask import current_app
 
 
 def load_low_level(mbid):
-    """
-        Load the low level data from disk for a given mbid
-    """
+    """Load low level data for a given MBID."""
 
     if not validate_uuid(mbid):
         raise BadRequest("Invalid MBID: %s" % mbid)
@@ -31,9 +29,7 @@ def load_low_level(mbid):
 
 
 def load_high_level(mbid):
-    """
-        Load high level data
-    """
+    """Load high level data for a given MBID."""
 
     if not validate_uuid(mbid):
         raise BadRequest("Invalid MBID: %s" % mbid)

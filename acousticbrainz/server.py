@@ -19,7 +19,6 @@ import argparse
 
 STATS_CACHE_TIMEOUT = 60 * 10     # ten minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60 # 1 minute (this query is cheap)
-MAX_NUMBER_DUPES     = 5
 UNSURE = "unsure"
 
 STATIC_PATH = "/static"

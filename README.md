@@ -28,6 +28,6 @@ and edit its content to fit your environment.
 
 (Something about setting up PostgreSQL could go go here...)
 
-After all this, you can run the site/server using `./acousticbrainz/server.py`.
-Use `./acousticbrainz/server.py -h` to get a list of command-line switches
+After all this, you can run the site/server using `./server.py`.
+Use `./server.py -h` to get a list of command-line switches
 to further suit your local environment (e.g., port, listening address, ...).

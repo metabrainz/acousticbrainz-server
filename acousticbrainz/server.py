@@ -6,10 +6,9 @@ import logging
 import config
 import datetime
 import time
-import os
 from operator import itemgetter
 from logging.handlers import RotatingFileHandler
-from acousticbrainz.utils import validate_uuid
+from utils import validate_uuid, sanity_check_json, clean_metadata, interpret_high_level
 from flask import Flask, request, Response, render_template, redirect
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 import memcache
@@ -17,21 +16,6 @@ from hashlib import sha256
 from urllib import quote_plus
 import argparse
 
-SANITY_CHECK_KEYS = [
-   [ 'metadata', 'version', 'essentia' ],
-   [ 'metadata', 'version', 'essentia_git_sha' ],
-   [ 'metadata', 'version', 'extractor' ],
-   [ 'metadata', 'version', 'essentia_build_sha' ],
-   [ 'metadata', 'audio_properties', 'length' ],
-   [ 'metadata', 'audio_properties', 'bit_rate' ],
-   [ 'metadata', 'audio_properties', 'codec' ],
-   [ 'metadata', 'audio_properties', 'lossless' ],
-   [ 'metadata', 'tags', 'file_name' ],
-   [ 'metadata', 'tags', 'musicbrainz_recordingid' ],
-   [ 'lowlevel' ],
-   [ 'rhythm' ],
-   [ 'tonal' ],
-]
 STATS_CACHE_TIMEOUT = 60 * 10     # ten minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60 # 1 minute (this query is cheap)
 MAX_NUMBER_DUPES     = 5
@@ -46,8 +30,6 @@ app = Flask(__name__,
             static_folder = STATIC_FOLDER,
             template_folder = TEMPLATE_FOLDER)
 
-whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
-whitelist_tags = set(json.load(open(whitelist_file)))
 
 # Configuration
 app.config.from_object(config)
@@ -56,61 +38,6 @@ app.config.from_object(config)
 handler = RotatingFileHandler(config.LOG_FILE)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
-
-def has_key(dict, keys):
-    for k in keys:
-        if k not in dict:
-            return False
-        dict = dict[k]
-    return True
-
-def sanity_check_json(data):
-    for check in SANITY_CHECK_KEYS:
-        if not has_key(data, check):
-            return "key '%s' was not found in submitted data." % ' : '.join(check)
-    return ""
-
-def interpret(text, data, threshold):
-    if data['probability'] >= threshold:
-        return (text, data['value'].replace("_", " "), "%.3f" % data['probability'])
-    return (text, UNSURE,"%.3f" %  data['probability'])
-
-def interpret_high_level(hl):
-    genres = []
-    genres.append(interpret("Genre - tzanetakis' method", hl['highlevel']['genre_tzanetakis'], .6))
-    genres.append(interpret("Genre - electronic classification", hl['highlevel']['genre_electronic'], .6))
-    genres.append(interpret("Genre - dortmund method", hl['highlevel']['genre_dortmund'], .6))
-    genres.append(interpret("Genre - rosamerica method", hl['highlevel']['genre_rosamerica'], .6))
-
-    moods = []
-    moods.append(interpret("Mood - electronic", hl['highlevel']['mood_electronic'], .6))
-    moods.append(interpret("Mood - party", hl['highlevel']['mood_party'], .6))
-    moods.append(interpret("Mood - aggressive", hl['highlevel']['mood_aggressive'], .6))
-    moods.append(interpret("Mood - acoustic", hl['highlevel']['mood_acoustic'], .6))
-    moods.append(interpret("Mood - happy", hl['highlevel']['mood_happy'], .6))
-    moods.append(interpret("Mood - sad", hl['highlevel']['mood_sad'], .6))
-    moods.append(interpret("Mood - relaxed", hl['highlevel']['mood_relaxed'], .6))
-    moods.append(interpret("Mood - mirex method", hl['highlevel']['moods_mirex'], .6))
-
-    other = []
-    other.append(interpret("Voice", hl['highlevel']['voice_instrumental'], .6))
-    other.append(interpret("Gender", hl['highlevel']['gender'], .6))
-    other.append(interpret("Danceability", hl['highlevel']['danceability'], .6))
-    other.append(interpret("Tonal", hl['highlevel']['tonal_atonal'], .6))
-    other.append(interpret("Timbre", hl['highlevel']['timbre'], .6))
-    other.append(interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm'], .6))
-
-    return (genres, moods, other)
-
-def clean_metadata(data):
-    """ Check that tags are in our whitelist. If not, throw them away """
-    tags = data["metadata"]["tags"]
-    for k in tags.keys():
-        k = k.lower()
-        if k not in whitelist_tags:
-            del tags[k]
-    data["metadata"]["tags"] = tags
-    return data
 
 @app.route("/")
 def index():
@@ -462,7 +389,7 @@ def get_summary(mbid):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='AcousticBrainz dev server')
     parser.add_argument("-d", "--debug", help="Turn on debugging mode to see stack traces in the error pages", default=True, action='store_true')
-    parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 127.0.0.1", default="127.0.0.1", type=str)
+    parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 127.0.0.1", default="0.0.0.0", type=str)
     parser.add_argument("-p", "--port", help="Which port to listen on. Default: 8080", default="8080", type=int)
     args = parser.parse_args()
     app.run(debug=True, host=args.host, port=args.port)

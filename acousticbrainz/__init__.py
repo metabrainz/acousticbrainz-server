@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_uuid import FlaskUUID
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -20,6 +21,9 @@ def create_app():
     handler = RotatingFileHandler(app.config['LOG_FILE'])
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
+
+    # Extensions
+    FlaskUUID(app)
 
     # Blueprints
     from acousticbrainz.views.index import index_bp

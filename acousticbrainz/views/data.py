@@ -1,6 +1,6 @@
 from flask import Blueprint, request, Response, render_template, redirect, current_app
 from acousticbrainz.data import load_low_level, load_high_level
-from acousticbrainz.utils import validate_uuid, sanity_check_json, clean_metadata, interpret_high_level
+from acousticbrainz.utils import sanity_check_json, clean_metadata, interpret_high_level
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, InternalServerError
 from hashlib import sha256
 from urllib import quote_plus
@@ -21,10 +21,10 @@ def data():
     return render_template("data.html")
 
 
-@data_bp.route("/<mbid>/low-level", methods=["POST"])
+@data_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz."""
-
+    mbid = str(mbid)
     raw_data = request.get_data()
     try:
         data = json.loads(raw_data)
@@ -52,9 +52,6 @@ def submit_low_level(mbid):
     err = sanity_check_json(data)
     if err:
         raise BadRequest(err)
-
-    if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % mbid)
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
     if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
@@ -97,36 +94,33 @@ def submit_low_level(mbid):
     return ""
 
 
-@data_bp.route("/<mbid>/low-level/view", methods=["GET"])
+@data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
     data = json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True)
     return render_template("json-display.html", title="Low-level JSON for %s" % mbid, data=data)
 
 
-@data_bp.route("/<mbid>/low-level", methods=["GET"])
+@data_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
 def get_low_level(mbid):
     """Endpoint for fetching low-level information to AcousticBrainz."""
     return Response(load_low_level(mbid), content_type='application/json')
 
 
-@data_bp.route("/<mbid>/high-level/view", methods=["GET"])
+@data_bp.route("/<uuid:mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):
     data = json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True)
     return render_template("json-display.html", title="High-level JSON for %s" % mbid, data=data)
 
 
-@data_bp.route("/<mbid>/high-level", methods=["GET"])
+@data_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
 def get_high_level(mbid):
     """Endpoint for fetching high-level information to AcousticBrainz."""
     return Response(load_high_level(mbid), content_type='application/json')
 
 
-@data_bp.route("/<mbid>", methods=["GET"])
+@data_bp.route("/<uuid:mbid>", methods=["GET"])
 def get_summary(mbid):
-
-    if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % mbid)
-
+    mbid = str(mbid)
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:

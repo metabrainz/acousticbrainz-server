@@ -1,19 +1,14 @@
 import psycopg2
-from utils import validate_uuid
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, NotFound, InternalServerError
 from flask import current_app
 
 
 def load_low_level(mbid):
     """Load low level data for a given MBID."""
-
-    if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % mbid)
-
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
-        cur.execute("SELECT data::text FROM lowlevel WHERE mbid = %s", (mbid, ))
+        cur.execute("SELECT data::text FROM lowlevel WHERE mbid = %s", (str(mbid), ))
         if not cur.rowcount:
             raise NotFound
 
@@ -30,10 +25,6 @@ def load_low_level(mbid):
 
 def load_high_level(mbid):
     """Load high level data for a given MBID."""
-
-    if not validate_uuid(mbid):
-        raise BadRequest("Invalid MBID: %s" % mbid)
-
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
@@ -41,7 +32,7 @@ def load_high_level(mbid):
                          FROM highlevel hl
                          JOIN highlevel_json hlj
                            ON hl.data = hlj.id
-                        WHERE mbid = %s""", (mbid, ))
+                        WHERE mbid = %s""", (str(mbid), ))
         if not cur.rowcount:
             raise NotFound
 

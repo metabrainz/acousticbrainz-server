@@ -82,17 +82,3 @@ def interpret_high_level(hl):
     other.append(_interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm'], .6))
 
     return genres, moods, other
-
-
-def validate_uuid(string, version=4):
-    """Validates UUID of a specified version (default version is 4).
-
-    Returns:
-        True if UUID is valid.
-        False otherwise.
-    """
-    try:
-        _ = uuid.UUID(string, version=version)
-    except ValueError:
-        return False
-    return True

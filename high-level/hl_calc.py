@@ -3,16 +3,13 @@
 import sys
 sys.path.append("../acousticbrainz")
 
-import urllib2
 import json
 import os
 from time import sleep
 import subprocess
-from operator import itemgetter
 import psycopg2
 import config
 from threading import Thread
-import random
 from hashlib import sha256, sha1
 import tempfile
 import yaml

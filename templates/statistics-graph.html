@@ -14,7 +14,7 @@
 <script src="{{ url_for('static', filename="js/d3.v3.js") }}"></script>
 <script src="{{ url_for('static', filename="js/nv.d3.js") }}"></script>
 <script>
-d3.json('{{ url_for('statistics_data') }}', function(data) {
+d3.json('{{ url_for('stats.statistics_data') }}', function(data) {
   nv.addGraph(function() {
       var chart = nv.models.lineWithFocusChart();
 

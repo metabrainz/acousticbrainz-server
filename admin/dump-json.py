@@ -10,7 +10,6 @@ import os
 import psycopg2
 import config
 from datetime import datetime
-from time import gmtime, strftime
 import argparse
 
 DUMP_CHUNK_SIZE = 1000

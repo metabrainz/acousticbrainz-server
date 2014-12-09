@@ -132,11 +132,11 @@
         <div class="col-md-12">
           <p>Inspect the data the above is taken from:
             <ul>
-              <li><a href="{{ url_for('view_low_level', mbid=mbid) }}">Low level data</a>
-                  (<a href="{{ url_for('get_low_level', mbid=mbid) }}">raw JSON</a>)</li>
+              <li><a href="{{ url_for('data.view_low_level', mbid=mbid) }}">Low level data</a>
+                  (<a href="{{ url_for('data.get_low_level', mbid=mbid) }}">raw JSON</a>)</li>
               {% if other -%}
-                <li><a href="{{ url_for('view_high_level', mbid=mbid) }}">High level data</a>
-                    (<a href="{{ url_for('get_high_level', mbid=mbid) }}">raw JSON</a>)</li>
+                <li><a href="{{ url_for('data.view_high_level', mbid=mbid) }}">High level data</a>
+                    (<a href="{{ url_for('data.get_high_level', mbid=mbid) }}">raw JSON</a>)</li>
               {%- endif %}
             </ul>
           </p>

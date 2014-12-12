@@ -130,11 +130,15 @@ def create_path(path):
 
 
 def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
-    """Removes all files or directories that match specified pattern except two last.
-    :param location: Location that needs to be cleaned up.
-    :param pattern: Regular expression that will be used to filter entries in the specified location.
-    :param is_dir: True if directories need to be removed, False if files.
-    :param sort_key: See https://docs.python.org/2/howto/sorting.html?highlight=sort#key-functions.
+    """Removes all files or directories that match specified pattern except two
+    last based on sort key.
+
+    Args:
+        location: Location that needs to be cleaned up.
+        pattern: Regular expression that will be used to filter entries in the
+            specified location.
+        is_dir: True if directories need to be removed, False if files.
+        sort_key: See https://docs.python.org/2/howto/sorting.html?highlight=sort#key-functions.
     """
     entries = [os.path.join(location, e) for e in os.listdir(location)]
     pattern = re.compile(pattern)

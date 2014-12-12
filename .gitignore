@@ -55,6 +55,7 @@ target/
 
 # project specific stuff
 acousticbrainz/config.py
+/export
 ve
 *.swp
 high-level/streaming_extractor_music_svm

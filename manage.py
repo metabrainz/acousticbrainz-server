@@ -1,18 +1,9 @@
 ﻿from __future__ import print_function
 from flask_script import Manager
+from datetime import datetime
 import acousticbrainz
-from flask import jsonify
-from datetime import datetime
-from time import gmtime, strftime
-import subprocess
 import tarfile
-import shutil
-import errno
 import psycopg2
-import sys
-import os
-from datetime import datetime
-import unicodedata
 import shutil
 import errno
 import sys

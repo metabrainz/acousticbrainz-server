@@ -8,19 +8,19 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="{{ url_for('index') }}">AcousticBrainz</a>
+      <a class="navbar-brand" href="{{ url_for('index.index') }}">AcousticBrainz</a>
     </div>
 
     {#- Collect the nav links, forms, and other content for toggling -#}
     <div class="collapse navbar-collapse" id="cb-navbar-collapse">
       {%- if not error -%} {# Not showing this stuff on error pages. If attempt to load user info failes there, page will not render. #}
         <ul class="nav navbar-nav">
-          <li><a href="{{ url_for('contribute') }}">Contribute</a></li>
-          <li><a href="{{ url_for('download') }}">Download</a></li>
-          <li><a href="{{ url_for('goals') }}">Goals</a></li>
-          <li><a href="{{ url_for('data') }}">API/Data</a></li>
-          <li><a href="{{ url_for('faq') }}">FAQ</a></li>
-          <li><a href="{{ url_for('statistics_graph') }}">Detailed Statistics</a></li>
+          <li><a href="{{ url_for('index.contribute') }}">Contribute</a></li>
+          <li><a href="{{ url_for('index.download') }}">Download</a></li>
+          <li><a href="{{ url_for('index.goals') }}">Goals</a></li>
+          <li><a href="{{ url_for('data.data') }}">API/Data</a></li>
+          <li><a href="{{ url_for('index.faq') }}">FAQ</a></li>
+          <li><a href="{{ url_for('stats.statistics_graph') }}">Detailed Statistics</a></li>
         </ul>
       {%- endif -%}
     </div>

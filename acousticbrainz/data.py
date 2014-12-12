@@ -13,7 +13,7 @@ STATS_CACHE_TIMEOUT = 60 * 10  # ten minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 
-def submit_low_level(mbid, data):
+def submit_low_level_data(mbid, data):
     """Function for submitting low-level data.
 
     Args:

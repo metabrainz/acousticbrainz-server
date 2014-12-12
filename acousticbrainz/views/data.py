@@ -1,5 +1,5 @@
 from flask import Blueprint, request, Response, render_template, redirect
-from acousticbrainz.data import load_low_level, load_high_level, submit_low_level, get_summary_data
+from acousticbrainz.data import load_low_level, load_high_level, submit_low_level_data, get_summary_data
 from werkzeug.exceptions import BadRequest
 from urllib import quote_plus
 import json
@@ -26,7 +26,7 @@ def submit_low_level(mbid):
     except ValueError, e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
-    submit_low_level(mbid, data)
+    submit_low_level_data(mbid, data)
     return ""
 
 

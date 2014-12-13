@@ -32,11 +32,16 @@ def _has_key(dictionary, keys):
     return True
 
 
-def sanity_check_json(data):
-    for check in SANITY_CHECK_KEYS:
-        if not _has_key(data, check):
-            return "key '%s' was not found in submitted data." % ' : '.join(check)
-    return ""
+def sanity_check_data(data):
+    """Checks if data about the track contains all required keys.
+
+    Returns:
+        First key that is missing or None if everything is in place.
+    """
+    for key in SANITY_CHECK_KEYS:
+        if not _has_key(data, key):
+            return key
+    return None
 
 
 def clean_metadata(data):

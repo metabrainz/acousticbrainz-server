@@ -1,5 +1,5 @@
 import psycopg2
-from acousticbrainz.utils import sanity_check_json, clean_metadata, interpret_high_level
+from acousticbrainz.utils import sanity_check_data, clean_metadata, interpret_high_level
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, InternalServerError, NotFound
 from flask import current_app
 from hashlib import sha256
@@ -39,10 +39,9 @@ def submit_low_level_data(mbid, data):
     except KeyError:
         pass
 
-    # sanity check the incoming data
-    err = sanity_check_json(data)
-    if err:
-        raise BadRequest(err)
+    missing_key = sanity_check_data(data)
+    if missing_key is not None:
+        raise BadRequest("Key '%s' was not found in submitted data." % ' : '.join(missing_key))
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
     if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():

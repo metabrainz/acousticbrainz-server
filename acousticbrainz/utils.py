@@ -23,11 +23,22 @@ SANITY_CHECK_KEYS = [
 ]
 
 
-def _has_key(dictionary, keys):
-    for k in keys:
-        if k not in dictionary:
+def _has_key(dictionary, key):
+    """Checks if muti-level dictionary contains in item referenced by a
+    specified key.
+
+    Args:
+        dictionary: Multi-level dictionary that needs to be checked.
+        keys: List of keys that will be checked. For example, key
+            ['metadata', 'tags'] represents dictionary['metadata']['tags'].
+    Returns:
+        True if dictionary contains item with a specified key, False if it
+        wasn't found.
+    """
+    for part in key:
+        if part not in dictionary:
             return False
-        dictionary = dictionary[k]
+        dictionary = dictionary[part]
     return True
 
 

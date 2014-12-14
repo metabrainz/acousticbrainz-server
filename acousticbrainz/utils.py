@@ -59,10 +59,10 @@ def sanity_check_data(data):
 def clean_metadata(data):
     """Check that tags are in our whitelist. If not, throw them away."""
     tags = data["metadata"]["tags"]
-    for k in tags.keys():
-        k = k.lower()
-        if k not in _whitelist_tags:
-            del tags[k]
+    for tag in tags.keys():
+        tag = tag.lower()
+        if tag not in _whitelist_tags:
+            del tags[tag]
     data["metadata"]["tags"] = tags
     return data
 

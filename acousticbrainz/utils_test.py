@@ -1,5 +1,5 @@
 from acousticbrainz.testing import FlaskTestCase
-from acousticbrainz.utils import _has_key, sanity_check_data
+from acousticbrainz.utils import _has_key, sanity_check_data, clean_metadata
 
 
 class UtilsTestCase(FlaskTestCase):
@@ -51,3 +51,17 @@ class UtilsTestCase(FlaskTestCase):
         del data['metadata']['tags']['file_name']
 
         self.assertEquals(sanity_check_data(data), ['metadata', 'tags', 'file_name'])
+
+    def test_clean_metadata(self):
+        data = {
+            "metadata": {
+                "tags": {
+                    "file_name": "18 I Was Born for This.mp3",
+                    "musicbrainz_recordingid": ["8c12af5a-f9a2-42fa-9dbe-032d7a1f4d5b"],
+                    "unknown_tag": "Hello! I am unknown tag!",
+                },
+            },
+        }
+        clean_metadata(data)
+        self.assertFalse('unknown_tag' in data['metadata']['tags'])
+        self.assertTrue('file_name' in data['metadata']['tags'])

@@ -45,6 +45,8 @@ def _has_key(dictionary, key):
 def sanity_check_data(data):
     """Checks if data about the track contains all required keys.
 
+    Args:
+        data: Dictionary that contains information about the track.
     Returns:
         First key that is missing or None if everything is in place.
     """

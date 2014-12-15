@@ -70,7 +70,8 @@ def clean_metadata(data):
 def _interpret(text, data, threshold):
     if data['probability'] >= threshold:
         return text, data['value'].replace("_", " "), "%.3f" % data['probability']
-    return text, UNSURE,"%.3f" %  data['probability']
+    else:
+        return text, UNSURE, "%.3f" % data['probability']
 
 
 def interpret_high_level(hl):

@@ -166,7 +166,6 @@ def get_summary_data(mbid):
 
         return lowlevel, highlevel, genres, moods, other
 
-
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
     except psycopg2.OperationalError, e:

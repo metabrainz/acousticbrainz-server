@@ -1,4 +1,3 @@
-import uuid
 import json
 import os
 
@@ -24,28 +23,46 @@ SANITY_CHECK_KEYS = [
 ]
 
 
-def _has_key(dictionary, keys):
-    for k in keys:
-        if k not in dictionary:
+def _has_key(dictionary, key):
+    """Checks if muti-level dictionary contains in item referenced by a
+    specified key.
+
+    Args:
+        dictionary: Multi-level dictionary that needs to be checked.
+        keys: List of keys that will be checked. For example, key
+            ['metadata', 'tags'] represents dictionary['metadata']['tags'].
+    Returns:
+        True if dictionary contains item with a specified key, False if it
+        wasn't found.
+    """
+    for part in key:
+        if part not in dictionary:
             return False
-        dictionary = dictionary[k]
+        dictionary = dictionary[part]
     return True
 
 
-def sanity_check_json(data):
-    for check in SANITY_CHECK_KEYS:
-        if not _has_key(data, check):
-            return "key '%s' was not found in submitted data." % ' : '.join(check)
-    return ""
+def sanity_check_data(data):
+    """Checks if data about the track contains all required keys.
+
+    Args:
+        data: Dictionary that contains information about the track.
+    Returns:
+        First key that is missing or None if everything is in place.
+    """
+    for key in SANITY_CHECK_KEYS:
+        if not _has_key(data, key):
+            return key
+    return None
 
 
 def clean_metadata(data):
     """Check that tags are in our whitelist. If not, throw them away."""
     tags = data["metadata"]["tags"]
-    for k in tags.keys():
-        k = k.lower()
-        if k not in _whitelist_tags:
-            del tags[k]
+    for tag in tags.keys():
+        tag = tag.lower()
+        if tag not in _whitelist_tags:
+            del tags[tag]
     data["metadata"]["tags"] = tags
     return data
 
@@ -53,7 +70,8 @@ def clean_metadata(data):
 def _interpret(text, data, threshold):
     if data['probability'] >= threshold:
         return text, data['value'].replace("_", " "), "%.3f" % data['probability']
-    return text, UNSURE,"%.3f" %  data['probability']
+    else:
+        return text, UNSURE, "%.3f" % data['probability']
 
 
 def interpret_high_level(hl):

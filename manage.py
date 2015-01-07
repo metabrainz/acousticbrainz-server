@@ -47,7 +47,7 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
         f.write(str(acousticbrainz.__version__))
 
     # Creating the archive
-    with tarfile.open("%s/abdump.tar.bz2" % dump_dir, "w:bz2") as tar:
+    with tarfile.open("%s/abdump.tar" % dump_dir, "w") as tar:
         base_archive_dir = '%s/abdump' % temp_dir
         create_path(base_archive_dir)
 
@@ -63,7 +63,7 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
         tar.add('%s/TIMESTAMP' % temp_dir, arcname='TIMESTAMP')
         tar.add('%s/SCHEMA_SEQUENCE' % temp_dir, arcname='SCHEMA_SEQUENCE')
 
-        print(" + %s/abdump.tar.bz2" % dump_dir)
+        print(" + %s/abdump.tar" % dump_dir)
 
     shutil.rmtree(temp_dir)  # Cleanup
 
@@ -78,12 +78,11 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
 def importer(archive, temp_dir="temp"):
     """Imports database dump (archive) produced by export command.
 
-    You should only import data into empty tables to prevent conflicts.
-    Importing only supported for bzip2 compressed tar archives. It will fail
-    if version of the schema that provided archive requires is different from
-    the current. Make sure you have the latest dump available.
+    You should only import data into empty tables to prevent conflicts. It will
+    fail if version of the schema that provided archive requires is different
+    from the current. Make sure you have the latest dump available.
     """
-    archive = tarfile.open(archive, 'r:bz2')
+    archive = tarfile.open(archive, 'r')
     # TODO: Read data from the archive without extracting it into temporary directory
     archive.extractall(temp_dir)
 

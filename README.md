@@ -9,6 +9,7 @@ Requirements
 * [Python](https://www.python.org/) 2.7.x
 * Python modules listed in `requirements.txt` (can be installed with `pip`, see below)
 * [PostgreSQL](http://www.postgresql.org/) >=9.2 (needs the JSON data type)
+* [pxz](http://manpages.ubuntu.com/manpages/trusty/man1/pxz.1.html)
 
 Install
 -------

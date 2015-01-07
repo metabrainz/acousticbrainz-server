@@ -114,7 +114,7 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
 
 
 @manager.command
-def importer(archive, temp_dir="temp"):
+def importer(archive):
     """Imports database dump (.tar.xz archive) produced by export command.
 
     You should only import data into empty tables to prevent conflicts. It will
@@ -122,42 +122,32 @@ def importer(archive, temp_dir="temp"):
     from the current. Make sure you have the latest dump available.
     """
     subprocess.check_call(['pxz', '-d', '-k', archive])
-    archive = tarfile.open(archive[:-3], 'r')  # removing ".xz"
-    # TODO: Read data from the archive without extracting it into temporary directory
-    archive.extractall(temp_dir)
+    tar_file_path = archive[:-3]  # removing ".xz" extension
+    with tarfile.open(tar_file_path, 'r') as tar:
 
-    # Verifying schema version
-    try:
-        with open('%s/SCHEMA_SEQUENCE' % temp_dir) as f:
-            archive_version = f.readline()
-            if archive_version != str(acousticbrainz.__version__):
-                sys.exit("Incorrect schema version! Expected: %d, got: %c. Please, get the latest version of the dump."
-                         % (acousticbrainz.__version__, archive_version))
-    except IOError as exception:
-        if exception.errno == errno.ENOENT:
-            print("Can't find SCHEMA_SEQUENCE in the specified archive. Importing might fail.")
-        else:
-            sys.exit("Failed to open SCHEMA_SEQUENCE file. Error: %s" % exception)
+        # Verifying schema version
+        version = tar.extractfile('SCHEMA_SEQUENCE').readline()
+        if str(acousticbrainz.__version__) != version:
+            sys.exit("Incorrect schema version! Expected: %d, got: %c."
+                     "Please, get latest version of the dump."
+                     % (acousticbrainz.__version__, version))
 
-    # Importing data
-    for table in _tables:
-        _import_data('%s/abdump/%s' % (temp_dir, table[0]), table[0], table[1])
-    shutil.rmtree(temp_dir)  # Cleanup
+        # Importing data
+        cursor = db_connection.cursor()
+        for table in _tables:
+            print("Importing data into %s table." % table[0])
+            try:
+                f = tar.extractfile('abdump/%s' % table[0])
+                cursor.copy_from(f, '"%s"' % table[0], columns=table[1])
+                db_connection.commit()
+            except IOError as exception:
+                if exception.errno == errno.ENOENT:
+                    print("Can't find data file for %s table. Skipping." % table[0])
+                else:
+                    sys.exit("Failed to open data file. Error: %s" % exception)
+
+    os.remove(tar_file_path)  # Cleanup
     print("Done!")
-
-
-def _import_data(file_name, table, columns):
-    cursor = db_connection.cursor()
-    try:
-        with open(file_name) as f:
-            print("Importing data into %s table." % table)
-            cursor.copy_from(f, '"%s"' % table, columns=columns)
-            db_connection.commit()
-    except IOError as exception:
-        if exception.errno == errno.ENOENT:
-            print("Can't find data file for %s table. Skipping." % table)
-        else:
-            sys.exit("Failed to open data file. Error: %s" % exception)
 
 
 def create_path(path):

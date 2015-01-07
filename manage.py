@@ -61,7 +61,7 @@ _tables = (
 
 
 @manager.command
-def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
+def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=False):
     print("Creating new archives...")
     time_now = datetime.today()
 
@@ -97,7 +97,11 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
         tar.add('%s/SCHEMA_SEQUENCE' % temp_dir, arcname='SCHEMA_SEQUENCE')
 
     # Compressing created archive using pxz
-    subprocess.check_call(['pxz', '-z', '%s/abdump.tar' % dump_dir])
+    pxz_command = ['pxz', '-z', '%s/abdump.tar' % dump_dir]
+    if threads is not None:
+        pxz_command.append('-T %s' % threads)
+    print(pxz_command)
+    subprocess.check_call(pxz_command)
     print(" + %s/abdump.tar.xz" % dump_dir)
 
     shutil.rmtree(temp_dir)  # Cleanup

@@ -34,7 +34,7 @@ def create_app():
     app.register_blueprint(data_bp)
     app.register_blueprint(stats_bp)
 
-    from acousticbrainz.views.data import init_websocket
+    from acousticbrainz.websocket import init_websocket
     init_websocket(app)
 
     return app

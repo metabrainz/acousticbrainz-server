@@ -16,32 +16,46 @@ manager = Manager(app)
 db_connection = psycopg2.connect(app.config['PG_CONNECT'])
 
 # Importing of old dumps will fail if you change
-# order of the columns defined below.
-_LOWLEVEL_COLUMNS = (
-    'id',
-    'mbid',
-    'build_sha1',
-    'lossless',
-    'data',
-    'submitted',
-    'data_sha256',
-)
-_HIGHLEVEL_COLUMNS = (
-    'id',
-    'mbid',
-    'build_sha1',
-    'data',
-    'submitted',
-)
-_HIGHLEVEL_JSON_COLUMNS = (
-    'id',
-    'data',
-    'data_sha256',
-)
-_STATISTICS_COLUMNS = (
-    'name',
-    'value',
-    'collected',
+# definition of tables below.
+_tables = (
+    (
+        'lowlevel',
+        (
+            'id',
+            'mbid',
+            'build_sha1',
+            'lossless',
+            'data',
+            'submitted',
+            'data_sha256',
+        )
+    ),
+    (
+        'highlevel',
+        (
+            'id',
+            'mbid',
+            'build_sha1',
+            'data',
+            'submitted',
+        )
+    ),
+    (
+        'highlevel_json',
+        (
+            'id',
+            'data',
+            'data_sha256',
+        )
+    ),
+    (
+        'statistics',
+        (
+            'name',
+            'value',
+            'collected',
+        )
+    ),
 )
 
 
@@ -71,20 +85,9 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
 
         base_archive_tables_dir = '%s/abdump' % base_archive_dir
         create_path(base_archive_tables_dir)
-
-        # lowlevel
-        with open('%s/lowlevel' % base_archive_tables_dir, 'w') as f:
-            cursor.copy_to(f, 'lowlevel', columns=_LOWLEVEL_COLUMNS)
-        # highlevel
-        with open('%s/highlevel' % base_archive_tables_dir, 'w') as f:
-            cursor.copy_to(f, 'highlevel', columns=_HIGHLEVEL_COLUMNS)
-        # highlevel_json
-        with open('%s/highlevel_json' % base_archive_tables_dir, 'w') as f:
-            cursor.copy_to(f, 'highlevel_json', columns=_HIGHLEVEL_JSON_COLUMNS)
-        # statistics
-        with open('%s/statistics' % base_archive_tables_dir, 'w') as f:
-            cursor.copy_to(f, 'statistics', columns=_STATISTICS_COLUMNS)
-
+        for table in _tables:
+            with open('%s/%s' % (base_archive_tables_dir, table[0]), 'w') as f:
+                cursor.copy_to(f, table[0], columns=table[1])
         tar.add(base_archive_tables_dir, arcname='abdump')
 
         # Including additional information about this archive
@@ -129,10 +132,8 @@ def importer(archive, temp_dir="temp"):
             sys.exit("Failed to open SCHEMA_SEQUENCE file. Error: %s" % exception)
 
     # Importing data
-    _import_data('%s/abdump/lowlevel' % temp_dir, 'lowlevel', _LOWLEVEL_COLUMNS)
-    _import_data('%s/abdump/highlevel' % temp_dir, 'highlevel', _HIGHLEVEL_COLUMNS)
-    _import_data('%s/abdump/highlevel_json' % temp_dir, 'highlevel_json', _HIGHLEVEL_JSON_COLUMNS)
-    _import_data('%s/abdump/statistics' % temp_dir, 'statistics', _STATISTICS_COLUMNS)
+    for table in _tables:
+        _import_data('%s/abdump/%s' % (temp_dir, table[0]), table[0], table[1])
     shutil.rmtree(temp_dir)  # Cleanup
     print("Done!")
 

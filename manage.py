@@ -15,15 +15,33 @@ manager = Manager(app)
 
 db_connection = psycopg2.connect(app.config['PG_CONNECT'])
 
-# If you change the order of columns defined below, importing will break.
+# Importing of old dumps will fail if you change
+# order of the columns defined below.
 _LOWLEVEL_COLUMNS = (
-    'id', 
+    'id',
     'mbid',
     'build_sha1',
     'lossless',
     'data',
     'submitted',
     'data_sha256',
+)
+_HIGHLEVEL_COLUMNS = (
+    'id',
+    'mbid',
+    'build_sha1',
+    'data',
+    'submitted',
+)
+_HIGHLEVEL_JSON_COLUMNS = (
+    'id',
+    'data',
+    'data_sha256',
+)
+_STATISTICS_COLUMNS = (
+    'name',
+    'value',
+    'collected',
 )
 
 
@@ -51,11 +69,22 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
         base_archive_dir = '%s/abdump' % temp_dir
         create_path(base_archive_dir)
 
-        # Dumping tables
         base_archive_tables_dir = '%s/abdump' % base_archive_dir
         create_path(base_archive_tables_dir)
+
+        # lowlevel
         with open('%s/lowlevel' % base_archive_tables_dir, 'w') as f:
             cursor.copy_to(f, 'lowlevel', columns=_LOWLEVEL_COLUMNS)
+        # highlevel
+        with open('%s/highlevel' % base_archive_tables_dir, 'w') as f:
+            cursor.copy_to(f, 'highlevel', columns=_HIGHLEVEL_COLUMNS)
+        # highlevel_json
+        with open('%s/highlevel_json' % base_archive_tables_dir, 'w') as f:
+            cursor.copy_to(f, 'highlevel_json', columns=_HIGHLEVEL_JSON_COLUMNS)
+        # statistics
+        with open('%s/statistics' % base_archive_tables_dir, 'w') as f:
+            cursor.copy_to(f, 'statistics', columns=_STATISTICS_COLUMNS)
+
         tar.add(base_archive_tables_dir, arcname='abdump')
 
         # Including additional information about this archive
@@ -101,6 +130,9 @@ def importer(archive, temp_dir="temp"):
 
     # Importing data
     _import_data('%s/abdump/lowlevel' % temp_dir, 'lowlevel', _LOWLEVEL_COLUMNS)
+    _import_data('%s/abdump/highlevel' % temp_dir, 'highlevel', _HIGHLEVEL_COLUMNS)
+    _import_data('%s/abdump/highlevel_json' % temp_dir, 'highlevel_json', _HIGHLEVEL_JSON_COLUMNS)
+    _import_data('%s/abdump/statistics' % temp_dir, 'statistics', _STATISTICS_COLUMNS)
     shutil.rmtree(temp_dir)  # Cleanup
     print("Done!")
 

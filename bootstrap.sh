@@ -2,7 +2,7 @@
 
 apt-get update
 apt-get -y upgrade
-apt-get -y install python-virtualenv python-dev
+apt-get -y install python-virtualenv python-dev pxz
 
 # Setting up PostgreSQL
 PG_VERSION=9.3

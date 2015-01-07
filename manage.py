@@ -2,6 +2,7 @@
 from flask_script import Manager
 from datetime import datetime
 import acousticbrainz
+import subprocess
 import tarfile
 import psycopg2
 import shutil
@@ -95,7 +96,9 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
         tar.add('%s/TIMESTAMP' % temp_dir, arcname='TIMESTAMP')
         tar.add('%s/SCHEMA_SEQUENCE' % temp_dir, arcname='SCHEMA_SEQUENCE')
 
-        print(" + %s/abdump.tar" % dump_dir)
+    # Compressing created archive using pxz
+    subprocess.check_call(['pxz', '-z', '%s/abdump.tar' % dump_dir])
+    print(" + %s/abdump.tar.xz" % dump_dir)
 
     shutil.rmtree(temp_dir)  # Cleanup
 
@@ -108,13 +111,14 @@ def export(location=os.path.join(os.getcwd(), 'export'), rotate=False):
 
 @manager.command
 def importer(archive, temp_dir="temp"):
-    """Imports database dump (archive) produced by export command.
+    """Imports database dump (.tar.xz archive) produced by export command.
 
     You should only import data into empty tables to prevent conflicts. It will
     fail if version of the schema that provided archive requires is different
     from the current. Make sure you have the latest dump available.
     """
-    archive = tarfile.open(archive, 'r')
+    subprocess.check_call(['pxz', '-d', '-k', archive])
+    archive = tarfile.open(archive[:-3], 'r')  # removing ".xz"
     # TODO: Read data from the archive without extracting it into temporary directory
     archive.extractall(temp_dir)
 

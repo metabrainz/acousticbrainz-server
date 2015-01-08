@@ -3,5 +3,8 @@
 # Create the database
 psql -U postgres < create-test-db.sql
 
-# Create the tables
-psql -U ab_test ab_test < create-tables.sql
+# Create the stuff
+psql -U ab_test ab_test < sql/create_tables.sql
+psql -U ab_test ab_test < sql/create_primary_keys.sql
+psql -U ab_test ab_test < sql/create_foreign_keys.sql
+psql -U ab_test ab_test < sql/create_indexes.sql

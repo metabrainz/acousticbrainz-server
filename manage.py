@@ -61,6 +61,38 @@ _tables = (
 
 
 @manager.command
+def init_db(archive):
+    """Initializes database and imports data if needed.
+
+    This process involves several steps:
+    1. Table structure is created.
+    2. Data is imported from the dump if it exists.
+    3. Primary keys and foreign keys are created.
+    3. Indexes are created.
+
+    Data dump needs to be a .tar.xz archive produced by export command.
+
+    More information about populating a PostgreSQL database efficently can be
+    found at http://www.postgresql.org/docs/current/static/populate.html.
+    """
+    print('Creating tables...')
+    _run_sql_script('admin/sql/create_tables.sql')
+
+    # TODO: Make importing optional
+    print('Importing data...')
+    _import_data(archive)
+
+    print('Creating primary and foreign keys...')
+    _run_sql_script('admin/sql/create_primary_keys.sql')
+    _run_sql_script('admin/sql/create_foreign_keys.sql')
+
+    print('Creating indexes...')
+    _run_sql_script('admin/sql/create_indexes.sql')
+
+    print("Done!")
+
+
+@manager.command
 def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=False):
     print("Creating new archives...")
     time_now = datetime.today()
@@ -113,14 +145,13 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
     print("Done!")
 
 
-@manager.command
-def importer(archive):
-    """Imports database dump (.tar.xz archive) produced by export command.
+def _run_sql_script(sql_file):
+    cursor = db_connection.cursor()
+    with open(sql_file) as sql:
+        cursor.execute(sql.read())
 
-    You should only import data into empty tables to prevent conflicts. It will
-    fail if version of the schema that provided archive requires is different
-    from the current. Make sure you have the latest dump available.
-    """
+
+def _import_data(archive):
     subprocess.check_call(['pxz', '-d', '-k', archive])
     tar_file_path = archive[:-3]  # removing ".xz" extension
     with tarfile.open(tar_file_path, 'r') as tar:
@@ -145,9 +176,7 @@ def importer(archive):
                     print("Can't find data file for %s table. Skipping." % table[0])
                 else:
                     sys.exit("Failed to open data file. Error: %s" % exception)
-
     os.remove(tar_file_path)  # Cleanup
-    print("Done!")
 
 
 def create_path(path):

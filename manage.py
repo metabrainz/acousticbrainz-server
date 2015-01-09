@@ -167,7 +167,7 @@ def _import_data(archive):
             file_name = item.name.split('/')[-1]
             if file_name in table_names:
                 print(" - Importing data into %s table..." % file_name)
-                f = tar.extractfile(item.name)
+                f = tar.extractfile(item)
                 cursor.copy_from(f, '"%s"' % file_name, columns=_tables[file_name])
         db_connection.commit()
 

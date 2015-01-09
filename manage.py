@@ -3,6 +3,7 @@ from flask_script import Manager
 from datetime import datetime
 import acousticbrainz
 import subprocess
+import tempfile
 import tarfile
 import psycopg2
 import shutil
@@ -86,9 +87,9 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
     time_now = datetime.today()
 
     # Creating a directory where dump will go
-    dump_dir = '%s/%s' % (location, time_now.strftime('%Y%m%d-%H%M%S'))
-    create_path(dump_dir)
-    with open('%s/abdump.tar.xz' % dump_dir, 'w') as archive:
+    create_path(location)
+    archive_path = '%s/abdump-%s.tar.xz' % (location, time_now.strftime('%Y%m%d-%H%M%S'))
+    with open(archive_path, 'w') as archive:
 
         pxz_command = ['pxz', '--compress']
         if threads is not None:
@@ -98,8 +99,7 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
         # Creating the archive
         with tarfile.open(fileobj=pxz.stdin, mode='w|') as tar:
             # TODO(roman): Get rid of temporary directories and write directly to tar file
-            temp_dir = '%s/temp' % dump_dir
-            create_path(temp_dir)
+            temp_dir = tempfile.mkdtemp()
 
             # Adding metadata
             with open('%s/SCHEMA_SEQUENCE' % temp_dir, 'w') as f:
@@ -124,9 +124,12 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
 
         pxz.stdin.close()
 
+    print("Database dump created:\n +", archive_path)
+
     if rotate:
         print("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "[0-9]+-[0-9]+", is_dir=True)
+        remove_old_archives(location, "abdump-[0-9]+-[0-9]+.tar.xz",
+                            is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
     print("Done!")
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Create the database
-psql -U postgres < create-db.sql
+psql -U postgres < sql/create_db.sql
 
 # Create the stuff
 psql -U acousticbrainz acousticbrainz < sql/create_tables.sql

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Create the database
-psql -U postgres < create-test-db.sql
+psql -U postgres < sql/create_test_db.sql
 
 # Create the stuff
 psql -U ab_test ab_test < sql/create_tables.sql

@@ -152,8 +152,7 @@ def export_json(no_highlevel, no_lowlevel):
 @manager.command
 def export_lowlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=False):
     print("Dumping lowlevel data (JSON)...")
-    dump_lowlevel_json(location)
-    print("Done!")
+    print("Done! Created:", dump_lowlevel_json(location))
 
     if rotate:
         print("Removing old sets of archives (except two latest)...")
@@ -164,8 +163,7 @@ def export_lowlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=Fa
 @manager.command
 def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=False):
     print("Dumping highlevel data (JSON)...")
-    dump_highlevel_json(location)
-    print("Done!")
+    print("Done! Created:", dump_highlevel_json(location))
 
     if rotate:
         print("Removing old sets of archives (except two latest)...")
@@ -180,6 +178,7 @@ def _run_sql_script(sql_file):
 
 
 def _import_data(archive):
+    """Import data from .tar.xz archive into the database."""
     pxz_command = ['pxz', '--decompress', '--stdout', archive]
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 

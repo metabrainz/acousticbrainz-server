@@ -50,12 +50,12 @@ _tables = {
 
 
 @manager.command
-def init_db(archive):
+def init_db(archive=None):
     """Initializes database and imports data if needed.
 
     This process involves several steps:
     1. Table structure is created.
-    2. Data is imported from the dump if it exists.
+    2. Data is imported from the archive if it is specified.
     3. Primary keys and foreign keys are created.
     3. Indexes are created.
 
@@ -67,9 +67,9 @@ def init_db(archive):
     print('Creating tables...')
     _run_sql_script('admin/sql/create_tables.sql')
 
-    # TODO: Make importing optional
-    print('Importing data...')
-    _import_data(archive)
+    if archive:
+        print('Importing data...')
+        _import_data(archive)
 
     print('Creating primary and foreign keys...')
     _run_sql_script('admin/sql/create_primary_keys.sql')

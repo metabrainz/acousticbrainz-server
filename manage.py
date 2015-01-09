@@ -87,7 +87,7 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
 
     # Creating a directory where dump will go
     create_path(location)
-    archive_path = '%s/abdump-%s.tar.xz' % (location, time_now.strftime('%Y%m%d-%H%M%S'))
+    archive_path = '%s/acousticbrainzdump-%s.tar.xz' % (location, time_now.strftime('%Y%m%d-%H%M%S'))
     with open(archive_path, 'w') as archive:
 
         pxz_command = ['pxz', '--compress']
@@ -127,7 +127,7 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
 
     if rotate:
         print("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "abdump-[0-9]+-[0-9]+.tar.xz",
+        remove_old_archives(location, "acousticbrainzdump-[0-9]+-[0-9]+.tar.xz",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
     print("Done!")

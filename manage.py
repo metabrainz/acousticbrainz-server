@@ -17,47 +17,35 @@ manager = Manager(app)
 db_connection = psycopg2.connect(app.config['PG_CONNECT'])
 
 # Importing of old dumps will fail if you change
-# definition of tables below.
-_tables = (
-    (
-        'lowlevel',
-        (
-            'id',
-            'mbid',
-            'build_sha1',
-            'lossless',
-            'data',
-            'submitted',
-            'data_sha256',
-        )
+# definition of columns below.
+_tables = {
+    'lowlevel': (
+        'id',
+        'mbid',
+        'build_sha1',
+        'lossless',
+        'data',
+        'submitted',
+        'data_sha256',
     ),
-    (
-        'highlevel',
-        (
-            'id',
-            'mbid',
-            'build_sha1',
-            'data',
-            'submitted',
-        )
+    'highlevel': (
+        'id',
+        'mbid',
+        'build_sha1',
+        'data',
+        'submitted',
     ),
-    (
-        'highlevel_json',
-        (
-            'id',
-            'data',
-            'data_sha256',
-        )
+    'highlevel_json': (
+        'id',
+        'data',
+        'data_sha256',
     ),
-    (
-        'statistics',
-        (
-            'name',
-            'value',
-            'collected',
-        )
+    'statistics': (
+        'name',
+        'value',
+        'collected',
     ),
-)
+}
 
 
 @manager.command
@@ -94,49 +82,47 @@ def init_db(archive):
 
 @manager.command
 def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=False):
-    print("Creating new archives...")
+    print("Creating new archive...")
     time_now = datetime.today()
 
-    # Getting psycopg2 cursor
-    cursor = db_connection.cursor()
-
-    # Creating a directory where all dumps will go
+    # Creating a directory where dump will go
     dump_dir = '%s/%s' % (location, time_now.strftime('%Y%m%d-%H%M%S'))
-    temp_dir = '%s/temp' % dump_dir
-    create_path(temp_dir)
+    create_path(dump_dir)
+    with open('%s/abdump.tar.xz' % dump_dir, 'w') as archive:
 
-    # Preparing meta files
-    with open('%s/TIMESTAMP' % temp_dir, 'w') as f:
-        f.write(time_now.isoformat(' '))
-    with open('%s/SCHEMA_SEQUENCE' % temp_dir, 'w') as f:
-        f.write(str(acousticbrainz.__version__))
+        pxz_command = ['pxz', '--compress']
+        if threads is not None:
+            pxz_command.append('-T %s' % threads)
+        pxz = subprocess.Popen(pxz_command, stdin=subprocess.PIPE, stdout=archive)
 
-    # Creating the archive
-    with tarfile.open("%s/abdump.tar" % dump_dir, "w") as tar:
-        base_archive_dir = '%s/abdump' % temp_dir
-        create_path(base_archive_dir)
+        # Creating the archive
+        with tarfile.open(fileobj=pxz.stdin, mode='w|') as tar:
+            # TODO(roman): Get rid of temporary directories and write directly to tar file
+            temp_dir = '%s/temp' % dump_dir
+            create_path(temp_dir)
 
-        base_archive_tables_dir = '%s/abdump' % base_archive_dir
-        create_path(base_archive_tables_dir)
-        for table in _tables:
-            with open('%s/%s' % (base_archive_tables_dir, table[0]), 'w') as f:
-                cursor.copy_to(f, table[0], columns=table[1])
-        tar.add(base_archive_tables_dir, arcname='abdump')
+            # Adding metadata
+            with open('%s/SCHEMA_SEQUENCE' % temp_dir, 'w') as f:
+                f.write(str(acousticbrainz.__version__))
+            tar.add('%s/SCHEMA_SEQUENCE' % temp_dir, arcname='SCHEMA_SEQUENCE')
+            with open('%s/TIMESTAMP' % temp_dir, 'w') as f:
+                f.write(time_now.isoformat(' '))
+            tar.add('%s/TIMESTAMP' % temp_dir, arcname='TIMESTAMP')
+            tar.add('licenses/COPYING-PublicDomain', arcname='COPYING')
 
-        # Including additional information about this archive
-        tar.add('licenses/COPYING-PublicDomain', arcname='COPYING')
-        tar.add('%s/TIMESTAMP' % temp_dir, arcname='TIMESTAMP')
-        tar.add('%s/SCHEMA_SEQUENCE' % temp_dir, arcname='SCHEMA_SEQUENCE')
+            archive_dir = '%s/abdump' % temp_dir
+            archive_tables_dir = '%s/abdump' % archive_dir
+            create_path(archive_tables_dir)
+            cursor = db_connection.cursor()
+            for table in _tables.keys():
+                print(" - Dumping %s table..." % table)
+                with open('%s/%s' % (archive_tables_dir, table), 'w') as f:
+                    cursor.copy_to(f, table, columns=_tables[table])
+            tar.add(archive_tables_dir, arcname='abdump')
 
-    # Compressing created archive using pxz
-    pxz_command = ['pxz', '-z', '%s/abdump.tar' % dump_dir]
-    if threads is not None:
-        pxz_command.append('-T %s' % threads)
-    print(pxz_command)
-    subprocess.check_call(pxz_command)
-    print(" + %s/abdump.tar.xz" % dump_dir)
+            shutil.rmtree(temp_dir)  # Cleanup
 
-    shutil.rmtree(temp_dir)  # Cleanup
+        pxz.stdin.close()
 
     if rotate:
         print("Removing old dumps (except two latest)...")
@@ -152,31 +138,40 @@ def _run_sql_script(sql_file):
 
 
 def _import_data(archive):
-    subprocess.check_call(['pxz', '-d', '-k', archive])
-    tar_file_path = archive[:-3]  # removing ".xz" extension
-    with tarfile.open(tar_file_path, 'r') as tar:
+    pxz_command = ['pxz', '--decompress', '--stdout', archive]
+    pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
+
+    with tarfile.open(fileobj=pxz.stdout, mode='r|') as tar:
+        members = tar.getmembers()
 
         # Verifying schema version
-        version = tar.extractfile('SCHEMA_SEQUENCE').readline()
-        if str(acousticbrainz.__version__) != version:
-            sys.exit("Incorrect schema version! Expected: %d, got: %c."
-                     "Please, get latest version of the dump."
-                     % (acousticbrainz.__version__, version))
+        item = members.pop(0)
+        if item.name == 'SCHEMA_SEQUENCE':
+            version = tar.extractfile(item).readline()
+            if str(acousticbrainz.__version__) != version:
+                sys.exit("Incorrect schema version! Expected: %d, got: %c."
+                         "Please, get the latest version of the dump."
+                         % (acousticbrainz.__version__, version))
+            else:
+                print("Schema version verified.")
+        else:
+            sys.exit("Incorrect data dump structure! Please get the latest"
+                     "version of the dump.")
 
         # Importing data
+        table_names = _tables.keys()
         cursor = db_connection.cursor()
-        for table in _tables:
-            print("Importing data into %s table." % table[0])
-            try:
-                f = tar.extractfile('abdump/%s' % table[0])
-                cursor.copy_from(f, '"%s"' % table[0], columns=table[1])
-                db_connection.commit()
-            except IOError as exception:
-                if exception.errno == errno.ENOENT:
-                    print("Can't find data file for %s table. Skipping." % table[0])
-                else:
-                    sys.exit("Failed to open data file. Error: %s" % exception)
-    os.remove(tar_file_path)  # Cleanup
+        for item in members:
+            file_name = item.name.split('/')[-1]
+            print(item.name, file_name)
+            if file_name in table_names:
+                print(" - Importing data into %s table..." % file_name)
+                f = tar.extractfile(item.name)
+                print(f)
+                cursor.copy_from(f, '"%s"' % file_name, columns=_tables[file_name])
+        db_connection.commit()
+
+    pxz.stdout.close()
 
 
 def create_path(path):

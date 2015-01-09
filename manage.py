@@ -1,12 +1,13 @@
 ﻿from __future__ import print_function
 from flask_script import Manager
+from admin.dump_json import dump_lowlevel_json, dump_highlevel_json
 from admin.utils import create_path, remove_old_archives
 from datetime import datetime
 import acousticbrainz
 import subprocess
 import tempfile
-import tarfile
 import psycopg2
+import tarfile
 import shutil
 import sys
 import os
@@ -131,6 +132,45 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
     print("Done!")
+
+
+@manager.option('-nh', '--no-highlevel', dest='no_highlevel', action='store_true',
+                help="Don't dump high level data.", default=False)
+@manager.option('-nl', '--no-lowlevel', dest='no_lowlevel', action='store_true',
+                help="Don't tump low level data.", default=False)
+def export_json(no_highlevel, no_lowlevel):
+    if no_highlevel and no_lowlevel:
+        print("wut? check your options, mate!")
+
+    if not no_highlevel:
+        export_highlevel_json()
+
+    if not no_lowlevel:
+        export_lowlevel_json()
+
+
+@manager.command
+def export_lowlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=False):
+    print("Dumping lowlevel data (JSON)...")
+    dump_lowlevel_json(location)
+    print("Done!")
+
+    if rotate:
+        print("Removing old sets of archives (except two latest)...")
+        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+-json.tar.bz2",
+                            is_dir=False, sort_key=lambda x: os.path.getmtime(x))
+
+
+@manager.command
+def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=False):
+    print("Dumping highlevel data (JSON)...")
+    dump_highlevel_json(location)
+    print("Done!")
+
+    if rotate:
+        print("Removing old sets of archives (except two latest)...")
+        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+-json.tar.bz2",
+                            is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
 def _run_sql_script(sql_file):

@@ -1,23 +1,17 @@
-#!/usr/bin/env python
-
-import sys
-sys.path.append("../acousticbrainz")
 from admin.utils import create_path, remove_old_archives
+from acousticbrainz import config
 import tarfile
 import shutil
 import os
 import psycopg2
-import config
 from datetime import datetime
 import argparse
 
 DUMP_CHUNK_SIZE = 1000
 
 
-def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
-    """
-        Create JSON dumps with all low level documents
-    """
+def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump')):
+    """Create JSON dumps with all low level documents."""
 
     temp_dir = '%s/temp' % location
     create_path(temp_dir)
@@ -70,21 +64,13 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False)
                 count += 1
 
         # Copying legal text
-        tar.add("../licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
+        tar.add("licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
 
     shutil.rmtree(temp_dir)  # Cleanup
 
-    if rotate:
-        print("Removing old sets of archives (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-[0-9]+-json.tar.bz2",
-                            is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
-    print("\nDone!")
-
-def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False):
-    """
-        Create JSON dumps with all high level documents
-    """
+def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump')):
+    """Create JSON dumps with all high level documents."""
 
     temp_dir = '%s/temp' % location
     create_path(temp_dir)
@@ -141,31 +127,6 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump'), rotate=False
                 count += 1
 
         # Copying legal text
-        tar.add("../licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
 
     shutil.rmtree(temp_dir)  # Cleanup
-
-    if rotate:
-        print("Removing old sets of archives (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-[0-9]+-json.tar.bz2",
-                            is_dir=False, sort_key=lambda x: os.path.getmtime(x))
-
-    print("\nDone!")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Create JSON data dump')
-    parser.add_argument("-nh", "--no-highlevel", help="Don't dump high level data", default=False, action='store_true')
-    parser.add_argument("-nl", "--no-lowlevel", help="Don't tump low level data", default=False, action='store_true')
-    args = parser.parse_args()
-
-
-    if args.no_highlevel and args.no_lowlevel:
-        print "wut? check your options, mate!"
-
-    if not args.no_highlevel:
-        print "Dumping highlevel data"
-        dump_highlevel_json()
-
-    if not args.no_lowlevel:
-        print "Dumping lowlevel data"
-        dump_lowlevel_json()
+        tar.add("licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))

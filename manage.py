@@ -143,34 +143,30 @@ def _import_data(archive):
     pxz_command = ['pxz', '--decompress', '--stdout', archive]
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 
+    table_names = _tables.keys()
+    cursor = db_connection.cursor()
+
     with tarfile.open(fileobj=pxz.stdout, mode='r|') as tar:
-        members = tar.getmembers()
+        for member in tar:
 
-        # Verifying schema version
-        item = members.pop(0)
-        if item.name == 'SCHEMA_SEQUENCE':
-            version = tar.extractfile(item).readline()
-            if str(acousticbrainz.__version__) != version:
-                sys.exit("Incorrect schema version! Expected: %d, got: %c."
-                         "Please, get the latest version of the dump."
-                         % (acousticbrainz.__version__, version))
+            if member.name == 'SCHEMA_SEQUENCE':
+                # Verifying schema version
+                schema_seq = int(tar.extractfile(member).read().strip())
+                if schema_seq != acousticbrainz.__version__:
+                    sys.exit("Incorrect schema version! Expected: %d, got: %d."
+                             "Please, get the latest version of the dump."
+                             % (acousticbrainz.__version__, schema_seq))
+                else:
+                    print("Schema version verified.")
+
             else:
-                print("Schema version verified.")
-        else:
-            sys.exit("Incorrect data dump structure! Please get the latest"
-                     "version of the dump.")
+                file_name = member.name.split('/')[-1]
+                if file_name in table_names:
+                    print(" - Importing data into %s table..." % file_name)
+                    cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
+                                     columns=_tables[file_name])
 
-        # Importing data
-        table_names = _tables.keys()
-        cursor = db_connection.cursor()
-        for item in members:
-            file_name = item.name.split('/')[-1]
-            if file_name in table_names:
-                print(" - Importing data into %s table..." % file_name)
-                f = tar.extractfile(item)
-                cursor.copy_from(f, '"%s"' % file_name, columns=_tables[file_name])
-        db_connection.commit()
-
+    db_connection.commit()
     pxz.stdout.close()
 
 

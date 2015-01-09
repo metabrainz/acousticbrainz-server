@@ -1,37 +1,44 @@
-from admin.utils import create_path, remove_old_archives
+from __future__ import print_function
+from admin.utils import create_path
 from acousticbrainz import config
-import tarfile
-import shutil
-import os
-import psycopg2
 from datetime import datetime
-import argparse
+import psycopg2
+import tarfile
+import os
 
 DUMP_CHUNK_SIZE = 1000
 
 
-def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump')):
-    """Create JSON dumps with all low level documents."""
+def dump_lowlevel_json(location):
+    """Create JSON dumps with all low level documents.
 
-    temp_dir = '%s/temp' % location
-    create_path(temp_dir)
+    Args:
+        location: Directory where archive will be created.
+
+    Returns:
+        Path to created archive.
+    """
+
+    # Creating a directory where dump will go
+    create_path(location)
 
     conn = psycopg2.connect(config.PG_CONNECT)
-    conn2 = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     cur2 = conn.cursor()
 
-    with tarfile.open("%s/acousticbrainz-lowlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
-        last_mbid = ""
+    archive_path = "%s/acousticbrainz-lowlevel-json-%s-json.tar.bz2" % \
+                   (location, datetime.today().strftime('%Y%m%d'))
+
+    with tarfile.open(archive_path, "w:bz2") as tar:
+        last_mbid = None
         index = 0
-        print "  run queries..."
-        cur.execute("""SELECT id FROM lowlevel ll ORDER BY mbid""")
+        cur.execute("SELECT id FROM lowlevel ll ORDER BY mbid")
         while True:
-            id_list = cur.fetchmany(size = DUMP_CHUNK_SIZE)
+            id_list = cur.fetchmany(size=DUMP_CHUNK_SIZE)
             if not id_list:
                 break
 
-            id_list = tuple([ i[0] for i in id_list ])
+            id_list = tuple([i[0] for i in id_list])
 
             count = 0
             cur2.execute("SELECT mbid, data::text FROM lowlevel WHERE id IN %s ORDER BY mbid", (id_list,))
@@ -44,7 +51,7 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump')):
                 json = row[1]
 
                 if count == 0:
-                    print "\r  write %s" % mbid,
+                    print(" - %s" % mbid)
 
                 if mbid == last_mbid:
                     index += 1
@@ -66,31 +73,39 @@ def dump_lowlevel_json(location=os.path.join(os.getcwd(), 'dump')):
         # Copying legal text
         tar.add("licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
 
-    shutil.rmtree(temp_dir)  # Cleanup
+    return archive_path
 
 
-def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump')):
-    """Create JSON dumps with all high level documents."""
+def dump_highlevel_json(location):
+    """Create JSON dumps with all high level documents.
 
-    temp_dir = '%s/temp' % location
-    create_path(temp_dir)
+    Args:
+        location: Directory where archive will be created.
+
+    Returns:
+        Path to created archive.
+    """
+
+    # Creating a directory where dump will go
+    create_path(location)
 
     conn = psycopg2.connect(config.PG_CONNECT)
-    conn2 = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     cur2 = conn.cursor()
 
-    with tarfile.open("%s/acousticbrainz-highlevel-json-%s-json.tar.bz2" % (location, datetime.today().strftime('%Y%m%d')), "w:bz2") as tar:
-        last_mbid = ""
+    archive_path = "%s/acousticbrainz-highlevel-json-%s-json.tar.bz2" % \
+                   (location, datetime.today().strftime('%Y%m%d'))
+
+    with tarfile.open(archive_path, "w:bz2") as tar:
+        last_mbid = None
         index = 0
-        print "  run queries..."
-        cur.execute("""SELECT hl.id FROM highlevel hl, highlevel_json hlj WHERE hl.data = hlj.id ORDER BY mbid""")
+        cur.execute("SELECT hl.id FROM highlevel hl, highlevel_json hlj WHERE hl.data = hlj.id ORDER BY mbid")
         while True:
-            id_list = cur.fetchmany(size = DUMP_CHUNK_SIZE)
+            id_list = cur.fetchmany(size=DUMP_CHUNK_SIZE)
             if not id_list:
                 break
 
-            id_list = tuple([ i[0] for i in id_list ])
+            id_list = tuple([i[0] for i in id_list])
 
             count = 0
             cur2.execute("""SELECT mbid, hlj.data::text
@@ -107,7 +122,7 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump')):
                 json = row[1]
 
                 if count == 0:
-                    print "\r  write %s" % mbid,
+                    print(" - write %s" % mbid)
 
                 if mbid == last_mbid:
                     index += 1
@@ -127,6 +142,6 @@ def dump_highlevel_json(location=os.path.join(os.getcwd(), 'dump')):
                 count += 1
 
         # Copying legal text
-
-    shutil.rmtree(temp_dir)  # Cleanup
         tar.add("licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
+
+    return archive_path

@@ -65,18 +65,18 @@ def init_db(archive=None):
     found at http://www.postgresql.org/docs/current/static/populate.html.
     """
     print('Creating tables...')
-    _run_sql_script('admin/sql/create_tables.sql')
+    _run_sql_script(os.path.join('admin', 'sql', 'create_tables.sql'))
 
     if archive:
         print('Importing data...')
         _import_data(archive)
 
     print('Creating primary and foreign keys...')
-    _run_sql_script('admin/sql/create_primary_keys.sql')
-    _run_sql_script('admin/sql/create_foreign_keys.sql')
+    _run_sql_script(os.path.join('admin', 'sql', 'create_primary_keys.sql'))
+    _run_sql_script(os.path.join('admin', 'sql', 'create_foreign_keys.sql'))
 
     print('Creating indexes...')
-    _run_sql_script('admin/sql/create_indexes.sql')
+    _run_sql_script(os.path.join('admin', 'sql', 'create_indexes.sql'))
 
     print("Done!")
 
@@ -88,7 +88,9 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
 
     # Creating a directory where dump will go
     create_path(location)
-    archive_path = '%s/acousticbrainzdump-%s.tar.xz' % (location, time_now.strftime('%Y%m%d-%H%M%S'))
+    archive_path = os.path.join(location, 'acousticbrainzdump-%s.tar.xz' %
+                                time_now.strftime('%Y%m%d-%H%M%S'))
+
     with open(archive_path, 'w') as archive:
 
         pxz_command = ['pxz', '--compress']
@@ -102,21 +104,22 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
             temp_dir = tempfile.mkdtemp()
 
             # Adding metadata
-            with open('%s/SCHEMA_SEQUENCE' % temp_dir, 'w') as f:
+            schema_seq_path = os.path.join(temp_dir, 'SCHEMA_SEQUENCE')
+            with open(schema_seq_path, 'w') as f:
                 f.write(str(acousticbrainz.__version__))
-            tar.add('%s/SCHEMA_SEQUENCE' % temp_dir, arcname='SCHEMA_SEQUENCE')
-            with open('%s/TIMESTAMP' % temp_dir, 'w') as f:
+            tar.add(schema_seq_path, arcname='SCHEMA_SEQUENCE')
+            timestamp_path = os.path.join(temp_dir, 'TIMESTAMP')
+            with open(timestamp_path, 'w') as f:
                 f.write(time_now.isoformat(' '))
-            tar.add('%s/TIMESTAMP' % temp_dir, arcname='TIMESTAMP')
-            tar.add('licenses/COPYING-PublicDomain', arcname='COPYING')
+            tar.add(timestamp_path, arcname='TIMESTAMP')
+            tar.add(os.path.join('licenses', 'COPYING-PublicDomain'), arcname='COPYING')
 
-            archive_dir = '%s/abdump' % temp_dir
-            archive_tables_dir = '%s/abdump' % archive_dir
+            archive_tables_dir = os.path.join(temp_dir, 'abdump', 'abdump')
             create_path(archive_tables_dir)
             cursor = db_connection.cursor()
             for table in _tables.keys():
                 print(" - Dumping %s table..." % table)
-                with open('%s/%s' % (archive_tables_dir, table), 'w') as f:
+                with open(os.path.join(archive_tables_dir, table), 'w') as f:
                     cursor.copy_to(f, table, columns=_tables[table])
             tar.add(archive_tables_dir, arcname='abdump')
 
@@ -173,9 +176,9 @@ def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=F
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-def _run_sql_script(sql_file):
+def _run_sql_script(sql_file_path):
     cursor = db_connection.cursor()
-    with open(sql_file) as sql:
+    with open(sql_file_path) as sql:
         cursor.execute(sql.read())
 
 

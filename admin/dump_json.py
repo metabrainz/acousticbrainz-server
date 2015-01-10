@@ -18,16 +18,13 @@ def dump_lowlevel_json(location):
     Returns:
         Path to created archive.
     """
-
-    # Creating a directory where dump will go
-    create_path(location)
-
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     cur2 = conn.cursor()
 
-    archive_path = "%s/acousticbrainz-lowlevel-json-%s-json.tar.bz2" % \
-                   (location, datetime.today().strftime('%Y%m%d'))
+    create_path(location)
+    archive_path = os.path.join(location, "acousticbrainz-lowlevel-json-%s-json.tar.bz2" %
+                                datetime.today().strftime('%Y%m%d'))
 
     with tarfile.open(archive_path, "w:bz2") as tar:
         last_mbid = None
@@ -71,7 +68,9 @@ def dump_lowlevel_json(location):
                 count += 1
 
         # Copying legal text
-        tar.add("licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
+        tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
+                arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'),
+                                     'COPYING'))
 
     return archive_path
 
@@ -85,16 +84,13 @@ def dump_highlevel_json(location):
     Returns:
         Path to created archive.
     """
-
-    # Creating a directory where dump will go
-    create_path(location)
-
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
     cur2 = conn.cursor()
 
-    archive_path = "%s/acousticbrainz-highlevel-json-%s-json.tar.bz2" % \
-                   (location, datetime.today().strftime('%Y%m%d'))
+    create_path(location)
+    archive_path = os.path.join(location, "acousticbrainz-highlevel-json-%s-json.tar.bz2" %
+                                datetime.today().strftime('%Y%m%d'))
 
     with tarfile.open(archive_path, "w:bz2") as tar:
         last_mbid = None
@@ -142,6 +138,8 @@ def dump_highlevel_json(location):
                 count += 1
 
         # Copying legal text
-        tar.add("licenses/COPYING-PublicDomain", arcname=os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'), 'COPYING'))
+        tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
+                arcname=os.path.join("acousticbrainz-highlevel-json-" + datetime.today().strftime('%Y%m%d'),
+                                     'COPYING'))
 
     return archive_path

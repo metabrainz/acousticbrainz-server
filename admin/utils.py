@@ -5,7 +5,6 @@ import shutil
 import errno
 import os
 import re
-import sys
 
 
 def create_path(path):
@@ -14,7 +13,8 @@ def create_path(path):
         os.makedirs(path)
     except OSError as exception:
         if exception.errno != errno.EEXIST:
-            sys.exit("Failed to create directory structure %s. Error: %s" % (path, exception))
+            raise Exception("Failed to create directory structure %s. Error: %s" %
+                            (path, exception))
 
 
 def remove_old_archives(location, pattern, is_dir=False, sort_key=None):

@@ -152,7 +152,8 @@ def export_json(no_highlevel, no_lowlevel):
 @manager.command
 def export_lowlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=False):
     print("Dumping lowlevel data (JSON)...")
-    print("Done! Created:", dump_lowlevel_json(location))
+    path = dump_lowlevel_json(location)
+    print("Done! Created:", path)
 
     if rotate:
         print("Removing old sets of archives (except two latest)...")
@@ -163,7 +164,8 @@ def export_lowlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=Fa
 @manager.command
 def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=False):
     print("Dumping highlevel data (JSON)...")
-    print("Done! Created:", dump_highlevel_json(location))
+    path = dump_highlevel_json(location)
+    print("Done! Created:", path)
 
     if rotate:
         print("Removing old sets of archives (except two latest)...")

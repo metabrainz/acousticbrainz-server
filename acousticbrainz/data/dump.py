@@ -101,9 +101,9 @@ def dump_db(location, threads=None):
     return archive_path
 
 
-def import_db_dump(archive):
+def import_db_dump(archive_path):
     """Import data from .tar.xz archive into the database."""
-    pxz_command = ['pxz', '--decompress', '--stdout', archive]
+    pxz_command = ['pxz', '--decompress', '--stdout', archive_path]
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 
     table_names = _TABLES.keys()

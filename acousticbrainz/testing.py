@@ -21,6 +21,7 @@ class FlaskTestCase(TestCase):
         cur.execute("TRUNCATE highlevel CASCADE;")
         cur.execute("TRUNCATE lowlevel CASCADE;")
         cur.execute("TRUNCATE statistics CASCADE;")
+        cur.execute("TRUNCATE incremental_dumps CASCADE;")
         conn.commit()
         cur.close()
         conn.close()

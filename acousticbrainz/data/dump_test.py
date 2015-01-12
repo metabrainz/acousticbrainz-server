@@ -30,3 +30,14 @@ class DataDumpTestCase(FlaskTestCase):
     def test_dump_highlevel_json(self):
         path = dump.dump_highlevel_json(self.temp_dir)
         self.assertTrue(os.path.isfile(path))
+
+    def test_create_new_inc_dump_record(self):
+        id_1 = dump._create_new_inc_dump_record()[0]
+        id_2 = dump._create_new_inc_dump_record()[0]
+        self.assertNotEqual(id_1, id_2)
+
+    def test_get_last_inc_dump_time(self):
+        self.assertIsNone(dump._get_last_inc_dump_time())
+
+        dump_id, dump_time = dump._create_new_inc_dump_record()
+        self.assertEqual(dump._get_last_inc_dump_time(), dump_time)

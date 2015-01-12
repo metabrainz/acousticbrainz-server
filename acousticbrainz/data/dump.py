@@ -41,10 +41,14 @@ _TABLES = {
         'value',
         'collected',
     ),
+    'incremental_dumps': (
+        'id',
+        'created',
+    ),
 }
 
 
-def dump_db(location, threads=None):
+def dump_db(location, threads=None, incremental=False):
     """Create complete database dump in a specified location.
 
     Args:
@@ -54,13 +58,18 @@ def dump_db(location, threads=None):
     Returns:
         Path to created dump.
     """
+    create_path(location)
     time_now = datetime.today()
 
-    # Creating a directory where dump will go
-    create_path(location)
-    archive_path = os.path.join(location, 'acousticbrainzdump-%s.tar.xz' %
-                                time_now.strftime('%Y%m%d-%H%M%S'))
+    if incremental:
+        start_t = _get_last_inc_dump_time()
+        dump_id, end_t = _create_new_inc_dump_record()
+        archive_name = 'acousticbrainzdump-incr-%s.tar.xz' % dump_id
+    else:
+        start_t, end_t = None, None
+        archive_name = 'acousticbrainzdump-%s.tar.xz' % time_now.strftime('%Y%m%d-%H%M%S')
 
+    archive_path = os.path.join(location, archive_name)
     with open(archive_path, 'w') as archive:
 
         pxz_command = ['pxz', '--compress']
@@ -86,12 +95,7 @@ def dump_db(location, threads=None):
 
             archive_tables_dir = os.path.join(temp_dir, 'abdump', 'abdump')
             create_path(archive_tables_dir)
-            conn = psycopg2.connect(config.PG_CONNECT)
-            cursor = conn.cursor()
-            for table in _TABLES.keys():
-                print(" - Dumping %s table..." % table)
-                with open(os.path.join(archive_tables_dir, table), 'w') as f:
-                    cursor.copy_to(f, table, columns=_TABLES[table])
+            _copy_tables(archive_tables_dir, start_t, end_t)
             tar.add(archive_tables_dir, arcname='abdump')
 
             shutil.rmtree(temp_dir)  # Cleanup
@@ -99,6 +103,49 @@ def dump_db(location, threads=None):
         pxz.stdin.close()
 
     return archive_path
+
+
+def _copy_tables(location, start_time=None, end_time=None):
+    """Copies all tables into separate files in a specify directory.
+
+    You can also define time frame that will be used during data selection.
+    This will only work on tables that support incremental dumping.
+    """
+    conn = psycopg2.connect(config.PG_CONNECT)
+    cursor = conn.cursor()
+
+    # Copying tables that can be split up for incremental dumps
+
+    if start_time or end_time:
+        start_cond = "submitted > '%s'" % str(start_time) if start_time else ''
+        end_cond = "submitted <= '%s'" % str(end_time) if end_time else ''
+        if start_time and end_time:
+            where = "WHERE %s AND %s" % (start_cond, end_cond)
+        else:
+            where = "WHERE %s%s" % (start_cond, end_cond)
+    else:
+        where = ''
+
+    # lowlevel
+    with open(os.path.join(location, 'lowlevel'), 'w') as f:
+        print(" - Copying table lowlevel...")
+        cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
+                       (', '.join(_TABLES['lowlevel']), where))
+
+    # highlevel
+    with open(os.path.join(location, 'highlevel'), 'w') as f:
+        print(" - Copying table highlevel...")
+        where = "WHERE submitted >= '%s'" % str(start_time) if start_time else ''
+        cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
+                       (', '.join(_TABLES['highlevel']), where))
+
+    # Copying tables that are always dumped with all rows
+    for table in _TABLES.keys():
+        if table in ('lowlevel', 'highlevel',):
+            continue
+        print(" - Copying table %s..." % table)
+        with open(os.path.join(location, table), 'w') as f:
+            cursor.copy_to(f, table, columns=_TABLES[table])
 
 
 def import_db_dump(archive_path):
@@ -269,3 +316,22 @@ def dump_highlevel_json(location):
                                      'COPYING'))
 
     return archive_path
+
+
+def _create_new_inc_dump_record():
+    """Creates new record for incremental dump and returns its ID and creation time."""
+    db = psycopg2.connect(config.PG_CONNECT)
+    cursor = db.cursor()
+    cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
+    db.commit()
+    return cursor.fetchone()
+
+
+def _get_last_inc_dump_time():
+    cursor = psycopg2.connect(config.PG_CONNECT).cursor()
+    cursor.execute("SELECT created FROM incremental_dumps ORDER BY id")
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+    else:
+        return None

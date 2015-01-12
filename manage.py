@@ -53,7 +53,12 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
         remove_old_archives(location, "acousticbrainzdump-[0-9]+-[0-9]+.tar.xz",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
-    print("Done!")
+
+@manager.command
+def export_incremental(location=os.path.join(os.getcwd(), 'export'), threads=None):
+    print("Creating incremental database dump...")
+    path = dump_db(location, threads, incremental=True)
+    print("Done! Created:", path)
 
 
 @manager.option('-nh', '--no-highlevel', dest='no_highlevel', action='store_true',

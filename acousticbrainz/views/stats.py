@@ -1,5 +1,5 @@
 from flask import Blueprint, Response, render_template
-from acousticbrainz.data import get_statistics_data
+from acousticbrainz.data.stats import get_statistics_data
 from operator import itemgetter
 import json
 

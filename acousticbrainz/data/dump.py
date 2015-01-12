@@ -1,12 +1,138 @@
 from __future__ import print_function
-from admin.utils import create_path
 from acousticbrainz import config
+from admin.utils import create_path
 from datetime import datetime
+import acousticbrainz
+import subprocess
+import tempfile
 import psycopg2
 import tarfile
+import shutil
 import os
 
 DUMP_CHUNK_SIZE = 1000
+
+# Importing of old dumps will fail if you change
+# definition of columns below.
+_TABLES = {
+    'lowlevel': (
+        'id',
+        'mbid',
+        'build_sha1',
+        'lossless',
+        'data',
+        'submitted',
+        'data_sha256',
+    ),
+    'highlevel': (
+        'id',
+        'mbid',
+        'build_sha1',
+        'data',
+        'submitted',
+    ),
+    'highlevel_json': (
+        'id',
+        'data',
+        'data_sha256',
+    ),
+    'statistics': (
+        'name',
+        'value',
+        'collected',
+    ),
+}
+
+
+def dump_db(location, threads=None):
+    """Create complete database dump in a specified location.
+
+    Args:
+        location: Directory where archive will be created.
+        threads: Maximal number of threads to run during compression.
+
+    Returns:
+        Path to created dump.
+    """
+    time_now = datetime.today()
+
+    # Creating a directory where dump will go
+    create_path(location)
+    archive_path = os.path.join(location, 'acousticbrainzdump-%s.tar.xz' %
+                                time_now.strftime('%Y%m%d-%H%M%S'))
+
+    with open(archive_path, 'w') as archive:
+
+        pxz_command = ['pxz', '--compress']
+        if threads is not None:
+            pxz_command.append('-T %s' % threads)
+        pxz = subprocess.Popen(pxz_command, stdin=subprocess.PIPE, stdout=archive)
+
+        # Creating the archive
+        with tarfile.open(fileobj=pxz.stdin, mode='w|') as tar:
+            # TODO(roman): Get rid of temporary directories and write directly to tar file
+            temp_dir = tempfile.mkdtemp()
+
+            # Adding metadata
+            schema_seq_path = os.path.join(temp_dir, 'SCHEMA_SEQUENCE')
+            with open(schema_seq_path, 'w') as f:
+                f.write(str(acousticbrainz.__version__))
+            tar.add(schema_seq_path, arcname='SCHEMA_SEQUENCE')
+            timestamp_path = os.path.join(temp_dir, 'TIMESTAMP')
+            with open(timestamp_path, 'w') as f:
+                f.write(time_now.isoformat(' '))
+            tar.add(timestamp_path, arcname='TIMESTAMP')
+            tar.add(os.path.join('licenses', 'COPYING-PublicDomain'), arcname='COPYING')
+
+            archive_tables_dir = os.path.join(temp_dir, 'abdump', 'abdump')
+            create_path(archive_tables_dir)
+            conn = psycopg2.connect(config.PG_CONNECT)
+            cursor = conn.cursor()
+            for table in _TABLES.keys():
+                print(" - Dumping %s table..." % table)
+                with open(os.path.join(archive_tables_dir, table), 'w') as f:
+                    cursor.copy_to(f, table, columns=_TABLES[table])
+            tar.add(archive_tables_dir, arcname='abdump')
+
+            shutil.rmtree(temp_dir)  # Cleanup
+
+        pxz.stdin.close()
+
+    return archive_path
+
+
+def import_db_dump(archive):
+    """Import data from .tar.xz archive into the database."""
+    pxz_command = ['pxz', '--decompress', '--stdout', archive]
+    pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
+
+    table_names = _TABLES.keys()
+
+    conn = psycopg2.connect(config.PG_CONNECT)
+    cursor = conn.cursor()
+
+    with tarfile.open(fileobj=pxz.stdout, mode='r|') as tar:
+        for member in tar:
+
+            if member.name == 'SCHEMA_SEQUENCE':
+                # Verifying schema version
+                schema_seq = int(tar.extractfile(member).read().strip())
+                if schema_seq != acousticbrainz.__version__:
+                    raise Exception("Incorrect schema version! Expected: %d, got: %d."
+                                    "Please, get the latest version of the dump."
+                                    % (acousticbrainz.__version__, schema_seq))
+                else:
+                    print("Schema version verified.")
+
+            else:
+                file_name = member.name.split('/')[-1]
+                if file_name in table_names:
+                    print(" - Importing data into %s table..." % file_name)
+                    cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
+                                     columns=_TABLES[file_name])
+
+    conn.commit()
+    pxz.stdout.close()
 
 
 def dump_lowlevel_json(location):
@@ -16,7 +142,7 @@ def dump_lowlevel_json(location):
         location: Directory where archive will be created.
 
     Returns:
-        Path to created archive.
+        Path to created low level JSON dump.
     """
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()
@@ -82,7 +208,7 @@ def dump_highlevel_json(location):
         location: Directory where archive will be created.
 
     Returns:
-        Path to created archive.
+        Path to created high level JSON dump.
     """
     conn = psycopg2.connect(config.PG_CONNECT)
     cur = conn.cursor()

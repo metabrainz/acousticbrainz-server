@@ -3,6 +3,8 @@ acousticbrainz-server
 
 The server components for the new AcousticBrainz project.
 
+Please report issues here: http://tickets.musicbrainz.org/browse/AB
+
 Requirements
 ------------
 

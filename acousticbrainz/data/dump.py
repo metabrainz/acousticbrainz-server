@@ -1,3 +1,12 @@
+"""
+Functions for exporting and importing AcousticBrainz data in various formats.
+
+There are two types of data dumps:
+1. Full dumps (high/low level information about all tracks in JSON format
+or raw information from all tables in TSV format).
+2. Incremental dumps (similar to the first one, but some dumped tables don't
+include information from the previous dumps).
+"""
 from __future__ import print_function
 from acousticbrainz import config
 from admin.utils import create_path
@@ -54,6 +63,8 @@ def dump_db(location, threads=None, incremental=False):
     Args:
         location: Directory where archive will be created.
         threads: Maximal number of threads to run during compression.
+        incremental: False if resulting data dump should be complete, False if
+            it needs to be incremental.
 
     Returns:
         Path to created dump.
@@ -106,10 +117,11 @@ def dump_db(location, threads=None, incremental=False):
 
 
 def _copy_tables(location, start_time=None, end_time=None):
-    """Copies all tables into separate files in a specify directory.
+    """Copies all tables into separate files within a specified directory.
 
     You can also define time frame that will be used during data selection.
-    This will only work on tables that support incremental dumping.
+    This will only work on tables that support incremental dumping: "lowlevel"
+    and "highlevel".
     """
     conn = psycopg2.connect(config.PG_CONNECT)
     cursor = conn.cursor()

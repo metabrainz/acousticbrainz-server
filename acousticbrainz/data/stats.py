@@ -10,11 +10,6 @@ LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 
 def get_last_submitted_tracks():
-    """Function for getting a list of recently submitted tracks.
-
-    Returns:
-        List of recently submitted tracks. Contains MBID, artist and title.
-    """
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)
     last_submitted_data = mc.get('last-submitted-data')
     if not last_submitted_data:

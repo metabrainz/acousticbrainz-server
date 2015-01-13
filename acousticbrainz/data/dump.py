@@ -76,10 +76,10 @@ def dump_db(location, threads=None, incremental=False):
         last = get_inc_dump_info()
         start_t = last[1] if last else None
         dump_id, end_t = _create_new_inc_dump_record()
-        archive_name = 'acousticbrainzdump-incr-%s.tar.xz' % dump_id
+        archive_name = 'acousticbrainz-dump-incr-%s.tar.xz' % dump_id
     else:
         start_t, end_t = None, None
-        archive_name = 'acousticbrainzdump-%s.tar.xz' % time_now.strftime('%Y%m%d-%H%M%S')
+        archive_name = 'acousticbrainz-dump-%s.tar.xz' % time_now.strftime('%Y%m%d-%H%M%S')
 
     archive_path = os.path.join(location, archive_name)
     with open(archive_path, 'w') as archive:

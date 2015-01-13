@@ -34,10 +34,10 @@ class DataDumpTestCase(FlaskTestCase):
     def test_create_new_inc_dump_record(self):
         id_1 = dump._create_new_inc_dump_record()[0]
         id_2 = dump._create_new_inc_dump_record()[0]
-        self.assertNotEqual(id_1, id_2)
+        self.assertTrue(id_1 < id_2)
 
-    def test_get_last_inc_dump_time(self):
-        self.assertIsNone(dump._get_last_inc_dump_time())
+    def test_get_last_inc_dump_info(self):
+        self.assertIsNone(dump.get_inc_dump_info())
 
         dump_id, dump_time = dump._create_new_inc_dump_record()
-        self.assertEqual(dump._get_last_inc_dump_time(), dump_time)
+        self.assertEqual(dump.get_inc_dump_info()[1], dump_time)

@@ -73,7 +73,8 @@ def dump_db(location, threads=None, incremental=False):
     time_now = datetime.today()
 
     if incremental:
-        start_t = _get_last_inc_dump_time()
+        last = get_inc_dump_info()
+        start_t = last[1] if last else None
         dump_id, end_t = _create_new_inc_dump_record()
         archive_name = 'acousticbrainzdump-incr-%s.tar.xz' % dump_id
     else:
@@ -339,11 +340,18 @@ def _create_new_inc_dump_record():
     return cursor.fetchone()
 
 
-def _get_last_inc_dump_time():
+def get_inc_dump_info(all=False):
+    """Returns information about incremental dumps.
+
+    Args:
+        all: Whether to return information about all incremental dumps (True)
+            or just the last one.
+
+    Returns:
+        * One (id, created) pair if all is set to False.
+        * List of (id, created) pairs if all is set to True.
+        * None if there are no incremental dumps.
+    """
     cursor = psycopg2.connect(config.PG_CONNECT).cursor()
-    cursor.execute("SELECT created FROM incremental_dumps ORDER BY id")
-    row = cursor.fetchone()
-    if row:
-        return row[0]
-    else:
-        return None
+    cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
+    return cursor.fetchall() if all else cursor.fetchone()

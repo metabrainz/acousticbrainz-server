@@ -3,7 +3,7 @@ from flask_script import Manager
 import os
 import acousticbrainz
 from acousticbrainz.data import run_sql_script
-from acousticbrainz.data.dump import dump_db, import_db_dump, dump_lowlevel_json, dump_highlevel_json
+from acousticbrainz.data.dump import dump_db, import_db_dump, dump_lowlevel_json, dump_highlevel_json, get_inc_dump_info
 from admin.utils import remove_old_archives
 
 app = acousticbrainz.create_app()
@@ -98,6 +98,20 @@ def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=F
         print("Removing old dumps (except two latest)...")
         remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+-json.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
+
+
+@manager.command
+def get_incremental_info(all=False):
+    info = get_inc_dump_info(all)
+    if info:
+        if all:
+            print('Incremental dumps:')
+            for current in info:
+                print(' - %s at %s' % current)
+        else:
+            print('Last dump ID: %s\nTimestamp: %s' % info)
+    else:
+        print('No incremental dumps yet.')
 
 
 if __name__ == '__main__':

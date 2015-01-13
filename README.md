@@ -12,6 +12,12 @@ Requirements
 * Python modules listed in `requirements.txt` (can be installed with `pip`, see below)
 * [PostgreSQL](http://www.postgresql.org/) >=9.2 (needs the JSON data type)
 
+If you have the latest Ubuntu install, this command will install your pre-requisites:
+
+   sudo apt-get install build-essential git-core python-dev python-virtualenv postgresql-9.3 
+                postgresql-client-9.3 postgresql-server-dev-9.3 pxz
+
+
 Install
 -------
 

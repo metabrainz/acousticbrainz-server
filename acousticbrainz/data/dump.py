@@ -57,14 +57,16 @@ _TABLES = {
 }
 
 
-def dump_db(location, threads=None, incremental=False):
-    """Create complete database dump in a specified location.
+def dump_db(location, threads=None, incremental=False, dump_id=None):
+    """Create database dump in a specified location.
 
     Args:
         location: Directory where archive will be created.
         threads: Maximal number of threads to run during compression.
         incremental: False if resulting data dump should be complete, False if
             it needs to be incremental.
+        dump_id: If you need to reproduce previously created incremental dump,
+            its identifier (integer) can be specified there.
 
     Returns:
         Path to created dump.
@@ -73,12 +75,10 @@ def dump_db(location, threads=None, incremental=False):
     time_now = datetime.today()
 
     if incremental:
-        last = get_inc_dump_info()
-        start_t = last[1] if last else None
-        dump_id, end_t = _create_new_inc_dump_record()
+        dump_id, start_t, end_t = _prepare_incremental_dump(dump_id)
         archive_name = 'acousticbrainz-dump-incr-%s.tar.xz' % dump_id
     else:
-        start_t, end_t = None, None
+        start_t, end_t = None, None  # full
         archive_name = 'acousticbrainz-dump-%s.tar.xz' % time_now.strftime('%Y%m%d-%H%M%S')
 
     archive_path = os.path.join(location, archive_name)
@@ -331,6 +331,40 @@ def dump_highlevel_json(location):
     return archive_path
 
 
+def list_incremental_dumps():
+    """Get information about all created incremental dumps.
+
+    Returns:
+        List of (id, created) pairs ordered by dump identifier, or None if
+        there are no incremental dumps yet.
+    """
+    cursor = psycopg2.connect(config.PG_CONNECT).cursor()
+    cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
+    return cursor.fetchall()
+
+
+def _prepare_incremental_dump(dump_id=None):
+    if dump_id:  # getting existing
+        existing_dumps = list_incremental_dumps()
+        start_t, end_t = None, None
+        if existing_dumps:
+            for i, dump_info in enumerate(existing_dumps):
+                if dump_info[0] == dump_id:
+                    end_t = dump_info[1]
+                    # Getting info about the dump before that specified
+                    start_t = existing_dumps[i-1][1] if i > 0 else None
+                    break
+        if not start_t and not end_t:
+            raise Exception('Cannot find incremental dump with a specified ID.'
+                            ' Please check if it exists or create a new one.')
+
+    else:  # creating new
+        start_t = _get_incremental_dump_timestamp()
+        dump_id, end_t = _create_new_inc_dump_record()
+
+    return dump_id, start_t, end_t
+
+
 def _create_new_inc_dump_record():
     """Creates new record for incremental dump and returns its ID and creation time."""
     db = psycopg2.connect(config.PG_CONNECT)
@@ -340,18 +374,11 @@ def _create_new_inc_dump_record():
     return cursor.fetchone()
 
 
-def get_inc_dump_info(all=False):
-    """Returns information about incremental dumps.
-
-    Args:
-        all: Whether to return information about all incremental dumps (True)
-            or just the last one.
-
-    Returns:
-        * One (id, created) pair if all is set to False.
-        * List of (id, created) pairs if all is set to True.
-        * None if there are no incremental dumps.
-    """
+def _get_incremental_dump_timestamp(dump_id=None):
     cursor = psycopg2.connect(config.PG_CONNECT).cursor()
-    cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
-    return cursor.fetchall() if all else cursor.fetchone()
+    if dump_id:
+        cursor.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
+    else:
+        cursor.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
+    row = cursor.fetchone()
+    return row[0] if row else None

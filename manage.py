@@ -3,7 +3,7 @@ from flask_script import Manager
 import os
 import acousticbrainz
 from acousticbrainz.data import run_sql_script
-from acousticbrainz.data.dump import dump_db, import_db_dump, dump_lowlevel_json, dump_highlevel_json, get_inc_dump_info
+from acousticbrainz.data.dump import dump_db, import_db_dump, dump_lowlevel_json, dump_highlevel_json, list_incremental_dumps
 from admin.utils import remove_old_archives
 
 app = acousticbrainz.create_app()
@@ -55,9 +55,10 @@ def export(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=Fa
 
 
 @manager.command
-def export_incremental(location=os.path.join(os.getcwd(), 'export'), threads=None):
+def export_incremental(location=os.path.join(os.getcwd(), 'export'), threads=None, inc_id=None):
     print("Creating incremental database dump...")
-    path = dump_db(location, threads, incremental=True)
+    inc_id = int(inc_id) if inc_id else None  # converting to proper type
+    path = dump_db(location, threads, incremental=True, dump_id=inc_id)
     print("Done! Created:", path)
 
 
@@ -102,14 +103,14 @@ def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=F
 
 @manager.command
 def get_incremental_info(all=False):
-    info = get_inc_dump_info(all)
+    info = list_incremental_dumps()
     if info:
         if all:
             print('Incremental dumps:')
             for current in info:
                 print(' - %s at %s' % current)
         else:
-            print('Last dump ID: %s\nTimestamp: %s' % info)
+            print('Last dump ID: %s\nTimestamp: %s' % info[0])
     else:
         print('No incremental dumps yet.')
 

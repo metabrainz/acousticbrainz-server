@@ -1,5 +1,6 @@
 import psycopg2
 from acousticbrainz.utils import sanity_check_data, clean_metadata, interpret_high_level
+from acousticbrainz.websocket import ws_broadcast
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, InternalServerError, NotFound
 from flask import current_app
 from hashlib import sha256
@@ -70,6 +71,18 @@ def submit_low_level_data(mbid, data):
                         "VALUES (%s, %s, %s, %s, %s)",
                         (mbid, build_sha1, data_sha256, is_lossless_submit, data_json))
             conn.commit()
+
+            # Sending broadcast via WebSocket
+            if 'artist' not in data['metadata']['tags']:
+                data['metadata']['tags']['artist'] = ["[unknown]"]
+            if 'title' not in data['metadata']['tags']:
+                data['metadata']['tags']['title'] = ["[unknown]"]
+            ws_broadcast({
+                'mbid': mbid,
+                'artist': data['metadata']['tags']['artist'],
+                'title': data['metadata']['tags']['title'],
+            })
+
             return ""
 
         current_app.logger.info("Already have %s" % data_sha256)

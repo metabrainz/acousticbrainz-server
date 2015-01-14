@@ -1,12 +1,12 @@
 {%- extends 'base.html' -%}
-{%- block title -%}Sample Data - AcousticBrainz{%- endblock -%}
+{%- block title -%}API - AcousticBrainz{%- endblock -%}
 {%- block content -%}
 <div id="homepage">
   <h3>AcousticBrainz API</h3>
   <div id="project-description" class="row">
     <div class="col-md-8">
       <p>
-        Before diving into the API details, please have a look at the <a href="/sample-data">sample data</a> page.
+        Before diving into the API details, please have a look at the <a href="#sample-data">sample data</a> below.
       </p><p>
         To fetch the JSON documents for a given MusicBrainz recording ID, you can construct the
         following URLs:
@@ -34,8 +34,8 @@
       </p>
     </div>
   </div>
-  <h3>Sample data</h3>
-  <div id="project-description" class="row">
+  <h3 id="sample-data">Sample data</h3>
+  <div class="row">
     <div class="col-md-12">
       <p>
         AcousticBrainz stores two levels of data: Low-level and high level.

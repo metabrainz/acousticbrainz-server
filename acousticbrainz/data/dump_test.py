@@ -1,6 +1,7 @@
 from acousticbrainz.testing import FlaskTestCase
 from acousticbrainz.data import dump
 import os.path
+import psycopg2
 import tempfile
 import shutil
 
@@ -37,12 +38,17 @@ class DataDumpTestCase(FlaskTestCase):
         self.assertTrue(id_1 < id_2)
 
     def test_get_last_inc_dump_info(self):
-        self.assertIsNone(dump.list_incremental_dumps())
-
         dump_id, dump_time = dump._create_new_inc_dump_record()
         self.assertEqual(dump.list_incremental_dumps()[0][1], dump_time)
 
     def test_prepare_incremental_dump(self):
+        db = psycopg2.connect(self.app.config["PG_CONNECT"])
+        cursor = db.cursor()
+        cursor.execute("TRUNCATE incremental_dumps CASCADE;")
+        db.commit()
+        cursor.close()
+        db.close()
+
         dump_id_first, start_t_first, end_t_first = dump._prepare_incremental_dump()
         self.assertIsNone(start_t_first)
         self.assertIsNotNone(end_t_first)

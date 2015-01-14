@@ -261,6 +261,9 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     print(" - %s" % mbid)
                 count += 1
 
+                # TODO(roman): Keep track of how many duplications of this mbid
+                # exist in the entire database, not just this dump.
+                # See http://tickets.musicbrainz.org/browse/AB-22?focusedCommentId=34976&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_34976
                 if mbid == last_mbid:
                     index += 1
                 else:
@@ -354,6 +357,9 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                     print(" - %s" % mbid)
                 count += 1
 
+                # TODO(roman): Keep track of how many duplications of this mbid
+                # exist in the entire database, not just this dump.
+                # See http://tickets.musicbrainz.org/browse/AB-22?focusedCommentId=34976&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_34976
                 if mbid == last_mbid:
                     index += 1
                 else:

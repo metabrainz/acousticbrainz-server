@@ -418,6 +418,7 @@ def _prepare_incremental_dump(dump_id=None):
 
     else:  # creating new
         start_t = _get_incremental_dump_timestamp()
+        # TODO(roman): Check if there's any new data before creating new incremental dump
         dump_id, end_t = _create_new_inc_dump_record()
 
     return dump_id, start_t, end_t

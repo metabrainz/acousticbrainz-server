@@ -76,12 +76,12 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
 
     if incremental:
         dump_id, start_t, end_t = _prepare_incremental_dump(dump_id)
-        archive_name = 'acousticbrainz-dump-incr-%s.tar.xz' % dump_id
+        archive_name = 'acousticbrainz-dump-incr-%s' % dump_id
     else:
         start_t, end_t = None, None  # full
-        archive_name = 'acousticbrainz-dump-%s.tar.xz' % time_now.strftime('%Y%m%d-%H%M%S')
+        archive_name = 'acousticbrainz-dump-%s' % time_now.strftime('%Y%m%d-%H%M%S')
 
-    archive_path = os.path.join(location, archive_name)
+    archive_path = os.path.join(location, archive_name + '.tar.xz')
     with open(archive_path, 'w') as archive:
 
         pxz_command = ['pxz', '--compress']
@@ -98,17 +98,20 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
             schema_seq_path = os.path.join(temp_dir, 'SCHEMA_SEQUENCE')
             with open(schema_seq_path, 'w') as f:
                 f.write(str(acousticbrainz.__version__))
-            tar.add(schema_seq_path, arcname='SCHEMA_SEQUENCE')
+            tar.add(schema_seq_path,
+                    arcname=os.path.join(archive_name, 'SCHEMA_SEQUENCE'))
             timestamp_path = os.path.join(temp_dir, 'TIMESTAMP')
             with open(timestamp_path, 'w') as f:
                 f.write(time_now.isoformat(' '))
-            tar.add(timestamp_path, arcname='TIMESTAMP')
-            tar.add(os.path.join('licenses', 'COPYING-PublicDomain'), arcname='COPYING')
+            tar.add(timestamp_path,
+                    arcname=os.path.join(archive_name, 'TIMESTAMP'))
+            tar.add(os.path.join('licenses', 'COPYING-PublicDomain'),
+                    arcname=os.path.join(archive_name, 'COPYING'))
 
             archive_tables_dir = os.path.join(temp_dir, 'abdump', 'abdump')
             create_path(archive_tables_dir)
             _copy_tables(archive_tables_dir, start_t, end_t)
-            tar.add(archive_tables_dir, arcname='abdump')
+            tar.add(archive_tables_dir, arcname=os.path.join(archive_name, 'abdump'))
 
             shutil.rmtree(temp_dir)  # Cleanup
 

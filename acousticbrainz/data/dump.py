@@ -152,6 +152,8 @@ def _copy_tables(location, start_time=None, end_time=None):
         cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
                        (', '.join(_TABLES['highlevel']), where))
 
+    # TODO(roman): highlevel_json table should support incremental dumps as well
+
     # Copying tables that are always dumped with all rows
     for table in _TABLES.keys():
         if table in ('lowlevel', 'highlevel',):

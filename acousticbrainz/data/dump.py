@@ -195,68 +195,90 @@ def import_db_dump(archive_path):
     pxz.stdout.close()
 
 
-def dump_lowlevel_json(location):
+def dump_lowlevel_json(location, incremental=False, dump_id=None):
     """Create JSON dumps with all low level documents.
 
     Args:
         location: Directory where archive will be created.
+        incremental: False if resulting JSON dump should be complete, False if
+            it needs to be incremental.
+        dump_id: If you need to reproduce previously created incremental dump,
+            its identifier (integer) can be specified there.
 
     Returns:
         Path to created low level JSON dump.
     """
-    conn = psycopg2.connect(config.PG_CONNECT)
-    cur = conn.cursor()
-    cur2 = conn.cursor()
-
     create_path(location)
-    archive_path = os.path.join(location, "acousticbrainz-lowlevel-json-%s-json.tar.bz2" %
-                                datetime.today().strftime('%Y%m%d'))
 
+    if incremental:
+        dump_id, start_time, end_time = _prepare_incremental_dump(dump_id)
+        archive_name = 'acousticbrainz-lowlevel-json-incr-%s' % dump_id
+    else:
+        start_time, end_time = None, None  # full
+        archive_name = 'acousticbrainz-lowlevel-json-%s' % \
+                       datetime.today().strftime('%Y%m%d')
+
+    archive_path = os.path.join(location, archive_name + '.tar.bz2')
     with tarfile.open(archive_path, "w:bz2") as tar:
         last_mbid = None
         index = 0
-        cur.execute("SELECT id FROM lowlevel ll ORDER BY mbid")
+
+        db = psycopg2.connect(current_app.config["PG_CONNECT"])
+        cursor = db.cursor()
+
+        if start_time or end_time:
+            start_cond = "submitted > '%s'" % str(start_time) if start_time else ''
+            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ''
+            if start_time and end_time:
+                where = "WHERE %s AND %s" % (start_cond, end_cond)
+            else:
+                where = "WHERE %s%s" % (start_cond, end_cond)
+        else:
+            where = ''
+        cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
+        print("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
+        cursor_inner = db.cursor()
+
+        temp_dir = tempfile.mkdtemp()
+
         while True:
-            id_list = cur.fetchmany(size=DUMP_CHUNK_SIZE)
+            id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
             if not id_list:
                 break
-
             id_list = tuple([i[0] for i in id_list])
 
             count = 0
-            cur2.execute("SELECT mbid, data::text FROM lowlevel WHERE id IN %s ORDER BY mbid", (id_list,))
+            cursor_inner.execute("SELECT mbid, data::text FROM lowlevel WHERE id IN %s ORDER BY mbid", (id_list,))
             while True:
-                row = cur2.fetchone()
+                row = cursor_inner.fetchone()
                 if not row:
                     break
-
-                mbid = row[0]
-                json = row[1]
+                mbid, json = row[0], row[1]
 
                 if count == 0:
                     print(" - %s" % mbid)
+                count += 1
 
                 if mbid == last_mbid:
                     index += 1
                 else:
                     index = 0
 
-                filename = os.path.join(location, mbid + "-%d.json" % index)
-                f = open(filename, "w")
-                f.write(json)
-                f.close()
-
-                arcname = os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'), "lowlevel", mbid[0:1], mbid[0:2], mbid + "-%d.json" % index)
-                tar.add(filename, arcname=arcname)
-                os.unlink(filename)
+                json_filename = mbid + "-%d.json" % index
+                dump_tempfile = os.path.join(temp_dir, json_filename)
+                with open(dump_tempfile, "w") as f:
+                    f.write(json)
+                tar.add(dump_tempfile, arcname=os.path.join(
+                    archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
+                os.unlink(dump_tempfile)
 
                 last_mbid = mbid
-                count += 1
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
-                arcname=os.path.join("acousticbrainz-lowlevel-json-" + datetime.today().strftime('%Y%m%d'),
-                                     'COPYING'))
+                arcname=os.path.join(archive_name, 'COPYING'))
+
+        shutil.rmtree(temp_dir)  # Cleanup
 
     return archive_path
 

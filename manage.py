@@ -90,6 +90,14 @@ def export_lowlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=Fa
 
 
 @manager.command
+def export_lowlevel_json_incremental(location=os.path.join(os.getcwd(), 'export'), inc_id=None):
+    print("Creating incremental lowlevel JSON data dump...")
+    inc_id = int(inc_id) if inc_id else None  # converting to proper type
+    path = dump_lowlevel_json(location, incremental=True, dump_id=inc_id)
+    print("Done! Created:", path)
+
+
+@manager.command
 def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=False):
     print("Creating highlevel JSON data dump...")
     path = dump_highlevel_json(location)

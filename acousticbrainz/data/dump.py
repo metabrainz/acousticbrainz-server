@@ -352,7 +352,7 @@ def _prepare_incremental_dump(dump_id=None):
                 if dump_info[0] == dump_id:
                     end_t = dump_info[1]
                     # Getting info about the dump before that specified
-                    start_t = existing_dumps[i-1][1] if i > 0 else None
+                    start_t = existing_dumps[i+1][1] if i+1 < len(existing_dumps) else None
                     break
         if not start_t and not end_t:
             raise Exception('Cannot find incremental dump with a specified ID.'

@@ -41,3 +41,18 @@ class DataDumpTestCase(FlaskTestCase):
 
         dump_id, dump_time = dump._create_new_inc_dump_record()
         self.assertEqual(dump.list_incremental_dumps()[0][1], dump_time)
+
+    def test_prepare_incremental_dump(self):
+        dump_id_first, start_t_first, end_t_first = dump._prepare_incremental_dump()
+        self.assertIsNone(start_t_first)
+        self.assertIsNotNone(end_t_first)
+
+        dump_id_same, start_t_same, end_t_same = dump._prepare_incremental_dump(dump_id_first)
+        self.assertEqual(dump_id_same, dump_id_first)
+        self.assertEqual(start_t_same, start_t_first)
+        self.assertEqual(end_t_same, end_t_first)
+
+        dump_id_second, start_t_second, end_t_second = dump._prepare_incremental_dump()
+        self.assertNotEqual(dump_id_second, dump_id_first)
+        self.assertEqual(start_t_second, end_t_first)
+        self.assertIsNotNone(end_t_second)

@@ -8,8 +8,8 @@ or raw information from all tables in TSV format).
 include information from the previous dumps).
 """
 from __future__ import print_function
-from acousticbrainz import config
 from admin.utils import create_path
+from flask import current_app
 from datetime import datetime
 import acousticbrainz
 import subprocess
@@ -124,7 +124,7 @@ def _copy_tables(location, start_time=None, end_time=None):
     This will only work on tables that support incremental dumping: "lowlevel"
     and "highlevel".
     """
-    conn = psycopg2.connect(config.PG_CONNECT)
+    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = conn.cursor()
 
     # Copying tables that can be split up for incremental dumps
@@ -168,7 +168,7 @@ def import_db_dump(archive_path):
 
     table_names = _TABLES.keys()
 
-    conn = psycopg2.connect(config.PG_CONNECT)
+    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = conn.cursor()
 
     with tarfile.open(fileobj=pxz.stdout, mode='r|') as tar:
@@ -270,7 +270,7 @@ def dump_highlevel_json(location):
     Returns:
         Path to created high level JSON dump.
     """
-    conn = psycopg2.connect(config.PG_CONNECT)
+    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
     cur = conn.cursor()
     cur2 = conn.cursor()
 
@@ -338,7 +338,7 @@ def list_incremental_dumps():
         List of (id, created) pairs ordered by dump identifier, or None if
         there are no incremental dumps yet.
     """
-    cursor = psycopg2.connect(config.PG_CONNECT).cursor()
+    cursor = psycopg2.connect(current_app.config["PG_CONNECT"]).cursor()
     cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
     return cursor.fetchall()
 
@@ -367,7 +367,7 @@ def _prepare_incremental_dump(dump_id=None):
 
 def _create_new_inc_dump_record():
     """Creates new record for incremental dump and returns its ID and creation time."""
-    db = psycopg2.connect(config.PG_CONNECT)
+    db = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = db.cursor()
     cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
     db.commit()
@@ -375,7 +375,7 @@ def _create_new_inc_dump_record():
 
 
 def _get_incremental_dump_timestamp(dump_id=None):
-    cursor = psycopg2.connect(config.PG_CONNECT).cursor()
+    cursor = psycopg2.connect(current_app.config["PG_CONNECT"]).cursor()
     if dump_id:
         cursor.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
     else:

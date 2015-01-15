@@ -274,7 +274,6 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 if not row:
                     break
                 mbid, json = row
-                mbid_occurences[mbid] += 1
 
                 json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
                 dump_tempfile = os.path.join(temp_dir, json_filename)
@@ -284,6 +283,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
                 os.unlink(dump_tempfile)
 
+                mbid_occurences[mbid] += 1
                 dumped_count += 1
 
         # Copying legal text
@@ -373,7 +373,6 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                 if not row:
                     break
                 mbid, json = row
-                mbid_occurences[mbid] += 1
 
                 json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
                 dump_tempfile = os.path.join(temp_dir, json_filename)
@@ -382,6 +381,8 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                 tar.add(dump_tempfile, arcname=os.path.join(
                     archive_name, "highlevel", mbid[0:1], mbid[0:2], json_filename))
                 os.unlink(dump_tempfile)
+
+                mbid_occurences[mbid] += 1
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),

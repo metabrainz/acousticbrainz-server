@@ -383,6 +383,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                 os.unlink(dump_tempfile)
 
                 mbid_occurences[mbid] += 1
+                dumped_count += 1
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),

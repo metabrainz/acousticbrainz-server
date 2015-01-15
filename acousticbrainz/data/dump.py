@@ -8,6 +8,7 @@ or raw information from all tables in TSV format).
 include information from the previous dumps).
 """
 from __future__ import print_function
+from collections import defaultdict
 from admin.utils import create_path
 from flask import current_app
 from datetime import datetime
@@ -225,11 +226,22 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + '.tar.bz2')
     with tarfile.open(archive_path, "w:bz2") as tar:
-        last_mbid = None
-        index = 0
-
         db = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = db.cursor()
+
+        mbid_occurences = defaultdict(int)
+
+        # Need to count how many duplicate MBIDs are there before start_time
+        if start_time:
+            cursor.execute("""
+                SELECT mbid, count(id)
+                FROM lowlevel
+                WHERE submitted <= %s
+                GROUP BY mbid
+                """, (start_time,))
+            counts = cursor.fetchall()
+            for count in counts:
+                mbid_occurences[count[0]] = count[1]
 
         if start_time or end_time:
             start_cond = "submitted > '%s'" % str(start_time) if start_time else ''
@@ -245,13 +257,14 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
         cursor_inner = db.cursor()
         temp_dir = tempfile.mkdtemp()
 
+        dumped_count = 0
+
         while True:
             id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
             if not id_list:
                 break
             id_list = tuple([i[0] for i in id_list])
 
-            count = 0
             cursor_inner.execute("""SELECT mbid, data::text
                                     FROM lowlevel
                                     WHERE id IN %s
@@ -261,20 +274,9 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 if not row:
                     break
                 mbid, json = row
+                mbid_occurences[mbid] += 1
 
-                if count == 0:
-                    print(" - %s" % mbid)
-                count += 1
-
-                # TODO(roman): Keep track of how many duplications of this mbid
-                # exist in the entire database, not just this dump.
-                # See http://tickets.musicbrainz.org/browse/AB-22?focusedCommentId=34976&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_34976
-                if mbid == last_mbid:
-                    index += 1
-                else:
-                    index = 0
-
-                json_filename = mbid + "-%d.json" % index
+                json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
                 dump_tempfile = os.path.join(temp_dir, json_filename)
                 with open(dump_tempfile, "w") as f:
                     f.write(json)
@@ -282,13 +284,15 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
                 os.unlink(dump_tempfile)
 
-                last_mbid = mbid
+                dumped_count += 1
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
                 arcname=os.path.join(archive_name, 'COPYING'))
 
         shutil.rmtree(temp_dir)  # Cleanup
+
+        print("Dumped %s tracks." % dumped_count)
 
     return archive_path
 
@@ -318,11 +322,22 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + '.tar.bz2')
     with tarfile.open(archive_path, "w:bz2") as tar:
-        last_mbid = None
-        index = 0
-
         db = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = db.cursor()
+
+        mbid_occurences = defaultdict(int)
+
+        # Need to count how many duplicate MBIDs are there before start_time
+        if start_time:
+            cursor.execute("""
+                SELECT mbid, count(id)
+                FROM highlevel
+                WHERE submitted <= %s
+                GROUP BY mbid
+                """, (start_time,))
+            counts = cursor.fetchall()
+            for count in counts:
+                mbid_occurences[count[0]] = count[1]
 
         if start_time or end_time:
             start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ''
@@ -341,13 +356,14 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
         cursor_inner = db.cursor()
         temp_dir = tempfile.mkdtemp()
 
+        dumped_count = 0
+
         while True:
             id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
             if not id_list:
                 break
             id_list = tuple([i[0] for i in id_list])
 
-            count = 0
             cursor_inner.execute("""SELECT mbid, hlj.data::text
                                     FROM highlevel hl, highlevel_json hlj
                                     WHERE hl.data = hlj.id AND hl.id IN %s
@@ -357,20 +373,9 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                 if not row:
                     break
                 mbid, json = row
+                mbid_occurences[mbid] += 1
 
-                if count == 0:
-                    print(" - %s" % mbid)
-                count += 1
-
-                # TODO(roman): Keep track of how many duplications of this mbid
-                # exist in the entire database, not just this dump.
-                # See http://tickets.musicbrainz.org/browse/AB-22?focusedCommentId=34976&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_34976
-                if mbid == last_mbid:
-                    index += 1
-                else:
-                    index = 0
-
-                json_filename = mbid + "-%d.json" % index
+                json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
                 dump_tempfile = os.path.join(temp_dir, json_filename)
                 with open(dump_tempfile, "w") as f:
                     f.write(json)
@@ -378,13 +383,13 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                     archive_name, "highlevel", mbid[0:1], mbid[0:2], json_filename))
                 os.unlink(dump_tempfile)
 
-                last_mbid = mbid
-
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
                 arcname=os.path.join(archive_name, 'COPYING'))
 
         shutil.rmtree(temp_dir)  # Cleanup
+
+        print("Dumped %s tracks." % dumped_count)
 
     return archive_path
 

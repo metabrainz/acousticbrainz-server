@@ -15,6 +15,9 @@ class FlaskTestCase(TestCase):
         pass
 
     def tearDown(self):
+        self.truncate_all()
+
+    def truncate_all(self):
         conn = psycopg2.connect(self.app.config["PG_CONNECT"])
         cur = conn.cursor()
         cur.execute("TRUNCATE highlevel_json CASCADE;")

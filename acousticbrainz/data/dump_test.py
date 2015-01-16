@@ -22,6 +22,7 @@ class DataDumpTestCase(FlaskTestCase):
 
     def test_import_db_dump(self):
         path = dump.dump_db(self.temp_dir)
+        self.truncate_all()
         dump.import_db_dump(path)
 
     def test_dump_lowlevel_json(self):
@@ -42,12 +43,7 @@ class DataDumpTestCase(FlaskTestCase):
         self.assertEqual(dump.list_incremental_dumps()[0][1], dump_time)
 
     def test_prepare_incremental_dump(self):
-        db = psycopg2.connect(self.app.config["PG_CONNECT"])
-        cursor = db.cursor()
-        cursor.execute("TRUNCATE incremental_dumps CASCADE;")
-        db.commit()
-        cursor.close()
-        db.close()
+        self.truncate_all()
 
         dump_id_first, start_t_first, end_t_first = dump._prepare_incremental_dump()
         self.assertIsNone(start_t_first)

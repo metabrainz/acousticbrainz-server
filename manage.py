@@ -85,7 +85,7 @@ def export_lowlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=Fa
 
     if rotate:
         print("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+-json.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
@@ -105,7 +105,7 @@ def export_highlevel_json(location=os.path.join(os.getcwd(), 'export'), rotate=F
 
     if rotate:
         print("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+-json.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 

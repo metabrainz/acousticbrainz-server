@@ -152,15 +152,20 @@ def _copy_tables(location, start_time=None, end_time=None):
     # highlevel
     with open(os.path.join(location, 'highlevel'), 'w') as f:
         print(" - Copying table highlevel...")
-        where = "WHERE submitted >= '%s'" % str(start_time) if start_time else ''
         cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
                        (', '.join(_TABLES['highlevel']), where))
 
-    # TODO(roman): highlevel_json table should support incremental dumps as well
+    # highlevel_json
+    with open(os.path.join(location, 'highlevel_json'), 'w') as f:
+        print(" - Copying table highlevel_json...")
+        query = """SELECT %s FROM highlevel_json WHERE id IN (
+                       SELECT data FROM highlevel %s
+                )""" % (', '.join(_TABLES['highlevel_json']), where)
+        cursor.copy_to(f, "(%s)" % query)
 
     # Copying tables that are always dumped with all rows
     for table in _TABLES.keys():
-        if table in ('lowlevel', 'highlevel',):
+        if table in ('lowlevel', 'highlevel', 'highlevel_json'):
             continue
         print(" - Copying table %s..." % table)
         with open(os.path.join(location, table), 'w') as f:

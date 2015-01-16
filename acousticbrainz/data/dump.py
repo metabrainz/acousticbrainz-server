@@ -92,7 +92,7 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
 
         # Creating the archive
         with tarfile.open(fileobj=pxz.stdin, mode='w|') as tar:
-            # TODO(roman): Get rid of temporary directories and write directly to tar file
+            # TODO(roman): Get rid of temporary directories and write directly to tar file if that's possible.
             temp_dir = tempfile.mkdtemp()
 
             # Adding metadata

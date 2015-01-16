@@ -1,12 +1,2 @@
 {% extends 'errors/base.html' %}
-
-{% block error_title %}{{ _('Server error') }}{% endblock %}
-
-{% block error_description %}
-  <p>{{ _('Server failed to process your request. Developers have been notified. You can try again later.') }}</p>
-{% endblock %}
-
-{% block error_info %}
-  {% if error.code %}{{ error.code }}{% if error.desc %} - {{ error.desc }}{% endif %}<br />{% endif %}
-  {% if error.message %}{{ error.message }}{% endif %}
-{% endblock %}
+{% block error_title %}Internal server error{% endblock %}

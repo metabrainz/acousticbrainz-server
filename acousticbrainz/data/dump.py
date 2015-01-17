@@ -9,9 +9,9 @@ include information from the previous dumps).
 """
 from __future__ import print_function
 from collections import defaultdict
-from admin.utils import create_path
 from flask import current_app
 from datetime import datetime
+from acousticbrainz.utils import create_path
 import acousticbrainz
 import subprocess
 import tempfile

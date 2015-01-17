@@ -1,61 +1,53 @@
 {%- extends 'base.html' -%}
-{%- block title -%}Sample Data - AcousticBrainz{%- endblock -%}
+{%- block title -%}API - AcousticBrainz{%- endblock -%}
 {%- block content -%}
-<div id="homepage">
-  <h3>AcousticBrainz API</h3>
-  <div id="project-description" class="row">
-    <div class="col-md-8">
-      <p>
-        Before diving into the API details, please have a look at the <a href="/sample-data">sample data</a> page.
-      </p><p>
-        To fetch the JSON documents for a given MusicBrainz recording ID, you can construct the
-        following URLs:
-      </p>
+   <h3>AcousticBrainz API</h3>
+   <p>
+      Before diving into the API details, please have a look at the
+      <a href="#sample-data">sample data</a> below.
+   </p>
+   <p>
+      To fetch the JSON documents for a given MusicBrainz recording ID,
+      you can construct the following URLs:
+   </p>
 <pre>
    GET http://acousticbrainz.org/&lt;MBID&gt;/low-level
    GET http://acousticbrainz.org/&lt;MBID&gt;/high-level
 </pre>
-      <p>
-        examples:
-      </p>
+   <p>Examples:</p>
 <pre>
    GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level</a>
    GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level</a>
 </pre>
-      </p><p>
-        The submit API end-point is:
-      </p>
-      <pre>
-        POST http://acousticbrainz.org/&lt;MBID&gt;/low-level
-      </pre>
-      <p>
-        It expects a JSON payload, containing the output of a feature extractor
-        (see <a href="/contribute">the contribute page</a>).
-      </p>
-    </div>
-  </div>
-  <h3>Sample data</h3>
-  <div id="project-description" class="row">
-    <div class="col-md-12">
-      <p>
-        AcousticBrainz stores two levels of data: Low-level and high level.
-      </p><p>
-        Both types of information are JSON documents,
-        two documents per each <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a> for
-        a <a href="https://musicbrainz.org/doc/Recording">recording</a>.
-      </p><p>
-        The low-level data includes acoustic descriptors characterizing overall loudness, dynamics and spectral shape of a
-        signal, rhythm descriptors (including beats per minute), and tonal information (including keys and scales). The
-        low-level data is stable, compared to the higher level data. This hopefully means that we will not have to recompute
-        this data from audio files too frequently. More detailed information about the low-level data is provided in
-        <a href="http://essentia.upf.edu/documentation/streaming_extractor_music.html#music-descriptors">the official documentation
-        for Essentia toolkit</a>.
+<p>The submit API end-point is:</p>
+<pre>
+   POST http://acousticbrainz.org/&lt;MBID&gt;/low-level
+</pre>
+   <p>
+     It expects a JSON payload, containing the output of a feature extractor
+     (see <a href="{{ url_for('index.contribute') }}">the contribute page</a>).
+   </p>
 
-      </p>
+   <h4 id="sample-data">Sample data</h4>
+   <p>AcousticBrainz stores two levels of data: Low-level and high level.</p>
+   <p>
+      Both types of information are JSON documents, two documents per each
+      <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a>
+      for a <a href="https://musicbrainz.org/doc/Recording">recording</a>.
+   </p>
+   <p>
+      The low-level data includes acoustic descriptors characterizing overall
+      loudness, dynamics and spectral shape of a signal, rhythm descriptors
+      (including beats per minute), and tonal information (including keys and
+      scales). The low-level data is stable, compared to the higher level data.
+      This hopefully means that we will not have to recompute this data from
+      audio files too frequently. More detailed information about the low-level
+      data is provided in <a href="http://essentia.upf.edu/documentation/streaming_extractor_music.html#music-descriptors">
+      the official documentation for Essentia toolkit</a>.
+   </p>
 
-      </p>
-      <div style="background-color: #f8f8f8;">
-         <pre style="height: 300px">
+   <div style="background-color: #f8f8f8;">
+<pre style="height: 300px"><code class="json">
 {
    "tonal" : {
       "chords_strength" : {
@@ -3424,17 +3416,19 @@
       }
    }
 }
-</pre>
-      </div>
-      <p>
-        The high level data includes information about moods, genres, vocals and music type automatically inferred
-        from low-level data by pre-trained classifiers. The high-level data can be computed from the low-level data,
-        without requiring access to original audio files. The high-level data is less stable that the low-level data,
-        since it contains more experimental algorithms. We anticipate re-calculating the high level data until it
-        becomes fully stable.
-      </p>
-      <div style="background-color: #f8f8f8;">
-         <pre style="height: 300px">
+</code></pre>
+   </div>
+   <p>
+      The high level data includes information about moods, genres, vocals and
+      music type automatically inferred from low-level data by pre-trained
+      classifiers. The high-level data can be computed from the low-level data,
+      without requiring access to original audio files. The high-level data is
+      less stable that the low-level data, since it contains more experimental
+      algorithms. We anticipate re-calculating the high level data until it
+      becomes fully stable.
+   </p>
+   <div style="background-color: #f8f8f8;">
+<pre style="height: 300px"><code class="json">
 {
    "metadata" : {
       "version" : {
@@ -3734,10 +3728,12 @@
       }
    }
 }
-</pre>
-      </div>
-    </div>
-  </div>
+</code></pre>
+   </div>
+{%- endblock -%}
 
-</div>
+{%- block scripts -%}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
+<script>hljs.initHighlightingOnLoad();</script>
 {%- endblock -%}

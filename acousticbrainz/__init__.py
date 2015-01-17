@@ -28,6 +28,10 @@ def create_app():
     # Extensions
     FlaskUUID(app)
 
+    # Error handling
+    import errors
+    errors.init_error_handlers(app)
+
     # Blueprints
     from acousticbrainz.views.index import index_bp
     from acousticbrainz.views.data import data_bp

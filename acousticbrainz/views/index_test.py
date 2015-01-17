@@ -8,8 +8,8 @@ class IndexViewsTestCase(FlaskTestCase):
         resp = self.client.get(url_for('index.index'))
         self.assert200(resp)
 
-    def test_download(self):
-        resp = self.client.get(url_for('index.download'))
+    def test_downloads(self):
+        resp = self.client.get(url_for('index.downloads'))
         self.assert200(resp)
 
     def test_contribute(self):

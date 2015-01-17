@@ -25,8 +25,8 @@ service postgresql restart
 # Initializing the database
 su postgres << EOF
     cd /vagrant/admin
-    ./setup.sh
-    ./setup_test.sh
+    ./init_db.sh
+    ./init_db_test.sh
 EOF
 
 # Installing application requirements

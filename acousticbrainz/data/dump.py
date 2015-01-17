@@ -430,10 +430,28 @@ def _prepare_incremental_dump(dump_id=None):
 
     else:  # creating new
         start_t = _get_incremental_dump_timestamp()
-        # TODO(roman): Check if there's any new data before creating new incremental dump
+        if start_t and not _any_new_data(start_t):
+            raise Exception("No new data since the last incremental dump!")
         dump_id, end_t = _create_new_inc_dump_record()
 
     return dump_id, start_t, end_t
+
+
+def _any_new_data(from_time):
+    """Checks if there's any new data since specified time in tables that
+    support incremental dumps.
+
+    Returns:
+        True if there is new data in one of tables that support incremental
+        dumps, False if there is no new data there.
+    """
+    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
+    cursor = conn.cursor()
+    cursor.execute("SELECT count(*) FROM lowlevel WHERE submitted > %s", (from_time,))
+    lowlevel_count = cursor.fetchone()[0]
+    cursor.execute("SELECT count(*) FROM highlevel WHERE submitted > %s", (from_time,))
+    highlevel_count = cursor.fetchone()[0]
+    return lowlevel_count > 0 or highlevel_count > 0
 
 
 def _create_new_inc_dump_record():

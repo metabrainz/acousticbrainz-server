@@ -14,7 +14,7 @@ def api():
 
 @data_bp.route("/data")
 def data():
-    return render_template("data.html")
+    return render_template("data/data.html")
 
 
 @data_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
@@ -33,7 +33,7 @@ def submit_low_level(mbid):
 @data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
     data = json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True)
-    return render_template("json-display.html", title="Low-level JSON for %s" % mbid, data=data)
+    return render_template("data/json-display.html", title="Low-level JSON for %s" % mbid, data=data)
 
 
 @data_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
@@ -45,7 +45,7 @@ def get_low_level(mbid):
 @data_bp.route("/<uuid:mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):
     data = json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True)
-    return render_template("json-display.html", title="High-level JSON for %s" % mbid, data=data)
+    return render_template("data/json-display.html", title="High-level JSON for %s" % mbid, data=data)
 
 
 @data_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
@@ -66,5 +66,5 @@ def get_summary(mbid):
             artist=quote_plus(lowlevel['metadata']['tags']['artist'][0].encode("UTF-8")),
             title=quote_plus(lowlevel['metadata']['tags']['title'][0].encode("UTF-8")))
 
-    return render_template("summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
+    return render_template("data/summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
                            genres=genres, moods=moods, other=other, tomahawk_url=tomahawk_url)

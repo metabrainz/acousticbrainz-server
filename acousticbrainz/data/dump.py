@@ -25,35 +25,35 @@ DUMP_CHUNK_SIZE = 1000
 # Importing of old dumps will fail if you change
 # definition of columns below.
 _TABLES = {
-    'lowlevel': (
-        'id',
-        'mbid',
-        'build_sha1',
-        'lossless',
-        'data',
-        'submitted',
-        'data_sha256',
+    "lowlevel": (
+        "id",
+        "mbid",
+        "build_sha1",
+        "lossless",
+        "data",
+        "submitted",
+        "data_sha256",
     ),
-    'highlevel': (
-        'id',
-        'mbid',
-        'build_sha1',
-        'data',
-        'submitted',
+    "highlevel": (
+        "id",
+        "mbid",
+        "build_sha1",
+        "data",
+        "submitted",
     ),
-    'highlevel_json': (
-        'id',
-        'data',
-        'data_sha256',
+    "highlevel_json": (
+        "id",
+        "data",
+        "data_sha256",
     ),
-    'statistics': (
-        'name',
-        'value',
-        'collected',
+    "statistics": (
+        "name",
+        "value",
+        "collected",
     ),
-    'incremental_dumps': (
-        'id',
-        'created',
+    "incremental_dumps": (
+        "id",
+        "created",
     ),
 }
 
@@ -77,42 +77,42 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
 
     if incremental:
         dump_id, start_t, end_t = _prepare_incremental_dump(dump_id)
-        archive_name = 'acousticbrainz-dump-incr-%s' % dump_id
+        archive_name = "acousticbrainz-dump-incr-%s" % dump_id
     else:
         start_t, end_t = None, None  # full
-        archive_name = 'acousticbrainz-dump-%s' % time_now.strftime('%Y%m%d-%H%M%S')
+        archive_name = "acousticbrainz-dump-%s" % time_now.strftime("%Y%m%d-%H%M%S")
 
-    archive_path = os.path.join(location, archive_name + '.tar.xz')
-    with open(archive_path, 'w') as archive:
+    archive_path = os.path.join(location, archive_name + ".tar.xz")
+    with open(archive_path, "w") as archive:
 
-        pxz_command = ['pxz', '--compress']
+        pxz_command = ["pxz", "--compress"]
         if threads is not None:
-            pxz_command.append('-T %s' % threads)
+            pxz_command.append("-T %s" % threads)
         pxz = subprocess.Popen(pxz_command, stdin=subprocess.PIPE, stdout=archive)
 
         # Creating the archive
-        with tarfile.open(fileobj=pxz.stdin, mode='w|') as tar:
+        with tarfile.open(fileobj=pxz.stdin, mode="w|") as tar:
             # TODO(roman): Get rid of temporary directories and write directly to tar file if that's possible.
             temp_dir = tempfile.mkdtemp()
 
             # Adding metadata
-            schema_seq_path = os.path.join(temp_dir, 'SCHEMA_SEQUENCE')
-            with open(schema_seq_path, 'w') as f:
+            schema_seq_path = os.path.join(temp_dir, "SCHEMA_SEQUENCE")
+            with open(schema_seq_path, "w") as f:
                 f.write(str(acousticbrainz.__version__))
             tar.add(schema_seq_path,
-                    arcname=os.path.join(archive_name, 'SCHEMA_SEQUENCE'))
-            timestamp_path = os.path.join(temp_dir, 'TIMESTAMP')
-            with open(timestamp_path, 'w') as f:
-                f.write(time_now.isoformat(' '))
+                    arcname=os.path.join(archive_name, "SCHEMA_SEQUENCE"))
+            timestamp_path = os.path.join(temp_dir, "TIMESTAMP")
+            with open(timestamp_path, "w") as f:
+                f.write(time_now.isoformat(" "))
             tar.add(timestamp_path,
-                    arcname=os.path.join(archive_name, 'TIMESTAMP'))
-            tar.add(os.path.join('licenses', 'COPYING-PublicDomain'),
-                    arcname=os.path.join(archive_name, 'COPYING'))
+                    arcname=os.path.join(archive_name, "TIMESTAMP"))
+            tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
+                    arcname=os.path.join(archive_name, "COPYING"))
 
-            archive_tables_dir = os.path.join(temp_dir, 'abdump', 'abdump')
+            archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
             create_path(archive_tables_dir)
             _copy_tables(archive_tables_dir, start_t, end_t)
-            tar.add(archive_tables_dir, arcname=os.path.join(archive_name, 'abdump'))
+            tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
 
             shutil.rmtree(temp_dir)  # Cleanup
 
@@ -134,47 +134,47 @@ def _copy_tables(location, start_time=None, end_time=None):
     # Copying tables that can be split up for incremental dumps
 
     if start_time or end_time:
-        start_cond = "submitted > '%s'" % str(start_time) if start_time else ''
-        end_cond = "submitted <= '%s'" % str(end_time) if end_time else ''
+        start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
+        end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
         if start_time and end_time:
             where = "WHERE %s AND %s" % (start_cond, end_cond)
         else:
             where = "WHERE %s%s" % (start_cond, end_cond)
     else:
-        where = ''
+        where = ""
 
     # lowlevel
-    with open(os.path.join(location, 'lowlevel'), 'w') as f:
+    with open(os.path.join(location, "lowlevel"), "w") as f:
         print(" - Copying table lowlevel...")
         cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
-                       (', '.join(_TABLES['lowlevel']), where))
+                       (", ".join(_TABLES["lowlevel"]), where))
 
     # highlevel
-    with open(os.path.join(location, 'highlevel'), 'w') as f:
+    with open(os.path.join(location, "highlevel"), "w") as f:
         print(" - Copying table highlevel...")
         cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
-                       (', '.join(_TABLES['highlevel']), where))
+                       (", ".join(_TABLES["highlevel"]), where))
 
     # highlevel_json
-    with open(os.path.join(location, 'highlevel_json'), 'w') as f:
+    with open(os.path.join(location, "highlevel_json"), "w") as f:
         print(" - Copying table highlevel_json...")
         query = """SELECT %s FROM highlevel_json WHERE id IN (
                        SELECT data FROM highlevel %s
-                )""" % (', '.join(_TABLES['highlevel_json']), where)
+                )""" % (", ".join(_TABLES["highlevel_json"]), where)
         cursor.copy_to(f, "(%s)" % query)
 
     # Copying tables that are always dumped with all rows
     for table in _TABLES.keys():
-        if table in ('lowlevel', 'highlevel', 'highlevel_json'):
+        if table in ("lowlevel", "highlevel", "highlevel_json"):
             continue
         print(" - Copying table %s..." % table)
-        with open(os.path.join(location, table), 'w') as f:
+        with open(os.path.join(location, table), "w") as f:
             cursor.copy_to(f, table, columns=_TABLES[table])
 
 
 def import_db_dump(archive_path):
     """Import data from .tar.xz archive into the database."""
-    pxz_command = ['pxz', '--decompress', '--stdout', archive_path]
+    pxz_command = ["pxz", "--decompress", "--stdout", archive_path]
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 
     table_names = _TABLES.keys()
@@ -182,10 +182,10 @@ def import_db_dump(archive_path):
     conn = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = conn.cursor()
 
-    with tarfile.open(fileobj=pxz.stdout, mode='r|') as tar:
+    with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
         for member in tar:
 
-            if member.name == 'SCHEMA_SEQUENCE':
+            if member.name == "SCHEMA_SEQUENCE":
                 # Verifying schema version
                 schema_seq = int(tar.extractfile(member).read().strip())
                 if schema_seq != acousticbrainz.__version__:
@@ -196,7 +196,7 @@ def import_db_dump(archive_path):
                     print("Schema version verified.")
 
             else:
-                file_name = member.name.split('/')[-1]
+                file_name = member.name.split("/")[-1]
                 if file_name in table_names:
                     print(" - Importing data into %s table..." % file_name)
                     cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
@@ -223,13 +223,13 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
     if incremental:
         dump_id, start_time, end_time = _prepare_incremental_dump(dump_id)
-        archive_name = 'acousticbrainz-lowlevel-json-incr-%s' % dump_id
+        archive_name = "acousticbrainz-lowlevel-json-incr-%s" % dump_id
     else:
         start_time, end_time = None, None  # full
-        archive_name = 'acousticbrainz-lowlevel-json-%s' % \
-                       datetime.today().strftime('%Y%m%d')
+        archive_name = "acousticbrainz-lowlevel-json-%s" % \
+                       datetime.today().strftime("%Y%m%d")
 
-    archive_path = os.path.join(location, archive_name + '.tar.bz2')
+    archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
         db = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = db.cursor()
@@ -249,14 +249,14 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 mbid_occurences[count[0]] = count[1]
 
         if start_time or end_time:
-            start_cond = "submitted > '%s'" % str(start_time) if start_time else ''
-            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ''
+            start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
+            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
             if start_time and end_time:
                 where = "WHERE %s AND %s" % (start_cond, end_cond)
             else:
                 where = "WHERE %s%s" % (start_cond, end_cond)
         else:
-            where = ''
+            where = ""
         cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
 
         cursor_inner = db.cursor()
@@ -293,7 +293,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
-                arcname=os.path.join(archive_name, 'COPYING'))
+                arcname=os.path.join(archive_name, "COPYING"))
 
         shutil.rmtree(temp_dir)  # Cleanup
 
@@ -319,13 +319,13 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
     if incremental:
         dump_id, start_time, end_time = _prepare_incremental_dump(dump_id)
-        archive_name = 'acousticbrainz-highlevel-json-incr-%s' % dump_id
+        archive_name = "acousticbrainz-highlevel-json-incr-%s" % dump_id
     else:
         start_time, end_time = None, None  # full
-        archive_name = 'acousticbrainz-highlevel-json-%s' % \
-                       datetime.today().strftime('%Y%m%d')
+        archive_name = "acousticbrainz-highlevel-json-%s" % \
+                       datetime.today().strftime("%Y%m%d")
 
-    archive_path = os.path.join(location, archive_name + '.tar.bz2')
+    archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
         db = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = db.cursor()
@@ -345,14 +345,14 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                 mbid_occurences[count[0]] = count[1]
 
         if start_time or end_time:
-            start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ''
-            end_cond = "hl.submitted <= '%s'" % str(end_time) if end_time else ''
+            start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ""
+            end_cond = "hl.submitted <= '%s'" % str(end_time) if end_time else ""
             if start_time and end_time:
                 where = "AND %s AND %s" % (start_cond, end_cond)
             else:
                 where = "AND %s%s" % (start_cond, end_cond)
         else:
-            where = ''
+            where = ""
         cursor.execute("""SELECT hl.id
                           FROM highlevel hl, highlevel_json hlj
                           WHERE hl.data = hlj.id %s
@@ -392,7 +392,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
-                arcname=os.path.join(archive_name, 'COPYING'))
+                arcname=os.path.join(archive_name, "COPYING"))
 
         shutil.rmtree(temp_dir)  # Cleanup
 
@@ -425,8 +425,8 @@ def _prepare_incremental_dump(dump_id=None):
                     start_t = existing_dumps[i+1][1] if i+1 < len(existing_dumps) else None
                     break
         if not start_t and not end_t:
-            raise Exception('Cannot find incremental dump with a specified ID.'
-                            ' Please check if it exists or create a new one.')
+            raise Exception("Cannot find incremental dump with a specified ID."
+                            " Please check if it exists or create a new one.")
 
     else:  # creating new
         start_t = _get_incremental_dump_timestamp()

@@ -1,7 +1,6 @@
 from acousticbrainz.testing import FlaskTestCase
 from acousticbrainz.data import dump
 import os.path
-import psycopg2
 import tempfile
 import shutil
 

@@ -55,7 +55,7 @@ def get_high_level(mbid):
 
 
 @data_bp.route("/<uuid:mbid>", methods=["GET"])
-def get_summary(mbid):
+def summary(mbid):
     lowlevel, highlevel, genres, moods, other = get_summary_data(mbid)
 
     # Tomahawk player stuff

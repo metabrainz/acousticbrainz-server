@@ -12,8 +12,8 @@ def index():
 
 
 @index_bp.route("/download")
-def download():
-    return render_template("index/download.html")
+def downloads():
+    return render_template("index/downloads.html")
 
 
 @index_bp.route("/contribute")

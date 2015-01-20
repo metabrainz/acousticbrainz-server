@@ -44,31 +44,30 @@ to further suit your local environment (e.g., port, listening address, ...).
 ## Exporting data
 
 There are several ways to export data out of AcousticBrainz server. You can
-create full database dump or export only low/high level data in JSON format.
-Both ways support incremental dumping.
+create full database dump or export only low level and high level data in JSON
+format. Both ways support incremental dumping.
 
 ### Examples
 
-Full database dump:
+**Full database dump:**
 
-    $ python manage.py dump full
+    $ python manage.py dump full_db
 
-Incremental database dump:
+**JSON dump:**
+
+    $ python manage.py dump json
+
+*Creates two separate full JSON dumps with low level and high level data.*
+
+**Incremental dumps:**
 
     $ python manage.py dump incremental
 
-JSON dump with low level data:
+*Creates new incremental dump in three different formats: usual database dump,
+low level and high level JSON.*
 
-    $ python manage.py dump lowlevel_json
-
-JSON dump with high level data:
-
-    $ python manage.py dump highlevel_json
-
-Incremental JSON dump with low level data:
-
-    $ python manage.py dump lowlevel_json_incremental
-
-Recreate previous incremental database dump:
+**Previous incremental dumps:**
 
     $ python manage.py dump incremental -i=42
+
+*Same as the previous but recreates previous incremental dump.*

@@ -76,7 +76,7 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
     time_now = datetime.today()
 
     if incremental:
-        dump_id, start_t, end_t = _prepare_incremental_dump(dump_id)
+        dump_id, start_t, end_t = prepare_incremental_dump(dump_id)
         archive_name = "acousticbrainz-dump-incr-%s" % dump_id
     else:
         start_t, end_t = None, None  # full
@@ -222,7 +222,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
     create_path(location)
 
     if incremental:
-        dump_id, start_time, end_time = _prepare_incremental_dump(dump_id)
+        dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
         archive_name = "acousticbrainz-lowlevel-json-incr-%s" % dump_id
     else:
         start_time, end_time = None, None  # full
@@ -318,7 +318,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     create_path(location)
 
     if incremental:
-        dump_id, start_time, end_time = _prepare_incremental_dump(dump_id)
+        dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
         archive_name = "acousticbrainz-highlevel-json-incr-%s" % dump_id
     else:
         start_time, end_time = None, None  # full
@@ -413,7 +413,7 @@ def list_incremental_dumps():
     return cursor.fetchall()
 
 
-def _prepare_incremental_dump(dump_id=None):
+def prepare_incremental_dump(dump_id=None):
     if dump_id:  # getting existing
         existing_dumps = list_incremental_dumps()
         start_t, end_t = None, None

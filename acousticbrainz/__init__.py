@@ -25,6 +25,12 @@ def create_app():
     # Extensions
     FlaskUUID(app)
 
+    # MusicBrainz
+    import musicbrainzngs
+    musicbrainzngs.set_useragent(app.config['MUSICBRAINZ_USERAGENT'], __version__)
+    if app.config['MUSICBRAINZ_HOSTNAME']:
+        musicbrainzngs.set_hostname(app.config['MUSICBRAINZ_HOSTNAME'])
+
     # Error handling
     import errors
     errors.init_error_handlers(app)

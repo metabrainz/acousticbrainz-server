@@ -2,6 +2,8 @@ from flask import Blueprint, request, Response, render_template, redirect
 from acousticbrainz.data import load_low_level, load_high_level, submit_low_level_data, get_summary_data
 from werkzeug.exceptions import BadRequest
 from urllib import quote_plus
+from musicbrainzngs.musicbrainz import ResponseError
+import musicbrainzngs
 import json
 
 data_bp = Blueprint('data', __name__)
@@ -58,6 +60,13 @@ def get_high_level(mbid):
 def summary(mbid):
     lowlevel, highlevel, genres, moods, other = get_summary_data(mbid)
 
+    # Getting good metadata from MusicBrainz
+    try:
+        metadata = musicbrainzngs.get_recording_by_id(
+            mbid, includes=['artists', 'releases', 'media'])['recording']
+    except ResponseError:
+        metadata = None
+
     # Tomahawk player stuff
     if not ('artist' in lowlevel['metadata']['tags'] and 'title' in lowlevel['metadata']['tags']):
         tomahawk_url = None
@@ -66,5 +75,6 @@ def summary(mbid):
             artist=quote_plus(lowlevel['metadata']['tags']['artist'][0].encode("UTF-8")),
             title=quote_plus(lowlevel['metadata']['tags']['title'][0].encode("UTF-8")))
 
-    return render_template("data/summary.html", lowlevel=lowlevel, highlevel=highlevel, mbid=mbid,
-                           genres=genres, moods=moods, other=other, tomahawk_url=tomahawk_url)
+    return render_template("data/summary.html", lowlevel=lowlevel, highlevel=highlevel,
+                           genres=genres, moods=moods, other=other, mbid=mbid,
+                           metadata=metadata, tomahawk_url=tomahawk_url)

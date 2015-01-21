@@ -1,12 +1,34 @@
 from __future__ import print_function
 from flask_script import Manager
-from acousticbrainz.data.dump import dump_db, dump_lowlevel_json, \
+from acousticbrainz.data.dump import NoNewData, dump_db, dump_lowlevel_json, \
     dump_highlevel_json, prepare_incremental_dump, list_incremental_dumps
 import shutil
 import re
 import os
 
 manager = Manager()
+
+
+@manager.command
+def full(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=True):
+    """This command creates:
+    1. New incremental dump record (+ incremental dumps unless it's the first record)
+    2. Full database dump
+    3. Full JSON dump
+
+    Archive rotation is enabled by default for full dumps.
+    """
+    try:
+        start_t = prepare_incremental_dump()[1]
+        if start_t:  # not the first incremental dump
+            incremental(location, id=None, threads=None)
+        else:
+            print("Skipping incremental dump creation since it's the first one.\n")
+    except NoNewData:
+        print("Skipping incremental dump creation. No new data.\n")
+
+    full_db(location, threads=threads, rotate=rotate)
+    json(location, rotate=rotate)
 
 
 @manager.command
@@ -25,11 +47,11 @@ def full_db(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=F
                 default=os.path.join(os.getcwd(), 'export'),
                 help="Directory where dumps need to be created")
 @manager.option('-r', '--rotate', dest='rotate', action='store_true', default=False)
-@manager.option('-nl', '--no-lowlevel', dest='no_lowlevel', action='store_true',
-                default=False, help="Don't tump low level data.")
-@manager.option('-nh', '--no-highlevel', dest='no_highlevel', action='store_true',
-                default=False, help="Don't dump high level data.")
-def json(location, rotate, no_lowlevel, no_highlevel):
+@manager.option('-nl', '--no-lowlevel', dest='no_lowlevel',
+                action='store_true', help="Don't tump low level data.")
+@manager.option('-nh', '--no-highlevel', dest='no_highlevel',
+                action='store_true', help="Don't dump high level data.")
+def json(location, rotate, no_lowlevel=False, no_highlevel=False):
     if no_lowlevel and no_highlevel:
         print("wut? check your options, mate!")
 
@@ -43,7 +65,7 @@ def json(location, rotate, no_lowlevel, no_highlevel):
 def _json_lowlevel(location, rotate):
     print("Creating low level JSON data dump...")
     path = dump_lowlevel_json(location)
-    print("Done! Created: %s\n" % path)
+    print("Done! Created: %s" % path)
 
     if rotate:
         print("Removing old dumps (except two latest)...")
@@ -54,7 +76,7 @@ def _json_lowlevel(location, rotate):
 def _json_highlevel(location, rotate):
     print("Creating high level JSON data dump...")
     path = dump_highlevel_json(location)
-    print("Done! Created: %s\n" % path)
+    print("Done! Created: %s" % path)
 
     if rotate:
         print("Removing old dumps (except two latest)...")

@@ -431,7 +431,7 @@ def prepare_incremental_dump(dump_id=None):
     else:  # creating new
         start_t = _get_incremental_dump_timestamp()
         if start_t and not _any_new_data(start_t):
-            raise Exception("No new data since the last incremental dump!")
+            raise NoNewData("No new data since the last incremental dump!")
         dump_id, end_t = _create_new_inc_dump_record()
 
     return dump_id, start_t, end_t
@@ -460,7 +460,9 @@ def _create_new_inc_dump_record():
     cursor = db.cursor()
     cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
     db.commit()
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    print("Created new incremental dump record (ID: %s)." % row[0])
+    return row
 
 
 def _get_incremental_dump_timestamp(dump_id=None):
@@ -471,3 +473,7 @@ def _get_incremental_dump_timestamp(dump_id=None):
         cursor.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
     row = cursor.fetchone()
     return row[0] if row else None
+
+
+class NoNewData(Exception):
+    pass

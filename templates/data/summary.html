@@ -12,12 +12,6 @@
 {%- block content -%}
   <h3>Details for track {{ mbid }}</h3>
 
-  {%- if not metadata -%}
-    <div class="alert alert-warning" role="alert">
-      <strong>Metadata might be incorrect!</strong> We can't check it because MusicBrainz server is unavailable.
-    </div>
-  {%- endif -%}
-
   {%- if mbid -%}
     <div class="row">
       <div class="col-md-8">
@@ -29,39 +23,19 @@
             </tr>
           </thead>
           <tr>
-            <td>artist</td>
+            <td>title</td>
             <td>
-              {%- if metadata -%}
-                {# TODO(roman): Handle multiple artists properly. #}
-                {%- set artist_id = metadata['artist-credit'][0]['artist']['id'] -%}
-                <a href="https://musicbrainz.org/artist/{{ artist_id }}">{{ metadata['artist-credit-phrase'] }}</a>
-              {%- else -%}
-                {%- if lowlevel.metadata.tags.musicbrainz_artistid -%}
-                  <a href="https://musicbrainz.org/artist/{{ lowlevel.metadata.tags.musicbrainz_artistid[0] }}">
-                    {{ lowlevel.metadata.tags.artist[0] }}
-                  </a>
-                  {%- else -%}
-                    {{ lowlevel.metadata.tags.artist[0] }}
-                  {%- endif -%}
-              {%- endif -%}
+              <a href="https://musicbrainz.org/recording/{{ mbid }}">{{ info['title'] }}</a>
             </td>
+          </tr>
+          <tr>
+            <td>artist</td>
+            <td><a href="https://musicbrainz.org/artist/{{ info['artist_id'] }}">{{ info['artist'] }}</a></td>
           </tr>
           <tr>
             <td>release</td>
             <td>
-              {%- if metadata -%}
-                {%- set release = metadata['release-list'][0] -%}
-                <a href="https://musicbrainz.org/release/{{ release.id }}">{{ release.title }}</a>
-              {%- else -%}
-                {%- if lowlevel.metadata.tags.musicbrainz_albumid -%}
-                  <a href="https://musicbrainz.org/release/{{ lowlevel.metadata.tags.musicbrainz_albumid[0] }}">
-                    {{ lowlevel.metadata.tags.album[0] }}
-                  </a>
-                {%- else -%}
-                  {{ lowlevel.metadata.tags.album[0] }}
-                {%- endif -%}
-              {%- endif -%}
-
+              <a href="https://musicbrainz.org/release/{{ info['release_id'] }}">{{ info['release'] }}</a>
               {# TODO(roman): Get MBID of release group from MusicBrainz. #}
               {% if lowlevel.metadata.tags.musicbrainz_releasegroupid %}
                 <span class="critiquebrainz">(<a href="https://critiquebrainz.org/release-group/{{ lowlevel.metadata.tags.musicbrainz_releasegroupid[0] }}">Reviews at CritiqueBrainz</a>)</span>
@@ -69,39 +43,12 @@
             </td>
           </tr>
           <tr>
-            <td>title</td>
-            <td>
-              <a href="https://musicbrainz.org/recording/{{ lowlevel.metadata.tags.musicbrainz_recordingid[0] }}">
-                {{ metadata['title'] if metadata else lowlevel.metadata.tags.title[0] }}
-              </a>
-            </td>
+            <td>track number</td>
+            <td><a href="https://musicbrainz.org/track/{{ info['track_id'] }}">{{ info['track_number'] }}</a></td>
           </tr>
-          {% if lowlevel.metadata.tags.tracknumber %}
-            <tr>
-              <td>track number</td>
-              <td>
-                {%- if metadata -%}
-                  {%- set medium = metadata['release-list'][0]['medium-list'][0] -%}
-                  {{ medium['track-list'][0]['number'] }} / {{ medium['track-count'] }}
-                {%- else -%}
-                  {%- if lowlevel.metadata.tags.musicbrainz_albumid -%}
-                    <a href="https://musicbrainz.org/release/{{ lowlevel.metadata.tags.musicbrainz_albumid[0] }}">
-                      {{ lowlevel.metadata.tags.album[0] }}
-                    </a>
-                  {%- else -%}
-                    {% if lowlevel.metadata.tags.tracktotal %}
-                      {{ lowlevel.metadata.tags.tracknumber[0] }} / {{ lowlevel.metadata.tags.tracktotal[0] }}
-                    {% else %}
-                      {{ lowlevel.metadata.tags.tracknumber[0] }}
-                    {% endif %}
-                  {%- endif -%}
-                {%- endif -%}
-              </td>
-            </tr>
-          {% endif %}
           <tr>
             <td>track length</td>
-            <td>{{ lowlevel.metadata.audio_properties.length_formatted }}</td></tr>
+            <td>{{ info['length'] }}</td></tr>
         </table>
       </div>
 

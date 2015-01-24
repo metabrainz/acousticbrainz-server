@@ -21,3 +21,10 @@ cd /tmp/essentia
 ./waf
 cp /tmp/essentia/build/src/examples/streaming_extractor_music_svm \
     /vagrant/high-level/streaming_extractor_music_svm
+
+# SVM models
+mkdir /tmp/models
+cd /tmp/models
+curl -o models.tar.gz http://essentia.upf.edu/documentation/svm_models/music%201.0/essentia-extractor-svm_models-v2.1_beta1.tar.gz
+tar -xvzf models.tar.gz
+mv v2.1_beta1/svm_models /vagrant/high-level

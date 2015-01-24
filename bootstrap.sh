@@ -3,5 +3,6 @@
 apt-get update
 apt-get -y upgrade
 
-./admin/install_server.sh
-./admin/install_hl_extractor.sh
+cd /vagrant/admin
+./install_server.sh
+./install_hl_extractor.sh

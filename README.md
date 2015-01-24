@@ -16,7 +16,7 @@ Vagrant for your OS. Then copy two config files:
 
 1. `config.py.sample` to `config.py` in the `acousticbrainz/` directory *(you
 don't need to modify this file)*
-2  `profile.conf.in.sample` to `profile.conf.in` in the `high-level/` directory
+2.  `profile.conf.in.sample` to `profile.conf.in` in the `high-level/` directory
 *(in this file you need to set `models_essentia_git_sha` value)*
 
 After that you can spin up the VM and start working with it:

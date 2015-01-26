@@ -8,6 +8,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.hostname = "acousticbrainz-server"
 
   config.vm.provider "virtualbox" do |v|
+    # Need more memory to be able to compile Essentia with related libs
     v.memory = 1024
   end
 

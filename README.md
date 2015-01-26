@@ -41,13 +41,15 @@ Use `./server.py -h` to get a list of command-line switches
 to further suit your local environment (e.g., port, listening address, ...).
 
 
-## Exporting data
+## Working with data
+
+### Exporting
 
 There are several ways to export data out of AcousticBrainz server. You can
 create full database dump or export only low level and high level data in JSON
 format. Both ways support incremental dumping.
 
-### Examples
+#### Examples
 
 **Full database dump:**
 

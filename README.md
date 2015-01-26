@@ -68,3 +68,37 @@ and edit its content to fit your environment.
 After all this, you can run the site/server using `./server.py`.
 Use `./server.py -h` to get a list of command-line switches
 to further suit your local environment (e.g., port, listening address, ...).
+
+
+## Working with data
+
+### Exporting
+
+There are several ways to export data out of AcousticBrainz server. You can
+create full database dump or export only low level and high level data in JSON
+format. Both ways support incremental dumping.
+
+#### Examples
+
+**Full database dump:**
+
+    $ python manage.py dump full_db
+
+**JSON dump:**
+
+    $ python manage.py dump json
+
+*Creates two separate full JSON dumps with low level and high level data.*
+
+**Incremental dumps:**
+
+    $ python manage.py dump incremental
+
+*Creates new incremental dump in three different formats: usual database dump,
+low level and high level JSON.*
+
+**Previous incremental dumps:**
+
+    $ python manage.py dump incremental -i=42
+
+*Same as the previous but recreates previous incremental dump.*

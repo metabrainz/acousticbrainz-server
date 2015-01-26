@@ -1,7 +1,7 @@
 # PostgreSQL connection string
 # See http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
 # Note: To have no password, use "password=" in the string below.
-PG_CONNECT = "dbname=acousticbrainz user=acousticbrainz password=acousticbrainz host=localhost port=5432"
+PG_CONNECT = "dbname=acousticbrainz user=acousticbrainz password= host=localhost port=5432"
 
 # Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
 COMPILE_LESS = True

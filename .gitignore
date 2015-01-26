@@ -46,7 +46,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Configuration
-config.py
+acousticbrainz/config.py
 
 # High level extractor stuff
 high-level/streaming_extractor_music_svm

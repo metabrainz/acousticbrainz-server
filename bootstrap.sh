@@ -2,7 +2,7 @@
 
 apt-get update
 apt-get -y upgrade
-apt-get -y install python-virtualenv python-dev
+apt-get -y install python-virtualenv python-dev pxz
 
 # Setting up PostgreSQL
 PG_VERSION=9.3
@@ -25,8 +25,8 @@ service postgresql restart
 # Initializing the database
 su postgres << EOF
     cd /vagrant/admin
-    ./setup.sh
-    ./setup_test.sh
+    ./init_db.sh
+    ./init_db_test.sh
 EOF
 
 # Installing application requirements

@@ -3,6 +3,9 @@ from flask_uuid import FlaskUUID
 import logging
 from logging.handlers import RotatingFileHandler
 
+# This value must be incremented after any schema changes!
+__version__ = 2
+
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
 TEMPLATE_FOLDER = "../templates"

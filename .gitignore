@@ -28,39 +28,34 @@ var/
 *.manifest
 *.spec
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# PyBuilder
+target/
 
 # Unit test / coverage reports
 htmlcov/
-/cover/
+cover/
 .tox/
 .coverage
 .cache
 nosetests.xml
 coverage.xml
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
+# Logs
 *.log
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# project specific stuff
+# Configuration
 acousticbrainz/config.py
-/export
 ve
 *.swp
 high-level/streaming_extractor_music_svm
 high-level/svm_models
 high-level/profile.conf
 high-level/profile.conf.in
+
+# Other stuff
 static/download
+export
+ve
+*.swp

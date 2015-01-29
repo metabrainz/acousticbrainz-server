@@ -10,8 +10,6 @@ STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
 TEMPLATE_FOLDER = "../templates"
 
-__version__ = 2
-
 
 def create_app():
     app = Flask(__name__,

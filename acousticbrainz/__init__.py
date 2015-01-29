@@ -3,9 +3,14 @@ from flask_uuid import FlaskUUID
 import logging
 from logging.handlers import RotatingFileHandler
 
+# This value must be incremented after any schema changes!
+__version__ = 2
+
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"
 TEMPLATE_FOLDER = "../templates"
+
+__version__ = 2
 
 
 def create_app():
@@ -24,6 +29,12 @@ def create_app():
 
     # Extensions
     FlaskUUID(app)
+
+    # MusicBrainz
+    import musicbrainzngs
+    musicbrainzngs.set_useragent(app.config['MUSICBRAINZ_USERAGENT'], __version__)
+    if app.config['MUSICBRAINZ_HOSTNAME']:
+        musicbrainzngs.set_hostname(app.config['MUSICBRAINZ_HOSTNAME'])
 
     # Error handling
     import errors

@@ -1,3 +1,7 @@
+DEBUG = False
+
+SECRET_KEY = "CHANGE_ME"
+
 # PostgreSQL connection string
 # See http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
 # Note: To have no password, use "password=" in the string below.
@@ -7,3 +11,5 @@ PG_CONNECT = "dbname=acousticbrainz user=acousticbrainz password= host=localhost
 COMPILE_LESS = True
 
 LOG_FILE = "./acousticbrainz.log"
+
+MUSICBRAINZ_HOSTNAME = None

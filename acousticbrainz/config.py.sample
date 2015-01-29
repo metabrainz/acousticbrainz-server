@@ -7,6 +7,9 @@ SECRET_KEY = "CHANGE_ME"
 # Note: To have no password, use "password=" in the string below.
 PG_CONNECT = "dbname=acousticbrainz user=acousticbrainz password= host=localhost port=5432"
 
+# This connection string will be used for testing
+PG_CONNECT_TEST = "dbname=ab_test user=ab_test password= host=localhost port=5432"
+
 # Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
 COMPILE_LESS = True
 

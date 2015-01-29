@@ -26,5 +26,5 @@ mergeValues:
         version:
             highlevel:
                 essentia_build_sha:
-#               TODO: You must fill this out before using!
+                # TODO: You must fill this out:
                 models_essentia_git_sha:

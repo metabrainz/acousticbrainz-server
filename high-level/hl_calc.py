@@ -1,31 +1,33 @@
 #!/usr/bin/env python
-
-import sys
-sys.path.append("../acousticbrainz")
-
-import json
-import os
+from __future__ import print_function
+from hashlib import sha256, sha1
+from threading import Thread
 from time import sleep
 import subprocess
 import psycopg2
-import config
-from threading import Thread
-from hashlib import sha256, sha1
 import tempfile
-import yaml
 import argparse
+import json
+import yaml
+import os
+
+# Importing AcousticBrainz config file
+import sys
+sys.path.append("../acousticbrainz")
+import config
 
 DEFAULT_NUM_THREADS = 1
 
-SLEEP_DURATION = 30 # number of seconds to wait between runs
+SLEEP_DURATION = 30  # number of seconds to wait between runs
 HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
 
 PROFILE_CONF_TEMPLATE = "profile.conf.in"
 PROFILE_CONF = "profile.conf"
 
+
 class HighLevel(Thread):
-    """
-        This thread class calculates the high level data by calling the external high level calculator
+    """This thread class calculates the high level data by calling the external
+    high level calculator.
     """
 
     def __init__(self, mbid, ll_data, ll_id):
@@ -36,9 +38,7 @@ class HighLevel(Thread):
         self.ll_id = ll_id
 
     def _calculate(self):
-        """
-           Invoke essentia high level extractor and return its JSON output
-        """
+        """Invoke Essentia high level extractor and return its JSON output."""
 
         try:
             f = tempfile.NamedTemporaryFile(delete=False)
@@ -46,7 +46,7 @@ class HighLevel(Thread):
             f.write(self.ll_data)
             f.close()
         except IOError:
-            print "IO Error while writing temp file"
+            print("IO Error while writing temp file")
             return "{}"
 
         # Securely generate a temporary filename
@@ -56,9 +56,11 @@ class HighLevel(Thread):
 
         fnull = open(os.devnull, 'w')
         try:
-            subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY), name, out_file, PROFILE_CONF], stdout=fnull, stderr=fnull)
+            subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY),
+                                   name, out_file, PROFILE_CONF],
+                                  stdout=fnull, stderr=fnull)
         except subprocess.CalledProcessError:
-            print "Cannot call high level extractor"
+            print("Cannot call high level extractor")
             return "{}"
 
         fnull.close()
@@ -70,7 +72,7 @@ class HighLevel(Thread):
             f.close()
             os.unlink(out_file)
         except IOError:
-            print "IO Error while removing temp file"
+            print("IO Error while removing temp file")
             return "{}"
 
         return hl_data
@@ -84,10 +86,9 @@ class HighLevel(Thread):
     def run(self):
         self.hl_data = self._calculate()
 
+
 def get_documents(conn):
-    """
-        Fetch a number of low level documents to process from the DB
-    """
+    """Fetch a number of low level documents to process from the DB."""
     cur = conn.cursor()
     cur.execute("""SELECT ll.mbid, ll.data::text, ll.id
                      FROM lowlevel AS ll
@@ -101,24 +102,25 @@ def get_documents(conn):
 
 
 def create_profile(in_file, out_file, sha1):
-    """
-        Prepare a profile file for use with essentia. Sanity check to make sure important values are present.
+    """Prepare a profile file for use with essentia. Sanity check to make sure
+    important values are present.
     """
 
     try:
         with open(in_file, 'r') as f:
             doc = yaml.load(f)
     except IOError as e:
-        print "Cannot read profile %s: %s" % (in_file, e)
+        print("Cannot read profile %s: %s" % (in_file, e))
         sys.exit(-1)
 
     try:
         models_ver = doc['mergeValues']['metadata']['version']['highlevel']['models_essentia_git_sha']
-    except KeyError as e:
-        models_ver = ""
+    except KeyError:
+        models_ver = None
 
     if not models_ver:
-        print "profile.conf.in needs to have 'metadata : version : highlevel : models_essentia_git_sha' defined."
+        print("profile.conf.in needs to have 'metadata : version : highlevel :"
+              " models_essentia_git_sha' defined.")
         sys.exit(-1)
 
     doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
@@ -127,25 +129,25 @@ def create_profile(in_file, out_file, sha1):
         with open(out_file, 'w') as yaml_file:
             yaml_file.write( yaml.dump(doc, default_flow_style=False))
     except IOError as e:
-        print "Cannot write profile %s: %s" % (out_file, e)
+        print("Cannot write profile %s: %s" % (out_file, e))
         sys.exit(-1)
 
+
 def get_build_sha1(binary):
-    """
-        Calculate the sha1 of the binary we're using.
-    """
+    """Calculate the SHA1 of the binary we're using."""
     try:
         f = open(binary, "r")
         bin = f.read()
         f.close()
     except IOError as e:
-        print "Cannot calculate the SHA1 of the high level binary: %s" % e
+        print("Cannot calculate the SHA1 of the high level binary: %s" % e)
         sys.exit(-1)
 
     return sha1(bin).hexdigest()
 
+
 def main(num_threads):
-    print "High level extractor daemon starting with %d threads" % num_threads
+    print("High level extractor daemon starting with %d threads" % num_threads)
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
 
@@ -175,14 +177,14 @@ def main(num_threads):
             mbid, doc, id = docs.pop()
             th = HighLevel(mbid, doc, id)
             th.start()
-            print "start %s" % mbid
+            print("start %s" % mbid)
             pool[mbid] = th
 
         # If we're at max threads, wait for one to complete
         while True:
             if len(pool) == 0 and len(docs) == 0:
                 if num_processed > 0:
-                    print "processed %s documents, none remain. Sleeping." % num_processed
+                    print("processed %s documents, none remain. Sleeping." % num_processed)
                 num_processed = 0
                 # Let's be nice and not keep any connections to the DB open while we nap
                 conn.close()
@@ -202,14 +204,14 @@ def main(num_threads):
                     try:
                         jdata = json.loads(hl_data)
                     except ValueError:
-                        print "error %s: Cannot parse result document" % mbid
-                        print hl_data
+                        print("error %s: Cannot parse result document" % mbid)
+                        print(hl_data)
                         jdata = {}
 
                     norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
                     sha = sha256(norm_data).hexdigest()
 
-                    print "done  %s" % mbid
+                    print("done  %s" % mbid)
                     if not conn:
                         conn = psycopg2.connect(config.PG_CONNECT)
 

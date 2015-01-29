@@ -12,4 +12,5 @@ COMPILE_LESS = True
 
 LOG_FILE = "./acousticbrainz.log"
 
+MUSICBRAINZ_USERAGENT = "acousticbrainz-server"
 MUSICBRAINZ_HOSTNAME = None

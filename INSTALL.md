@@ -77,7 +77,7 @@ configuration step
 
 2. `git clone` Essentia and configure it like this:
 
-    $ ./waf configure --mode=release --with-gaia --with-example=streaming_extractor_music_svm
+        $ ./waf configure --mode=release --with-gaia --with-example=streaming_extractor_music_svm
 
 3. Build Essentia and copy `streaming_extractor_music_svm` binary from *build/src/examples/*
 directory into */high-level* in the project root.

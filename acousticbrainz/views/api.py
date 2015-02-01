@@ -1,5 +1,6 @@
 from flask import Blueprint, request, Response
 from acousticbrainz.data import load_low_level, load_high_level, submit_low_level_data
+from acousticbrainz.decorators import crossdomain
 from werkzeug.exceptions import BadRequest
 import json
 
@@ -7,12 +8,14 @@ api_bp = Blueprint('api', __name__)
 
 
 @api_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
+@crossdomain()
 def get_low_level(mbid):
     """Endpoint for fetching low-level information to AcousticBrainz."""
     return Response(load_low_level(mbid), content_type='application/json')
 
 
 @api_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
+@crossdomain()
 def get_high_level(mbid):
     """Endpoint for fetching high-level information to AcousticBrainz."""
     return Response(load_high_level(mbid), content_type='application/json')

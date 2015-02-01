@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect
 from acousticbrainz.data import load_low_level, load_high_level, get_summary_data
-from urllib import quote_plus
 from musicbrainzngs.musicbrainz import ResponseError
+from urllib import quote_plus
 import musicbrainzngs
 import json
 

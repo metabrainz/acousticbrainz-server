@@ -29,9 +29,7 @@ def init_db(archive=None):
     print('Creating tables...')
     run_sql_script(os.path.join('admin', 'sql', 'create_tables.sql'))
 
-    if archive:
-        print('Importing data...')
-        import_db_dump(archive)
+    import_data(archive) if archive else print('Skipping data importing.')
 
     print('Creating primary and foreign keys...')
     run_sql_script(os.path.join('admin', 'sql', 'create_primary_keys.sql'))
@@ -41,6 +39,12 @@ def init_db(archive=None):
     run_sql_script(os.path.join('admin', 'sql', 'create_indexes.sql'))
 
     print("Done!")
+
+
+@manager.command
+def import_data(archive):
+    print('Importing data...')
+    import_db_dump(archive)
 
 
 if __name__ == '__main__':

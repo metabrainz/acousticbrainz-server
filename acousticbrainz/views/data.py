@@ -1,6 +1,5 @@
-from flask import Blueprint, request, Response, render_template, redirect
-from acousticbrainz.data import load_low_level, load_high_level, submit_low_level_data, get_summary_data
-from werkzeug.exceptions import BadRequest
+from flask import Blueprint, render_template, redirect
+from acousticbrainz.data import load_low_level, load_high_level, get_summary_data
 from urllib import quote_plus
 from musicbrainzngs.musicbrainz import ResponseError
 import musicbrainzngs
@@ -19,41 +18,16 @@ def data():
     return render_template("data/data.html")
 
 
-@data_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
-def submit_low_level(mbid):
-    """Endpoint for submitting low-level information to AcousticBrainz."""
-    raw_data = request.get_data()
-    try:
-        data = json.loads(raw_data)
-    except ValueError, e:
-        raise BadRequest("Cannot parse JSON document: %s" % e)
-
-    submit_low_level_data(mbid, data)
-    return ""
-
-
 @data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
     data = json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True)
     return render_template("data/json-display.html", title="Low-level JSON for %s" % mbid, data=data)
 
 
-@data_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
-def get_low_level(mbid):
-    """Endpoint for fetching low-level information to AcousticBrainz."""
-    return Response(load_low_level(mbid), content_type='application/json')
-
-
 @data_bp.route("/<uuid:mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):
     data = json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True)
     return render_template("data/json-display.html", title="High-level JSON for %s" % mbid, data=data)
-
-
-@data_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
-def get_high_level(mbid):
-    """Endpoint for fetching high-level information to AcousticBrainz."""
-    return Response(load_high_level(mbid), content_type='application/json')
 
 
 @data_bp.route("/<uuid:mbid>", methods=["GET"])

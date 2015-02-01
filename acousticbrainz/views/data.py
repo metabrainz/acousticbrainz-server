@@ -35,7 +35,8 @@ def submit_low_level(mbid):
 @data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
     data = json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True)
-    return render_template("data/json-display.html", title="Low-level JSON for %s" % mbid, data=data)
+    return render_template("data/json-display.html", mbid=mbid, data=data,
+                           title="Low-level JSON for %s" % mbid)
 
 
 @data_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
@@ -47,7 +48,8 @@ def get_low_level(mbid):
 @data_bp.route("/<uuid:mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):
     data = json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True)
-    return render_template("data/json-display.html", title="High-level JSON for %s" % mbid, data=data)
+    return render_template("data/json-display.html", mbid=mbid, data=data,
+                           title="High-level JSON for %s" % mbid)
 
 
 @data_bp.route("/<uuid:mbid>/high-level", methods=["GET"])

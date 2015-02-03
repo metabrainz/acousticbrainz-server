@@ -41,10 +41,12 @@ def create_app():
     # Blueprints
     from acousticbrainz.views.index import index_bp
     from acousticbrainz.views.data import data_bp
+    from acousticbrainz.views.api import api_bp
     from acousticbrainz.views.stats import stats_bp
 
     app.register_blueprint(index_bp)
     app.register_blueprint(data_bp)
+    app.register_blueprint(api_bp)
     app.register_blueprint(stats_bp)
 
     return app

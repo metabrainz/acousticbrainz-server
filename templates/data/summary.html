@@ -121,12 +121,12 @@
     <ul>
       <li>
         <a href="{{ url_for('data.view_low_level', mbid=mbid) }}">Low level data</a>
-        (<a href="{{ url_for('data.get_low_level', mbid=mbid) }}">raw JSON</a>)
+        (<a href="{{ url_for('api.get_low_level', mbid=mbid) }}">raw JSON</a>)
       </li>
       {% if other -%}
         <li>
           <a href="{{ url_for('data.view_high_level', mbid=mbid) }}">High level data</a>
-          (<a href="{{ url_for('data.get_high_level', mbid=mbid) }}">raw JSON</a>)
+          (<a href="{{ url_for('api.get_high_level', mbid=mbid) }}">raw JSON</a>)
         </li>
       {%- endif %}
     </ul>

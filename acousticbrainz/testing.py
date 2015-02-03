@@ -1,6 +1,9 @@
 from flask_testing import TestCase
 from acousticbrainz import create_app
+from acousticbrainz.data import submit_low_level_data
 import psycopg2
+import json
+import os
 
 
 class FlaskTestCase(TestCase):
@@ -28,3 +31,10 @@ class FlaskTestCase(TestCase):
         conn.commit()
         cur.close()
         conn.close()
+
+    def load_low_level_data(self, mbid):
+        """Loads low level data from JSON file in `acousticbrainz/test_data`
+        directory into the database.
+        """
+        with open(os.path.join('acousticbrainz', 'test_data', mbid + '.json')) as json_file:
+            submit_low_level_data(mbid, json.loads(json_file.read()))

@@ -148,6 +148,7 @@ def get_build_sha1(binary):
 
 def main(num_threads):
     print("High level extractor daemon starting with %d threads" % num_threads)
+    sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
 
@@ -178,6 +179,7 @@ def main(num_threads):
             th = HighLevel(mbid, doc, id)
             th.start()
             print("start %s" % mbid)
+            sys.stdout.flush()
             pool[mbid] = th
 
         # If we're at max threads, wait for one to complete
@@ -185,6 +187,7 @@ def main(num_threads):
             if len(pool) == 0 and len(docs) == 0:
                 if num_processed > 0:
                     print("processed %s documents, none remain. Sleeping." % num_processed)
+                    sys.stdout.flush()
                 num_processed = 0
                 # Let's be nice and not keep any connections to the DB open while we nap
                 conn.close()
@@ -206,12 +209,14 @@ def main(num_threads):
                     except ValueError:
                         print("error %s: Cannot parse result document" % mbid)
                         print(hl_data)
+                        sys.stdout.flush()
                         jdata = {}
 
                     norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
                     sha = sha256(norm_data).hexdigest()
 
                     print("done  %s" % mbid)
+                    sys.stdout.flush()
                     if not conn:
                         conn = psycopg2.connect(config.PG_CONNECT)
 

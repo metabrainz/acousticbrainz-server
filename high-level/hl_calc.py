@@ -10,6 +10,7 @@ import argparse
 import json
 import yaml
 import os
+from setproctitle import setproctitle
 
 # Importing AcousticBrainz config file
 import sys
@@ -237,6 +238,7 @@ def main(num_threads):
                 break
 
 if __name__ == "__main__":
+    setproctitle("hl_calc")
     parser = argparse.ArgumentParser(description='Extract high level data from lowlevel data')
     parser.add_argument("-t", "--threads", help="Number of threads to start", default=DEFAULT_NUM_THREADS, type=int)
     args = parser.parse_args()

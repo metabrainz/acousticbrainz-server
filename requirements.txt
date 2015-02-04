@@ -10,3 +10,4 @@ coverage == 3.7.1
 musicbrainzngs == 0.5
 python-memcached
 pyyaml
+setproctitle

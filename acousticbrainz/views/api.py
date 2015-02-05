@@ -9,7 +9,7 @@ api_bp = Blueprint('api', __name__)
 
 @api_bp.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
-def meta(mbid):
+def count(mbid):
     return jsonify({
         'mbid': mbid,
         'count': count_lowlevel(mbid),

@@ -76,12 +76,13 @@ def submit_low_level_data(mbid, data):
         raise ServiceUnavailable(str(e))
 
 
-def load_low_level(mbid):
+def load_low_level(mbid, offset=0):
     """Load low level data for a given MBID."""
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
-        cur.execute("SELECT data::text FROM lowlevel WHERE mbid = %s", (str(mbid), ))
+        cur.execute("SELECT data::text FROM lowlevel WHERE mbid = %s OFFSET %s",
+                    (str(mbid), offset))
         if not cur.rowcount:
             raise NotFound
 
@@ -118,6 +119,23 @@ def load_high_level(mbid):
         raise ServiceUnavailable(str(e))
 
     return InternalServerError("Bummer, dude.")
+
+
+def count_lowlevel(mbid):
+    """Count number of stored datasets for a specified MBID."""
+    conn = psycopg2.connect(current_app.config['PG_CONNECT'])
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT count(*) FROM lowlevel WHERE mbid = %s",
+                    (str(mbid),))
+        return cur.fetchone()[0]
+
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    return InternalServerError("Ouch!")
 
 
 def get_summary_data(mbid):

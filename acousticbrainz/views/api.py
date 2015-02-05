@@ -1,10 +1,19 @@
-from flask import Blueprint, request, Response
-from acousticbrainz.data import load_low_level, load_high_level, submit_low_level_data
+from flask import Blueprint, request, Response, jsonify
+from acousticbrainz.data import load_low_level, load_high_level, submit_low_level_data, count_lowlevel
 from acousticbrainz.decorators import crossdomain
 from werkzeug.exceptions import BadRequest
 import json
 
 api_bp = Blueprint('api', __name__)
+
+
+@api_bp.route("/<uuid:mbid>/meta", methods=["GET"])
+@crossdomain()
+def meta(mbid):
+    return jsonify({
+        'mbid': mbid,
+        'count': count_lowlevel(mbid),
+    })
 
 
 @api_bp.route("/<uuid:mbid>/low-level", methods=["GET"])

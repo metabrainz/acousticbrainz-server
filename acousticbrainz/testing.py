@@ -1,4 +1,5 @@
 from flask_testing import TestCase
+from flask import current_app
 from acousticbrainz import create_app
 from acousticbrainz.data import submit_low_level_data
 import psycopg2
@@ -21,16 +22,17 @@ class FlaskTestCase(TestCase):
         self.truncate_all()
 
     def truncate_all(self):
-        conn = psycopg2.connect(self.app.config["PG_CONNECT"])
-        cur = conn.cursor()
-        cur.execute("TRUNCATE highlevel_json CASCADE;")
-        cur.execute("TRUNCATE highlevel CASCADE;")
-        cur.execute("TRUNCATE lowlevel CASCADE;")
-        cur.execute("TRUNCATE statistics CASCADE;")
-        cur.execute("TRUNCATE incremental_dumps CASCADE;")
-        conn.commit()
-        cur.close()
-        conn.close()
+        connection = psycopg2.connect(current_app.config['PG_CONNECT'])
+        cursor = connection.cursor()
+        cursor.execute('TRUNCATE highlevel_json CASCADE;')
+        cursor.execute('TRUNCATE highlevel CASCADE;')
+        cursor.execute('TRUNCATE lowlevel CASCADE;')
+        cursor.execute('TRUNCATE statistics CASCADE;')
+        cursor.execute('TRUNCATE incremental_dumps CASCADE;')
+        cursor.execute('TRUNCATE "user" CASCADE;')
+        connection.commit()
+        cursor.close()
+        connection.close()
 
     def load_low_level_data(self, mbid):
         """Loads low level data from JSON file in `acousticbrainz/test_data`

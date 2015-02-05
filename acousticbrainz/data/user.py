@@ -10,6 +10,11 @@ def create(musicbrainz_id):
                    (str(musicbrainz_id),))
     connection.commit()
 
+    # Getting new user's ID
+    cursor.execute('SELECT id FROM "user" WHERE musicbrainz_id = %s',
+                   (str(musicbrainz_id),))
+    return cursor.fetchone()[0]
+
 
 def get(id):
     connection = psycopg2.connect(current_app.config['PG_CONNECT'])

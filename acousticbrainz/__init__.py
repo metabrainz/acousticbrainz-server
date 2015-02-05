@@ -50,11 +50,13 @@ def create_app():
     from acousticbrainz.views.api import api_bp
     from acousticbrainz.views.stats import stats_bp
     from acousticbrainz.views.login import login_bp
+    from acousticbrainz.views.user import user_bp
 
     app.register_blueprint(index_bp)
     app.register_blueprint(data_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(stats_bp)
     app.register_blueprint(login_bp, url_prefix='/login')
+    app.register_blueprint(user_bp, url_prefix='/user')
 
     return app

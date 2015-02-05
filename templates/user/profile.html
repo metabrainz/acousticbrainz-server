@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2>Your profile</h2>
+  <dl class="dl-horizontal">
+    <dt>ID</dt><dd>{{ user.id }}</dd>
+    <dt>Created</dt><dd>{{ user.created }}</dd>
+    <dt>MusicBrainz ID</dt><dd>{{ user.musicbrainz_id }}</dd>
+  </dl>
+{% endblock %}

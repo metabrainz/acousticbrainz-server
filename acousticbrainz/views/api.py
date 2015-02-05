@@ -10,8 +10,20 @@ api_bp = Blueprint('api', __name__)
 @api_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
 @crossdomain()
 def get_low_level(mbid):
-    """Endpoint for fetching low-level information to AcousticBrainz."""
-    return Response(load_low_level(mbid), content_type='application/json')
+    """Endpoint for fetching low-level information to AcousticBrainz.
+
+    Offset can be specified if you need to get another dataset in case there
+    are duplicates.
+    """
+    offset = request.args.get("n")
+    if offset:
+        if not offset.isdigit():
+            raise BadRequest("Offset must be an integer value!")
+        else:
+            offset = int(offset)
+    else:
+        offset = 0
+    return Response(load_low_level(mbid, offset), content_type='application/json')
 
 
 @api_bp.route("/<uuid:mbid>/high-level", methods=["GET"])

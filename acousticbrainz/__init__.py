@@ -34,6 +34,12 @@ def create_app():
     if app.config['MUSICBRAINZ_HOSTNAME']:
         musicbrainzngs.set_hostname(app.config['MUSICBRAINZ_HOSTNAME'])
 
+    # OAuth
+    from acousticbrainz.login import login_manager, provider
+    login_manager.init_app(app)
+    provider.init(app.config['MUSICBRAINZ_CLIENT_ID'],
+                  app.config['MUSICBRAINZ_CLIENT_SECRET'])
+
     # Error handling
     import errors
     errors.init_error_handlers(app)
@@ -43,10 +49,12 @@ def create_app():
     from acousticbrainz.views.data import data_bp
     from acousticbrainz.views.api import api_bp
     from acousticbrainz.views.stats import stats_bp
+    from acousticbrainz.views.login import login_bp
 
     app.register_blueprint(index_bp)
     app.register_blueprint(data_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(stats_bp)
+    app.register_blueprint(login_bp, url_prefix='/login')
 
     return app

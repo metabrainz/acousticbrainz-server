@@ -22,7 +22,7 @@ class FlaskTestCase(TestCase):
         self.truncate_all()
 
     def truncate_all(self):
-        connection = psycopg2.connect(current_app.config['PG_CONNECT'])
+        connection = psycopg2.connect(current_app.config['PG_CONNECT_TEST'])
         cursor = connection.cursor()
         cursor.execute('TRUNCATE highlevel_json CASCADE;')
         cursor.execute('TRUNCATE highlevel CASCADE;')

@@ -7,6 +7,8 @@
   <dl class="dl-horizontal">
     <dt>ID</dt><dd>{{ user.id }}</dd>
     <dt>Created</dt><dd>{{ user.created }}</dd>
-    <dt>MusicBrainz ID</dt><dd>{{ user.musicbrainz_id }}</dd>
+    <dt>MusicBrainz ID</dt><dd>
+        <a href="https://musicbrainz.org/user/{{ user.musicbrainz_id }}">{{ user.musicbrainz_id }}</a>
+    </dd>
   </dl>
 {% endblock %}

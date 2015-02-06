@@ -27,8 +27,8 @@ PROFILE_CONF = "profile.conf"
 
 
 class HighLevel(Thread):
-    """This thread class calculates the high level data by calling the external
-    high level calculator.
+    """This thread class calculates the high-level data by calling the external
+    high-level calculator.
     """
 
     def __init__(self, mbid, ll_data, ll_id):
@@ -39,7 +39,7 @@ class HighLevel(Thread):
         self.ll_id = ll_id
 
     def _calculate(self):
-        """Invoke Essentia high level extractor and return its JSON output."""
+        """Invoke Essentia high-level extractor and return its JSON output."""
 
         try:
             f = tempfile.NamedTemporaryFile(delete=False)
@@ -61,7 +61,7 @@ class HighLevel(Thread):
                                    name, out_file, PROFILE_CONF],
                                   stdout=fnull, stderr=fnull)
         except subprocess.CalledProcessError:
-            print("Cannot call high level extractor")
+            print("Cannot call high-level extractor")
             return "{}"
 
         fnull.close()
@@ -89,7 +89,7 @@ class HighLevel(Thread):
 
 
 def get_documents(conn):
-    """Fetch a number of low level documents to process from the DB."""
+    """Fetch a number of low-level documents to process from the DB."""
     cur = conn.cursor()
     cur.execute("""SELECT ll.mbid, ll.data::text, ll.id
                      FROM lowlevel AS ll
@@ -141,14 +141,14 @@ def get_build_sha1(binary):
         bin = f.read()
         f.close()
     except IOError as e:
-        print("Cannot calculate the SHA1 of the high level binary: %s" % e)
+        print("Cannot calculate the SHA1 of the high-level extractor binary: %s" % e)
         sys.exit(-1)
 
     return sha1(bin).hexdigest()
 
 
 def main(num_threads):
-    print("High level extractor daemon starting with %d threads" % num_threads)
+    print("High-level extractor daemon starting with %d threads" % num_threads)
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
@@ -239,7 +239,7 @@ def main(num_threads):
 
 if __name__ == "__main__":
     setproctitle("hl_calc")
-    parser = argparse.ArgumentParser(description='Extract high level data from lowlevel data')
+    parser = argparse.ArgumentParser(description='Extract high-level data from low-level data')
     parser.add_argument("-t", "--threads", help="Number of threads to start", default=DEFAULT_NUM_THREADS, type=int)
     args = parser.parse_args()
     main(args.threads)

@@ -10,7 +10,7 @@
   <h4>Getting data</h4>
   <p>
     To fetch the JSON documents for a given MusicBrainz recording ID, you can
-    construct the following endpoints for low level and high level:
+    construct the following endpoints for low-level and high-level:
   </p>
 <pre>
    GET http://acousticbrainz.org/&lt;MBID&gt;/low-level
@@ -22,7 +22,7 @@
    GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level</a>
 </pre>
   <p>
-    You can find out how many low level documents we have for a given track
+    You can find out how many low-level documents we have for a given track
     using the following endpoint:
   </p>
 <pre>
@@ -44,7 +44,7 @@
   </p>
 
   <h4 id="sample-data">Sample data</h4>
-  <p>AcousticBrainz stores two levels of data: Low-level and high level.</p>
+  <p>AcousticBrainz stores two levels of data: low-level and high-level.</p>
   <p>
     Both types of information are JSON documents, two documents per each
     <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a>
@@ -54,11 +54,10 @@
     The low-level data includes acoustic descriptors characterizing overall
     loudness, dynamics and spectral shape of a signal, rhythm descriptors
     (including beats per minute), and tonal information (including keys and
-    scales). The low-level data is stable, compared to the higher level data.
+    scales). The low-level data is stable, compared to the higher-level data.
     This hopefully means that we will not have to recompute this data from
     audio files too frequently. More detailed information about the low-level
-    data is provided in <a
-      href="http://essentia.upf.edu/documentation/streaming_extractor_music.html#music-descriptors">
+    data is provided in <a href="http://essentia.upf.edu/documentation/streaming_extractor_music.html#music-descriptors">
     the official documentation for Essentia toolkit</a>.
   </p>
 
@@ -3435,12 +3434,12 @@
 </code></pre>
   </div>
   <p>
-    The high level data includes information about moods, genres, vocals and
+    The high-level data includes information about moods, genres, vocals and
     music type automatically inferred from low-level data by pre-trained
     classifiers. The high-level data can be computed from the low-level data,
     without requiring access to original audio files. The high-level data is
     less stable that the low-level data, since it contains more experimental
-    algorithms. We anticipate re-calculating the high level data until it
+    algorithms. We anticipate re-calculating the high-level data until it
     becomes fully stable.
   </p>
   <div style="background-color: #f8f8f8;">

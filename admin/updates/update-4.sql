@@ -23,7 +23,7 @@ CREATE TABLE class_member (
   class    INT, -- FK to class
   lowlevel INT -- FK to lowlevel
 );
-ALTER TABLE class ADD CONSTRAINT class_pkey PRIMARY KEY (class, lowlevel);
+ALTER TABLE class_member ADD CONSTRAINT class_member_pkey PRIMARY KEY (class, lowlevel);
 
 
 -- FKs

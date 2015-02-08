@@ -8,6 +8,6 @@ ALTER TABLE incremental_dumps ADD CONSTRAINT incremental_dumps_pkey PRIMARY KEY 
 ALTER TABLE "user" ADD CONSTRAINT user_pkey PRIMARY KEY (id);
 ALTER TABLE dataset ADD CONSTRAINT dataset_pkey PRIMARY KEY (id);
 ALTER TABLE class ADD CONSTRAINT class_pkey PRIMARY KEY (id);
-ALTER TABLE class_member ADD CONSTRAINT class_pkey PRIMARY KEY (class, lowlevel);
+ALTER TABLE class_member ADD CONSTRAINT class_member_pkey PRIMARY KEY (class, lowlevel);
 
 COMMIT;

@@ -8,13 +8,10 @@ def create(musicbrainz_id):
     try:
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
-        cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s)',
+        cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
                        (str(musicbrainz_id),))
         connection.commit()
-
-        # Getting new user's ID
-        cursor.execute('SELECT id FROM "user" WHERE musicbrainz_id = %s',
-                       (str(musicbrainz_id),))
+        new_id = cursor.fetchone()[0]
     except psycopg2.ProgrammingError, e:
         raise BadRequest(str(e))
     except psycopg2.IntegrityError, e:
@@ -22,7 +19,7 @@ def create(musicbrainz_id):
     except psycopg2.OperationalError, e:
         raise ServiceUnavailable(str(e))
 
-    return cursor.fetchone()[0]
+    return new_id
 
 
 def get(id):

@@ -43,7 +43,7 @@ CREATE TABLE "user" (
 ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id);
 
 CREATE TABLE dataset (
-  id          SERIAL,
+  id          UUID,
   name        VARCHAR NOT NULL,
   description TEXT,
   owner       INT, -- FK to user
@@ -54,7 +54,7 @@ CREATE TABLE class (
   id          SERIAL,
   name        VARCHAR NOT NULL,
   description TEXT,
-  dataset     INT     NOT NULL -- FK to dataset
+  dataset     UUID    NOT NULL -- FK to dataset
 );
 
 CREATE TABLE class_member (

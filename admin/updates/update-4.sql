@@ -1,7 +1,7 @@
 BEGIN;
 
 CREATE TABLE dataset (
-  id          SERIAL,
+  id          UUID,
   name        VARCHAR NOT NULL,
   description TEXT,
   owner       INT, -- FK to user
@@ -14,7 +14,7 @@ CREATE TABLE class (
   id          SERIAL,
   name        VARCHAR NOT NULL,
   description TEXT,
-  dataset     INT     NOT NULL -- FK to dataset
+  dataset     UUID    NOT NULL -- FK to dataset
 );
 ALTER TABLE class ADD CONSTRAINT class_pkey PRIMARY KEY (id);
 
@@ -48,5 +48,6 @@ ALTER TABLE class_member
   FOREIGN KEY (lowlevel)
   REFERENCES lowlevel (id);
 
+CREATE EXTENSION "uuid-ossp";
 
 COMMIT;

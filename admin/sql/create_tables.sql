@@ -54,7 +54,7 @@ CREATE TABLE class (
   id          SERIAL,
   name        VARCHAR NOT NULL,
   description TEXT,
-  dataset     INT -- FK to dataset
+  dataset     INT     NOT NULL -- FK to dataset
 );
 
 CREATE TABLE class_member (

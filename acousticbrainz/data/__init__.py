@@ -13,7 +13,7 @@ def submit_low_level_data(mbid, data):
     Args:
         mbid: MusicBrainz ID of the track that corresponds to the data that is
             being submitted.
-        data: Low level data about the track.
+        data: Low-level data about the track.
     """
     mbid = str(mbid)
     data = clean_metadata(data)
@@ -77,7 +77,7 @@ def submit_low_level_data(mbid, data):
 
 
 def load_low_level(mbid, offset=0):
-    """Load low level data for a given MBID."""
+    """Load low-level data for a given MBID."""
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
@@ -98,7 +98,7 @@ def load_low_level(mbid, offset=0):
 
 
 def load_high_level(mbid):
-    """Load high level data for a given MBID."""
+    """Load high-level data for a given MBID."""
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:

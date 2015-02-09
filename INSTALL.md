@@ -2,8 +2,8 @@ Installing AcousticBrainz Server
 ================================
 
 AcousticBrainz Server consists of two parts: web server that powers
-acousticbrainz.org website and high level data extractor that processes
-incoming low level information about tracks.
+acousticbrainz.org website and high-level data extractor that processes
+incoming low-level information about tracks.
 
 Prerequisites
 -------------
@@ -57,10 +57,10 @@ Use `./server.py -h` to get a list of command-line switches
 to further suit your local environment (e.g., port, listening address, ...).
 
 
-High Level Data Extractor
+High-level Data Extractor
 -------------------------
 
-To run high level data extractor you'll need two things:
+To run high-level data extractor you'll need two things:
 
 1. `streaming_extractor_music_svm` which is a part of the [Essentia library](http://essentia.upf.edu/)
 2. *svm_models* which are available at http://essentia.upf.edu/documentation/svm_models/

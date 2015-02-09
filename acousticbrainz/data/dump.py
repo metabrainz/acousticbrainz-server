@@ -303,7 +303,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
 
 def dump_highlevel_json(location, incremental=False, dump_id=None):
-    """Create JSON dump with high level data.
+    """Create JSON dump with high-level data.
 
     Args:
         location: Directory where archive will be created.
@@ -313,7 +313,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
             its identifier (integer) can be specified there.
 
     Returns:
-        Path to created high level JSON dump.
+        Path to created high-level JSON dump.
     """
     create_path(location)
 

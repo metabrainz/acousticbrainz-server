@@ -11,11 +11,19 @@
     /** @jsx React.DOM */
 
     var Recording = React.createClass({
+      handleDelete: function (event) {
+        event.preventDefault();
+        this.props.onRecordingDelete(this.props.mbid);
+      },
       render: function () {
-        return (<li>
-          <strong>{this.props.mbid}</strong>
-          <button className="btn btn-xs btn-danger" type="button">delete</button>
-        </li>);
+        return (
+            <li>
+              <form onSubmit={this.handleDelete}>
+                <strong>{this.props.mbid}</strong>&nbsp;
+                <button className="btn btn-xs btn-danger" type="submit">Delete</button>
+              </form>
+            </li>
+        );
       }
     });
 
@@ -23,7 +31,7 @@
       render: function () {
         var items = [];
         this.props.recordings.forEach(function (recording) {
-          items.push(<Recording mbid={recording} />);
+          items.push(<Recording mbid={recording} onRecordingDelete={this.props.onRecordingDelete} />);
         }.bind(this));
         if (items.length > 0) {
           return (<ul>{items}</ul>);
@@ -34,8 +42,8 @@
     });
 
     var RecordingAddForm = React.createClass({
-      handleSubmit: function (e) {
-        e.preventDefault();
+      handleSubmit: function (event) {
+        event.preventDefault();
         var mbid = this.refs.mbid.getDOMNode().value.trim();
         if (!mbid) {
           return;
@@ -63,19 +71,23 @@
       handleRecordingSubmit: function (mbid) {
         var recordings = this.props.recordings;
         recordings.push(mbid);
-
-        // Passing whole list of recordings (updated) to the parent
         this.props.onRecordingsUpdate(recordings);
       },
       handleRecordingDelete: function (mbid) {
-        // TODO: Implement
+        var recordings = this.props.recordings;
+        var index = recordings.indexOf(mbid);
+        if (index > -1) {
+          recordings.splice(index, 1);
+        }
+        this.props.onRecordingsUpdate(recordings);
+        console.log("Deleted", mbid);
       },
       render: function () {
         return (
             <div>
               <h4>Recordings</h4>
               <RecordingAddForm onRecordingSubmit={this.handleRecordingSubmit} />
-              <RecordingList recordings={this.props.recordings} />
+              <RecordingList recordings={this.props.recordings} onRecordingDelete={this.handleRecordingDelete} />
             </div>
         );
       }

@@ -52,10 +52,11 @@
         this.refs.mbid.getDOMNode().value = '';
       },
       handleChange: function() {
-        var input = this.refs.mbid.getDOMNode().value;
-        var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input);
-        // TODO: Check if this recording is already added
-        this.setState({validInput: isValidUUID});
+        var mbid = this.refs.mbid.getDOMNode().value;
+        var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mbid);
+        var isNotDuplicate = this.props.recordings.indexOf(mbid) === -1;
+        this.setState({validInput: isValidUUID && isNotDuplicate});
+        // TODO: Show informative error messages if input is invalid.
       },
       getInitialState: function () {
         return {validInput: false};
@@ -97,7 +98,7 @@
         return (
             <div>
               <h4>Recordings</h4>
-              <RecordingAddForm onRecordingSubmit={this.handleRecordingSubmit} />
+              <RecordingAddForm recordings={this.props.recordings} onRecordingSubmit={this.handleRecordingSubmit} />
               <RecordingList recordings={this.props.recordings} onRecordingDelete={this.handleRecordingDelete} />
             </div>
         );

@@ -23,7 +23,7 @@
       render: function () {
         var items = [];
         this.props.recordings.forEach(function (recording) {
-          items.push(<Recording mbid={recording.mbid} />);
+          items.push(<Recording mbid={recording} />);
         }.bind(this));
         if (items.length > 0) {
           return (<ul>{items}</ul>);
@@ -40,7 +40,7 @@
         if (!mbid) {
           return;
         }
-        this.props.onRecordingSubmit({mbid: mbid});
+        this.props.onRecordingSubmit(mbid);
         this.refs.mbid.getDOMNode().value = '';
       },
       render: function () {
@@ -61,19 +61,21 @@
 
     var Recordings = React.createClass({
       handleRecordingSubmit: function (mbid) {
-        var recordings = this.state.recordings;
+        var recordings = this.props.recordings;
         recordings.push(mbid);
-        this.setState({recordings: recordings});
+
+        // Passing whole list of recordings (updated) to the parent
+        this.props.onRecordingsUpdate(recordings);
       },
-      getInitialState: function () {
-        return {recordings: []};
+      handleRecordingDelete: function (mbid) {
+        // TODO: Implement
       },
       render: function () {
         return (
             <div>
               <h4>Recordings</h4>
               <RecordingAddForm onRecordingSubmit={this.handleRecordingSubmit} />
-              <RecordingList recordings={this.state.recordings} />
+              <RecordingList recordings={this.props.recordings} />
             </div>
         );
       }
@@ -83,23 +85,24 @@
       render: function () {
         return (
             <div>
-              <p><em>Class description</em></p>
-              <div>
-                <button className="btn btn-xs btn-default" type="button">Edit</button>&nbsp;
-                <button className="btn btn-xs btn-danger" type="button">Delete</button>
-              </div>
+              <button className="btn btn-xs btn-default" type="button">Edit</button>&nbsp;
+              <button className="btn btn-xs btn-danger" type="button">Delete</button>
             </div>
         );
       }
     });
 
     var Class = React.createClass({
+      handleRecordingUpdate: function (recordings) {
+        this.props.onClassUpdate(this.props.name, this.props.name, this.props.description, recordings);
+      },
       render: function () {
         return (
             <div>
               <h3>{this.props.name}</h3>
+              <p><em>{this.props.description}</em></p>
               <ClassControl />
-              <Recordings className={this.props.name} />
+              <Recordings recordings={this.props.recordings} onRecordingsUpdate={this.handleRecordingUpdate} />
               <hr />
             </div>
         );
@@ -110,7 +113,8 @@
       render: function () {
         var items = [];
         this.props.classes.forEach(function (cls) {
-          items.push(<Class name={cls.name} />);
+          items.push(<Class name={cls.name} description={cls.description} recordings={cls.recordings}
+              onClassUpdate={this.props.onClassUpdate} />);
         }.bind(this));
         if (items.length > 0) {
           return (<ul>{items}</ul>);
@@ -127,10 +131,15 @@
         if (!name) {
           return;
         }
-        this.props.onClassSubmit({name: name});
+        this.props.onClassCreate({
+          name: name,
+          description: "NOTHING",
+          recordings: [],
+        });
         this.refs.name.getDOMNode().value = '';
       },
       render: function () {
+        // TODO: Add description input
         return (
             <form className="addClassForm clearfix" onSubmit={this.handleSubmit}>
               <div className="col-lg-4">
@@ -161,19 +170,33 @@
     });
 
     var Dataset = React.createClass({
-      handleClassSubmit: function (name) {
-        var dataset = this.state.dataset;
-        dataset.push(name);
-        this.setState({dataset: dataset});
+      handleClassCreate: function (name) {
+        var classes = this.state.classes;
+        classes.push(name);
+        this.setState({classes: classes});
+        console.debug("CLASS CREATED", this.state.classes);
+      },
+      handleClassUpdate: function (oldName, name, description, recordings) {
+        var classes = this.state.classes;
+        for (cls of classes) {
+          if (cls.name == oldName) {
+            cls.name = name;
+            cls.description = description;
+            cls.recordings = recordings;
+            break;
+          }
+        }
+        this.setState({classes: classes});
+        console.debug("CLASS UPDATED", this.state.classes);
       },
       getInitialState: function () {
-        return {dataset: []};
+        return {classes: []};
       },
       render: function () {
         return (
             <div>
-              <AddClassForm onClassSubmit={this.handleClassSubmit} />
-              <ClassList classes={this.state.dataset} />
+              <AddClassForm onClassCreate={this.handleClassCreate} />
+              <ClassList classes={this.state.classes} onClassUpdate={this.handleClassUpdate} />
               <SubmitDataBlock />
             </div>
         );

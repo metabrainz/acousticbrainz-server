@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Create new dataset - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2>Create new dataset</h2>
+  <div id="content"></div>
+
+  {% raw %}
+  <script type="text/jsx">
+    /** @jsx React.DOM */
+
+    var Recording = React.createClass({
+      render: function () {
+        return (<li>
+          <strong>{this.props.mbid}</strong>
+          <button className="btn btn-xs btn-danger" type="button">delete</button>
+        </li>);
+      }
+    });
+
+    var RecordingList = React.createClass({
+      render: function () {
+        var items = [];
+        this.props.recordings.forEach(function (recording) {
+          items.push(<Recording mbid={recording.mbid} />);
+        }.bind(this));
+        if (items.length > 0) {
+          return (<ul>{items}</ul>);
+        } else {
+          return (<strong>No recordings</strong>)
+        }
+      }
+    });
+
+    var RecordingAddForm = React.createClass({
+      handleSubmit: function (e) {
+        e.preventDefault();
+        var mbid = this.refs.mbid.getDOMNode().value.trim();
+        if (!mbid) {
+          return;
+        }
+        this.props.onRecordingSubmit({mbid: mbid});
+        this.refs.mbid.getDOMNode().value = '';
+      },
+      render: function () {
+        return (
+            <form className="addClassForm clearfix" onSubmit={this.handleSubmit}>
+              <div className="col-lg-4">
+                <div className="input-group">
+                  <input type="text" className="form-control" placeholder="MusicBrainz ID" ref="mbid" />
+                  <span className="input-group-btn">
+                    <button className="btn btn-default" type="submit">Add</button>
+                  </span>
+                </div>
+              </div>
+            </form>
+        );
+      }
+    });
+
+    var Recordings = React.createClass({
+      handleRecordingSubmit: function (mbid) {
+        var recordings = this.state.recordings;
+        recordings.push(mbid);
+        this.setState({recordings: recordings});
+      },
+      getInitialState: function () {
+        return {recordings: []};
+      },
+      render: function () {
+        return (
+            <div>
+              <h4>Recordings</h4>
+              <RecordingAddForm onRecordingSubmit={this.handleRecordingSubmit} />
+              <RecordingList recordings={this.state.recordings} />
+            </div>
+        );
+      }
+    });
+
+    var ClassControl = React.createClass({
+      render: function () {
+        return (
+            <div>
+              <p><em>Class description</em></p>
+              <div>
+                <button className="btn btn-xs btn-default" type="button">Edit</button>&nbsp;
+                <button className="btn btn-xs btn-danger" type="button">Delete</button>
+              </div>
+            </div>
+        );
+      }
+    });
+
+    var Class = React.createClass({
+      render: function () {
+        return (
+            <div>
+              <h3>{this.props.name}</h3>
+              <ClassControl />
+              <Recordings className={this.props.name} />
+              <hr />
+            </div>
+        );
+      }
+    });
+
+    var ClassList = React.createClass({
+      render: function () {
+        var items = [];
+        this.props.classes.forEach(function (cls) {
+          items.push(<Class name={cls.name} />);
+        }.bind(this));
+        if (items.length > 0) {
+          return (<ul>{items}</ul>);
+        } else {
+          return (<strong>No classes</strong>)
+        }
+      }
+    });
+
+    var AddClassForm = React.createClass({
+      handleSubmit: function (e) {
+        e.preventDefault();
+        var name = this.refs.name.getDOMNode().value.trim();
+        if (!name) {
+          return;
+        }
+        this.props.onClassSubmit({name: name});
+        this.refs.name.getDOMNode().value = '';
+      },
+      render: function () {
+        return (
+            <form className="addClassForm clearfix" onSubmit={this.handleSubmit}>
+              <div className="col-lg-4">
+                <div className="input-group">
+                  <input type="text" className="form-control" placeholder="Name" ref="name" />
+                  <span className="input-group-btn">
+                    <button className="btn btn-default" type="submit">Add</button>
+                  </span>
+                </div>
+              </div>
+            </form>
+        );
+      }
+    });
+
+    var SubmitDataBlock = React.createClass({
+      handleSubmit: function (e) {
+        e.preventDefault();
+        // TODO: POST data to server
+      },
+      render: function () {
+        return (
+            <div className="form-group">
+              <button type="submit" className="btn btn-default btn-primary">Create</button>
+            </div>
+        );
+      }
+    });
+
+    var Dataset = React.createClass({
+      handleClassSubmit: function (name) {
+        var dataset = this.state.dataset;
+        dataset.push(name);
+        this.setState({dataset: dataset});
+      },
+      getInitialState: function () {
+        return {dataset: []};
+      },
+      render: function () {
+        return (
+            <div>
+              <AddClassForm onClassSubmit={this.handleClassSubmit} />
+              <ClassList classes={this.state.dataset} />
+              <SubmitDataBlock />
+            </div>
+        );
+      }
+    });
+
+    React.render(<Dataset />, document.getElementById('content'));
+  </script>
+  {% endraw %}
+{% endblock %}
+
+{%- block scripts -%}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/react.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/JSXTransformer.js') }}"></script>
+{%- endblock -%}

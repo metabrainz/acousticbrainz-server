@@ -18,10 +18,8 @@
       render: function () {
         return (
             <li>
-              <form onSubmit={this.handleDelete}>
-                <strong>{this.props.mbid}</strong>&nbsp;
-                <button className="btn btn-xs btn-danger" type="submit">Delete</button>
-              </form>
+              <strong>{this.props.mbid}</strong>&nbsp;
+              <button onClick={this.handleDelete} type="button" className="btn btn-xs btn-danger">Delete</button>
             </li>
         );
       }
@@ -122,12 +120,8 @@
             <div>
               <h3>{this.props.name}</h3>
               <p><em>{this.props.description}</em></p>
-              <form onSubmit={this.handleEdit}>
-                <button className="btn btn-xs btn-default" type="submit">Edit</button>
-              </form>
-              <form onSubmit={this.handleDelete}>
-                <button className="btn btn-xs btn-danger" type="submit">Delete</button>
-              </form>
+              <button onClick={this.handleEdit} className="btn btn-xs btn-default" type="button">Edit</button>&nbsp;
+              <button onClick={this.handleDelete} className="btn btn-xs btn-danger" type="submit">Delete</button>
               <Recordings recordings={this.props.recordings} onRecordingsUpdate={this.handleRecordingUpdate} />
               <hr />
             </div>

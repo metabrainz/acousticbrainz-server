@@ -20,10 +20,10 @@ ALTER TABLE class ADD CONSTRAINT class_pkey PRIMARY KEY (id);
 
 
 CREATE TABLE class_member (
-  class    INT, -- FK to class
-  lowlevel INT -- FK to lowlevel
+  class INT, -- FK to class
+  mbid  UUID
 );
-ALTER TABLE class_member ADD CONSTRAINT class_member_pkey PRIMARY KEY (class, lowlevel);
+ALTER TABLE class_member ADD CONSTRAINT class_member_pkey PRIMARY KEY (class, mbid);
 
 
 -- FKs
@@ -42,11 +42,6 @@ ALTER TABLE class_member
   ADD CONSTRAINT class_member_fk_class
   FOREIGN KEY (class)
   REFERENCES class (id);
-
-ALTER TABLE class_member
-  ADD CONSTRAINT class_member_member_fk_lowlevel
-  FOREIGN KEY (lowlevel)
-  REFERENCES lowlevel (id);
 
 CREATE EXTENSION "uuid-ossp";
 

@@ -25,9 +25,4 @@ ALTER TABLE class_member
   FOREIGN KEY (class)
   REFERENCES class (id);
 
-ALTER TABLE class_member
-  ADD CONSTRAINT class_member_member_fk_lowlevel
-  FOREIGN KEY (lowlevel)
-  REFERENCES lowlevel (id);
-
 COMMIT;

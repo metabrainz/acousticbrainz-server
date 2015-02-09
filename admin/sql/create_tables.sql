@@ -58,8 +58,8 @@ CREATE TABLE class (
 );
 
 CREATE TABLE class_member (
-  class    INT, -- FK to class
-  lowlevel INT -- FK to lowlevel
+  class INT, -- FK to class
+  mbid  UUID
 );
 
 COMMIT;

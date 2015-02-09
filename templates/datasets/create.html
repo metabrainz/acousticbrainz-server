@@ -51,14 +51,25 @@
         this.props.onRecordingSubmit(mbid);
         this.refs.mbid.getDOMNode().value = '';
       },
+      handleChange: function() {
+        var input = this.refs.mbid.getDOMNode().value;
+        var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input);
+        // TODO: Check if this recording is already added
+        this.setState({validInput: isValidUUID});
+      },
+      getInitialState: function () {
+        return {validInput: false};
+      },
       render: function () {
         return (
             <form className="addClassForm clearfix" onSubmit={this.handleSubmit}>
               <div className="col-lg-4">
-                <div className="input-group">
-                  <input type="text" className="form-control" placeholder="MusicBrainz ID" ref="mbid" />
+                <div className={this.state.validInput ? 'input-group' : 'input-group has-error'}>
+                  <input type="text" className="form-control" placeholder="MusicBrainz ID"
+                      ref="mbid" onChange={this.handleChange} />
                   <span className="input-group-btn">
-                    <button className="btn btn-default" type="submit">Add</button>
+                    <button disabled={this.state.validInput ? '' : 'disabled'}
+                        className="btn btn-default" type="submit">Add</button>
                   </span>
                 </div>
               </div>

@@ -93,27 +93,29 @@
       }
     });
 
-    var ClassControl = React.createClass({
-      render: function () {
-        return (
-            <div>
-              <button className="btn btn-xs btn-default" type="button">Edit</button>&nbsp;
-              <button className="btn btn-xs btn-danger" type="button">Delete</button>
-            </div>
-        );
-      }
-    });
-
     var Class = React.createClass({
       handleRecordingUpdate: function (recordings) {
         this.props.onClassUpdate(this.props.name, this.props.name, this.props.description, recordings);
+      },
+      handleEdit: function (event) {
+        event.preventDefault();
+        // TODO: Implement class editor
+      },
+      handleDelete: function (event) {
+        event.preventDefault();
+        this.props.onClassDelete(this.props.name);
       },
       render: function () {
         return (
             <div>
               <h3>{this.props.name}</h3>
               <p><em>{this.props.description}</em></p>
-              <ClassControl />
+              <form onSubmit={this.handleEdit}>
+                <button className="btn btn-xs btn-default" type="submit">Edit</button>
+              </form>
+              <form onSubmit={this.handleDelete}>
+                <button className="btn btn-xs btn-danger" type="submit">Delete</button>
+              </form>
               <Recordings recordings={this.props.recordings} onRecordingsUpdate={this.handleRecordingUpdate} />
               <hr />
             </div>
@@ -126,7 +128,7 @@
         var items = [];
         this.props.classes.forEach(function (cls) {
           items.push(<Class name={cls.name} description={cls.description} recordings={cls.recordings}
-              onClassUpdate={this.props.onClassUpdate} />);
+              onClassUpdate={this.props.onClassUpdate} onClassDelete={this.props.onClassDelete} />);
         }.bind(this));
         if (items.length > 0) {
           return (<ul>{items}</ul>);
@@ -201,6 +203,21 @@
         this.setState({classes: classes});
         console.debug("CLASS UPDATED", this.state.classes);
       },
+      handleClassDelete: function (name) {
+        var classes = this.state.classes;
+        var index = -1;
+        for (var i = 0; i < classes.length; ++i) {
+          if (classes[i].name == name) {
+            index = i;
+            break;
+          }
+        }
+        if (index > -1) {
+          classes.splice(index, 1);
+        }
+        this.setState({classes: classes});
+        console.debug("CLASS DELETED", this.state.classes);
+      },
       getInitialState: function () {
         return {classes: []};
       },
@@ -208,7 +225,9 @@
         return (
             <div>
               <AddClassForm onClassCreate={this.handleClassCreate} />
-              <ClassList classes={this.state.classes} onClassUpdate={this.handleClassUpdate} />
+              <ClassList classes={this.state.classes}
+                  onClassUpdate={this.handleClassUpdate}
+                  onClassDelete={this.handleClassDelete} />
               <SubmitDataBlock />
             </div>
         );

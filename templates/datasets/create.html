@@ -158,15 +158,33 @@
         });
         this.refs.name.getDOMNode().value = '';
       },
+      handleChange: function() {
+        // Making sure that class name is unique
+        var new_name = this.refs.name.getDOMNode().value;
+        var classes = this.props.classes;
+        var index = -1;
+        for (var i = 0; i < classes.length; ++i) {
+          if (classes[i].name == new_name) {
+            index = i;
+            break;
+          }
+        }
+        this.setState({validInput: index === -1});
+      },
+      getInitialState: function () {
+        return {validInput: false};
+      },
       render: function () {
         // TODO: Add description input
         return (
             <form className="addClassForm clearfix" onSubmit={this.handleSubmit}>
               <div className="col-lg-4">
-                <div className="input-group">
-                  <input type="text" className="form-control" placeholder="Name" ref="name" />
+                <div className={this.state.validInput ? 'input-group' : 'input-group has-error'}>
+                  <input type="text" className="form-control" placeholder="Name"
+                      ref="name" onChange={this.handleChange} />
                   <span className="input-group-btn">
-                    <button className="btn btn-default" type="submit">Add</button>
+                    <button disabled={this.state.validInput ? '' : 'disabled'}
+                        className="btn btn-default" type="submit">Add</button>
                   </span>
                 </div>
               </div>

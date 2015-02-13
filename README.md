@@ -41,6 +41,22 @@ Full installation instructions are available in [INSTALL.md](https://github.com/
 
 ## Working with data
 
+### Importing
+
+AcousticBrainz provides data dumps that you can import into your own server.
+Latest database dump is available at http://acousticbrainz.org/download. You
+need to download full database dump from this page and use it during database
+initialization:
+
+    $ python manage.py init_db -a <path_to_the_archive>
+
+or import archive after database is created:
+
+    $ python manage.py import_data -a <path_to_the_archive>
+
+*You can also import dumps that you created yourself. This process is described
+below (see `dump full_db` command).
+
 ### Exporting
 
 There are several ways to export data out of AcousticBrainz server. You can

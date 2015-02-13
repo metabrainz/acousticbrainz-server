@@ -55,7 +55,7 @@ or import archive after database is created:
     $ python manage.py import_data -a <path_to_the_archive>
 
 *You can also import dumps that you created yourself. This process is described
-below (see `dump full_db` command).
+below (see `dump full_db` command).*
 
 ### Exporting
 

@@ -43,12 +43,11 @@ and edit its content to fit your environment.
 
 After you tweak configuration file, database needs to be created:
 
-    $ cd admin
-    $ ./init_db.sh
+    $ python manage.py init_db
 
 *Optional:* You might want to create a database that will be used by tests:
 
-    $ ./init_db_test.sh
+    $ python manage.py init_test_db
 
 ### Starting the server
 

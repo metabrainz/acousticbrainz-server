@@ -1,10 +1,18 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import NotFound
 from acousticbrainz.data import dataset
 from jsonschema import ValidationError, validate as validate_json
 
 datasets_bp = Blueprint('datasets', __name__)
+
+
+@datasets_bp.route('/<uuid:id>/')
+def details(id):
+    ds = dataset.get(id)
+    if not ds:
+        raise NotFound("Can't find this dataset.")
+    return render_template('datasets/view.html', dataset=ds)
 
 
 @datasets_bp.route('/create/', methods=('GET', 'POST'))
@@ -38,3 +46,25 @@ def create():
             dataset_id=dataset_id,
         )
     return render_template('datasets/create.html')
+
+
+@datasets_bp.route('/<uuid:id>/edit/', methods=('GET', 'POST'))
+@login_required
+def edit(id):
+    ds = dataset.get(id)
+    if not ds:
+        raise NotFound("Can't find this dataset.")
+    # TODO: Check if owner is editing.
+    # TODO: Implement the rest of the editing stuff.
+    raise NotImplementedError
+
+
+@datasets_bp.route('/<uuid:id>/delete/', methods=('GET', 'POST'))
+@login_required
+def delete(id):
+    ds = dataset.get(id)
+    if not ds:
+        raise NotFound("Can't find this dataset.")
+    # TODO: Check if owner is deleting.
+    # TODO: Show confirmation page and delete if POSTed.
+    raise NotImplementedError

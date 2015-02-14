@@ -67,3 +67,62 @@ def create_from_dict(dictionary, owner_id=None):
         return None, e
 
     return dataset_id, None
+
+
+def get(id):
+    """Get dataset with a specified ID.
+
+    Returns:
+        Dictionary with dataset details if it has been found, None
+        otherwise.
+    """
+    try:
+        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+        cursor = connection.cursor()
+        cursor.execute("""SELECT id, name, description, owner, created
+                          FROM dataset
+                          WHERE id = %s""",
+                       (str(id),))
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    if cursor.rowcount > 0:
+        row = cursor.fetchone()
+        return {
+            "id": row[0],
+            "name": row[1],
+            "description": row[2],
+            "owner": row[3],
+            "created": row[4],
+        }
+    else:
+        return None
+
+
+def get_by_user_id(user_id):
+    """Get datasets created by a specified user.
+
+    Returns:
+        List of dictionaries with dataset details.
+    """
+    try:
+        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+        cursor = connection.cursor()
+        cursor.execute("""SELECT id, name, description, owner, created
+                          FROM dataset
+                          WHERE owner = %s""",
+                       (user_id,))
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    return [{
+        "id": row[0],
+        "name": row[1],
+        "description": row[2],
+        "owner": row[3],
+        "created": row[4],
+    } for row in cursor.fetchall()]

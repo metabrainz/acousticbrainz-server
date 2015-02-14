@@ -153,8 +153,8 @@
         }
         this.props.onClassCreate({
           name: name,
-          description: "NOTHING",
-          recordings: [],
+          description: "",  // TODO: Implement
+          recordings: []
         });
         this.refs.name.getDOMNode().value = '';
       },
@@ -194,15 +194,27 @@
       }
     });
 
-    var SubmitDataBlock = React.createClass({
+    var SubmitDatasetButton = React.createClass({
       handleSubmit: function (e) {
         e.preventDefault();
-        // TODO: POST data to server
+        // TODO: Make sure that all classes contain at least one recording!
+        $.ajax({
+          type: "POST",
+          url: "/datasets/create/",
+          data: JSON.stringify({
+              'name': this.props.name,
+              'description': this.props.description,
+              'classes': this.props.classes
+          }),
+          dataType: "json",
+          contentType: "application/json; charset=utf-8"
+        });
       },
       render: function () {
         return (
             <div className="form-group">
-              <button type="submit" className="btn btn-default btn-primary">Create</button>
+              <button onClick={this.handleSubmit} type="button"
+                  className="btn btn-default btn-primary">Create</button>
             </div>
         );
       }
@@ -243,17 +255,46 @@
         this.setState({classes: classes});
         console.debug("CLASS DELETED", this.state.classes);
       },
+      handleDatasetUpdate: function () {
+        this.setState({
+          name: this.refs.name.getDOMNode().value,
+          description: this.refs.description.getDOMNode().value,
+          classes: this.state.classes
+        });
+      },
       getInitialState: function () {
-        return {classes: []};
+        return {
+          name: "",
+          description: "",
+          classes: []
+        };
       },
       render: function () {
         return (
             <div>
-              <AddClassForm onClassCreate={this.handleClassCreate} />
+              <form className="form-horizontal">
+                <div className="form-group">
+                  <div className="col-sm-6">
+                  <input type="text" className="form-control" placeholder="Dataset name"
+                      ref="name" onChange={this.handleDatasetUpdate} required="required" />
+                    </div>
+                    </div>
+                  <div className="form-group"><div className="col-sm-6">
+                    <textarea className="form-control" placeholder="Description (optional)"
+                        rows="3" ref="description" onChange={this.handleDatasetUpdate}></textarea>
+                </div>
+                </div>
+              </form>
+              <h3>Classes</h3>
+              <AddClassForm onClassCreate={this.handleClassCreate}
+                  classes={this.state.classes} />
               <ClassList classes={this.state.classes}
                   onClassUpdate={this.handleClassUpdate}
                   onClassDelete={this.handleClassDelete} />
-              <SubmitDataBlock />
+              <SubmitDatasetButton
+                  name={this.state.name}
+                  description={this.state.description}
+                  classes={this.state.classes} />
             </div>
         );
       }

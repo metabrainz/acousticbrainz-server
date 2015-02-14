@@ -51,6 +51,7 @@ def create_app():
     from acousticbrainz.views.stats import stats_bp
     from acousticbrainz.views.login import login_bp
     from acousticbrainz.views.user import user_bp
+    from acousticbrainz.views.datasets import datasets_bp
 
     app.register_blueprint(index_bp)
     app.register_blueprint(data_bp)
@@ -58,5 +59,6 @@ def create_app():
     app.register_blueprint(stats_bp)
     app.register_blueprint(login_bp, url_prefix='/login')
     app.register_blueprint(user_bp, url_prefix='/user')
+    app.register_blueprint(datasets_bp, url_prefix='/datasets')
 
     return app

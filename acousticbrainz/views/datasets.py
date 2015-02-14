@@ -33,5 +33,8 @@ def create():
                 error=str(error),
             ), 400
 
-        return jsonify(success=True, error=None)
+        return jsonify(
+            success=True,
+            dataset_id=dataset_id,
+        )
     return render_template('datasets/create.html')

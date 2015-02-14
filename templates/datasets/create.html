@@ -198,22 +198,47 @@
       handleSubmit: function (e) {
         e.preventDefault();
         // TODO: Make sure that all classes contain at least one recording!
+        this.setState({
+          enabled: false,
+          errorMsg: null
+        });
+        var so = this;
         $.ajax({
           type: "POST",
           url: "/datasets/create/",
           data: JSON.stringify({
-              'name': this.props.name,
-              'description': this.props.description,
-              'classes': this.props.classes
+            'name': this.props.name,
+            'description': this.props.description,
+            'classes': this.props.classes
           }),
           dataType: "json",
-          contentType: "application/json; charset=utf-8"
+          contentType: "application/json; charset=utf-8",
+          success: function (data, textStatus, jqXHR) {
+            window.location.replace("/datasets/" + data.dataset_id);
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            so.setState({
+              enabled: true,
+              errorMsg: jqXHR.responseJSON
+            });
+          }
         });
+      },
+      getInitialState: function () {
+        return {
+          enabled: true,
+          errorMsg: null
+        };
       },
       render: function () {
         return (
             <div className="form-group">
+              <p className={this.state.errorMsg ? 'text-danger' : 'hidden'}>
+                <strong>Error occured while submitting this dataset:</strong>
+                <br />{ this.state.errorMsg }
+              </p>
               <button onClick={this.handleSubmit} type="button"
+                  disabled={this.state.enabled ? '' : 'disabled'}
                   className="btn btn-default btn-primary">Create</button>
             </div>
         );

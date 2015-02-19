@@ -5,7 +5,6 @@ var Dataset = React.createClass({
         var classes = this.state.classes;
         classes.push(name);
         this.setState({classes: classes});
-        console.debug("CLASS CREATED", this.state.classes);
     },
     handleClassUpdate: function (oldName, name, description, recordings) {
         var classes = this.state.classes;
@@ -18,7 +17,6 @@ var Dataset = React.createClass({
             }
         }
         this.setState({classes: classes});
-        console.debug("CLASS UPDATED", this.state.classes);
     },
     handleClassDelete: function (name) {
         var classes = this.state.classes;
@@ -33,7 +31,6 @@ var Dataset = React.createClass({
             classes.splice(index, 1);
         }
         this.setState({classes: classes});
-        console.debug("CLASS DELETED", this.state.classes);
     },
     handleDatasetUpdate: function () {
         this.setState({
@@ -240,7 +237,6 @@ var Recordings = React.createClass({
             recordings.splice(index, 1);
         }
         this.props.onRecordingsUpdate(recordings);
-        console.log("Deleted", mbid);
     },
     render: function () {
         return (

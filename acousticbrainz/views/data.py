@@ -10,7 +10,7 @@ data_bp = Blueprint('data', __name__)
 
 @data_bp.route("/api")
 def api():
-    return redirect("/data")
+    return redirect(url_for(".data"))
 
 
 @data_bp.route("/data")

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect
+from flask import Blueprint, render_template, redirect, url_for
 from acousticbrainz.data import load_low_level, load_high_level, get_summary_data
 from musicbrainzngs.musicbrainz import ResponseError
 from urllib import quote_plus
@@ -16,6 +16,16 @@ def api():
 @data_bp.route("/data")
 def data():
     return render_template("data/data.html")
+
+
+@data_bp.route("/recording/<uuid:mbid>")
+def recording(mbid):
+    """Endpoint for MusicBrainz style recording URLs (https://musicbrainz.org/recording/<mbid>).
+
+    Basic wrapper for `summary` endpoint that makes it easier to move from
+    MusicBrainz to AcousticBrainz.
+    """
+    return redirect(url_for(".summary", mbid=mbid))
 
 
 @data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])

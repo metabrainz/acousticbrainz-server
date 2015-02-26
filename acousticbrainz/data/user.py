@@ -33,8 +33,8 @@ def get(id):
     except psycopg2.OperationalError, e:
         raise ServiceUnavailable(str(e))
 
-    if cursor.rowcount > 0:
-        row = cursor.fetchone()
+    row = cursor.fetchone()
+    if row:
         return User(
             id=row[0],
             created=row[1],
@@ -55,8 +55,8 @@ def get_by_mb_id(musicbrainz_id):
     except psycopg2.OperationalError, e:
         raise ServiceUnavailable(str(e))
 
-    if cursor.rowcount > 0:
-        row = cursor.fetchone()
+    row = cursor.fetchone()
+    if row:
         return User(
             id=row[0],
             created=row[1],

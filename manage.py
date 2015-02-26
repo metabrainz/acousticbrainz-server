@@ -1,4 +1,4 @@
-﻿from __future__ import print_function
+from __future__ import print_function
 from flask_script import Manager
 from flask import current_app
 from acousticbrainz.data.dump_manager import manager as dump_manager

@@ -9,7 +9,7 @@ def create(musicbrainz_id):
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
-                       (str(musicbrainz_id),))
+                       (musicbrainz_id,))
         connection.commit()
         new_id = cursor.fetchone()[0]
     except psycopg2.ProgrammingError, e:
@@ -27,7 +27,7 @@ def get(id):
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
-                       (str(id),))
+                       (id,))
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
     except psycopg2.OperationalError, e:
@@ -49,7 +49,7 @@ def get_by_mb_id(musicbrainz_id):
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute('SELECT id, created FROM "user" WHERE musicbrainz_id = %s',
-                       (str(musicbrainz_id),))
+                       (musicbrainz_id,))
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
     except psycopg2.OperationalError, e:

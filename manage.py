@@ -1,5 +1,5 @@
 from __future__ import print_function
-from flask_script import Manager
+from flask_script import Manager, Server
 from flask import current_app
 from acousticbrainz.data.dump_manager import manager as dump_manager
 from acousticbrainz.data.dump import import_db_dump
@@ -12,6 +12,7 @@ manager = Manager(create_app)
 
 manager.add_command('dump', dump_manager)
 
+manager.add_command("runserver", Server(host="0.0.0.0", port=8080))
 
 @manager.command
 def init_db(archive=None, force=False):

@@ -23,6 +23,7 @@ def create(musicbrainz_id):
 
 
 def get(id):
+    """Get user with a specified ID (integer)."""
     try:
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
@@ -45,6 +46,7 @@ def get(id):
 
 
 def get_by_mb_id(musicbrainz_id):
+    """Get user with a specified MusicBrainz ID."""
     try:
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()

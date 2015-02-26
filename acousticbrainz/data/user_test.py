@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from acousticbrainz.testing import FlaskTestCase
 from acousticbrainz.data import user as user_data
 
@@ -5,10 +6,13 @@ from acousticbrainz.data import user as user_data
 class UserTestCase(FlaskTestCase):
 
     def test_create(self):
-        musicbrainz_id = "fuzzy_dunlop"
-        user_id = user_data.create(musicbrainz_id)
+        user_id = user_data.create("fuzzy_dunlop")
 
         self.assertIsNotNone(user_data.get(user_id))
+
+        # Testing Unicode
+        user_id = user_data.create(u"Пользователь")
+        self.assertIsNotNone(user_id)
 
     def test_get(self):
         user_id = user_data.create("fuzzy_dunlop")
@@ -26,4 +30,17 @@ class UserTestCase(FlaskTestCase):
         self.assertEqual(user.id, user_id)
 
     def test_get_or_create(self):
-        self.assertIsNotNone(user_data.get_or_create("fuzzy_dunlop"))
+        musicbrainz_id = "User"
+        user = user_data.get_or_create(musicbrainz_id)
+        self.assertIsNotNone(user)
+
+        same_user = user_data.get_or_create(musicbrainz_id)
+        self.assertEqual(user.id, same_user.id)
+
+        # Testing Unicode
+        musicbrainz_id = u"Пользователь"
+        user = user_data.get_or_create(musicbrainz_id)
+        self.assertIsNotNone(user)
+
+        same_user = user_data.get_or_create(musicbrainz_id)
+        self.assertEqual(user.id, same_user.id)

@@ -35,7 +35,7 @@ class FlaskTestCase(TestCase):
         connection.close()
 
     def load_low_level_data(self, mbid):
-        """Loads low level data from JSON file in `acousticbrainz/test_data`
+        """Loads low-level data from JSON file in `acousticbrainz/test_data`
         directory into the database.
         """
         with open(os.path.join('acousticbrainz', 'test_data', mbid + '.json')) as json_file:

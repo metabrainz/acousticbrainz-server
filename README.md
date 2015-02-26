@@ -29,7 +29,7 @@ You can start the web server (will be available at http://127.0.0.1:8080/):
 
     # python server.py
 
-or high level data extractor:
+or high-level data extractor:
 
     # cd /high-level
     # python hl_calc.py
@@ -41,10 +41,31 @@ Full installation instructions are available in [INSTALL.md](https://github.com/
 
 ## Working with data
 
+### Importing
+
+AcousticBrainz provides data dumps that you can import into your own server.
+Latest database dump is available at http://acousticbrainz.org/download. You
+need to download full database dump from this page and use it during database
+initialization:
+
+    $ python manage.py init_db -a <path_to_the_archive>
+
+you can also easily remove existing database before initialization using
+`--force` option:
+
+    $ python manage.py init_db -a <path_to_the_archive> --force
+
+or import archive after database is created:
+
+    $ python manage.py import_data -a <path_to_the_archive>
+
+*You can also import dumps that you created yourself. This process is described
+below (see `dump full_db` command).*
+
 ### Exporting
 
 There are several ways to export data out of AcousticBrainz server. You can
-create full database dump or export only low level and high level data in JSON
+create full database dump or export only low-level and high-level data in JSON
 format. Both ways support incremental dumping.
 
 #### Examples
@@ -57,14 +78,14 @@ format. Both ways support incremental dumping.
 
     $ python manage.py dump json
 
-*Creates two separate full JSON dumps with low level and high level data.*
+*Creates two separate full JSON dumps with low-level and high-level data.*
 
 **Incremental dumps:**
 
     $ python manage.py dump incremental
 
 *Creates new incremental dump in three different formats: usual database dump,
-low level and high level JSON.*
+low-level and high-level JSON.*
 
 **Previous incremental dumps:**
 

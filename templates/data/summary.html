@@ -106,7 +106,7 @@
       </div>
     {% else %}
       <div class="alert alert-warning">
-        Sorry, we have not had a chance to calculate the high level data for
+        Sorry, we have not had a chance to calculate the high-level data for
         this track yet. It should be calculated soon. In the meantime, have a
         look at our <a href="{{ url_for('data.data') }}#sample-data">sample data</a>.
       </div>
@@ -115,12 +115,12 @@
     <p>Inspect the data the above is taken from:</p>
     <ul>
       <li>
-        <a href="{{ url_for('data.view_low_level', mbid=mbid) }}">Low level data</a>
+        <a href="{{ url_for('data.view_low_level', mbid=mbid) }}">Low-level data</a>
         (<a href="{{ url_for('api.get_low_level', mbid=mbid) }}">raw JSON</a>)
       </li>
       {% if other -%}
         <li>
-          <a href="{{ url_for('data.view_high_level', mbid=mbid) }}">High level data</a>
+          <a href="{{ url_for('data.view_high_level', mbid=mbid) }}">High-level data</a>
           (<a href="{{ url_for('api.get_high_level', mbid=mbid) }}">raw JSON</a>)
         </li>
       {%- endif %}

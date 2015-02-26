@@ -184,8 +184,9 @@ def import_db_dump(archive_path):
 
     with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
         for member in tar:
+            file_name = member.name.split("/")[-1]
 
-            if member.name == "SCHEMA_SEQUENCE":
+            if file_name == "SCHEMA_SEQUENCE":
                 # Verifying schema version
                 schema_seq = int(tar.extractfile(member).read().strip())
                 if schema_seq != acousticbrainz.__version__:
@@ -196,7 +197,6 @@ def import_db_dump(archive_path):
                     print("Schema version verified.")
 
             else:
-                file_name = member.name.split("/")[-1]
                 if file_name in table_names:
                     print(" - Importing data into %s table..." % file_name)
                     cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
@@ -303,7 +303,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
 
 def dump_highlevel_json(location, incremental=False, dump_id=None):
-    """Create JSON dump with high level data.
+    """Create JSON dump with high-level data.
 
     Args:
         location: Directory where archive will be created.
@@ -313,7 +313,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
             its identifier (integer) can be specified there.
 
     Returns:
-        Path to created high level JSON dump.
+        Path to created high-level JSON dump.
     """
     create_path(location)
 

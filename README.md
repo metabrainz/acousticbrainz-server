@@ -50,6 +50,11 @@ initialization:
 
     $ python manage.py init_db -a <path_to_the_archive>
 
+you can also easily remove existing database before initialization using
+`--force` option:
+
+    $ python manage.py init_db -a <path_to_the_archive> --force
+
 or import archive after database is created:
 
     $ python manage.py import_data -a <path_to_the_archive>

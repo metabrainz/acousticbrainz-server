@@ -48,7 +48,7 @@ def submit_low_level(mbid):
     raw_data = request.get_data()
     try:
         data = json.loads(raw_data)
-    except ValueError, e:
+    except ValueError as e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
     submit_low_level_data(mbid, data)

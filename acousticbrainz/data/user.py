@@ -12,12 +12,12 @@ def create(musicbrainz_id):
                        (musicbrainz_id,))
         connection.commit()
         new_id = cursor.fetchone()[0]
-    except psycopg2.ProgrammingError, e:
-        raise BadRequest(str(e))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.ProgrammingError as e:
+        raise BadRequest(e)
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     return new_id
 
@@ -29,10 +29,10 @@ def get(id):
         cursor = connection.cursor()
         cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
                        (id,))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     row = cursor.fetchone()
     if row:
@@ -52,10 +52,10 @@ def get_by_mb_id(musicbrainz_id):
         cursor = connection.cursor()
         cursor.execute('SELECT id, created FROM "user" WHERE musicbrainz_id = %s',
                        (musicbrainz_id,))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     row = cursor.fetchone()
     if row:

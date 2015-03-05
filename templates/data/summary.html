@@ -77,32 +77,27 @@
   </table>
 
   {% if other %}
-    <div class="col-md-12">
-      <table class="table table-striped table-bordered">
-        <thead><th style="width: 30%;">Voice, timbre, gender, etc.</th><th style="width: 25%;">value</th><th>probability</th></thead>
-        {% for row in other %}
-          <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
-        {% endfor %}
-      </table>
-    </div>
+    <table class="table table-striped table-bordered">
+      <thead><th style="width: 30%;">Voice, timbre, gender, etc.</th><th style="width: 25%;">value</th><th>probability</th></thead>
+      {% for row in other %}
+        <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+      {% endfor %}
+    </table>
 
-    <div class="col-md-12">
-      <table class="table table-striped table-bordered">
-        <thead><th style="width: 30%;">Moods</th><th style="width: 25%;">value</th><th>probability</th></thead>
-        {% for row in moods %}
-          <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
-        {% endfor %}
-      </table>
-    </div>
+    <table class="table table-striped table-bordered">
+      <thead><th style="width: 30%;">Moods</th><th style="width: 25%;">value</th><th>probability</th></thead>
+      {% for row in moods %}
+        <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+      {% endfor %}
+    </table>
 
-    <div class="col-md-12">
-      <table class="table table-striped table-bordered">
-        <thead><th style="width: 30%;">Genres</th><th style="width: 25%;">value</th><th>probability</th></thead>
-        {% for row in genres %}
-          <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
-        {% endfor %}
-      </table>
-    </div>
+    <table class="table table-striped table-bordered">
+      <thead><th style="width: 30%;">Genres</th><th style="width: 25%;">value</th><th>probability</th></thead>
+      {% for row in genres %}
+        <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+      {% endfor %}
+    </table>
+
   {% else %}
     <div class="alert alert-warning">
       Sorry, we have not had a chance to calculate the high-level data for

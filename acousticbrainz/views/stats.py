@@ -12,6 +12,6 @@ def statistics_graph():
 
 
 @stats_bp.route("/statistics-data")
-def statistics_data():
-    return Response(json.dumps(sorted(get_statistics_data(), key=itemgetter('key'))),
+def data():
+    return Response(json.dumps(sorted(get_statistics_data(), key=itemgetter('name'))),
                     content_type='application/json; charset=utf-8')

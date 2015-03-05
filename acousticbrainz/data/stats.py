@@ -79,9 +79,14 @@ def get_stats():
 
 
 def get_statistics_data():
-    conn = psycopg2.connect(current_app.config['PG_CONNECT'])
-    cur = conn.cursor()
-    cur.execute("SELECT name, array_agg(collected ORDER BY collected ASC) AS times, array_agg(value ORDER BY collected ASC) AS values FROM statistics GROUP BY name");
+    connection = psycopg2.connect(current_app.config['PG_CONNECT'])
+    cursor = connection.cursor()
+    cursor.execute(
+        "SELECT name, array_agg(collected ORDER BY collected ASC) AS times,"
+        "       array_agg(value ORDER BY collected ASC) AS values "
+        "FROM statistics "
+        "GROUP BY name"
+    )
     stats_key_map = {
         "lowlevel-lossy": "Lossy (all)",
         "lowlevel-lossy-unique": "Lossy (unique)",
@@ -89,24 +94,27 @@ def get_statistics_data():
         "lowlevel-lossless-unique": "Lossless (unique)"
     }
     ret = []
-    total_unique = {"key": "Total (unique)", "values": {}}
-    total_all = {"key": "Total (all)", "values": {}}
-    for val in cur:
+    total_unique = {"name": "Total (unique)", "data": {}}
+    total_all = {"name": "Total (all)", "data": {}}
+    for val in cursor:
         pairs = zip([_make_timestamp(v) for v in val[1]], val[2])
-        ret.append({"key": stats_key_map.get(val[0], val[0]), "values": [{'x': v[0], 'y': v[1]} for v in pairs]})
+        ret.append({
+            "name": stats_key_map.get(val[0], val[0]),
+            "data": [[v[0], v[1]] for v in pairs]
+        })
         second = {}
         if val[0] in ["lowlevel-lossy", "lowlevel-lossless"]:
             second = total_all
         elif val[0] in ["lowlevel-lossy-unique", "lowlevel-lossless-unique"]:
             second = total_unique
         for pair in pairs:
-            if pair[0] in second['values']:
-                second['values'][pair[0]] = second['values'][pair[0]] + pair[1]
+            if pair[0] in second['data']:
+                second['data'][pair[0]] = second['data'][pair[0]] + pair[1]
             else:
-                second['values'][pair[0]] = pair[1]
+                second['data'][pair[0]] = pair[1]
 
-    total_unique['values'] = [{'x': k, 'y': total_unique['values'][k]} for k in sorted(total_unique['values'].keys())]
-    total_all['values'] = [{'x': k, 'y': total_all['values'][k]} for k in sorted(total_all['values'].keys())]
+    total_unique['data'] = [[k, total_unique['data'][k]] for k in sorted(total_unique['data'].keys())]
+    total_all['data'] = [[k, total_all['data'][k]] for k in sorted(total_all['data'].keys())]
     ret.extend([total_unique, total_all])
     return ret
 

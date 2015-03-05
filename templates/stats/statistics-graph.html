@@ -1,42 +1,26 @@
 {%- extends 'base.html' -%}
+
 {%- block title -%}Detailed Statistics - AcousticBrainz{%- endblock -%}
+
 {%- block content -%}
   <h3><strong>Detailed Statistics Chart</strong></h3>
   <p>Use the small chart below to select a smaller section of the graph to view.</p>
-  <div id="timeline-chart"><svg style='height:500px; width:100%;'></svg></div>
+  <div id="chart"><svg style="height:500px; width:100%;"></svg></div>
 {%- endblock -%}
+
 {%- block scripts -%}
-{{ super() }}
-<script src="{{ url_for('static', filename="js/d3.v3.js") }}"></script>
-<script src="{{ url_for('static', filename="js/nv.d3.js") }}"></script>
-<script>
-d3.json('{{ url_for('stats.statistics_data') }}', function(data) {
-  nv.addGraph(function() {
-      var chart = nv.models.lineWithFocusChart();
-
-      chart.yAxis.tickFormat(d3.format('d'));
-      chart.y2Axis.tickFormat(d3.format('d'));
-
-      chart.xAxis.tickFormat(function(d) {
-          return d3.time.format('%x %H:%M')(new Date(d))
+  {{ super() }}
+  <script src="{{ url_for('static', filename="js/highstock.js") }}"></script>
+  <script>
+    $(function () {
+      $.getJSON('{{ url_for('stats.data') }}', function (data) {
+        $("#chart").highcharts("StockChart", {
+          rangeSelector: { selected: 5 },
+          series: data,
+          yAxis: { min: 0 },
+          credits: { enabled: false }
+        });
       });
-      chart.x2Axis.tickFormat(function(d) {
-          return d3.time.format('%x')(new Date(d))
-      });
-
-      d3.select('#timeline-chart svg')
-      .datum(data)
-      .transition().duration(500)
-      .call(chart);
-
-  nv.utils.windowResize(chart.update);
-
-  return chart;
-  });
-});
-</script>
-{%- endblock -%}
-{%- block head -%}
-{{ super () }}
-<link href="{{ url_for('static', filename='css/nv.d3.css') }}" rel="stylesheet" media="screen">
+    });
+  </script>
 {%- endblock -%}

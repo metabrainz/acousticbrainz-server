@@ -7,7 +7,7 @@ stats_bp = Blueprint('stats', __name__)
 
 
 @stats_bp.route("/statistics-graph")
-def statistics_graph():
+def graph():
     return render_template("stats/statistics-graph.html")
 
 

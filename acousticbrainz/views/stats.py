@@ -13,5 +13,5 @@ def statistics_graph():
 
 @stats_bp.route("/statistics-data")
 def data():
-    return Response(json.dumps(sorted(get_statistics_data(), key=itemgetter('name'))),
+    return Response(json.dumps(sorted(get_statistics_data(), key=itemgetter('name'), reverse=True)),
                     content_type='application/json; charset=utf-8')

@@ -4,10 +4,10 @@ from flask import url_for
 
 class StatsViewsTestCase(FlaskTestCase):
 
-    def test_statistics_graph(self):
-        resp = self.client.get(url_for('stats.statistics_graph'))
+    def test_graph(self):
+        resp = self.client.get(url_for('stats.graph'))
         self.assert200(resp)
 
-    def test_statistics_data(self):
-        resp = self.client.get(url_for('stats.statistics_data'))
+    def test_data(self):
+        resp = self.client.get(url_for('stats.data'))
         self.assert200(resp)

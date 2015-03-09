@@ -7,11 +7,11 @@ stats_bp = Blueprint('stats', __name__)
 
 
 @stats_bp.route("/statistics-graph")
-def statistics_graph():
+def graph():
     return render_template("stats/statistics-graph.html")
 
 
 @stats_bp.route("/statistics-data")
-def statistics_data():
-    return Response(json.dumps(sorted(get_statistics_data(), key=itemgetter('key'))),
+def data():
+    return Response(json.dumps(sorted(get_statistics_data(), key=itemgetter('name'), reverse=True)),
                     content_type='application/json; charset=utf-8')

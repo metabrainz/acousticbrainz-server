@@ -2,8 +2,8 @@ Installing AcousticBrainz Server
 ================================
 
 AcousticBrainz Server consists of two parts: web server that powers
-acousticbrainz.org website and high level data extractor that processes
-incoming low level information about tracks.
+acousticbrainz.org website and high-level data extractor that processes
+incoming low-level information about tracks.
 
 Prerequisites
 -------------
@@ -39,16 +39,21 @@ Then use `pip` to install the required Python dependencies:
 Copy over `config.py.sample` to `config.py` in the *acousticbrainz/* directory
 and edit its content to fit your environment.
 
+#### Configuring MusicBrainz OAuth
+
+You need to create [a new application](https://musicbrainz.org/account/applications)
+and set two variables: `MUSICBRAINZ_CLIENT_ID` and `MUSICBRAINZ_CLIENT_SECRET`.
+On MusicBrainz set Callback URL to `http://<host>/login/musicbrainz/post`.
+
 ### Creating the database
 
 After you tweak configuration file, database needs to be created:
 
-    $ cd admin
-    $ ./init_db.sh
+    $ python manage.py init_db
 
 *Optional:* You might want to create a database that will be used by tests:
 
-    $ ./init_db_test.sh
+    $ python manage.py init_test_db
 
 ### Starting the server
 
@@ -57,10 +62,10 @@ Use `./server.py -h` to get a list of command-line switches
 to further suit your local environment (e.g., port, listening address, ...).
 
 
-High Level Data Extractor
+High-level Data Extractor
 -------------------------
 
-To run high level data extractor you'll need two things:
+To run high-level data extractor you'll need two things:
 
 1. `streaming_extractor_music_svm` which is a part of the [Essentia library](http://essentia.upf.edu/)
 2. *svm_models* which are available at http://essentia.upf.edu/documentation/svm_models/

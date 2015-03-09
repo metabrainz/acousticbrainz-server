@@ -9,32 +9,33 @@ def create(musicbrainz_id):
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
-                       (str(musicbrainz_id),))
+                       (musicbrainz_id,))
         connection.commit()
         new_id = cursor.fetchone()[0]
-    except psycopg2.ProgrammingError, e:
-        raise BadRequest(str(e))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.ProgrammingError as e:
+        raise BadRequest(e)
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     return new_id
 
 
 def get(id):
+    """Get user with a specified ID (integer)."""
     try:
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
-                       (str(id),))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+                       (id,))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
-    if cursor.rowcount > 0:
-        row = cursor.fetchone()
+    row = cursor.fetchone()
+    if row:
         return User(
             id=row[0],
             created=row[1],
@@ -45,18 +46,19 @@ def get(id):
 
 
 def get_by_mb_id(musicbrainz_id):
+    """Get user with a specified MusicBrainz ID."""
     try:
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute('SELECT id, created FROM "user" WHERE musicbrainz_id = %s',
-                       (str(musicbrainz_id),))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+                       (musicbrainz_id,))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
-    if cursor.rowcount > 0:
-        row = cursor.fetchone()
+    row = cursor.fetchone()
+    if row:
         return User(
             id=row[0],
             created=row[1],

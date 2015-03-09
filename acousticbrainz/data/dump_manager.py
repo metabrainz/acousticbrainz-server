@@ -48,9 +48,9 @@ def full_db(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=F
                 help="Directory where dumps need to be created")
 @manager.option('-r', '--rotate', dest='rotate', action='store_true', default=False)
 @manager.option('-nl', '--no-lowlevel', dest='no_lowlevel',
-                action='store_true', help="Don't tump low level data.")
+                action='store_true', help="Don't tump low-level data.")
 @manager.option('-nh', '--no-highlevel', dest='no_highlevel',
-                action='store_true', help="Don't dump high level data.")
+                action='store_true', help="Don't dump high-level data.")
 def json(location, rotate, no_lowlevel=False, no_highlevel=False):
     if no_lowlevel and no_highlevel:
         print("wut? check your options, mate!")
@@ -63,7 +63,7 @@ def json(location, rotate, no_lowlevel=False, no_highlevel=False):
 
 
 def _json_lowlevel(location, rotate):
-    print("Creating low level JSON data dump...")
+    print("Creating low-level JSON data dump...")
     path = dump_lowlevel_json(location)
     print("Done! Created: %s" % path)
 
@@ -74,7 +74,7 @@ def _json_lowlevel(location, rotate):
 
 
 def _json_highlevel(location, rotate):
-    print("Creating high level JSON data dump...")
+    print("Creating high-level JSON data dump...")
     path = dump_highlevel_json(location)
     print("Done! Created: %s" % path)
 
@@ -100,13 +100,13 @@ def _incremental_db(location, id, threads):
 
 
 def _incremental_json_lowlevel(location, id):
-    print("Creating incremental low level JSON data dump...")
+    print("Creating incremental low-level JSON data dump...")
     path = dump_lowlevel_json(location, incremental=True, dump_id=id)
     print("Done! Created: %s\n" % path)
 
 
 def _incremental_json_highlevel(location, id):
-    print("Creating incremental high level JSON data dump...")
+    print("Creating incremental high-level JSON data dump...")
     path = dump_highlevel_json(location, incremental=True, dump_id=id)
     print("Done! Created: %s\n" % path)
 

@@ -14,8 +14,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision :shell, path: "bootstrap.sh"
 
-  config.vm.synced_folder ".", "/home/vagrant/acousticbrainz"
-
   # Web server forwarding:
   config.vm.network "forwarded_port", guest: 8080, host: 8080
 

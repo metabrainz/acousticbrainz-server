@@ -13,7 +13,7 @@ def submit_low_level_data(mbid, data):
     Args:
         mbid: MusicBrainz ID of the track that corresponds to the data that is
             being submitted.
-        data: Low level data about the track.
+        data: Low-level data about the track.
     """
     mbid = str(mbid)
     data = clean_metadata(data)
@@ -68,16 +68,16 @@ def submit_low_level_data(mbid, data):
 
         current_app.logger.info("Already have %s" % data_sha256)
 
-    except psycopg2.ProgrammingError, e:
-        raise BadRequest(str(e))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.ProgrammingError as e:
+        raise BadRequest(e)
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
 
 def load_low_level(mbid, offset=0):
-    """Load low level data for a given MBID."""
+    """Load low-level data for a given MBID."""
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
@@ -89,16 +89,16 @@ def load_low_level(mbid, offset=0):
         row = cur.fetchone()
         return row[0]
 
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     return InternalServerError("whoops, looks like a cock-up on our part!")
 
 
 def load_high_level(mbid):
-    """Load high level data for a given MBID."""
+    """Load high-level data for a given MBID."""
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
@@ -113,10 +113,10 @@ def load_high_level(mbid):
         row = cur.fetchone()
         return row[0]
 
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     return InternalServerError("Bummer, dude.")
 
@@ -130,10 +130,10 @@ def count_lowlevel(mbid):
                     (str(mbid),))
         return cur.fetchone()[0]
 
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     return InternalServerError("Ouch!")
 
@@ -178,10 +178,10 @@ def get_summary_data(mbid):
 
         return lowlevel, highlevel, genres, moods, other
 
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    except psycopg2.IntegrityError as e:
+        raise BadRequest(e)
+    except psycopg2.OperationalError as e:
+        raise ServiceUnavailable(e)
 
     return InternalServerError("whoops!")
 

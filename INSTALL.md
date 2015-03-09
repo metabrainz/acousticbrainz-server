@@ -39,6 +39,12 @@ Then use `pip` to install the required Python dependencies:
 Copy over `config.py.sample` to `config.py` in the *acousticbrainz/* directory
 and edit its content to fit your environment.
 
+#### Configuring MusicBrainz OAuth
+
+You need to create [a new application](https://musicbrainz.org/account/applications)
+and set two variables: `MUSICBRAINZ_CLIENT_ID` and `MUSICBRAINZ_CLIENT_SECRET`.
+On MusicBrainz set Callback URL to `http://<host>/login/musicbrainz/post`.
+
 ### Creating the database
 
 After you tweak configuration file, database needs to be created:

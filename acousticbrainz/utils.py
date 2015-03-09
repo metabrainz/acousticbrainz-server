@@ -1,3 +1,5 @@
+import string
+import random
 import errno
 import json
 import os
@@ -111,3 +113,10 @@ def create_path(path):
         if exception.errno != errno.EEXIST:
             raise Exception("Failed to create directory structure %s. Error: %s" %
                             (path, exception))
+
+
+def generate_string(length):
+    """Generates random string with a specified length."""
+    return ''.join([random.choice(string.ascii_letters.decode('ascii')
+                                  + string.digits.decode('ascii'))
+                    for _ in xrange(length)])

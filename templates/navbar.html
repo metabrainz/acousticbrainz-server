@@ -27,8 +27,7 @@
       {% if not error %}
         <ul class="nav navbar-nav navbar-right">
           {% if not current_user or current_user.is_anonymous() %}
-            {# TODO: Show login link when stuff is ready. #}
-            {#<li><a href="{{ url_for('login.index') }}">Sign in</a></li>#}
+            <li><a href="{{ url_for('login.index') }}">Sign in</a></li>
           {% else %}
             <li class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#">

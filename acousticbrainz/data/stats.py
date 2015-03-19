@@ -25,7 +25,7 @@ def get_last_submitted_tracks():
         last_submitted_data = cur.fetchall()
         last_submitted_data = [
             (r[0], r[1].decode("UTF-8"), r[2].decode("UTF-8"))
-            for r in last_submitted_data
+            for r in last_submitted_data if r[1] and r[2]
         ]
         mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 

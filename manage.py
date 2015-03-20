@@ -43,6 +43,13 @@ def init_db(archive=None, force=False):
     if exit_code != 0:
         raise Exception('Failed to new database and user! Exit code: %i' % exit_code)
 
+    print('Creating database extensions...')
+    exit_code = subprocess.call('sudo -u postgres psql < ' +
+                                os.path.join('admin', 'sql', 'create_extensions.sql'),
+                                shell=True)
+    if exit_code != 0:
+        raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
+
     print('Creating tables...')
     run_sql_script(os.path.join('admin', 'sql', 'create_tables.sql'))
 
@@ -71,6 +78,7 @@ def init_test_db():
         raise Exception('Failed to new database and user! Exit code: %i' % exit_code)
 
     current_app.config['PG_CONNECT'] = current_app.config['PG_CONNECT_TEST']
+    run_sql_script(os.path.join('admin', 'sql', 'create_extensions.sql'))
     run_sql_script(os.path.join('admin', 'sql', 'create_tables.sql'))
     run_sql_script(os.path.join('admin', 'sql', 'create_primary_keys.sql'))
     run_sql_script(os.path.join('admin', 'sql', 'create_foreign_keys.sql'))

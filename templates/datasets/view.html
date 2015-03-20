@@ -1,7 +1,26 @@
 {% extends 'base.html' %}
 
-{% block title %}Dataset "{{ dataset['name'] }}" - AcousticBrainz{% endblock %}
+{% block title %}Dataset "{{ dataset['name'] }}" by {{ owner.musicbrainz_id }} - AcousticBrainz{% endblock %}
 
 {% block content %}
-  {{ dataset }}
+  <h2>Datasets</h2>
+  <h3>{{ dataset['name'] }}</h3>
+
+  {# TODO: Show "edit" and "delete" links if owner is viewing. #}
+
+  <p>
+    <strong>Author:</strong> <a href="{{ url_for('user.profile', user_id=owner.id) }}">{{ owner.musicbrainz_id }}</a><br/>
+    <strong>Created:</strong> {{ dataset['created'] }}
+  </p>
+
+  {% if dataset['description'] %}
+    <p>
+      <strong>Description:</strong>
+      <blockquote>{{ dataset['description'] }}</blockquote>
+    </p>
+  {% endif %}
+
+  <h4>Classes</h4>
+  <code>{{ dataset['classes'] }}</code>
+
 {% endblock %}

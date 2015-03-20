@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound
-from acousticbrainz.data import dataset
+from acousticbrainz.data import dataset, user as user_data
 from jsonschema import ValidationError, validate as validate_json
 
 datasets_bp = Blueprint('datasets', __name__)
@@ -12,7 +12,9 @@ def details(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    return render_template('datasets/view.html', dataset=ds)
+    return render_template('datasets/view.html',
+                           dataset=ds,
+                           owner=user_data.get(ds['owner']))
 
 
 @datasets_bp.route('/create/', methods=('GET', 'POST'))

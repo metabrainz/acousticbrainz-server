@@ -105,9 +105,53 @@ def get(id):
             "description": row[2],
             "owner": row[3],
             "created": row[4],
+            "classes": get_classes(row[0]),
         }
     else:
         return None
+
+
+def get_classes(dataset_id):
+    try:
+        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+        cursor = connection.cursor()
+        cursor.execute("""SELECT id, name, description
+                          FROM class
+                          WHERE dataset = %s""",
+                       (dataset_id,))
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    rows = cursor.fetchall()
+    classes = []
+    for row in rows:
+        classes.append({
+            "id": row[0],
+            "name": row[1],
+            "description": row[2],
+            "recordings": get_recordings_in_class(row[0])
+        })
+    return classes
+
+
+def get_recordings_in_class(class_id):
+    try:
+        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+        cursor = connection.cursor()
+        cursor.execute("""SELECT mbid FROM class_member WHERE class = %s""",
+                       (class_id,))
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))
+
+    rows = cursor.fetchall()
+    recordings = []
+    for row in rows:
+        recordings.append(row[0])
+    return recordings
 
 
 def get_by_user_id(user_id):

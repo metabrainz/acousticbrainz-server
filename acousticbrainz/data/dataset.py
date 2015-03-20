@@ -38,7 +38,7 @@ DATASET_JSON_SCHEMA = {
 }
 
 
-def create_from_dict(dictionary, owner_id=None):
+def create_from_dict(dictionary, author_id=None):
     """Creates a new dataset from a dictionary.
 
     Data in the dictionary must be validated using `DATASET_JSON_SCHEMA` before
@@ -53,9 +53,9 @@ def create_from_dict(dictionary, owner_id=None):
         connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
 
-        cursor.execute("""INSERT INTO dataset (id, name, description, owner)
+        cursor.execute("""INSERT INTO dataset (id, name, description, author)
                           VALUES (uuid_generate_v4(), %s, %s, %s) RETURNING id""",
-                       (dictionary["name"], dictionary["description"], owner_id))
+                       (dictionary["name"], dictionary["description"], author_id))
         dataset_id = cursor.fetchone()[0]
 
         for cls in dictionary["classes"]:
@@ -88,7 +88,7 @@ def get(id):
     try:
         connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
-        cursor.execute("""SELECT id, name, description, owner, created
+        cursor.execute("""SELECT id, name, description, author, created
                           FROM dataset
                           WHERE id = %s""",
                        (str(id),))
@@ -103,7 +103,7 @@ def get(id):
             "id": row[0],
             "name": row[1],
             "description": row[2],
-            "owner": row[3],
+            "author": row[3],
             "created": row[4],
             "classes": get_classes(row[0]),
         }
@@ -163,9 +163,9 @@ def get_by_user_id(user_id):
     try:
         connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
-        cursor.execute("""SELECT id, name, description, owner, created
+        cursor.execute("""SELECT id, name, description, author, created
                           FROM dataset
-                          WHERE owner = %s""",
+                          WHERE author = %s""",
                        (user_id,))
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))
@@ -176,6 +176,6 @@ def get_by_user_id(user_id):
         "id": row[0],
         "name": row[1],
         "description": row[2],
-        "owner": row[3],
+        "author": row[3],
         "created": row[4],
     } for row in cursor.fetchall()]

@@ -4,7 +4,7 @@ CREATE TABLE dataset (
   id          UUID,
   name        VARCHAR NOT NULL,
   description TEXT,
-  owner       INT, -- FK to user
+  author      INT, -- FK to user
   created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE dataset ADD CONSTRAINT dataset_pkey PRIMARY KEY (id);
@@ -30,7 +30,7 @@ ALTER TABLE class_member ADD CONSTRAINT class_member_pkey PRIMARY KEY (class, mb
 
 ALTER TABLE dataset
   ADD CONSTRAINT dataset_fk_user
-  FOREIGN KEY (owner)
+  FOREIGN KEY (author)
   REFERENCES "user" (id);
 
 ALTER TABLE class

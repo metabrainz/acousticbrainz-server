@@ -12,9 +12,8 @@ def details(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    return render_template('datasets/view.html',
-                           dataset=ds,
-                           owner=user_data.get(ds['owner']))
+    return render_template('datasets/view.html', dataset=ds,
+                           author=user_data.get(ds['author']))
 
 
 @datasets_bp.route('/create/', methods=('GET', 'POST'))
@@ -56,7 +55,7 @@ def edit(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    # TODO: Check if owner is editing.
+    # TODO: Check if author is editing.
     # TODO: Implement the rest of the editing stuff.
     raise NotImplementedError
 
@@ -67,6 +66,6 @@ def delete(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    # TODO: Check if owner is deleting.
+    # TODO: Check if author is deleting.
     # TODO: Show confirmation page and delete if POSTed.
     raise NotImplementedError

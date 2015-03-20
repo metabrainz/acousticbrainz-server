@@ -12,7 +12,7 @@ ALTER TABLE highlevel
 
 ALTER TABLE dataset
   ADD CONSTRAINT dataset_fk_user
-  FOREIGN KEY (owner)
+  FOREIGN KEY (author)
   REFERENCES "user" (id);
 
 ALTER TABLE class

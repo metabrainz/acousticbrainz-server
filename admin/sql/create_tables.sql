@@ -46,7 +46,7 @@ CREATE TABLE dataset (
   id          UUID,
   name        VARCHAR NOT NULL,
   description TEXT,
-  owner       INT, -- FK to user
+  author      INT, -- FK to user
   created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

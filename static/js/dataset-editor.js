@@ -1,15 +1,25 @@
 /** @jsx React.DOM */
 
 var Dataset = React.createClass({
-    handleClassCreate: function (name) {
+    handleClassCreate: function () {
         var classes = this.state.classes;
-        classes.push(name);
-        this.setState({classes: classes});
+        var counter = this.state.classSeq + 1;
+        classes.push({
+            id: counter,
+            name: "Class " + counter,
+            description: "",
+            recordings: []
+        });
+        this.setState({
+            classes: classes,
+            classSeq: counter
+        });
     },
-    handleClassUpdate: function (oldName, name, description, recordings) {
+    handleClassUpdate: function (id, name, description, recordings) {
         var classes = this.state.classes;
+        console.log(id, name);
         for (cls of classes) {
-            if (cls.name == oldName) {
+            if (cls.id == id) {
                 cls.name = name;
                 cls.description = description;
                 cls.recordings = recordings;
@@ -18,11 +28,11 @@ var Dataset = React.createClass({
         }
         this.setState({classes: classes});
     },
-    handleClassDelete: function (name) {
+    handleClassDelete: function (id) {
         var classes = this.state.classes;
         var index = -1;
         for (var i = 0; i < classes.length; ++i) {
-            if (classes[i].name == name) {
+            if (classes[i].id == id) {
                 index = i;
                 break;
             }
@@ -33,6 +43,7 @@ var Dataset = React.createClass({
         this.setState({classes: classes});
     },
     handleDatasetUpdate: function () {
+        console.log(this.refs.name.getDOMNode().value);
         this.setState({
             name: this.refs.name.getDOMNode().value,
             description: this.refs.description.getDOMNode().value,
@@ -43,38 +54,38 @@ var Dataset = React.createClass({
         return {
             name: "",
             description: "",
-            classes: []
+            classes: [],
+            classSeq: 0 // Used for assigning internal class IDs
         };
     },
     render: function () {
         return (
             <div>
-                <form className="form-horizontal">
-                    <div className="form-group">
+                <form className="form-horizontal dataset-details">
+                    <div className="form-group form-group-sm">
                         <label for="inputName" className="col-sm-2 control-label">
-                            Name<span className="red">*</span>
+                            Name<span className="red">*</span>:
                         </label>
-                        <div className="col-sm-4">
-                            <input type="text" className="form-control" placeholder="Dataset name"
+                        <div className="col-sm-3">
+                            <input type="text" className="form-control"
                                 ref="name" id="inputName" required="required"
                                 onChange={this.handleDatasetUpdate} />
                         </div>
                     </div>
-                    <div className="form-group">
-                        <label for="inputDescr" className="col-sm-2 control-label">Description</label>
-                        <div className="col-sm-4">
-                            <textarea className="form-control" placeholder="Description (optional)"
-                                rows="3" ref="description" id="inputDescr"
+                    <div className="form-group form-group-sm">
+                        <label for="inputDescr" className="col-sm-2 control-label">Description:</label>
+                        <div className="col-sm-3">
+                            <textarea className="form-control"
+                                rows="2" ref="description" id="inputDescr"
                                 onChange={this.handleDatasetUpdate}></textarea>
                         </div>
                     </div>
                 </form>
-                <h3>Classes</h3>
-                <AddClassForm onClassCreate={this.handleClassCreate}
-                    classes={this.state.classes} />
-                <ClassList classes={this.state.classes}
+                <ClassList
+                    classes={this.state.classes}
                     onClassUpdate={this.handleClassUpdate}
                     onClassDelete={this.handleClassDelete} />
+                <AddClassButton onClassCreate={this.handleClassCreate} />
                 <SubmitDatasetButton
                     name={this.state.name}
                     description={this.state.description}
@@ -93,6 +104,7 @@ var SubmitDatasetButton = React.createClass({
             errorMsg: null
         });
         var so = this;
+        console.log(this.props.classes);
         $.ajax({
             type: "POST",
             url: "/datasets/create/",
@@ -129,56 +141,19 @@ var SubmitDatasetButton = React.createClass({
                 </p>
                 <button onClick={this.handleSubmit} type="button"
                     disabled={this.state.enabled ? '' : 'disabled'}
-                    className="btn btn-default btn-primary">Create</button>
+                    className="btn btn-default btn-primary">Submit</button>
             </div>
         );
     }
 });
 
-var AddClassForm = React.createClass({
-    handleSubmit: function (e) {
-        e.preventDefault();
-        var name = this.refs.name.getDOMNode().value.trim();
-        if (!name) {
-            return;
-        }
-        this.props.onClassCreate({
-            name: name,
-            description: "",  // TODO: Implement
-            recordings: []
-        });
-        this.refs.name.getDOMNode().value = '';
-    },
-    handleChange: function() {
-        // Making sure that class name is unique
-        var new_name = this.refs.name.getDOMNode().value;
-        var classes = this.props.classes;
-        var index = -1;
-        for (var i = 0; i < classes.length; ++i) {
-            if (classes[i].name == new_name) {
-                index = i;
-                break;
-            }
-        }
-        this.setState({validInput: index == -1 || new_name.length == 0});
-        // TODO: Show informative error message if input is invalid.
-    },
-    getInitialState: function () {
-        return {validInput: true};
-    },
+var AddClassButton = React.createClass({
     render: function () {
-        // TODO: Add description input
         return (
-            <form className="addClassForm form-inline" onSubmit={this.handleSubmit}>
-                <div className={this.state.validInput ? 'input-group' : 'input-group has-error'}>
-                    <input type="text" className="form-control" placeholder="Class name"
-                        ref="name" onChange={this.handleChange} />
-                    <span className="input-group-btn">
-                        <button disabled={this.state.validInput ? '' : 'disabled'}
-                            className="btn btn-default" type="submit">Add</button>
-                    </span>
-                </div>
-            </form>
+            <div className="form-group">
+                <button onClick={this.props.onClassCreate} type="button"
+                    className="btn btn-sm btn-success">Add class</button>
+            </div>
         );
     }
 });
@@ -187,38 +162,71 @@ var ClassList = React.createClass({
     render: function () {
         var items = [];
         this.props.classes.forEach(function (cls) {
-            items.push(<Class name={cls.name} description={cls.description} recordings={cls.recordings}
-                onClassUpdate={this.props.onClassUpdate} onClassDelete={this.props.onClassDelete} />);
+            console.log(cls.recordings);
+            items.push(<Class id={cls.id} name={cls.name} description={cls.description} recordings={cls.recordings}
+                onClassUpdate={this.props.onClassUpdate}
+                onClassDelete={this.props.onClassDelete} />);
         }.bind(this));
-        if (items.length > 0) {
-            return (<ul>{items}</ul>);
-        } else {
-            return (<p><strong>No classes in this dataset</strong></p>)
-        }
+        return (<div>{items}</div>);
     }
 });
 
 var Class = React.createClass({
-    handleRecordingUpdate: function (recordings) {
-        this.props.onClassUpdate(this.props.name, this.props.name, this.props.description, recordings);
+    handleClassUpdate: function() {
+        console.log(this.props.name);
+        this.props.onClassUpdate(
+            this.props.id,
+            this.refs.name.getDOMNode().value,
+            this.refs.description.getDOMNode().value,
+            this.props.recordings
+        );
     },
-    handleEdit: function (event) {
-        event.preventDefault();
-        // TODO: Implement class editor
+    handleRecordingsUpdate: function (recordings) {
+        console.log(this.props.name);
+        this.props.onClassUpdate(
+            this.props.id,
+            this.props.name,
+            this.props.description,
+            recordings
+        );
     },
     handleDelete: function (event) {
         event.preventDefault();
-        this.props.onClassDelete(this.props.name);
+        this.props.onClassDelete(this.props.id);
     },
     render: function () {
+        console.log(this.props);
+        // TODO: Move delete button into the header
         return (
-            <div>
-                <h3>{this.props.name}</h3>
-                <p><em>{this.props.description}</em></p>
-                <button onClick={this.handleEdit} className="btn btn-xs btn-default" type="button">Edit</button>&nbsp;
-                <button onClick={this.handleDelete} className="btn btn-xs btn-danger" type="submit">Delete</button>
-                <Recordings recordings={this.props.recordings} onRecordingsUpdate={this.handleRecordingUpdate} />
-                <hr />
+            <div className="panel panel-info class">
+                <div className="panel-heading">
+                    <table>
+                        <tr>
+                            <td className="name-col">
+                                <input type="text" placeholder="Class name" className="form-control"
+                                    ref="name" id="inputName" required="required"
+                                    onChange={this.handleClassUpdate} /></td>
+                            <td className="remove-col">
+                                <button type="button" className="close" title="Remove class"
+                                    onClick={this.handleDelete}>&times;</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div className="panel-body">
+                    <form className="form-horizontal dataset-details">
+                        <div className="form-group form-group-sm">
+                            <div className="col-sm-12">
+                                <textarea className="form-control" placeholder="Description (optional)"
+                                    rows="2" ref="description" id="inputDescr"
+                                    onChange={this.handleClassUpdate}></textarea>
+                            </div>
+                        </div>
+                    </form>
+                    <Recordings
+                        recordings={this.props.recordings}
+                        onRecordingsUpdate={this.handleRecordingsUpdate} />
+                </div>
             </div>
         );
     }
@@ -242,8 +250,12 @@ var Recordings = React.createClass({
         return (
             <div>
                 <h4>Recordings</h4>
-                <RecordingAddForm recordings={this.props.recordings} onRecordingSubmit={this.handleRecordingSubmit} />
-                <RecordingList recordings={this.props.recordings} onRecordingDelete={this.handleRecordingDelete} />
+                <RecordingList
+                    recordings={this.props.recordings}
+                    onRecordingDelete={this.handleRecordingDelete} />
+                <RecordingAddForm
+                    recordings={this.props.recordings}
+                    onRecordingSubmit={this.handleRecordingSubmit} />
             </div>
         );
     }
@@ -271,13 +283,13 @@ var RecordingAddForm = React.createClass({
     },
     render: function () {
         return (
-            <form className="addClassForm clearfix form-inline" onSubmit={this.handleSubmit}>
+            <form className="recording-add clearfix form-inline form-group-sm" onSubmit={this.handleSubmit}>
                 <div className={this.state.validInput ? 'input-group' : 'input-group has-error'}>
-                    <input type="text" className="form-control" placeholder="MusicBrainz ID"
+                    <input type="text" className="form-control input-sm" placeholder="MusicBrainz ID"
                         ref="mbid" onChange={this.handleChange} />
                     <span className="input-group-btn">
                         <button disabled={this.state.validInput ? '' : 'disabled'}
-                            className="btn btn-default" type="submit">Add</button>
+                            className="btn btn-default btn-sm" type="submit">Add recording</button>
                     </span>
                 </div>
             </form>
@@ -288,14 +300,11 @@ var RecordingAddForm = React.createClass({
 var RecordingList = React.createClass({
     render: function () {
         var items = [];
+        console.log("recordings", this.props.recordings);
         this.props.recordings.forEach(function (recording) {
             items.push(<Recording mbid={recording} onRecordingDelete={this.props.onRecordingDelete} />);
         }.bind(this));
-        if (items.length > 0) {
-            return (<ul>{items}</ul>);
-        } else {
-            return (<p><strong>No recordings</strong></p>)
-        }
+        return (<table className="table recordings">{items}</table>);
     }
 });
 
@@ -306,12 +315,15 @@ var Recording = React.createClass({
     },
     render: function () {
         return (
-            <li>
-                <strong>{this.props.mbid}</strong>&nbsp;
-                <button onClick={this.handleDelete} type="button" className="btn btn-xs btn-danger">Delete</button>
-            </li>
+            <tr>
+                <td className="mbid-col">{this.props.mbid}</td>
+                <td className="remove-col">
+                    <button type="button" className="close" title="Remove recording"
+                        onClick={this.handleDelete}>&times;</button>
+                </td>
+            </tr>
         );
     }
 });
 
-React.render(<Dataset />, document.getElementById('content'));
+React.render(<Dataset />, document.getElementById('dataset-editor'));

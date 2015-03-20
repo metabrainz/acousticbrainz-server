@@ -37,7 +37,7 @@
 @import "bootstrap/panels";
 //@import "bootstrap/responsive-embed.less";
 @import "bootstrap/wells";
-//@import "bootstrap/close.less";
+@import "bootstrap/close.less";
 
 // Components w/ JavaScript
 //@import "bootstrap/modals.less";
@@ -96,5 +96,50 @@ body {
   .navbar-brand {
     font-family: 'Bitter', serif;
     font-weight: bold;
+  }
+}
+
+#dataset-editor {
+  .dataset-details {
+    .col-sm-3 {
+      padding-left: 0px;
+    }
+  }
+  .class {
+    max-width: 460px;
+
+    .close {
+      @remove-color: red;
+      color: @remove-color;
+      .opacity(.7);
+      &:hover, &:focus {
+        color: @remove-color;
+        .opacity(1);
+      }
+    }
+
+    .panel-heading {
+      table {
+        width: 100%;
+        .name-col {
+          width: 100%;
+          .form-control { height: 28px; font-size: 14px; }
+        }
+        .remove-col { padding-left: 10px; }
+      }
+    }
+
+    h4 {
+      margin-bottom: 4px;
+      color: @ab-blueish;
+      .opacity(0.8);
+    }
+    table.recordings {
+      margin-bottom: 8px;
+      .mbid-col { font-family: monospace; }
+    }
+    form.recording-add {
+      .input-group-btn { width: 1%; }
+    }
   }
 }

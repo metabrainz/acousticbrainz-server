@@ -6,7 +6,11 @@ from werkzeug.exceptions import BadRequest, ServiceUnavailable
 DATASET_JSON_SCHEMA = {
     "type": "object",
     "properties": {
-        "name": {"type": "string"},
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+        },
         "description": {"type": "string"},
         "classes": {
             "type": "array",
@@ -15,11 +19,16 @@ DATASET_JSON_SCHEMA = {
                 # CLASS
                 "type": "object",
                 "properties": {
-                    "name": {"type": "string"},
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    },
                     "description": {"type": "string"},
                     "recordings": {
                         # CLASS_MEMBER
                         "type": "array",
+                        "minItems": 1,  # must have at one recording
                         "items": {"type": "string"},  # FIXME: This should be a UUID
                     },
                 },

@@ -17,7 +17,6 @@ var Dataset = React.createClass({
     },
     handleClassUpdate: function (id, name, description, recordings) {
         var classes = this.state.classes;
-        console.log(id, name);
         for (cls of classes) {
             if (cls.id == id) {
                 cls.name = name;
@@ -43,7 +42,6 @@ var Dataset = React.createClass({
         this.setState({classes: classes});
     },
     handleDatasetUpdate: function () {
-        console.log(this.refs.name.getDOMNode().value);
         this.setState({
             name: this.refs.name.getDOMNode().value,
             description: this.refs.description.getDOMNode().value,
@@ -104,7 +102,6 @@ var SubmitDatasetButton = React.createClass({
             errorMsg: null
         });
         var so = this;
-        console.log(this.props.classes);
         $.ajax({
             type: "POST",
             url: "/datasets/create/",
@@ -162,7 +159,6 @@ var ClassList = React.createClass({
     render: function () {
         var items = [];
         this.props.classes.forEach(function (cls) {
-            console.log(cls.recordings);
             items.push(<Class id={cls.id} name={cls.name} description={cls.description} recordings={cls.recordings}
                 onClassUpdate={this.props.onClassUpdate}
                 onClassDelete={this.props.onClassDelete} />);
@@ -173,7 +169,6 @@ var ClassList = React.createClass({
 
 var Class = React.createClass({
     handleClassUpdate: function() {
-        console.log(this.props.name);
         this.props.onClassUpdate(
             this.props.id,
             this.refs.name.getDOMNode().value,
@@ -182,7 +177,6 @@ var Class = React.createClass({
         );
     },
     handleRecordingsUpdate: function (recordings) {
-        console.log(this.props.name);
         this.props.onClassUpdate(
             this.props.id,
             this.props.name,
@@ -195,8 +189,8 @@ var Class = React.createClass({
         this.props.onClassDelete(this.props.id);
     },
     render: function () {
-        console.log(this.props);
-        // TODO: Move delete button into the header
+        // FIXME: Name of the class and its description are not rendered correctly.
+        // Try to delete class above another one.
         return (
             <div className="panel panel-info class">
                 <div className="panel-heading">
@@ -300,7 +294,6 @@ var RecordingAddForm = React.createClass({
 var RecordingList = React.createClass({
     render: function () {
         var items = [];
-        console.log("recordings", this.props.recordings);
         this.props.recordings.forEach(function (recording) {
             items.push(<Recording mbid={recording} onRecordingDelete={this.props.onRecordingDelete} />);
         }.bind(this));

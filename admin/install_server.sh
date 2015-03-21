@@ -22,9 +22,7 @@ echo "client_encoding = utf8" >> "$PG_CONF"
 service postgresql restart
 
 # Less compiler
-curl -sL https://deb.nodesource.com/setup | sudo bash -
-apt-get install -y nodejs
-npm install -g less less-plugin-clean-css
+apt-get install -y node-less
 
 # Setting up the application
 cd /vagrant/

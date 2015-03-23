@@ -199,7 +199,8 @@ var Class = React.createClass({
                             <td className="name-col">
                                 <input type="text" placeholder="Class name" className="form-control"
                                     ref="name" id="inputName" required="required"
-                                    onChange={this.handleClassUpdate} /></td>
+                                    onChange={this.handleClassUpdate}
+                                    value={this.props.name} /></td>
                             <td className="remove-col">
                                 <button type="button" className="close" title="Remove class"
                                     onClick={this.handleDelete}>&times;</button>
@@ -213,7 +214,8 @@ var Class = React.createClass({
                             <div className="col-sm-12">
                                 <textarea className="form-control" placeholder="Description (optional)"
                                     rows="2" ref="description" id="inputDescr"
-                                    onChange={this.handleClassUpdate}></textarea>
+                                    onChange={this.handleClassUpdate}
+                                    value={this.props.description}></textarea>
                             </div>
                         </div>
                     </form>

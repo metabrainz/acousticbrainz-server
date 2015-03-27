@@ -189,8 +189,6 @@ var Class = React.createClass({
         this.props.onClassDelete(this.props.id);
     },
     render: function () {
-        // FIXME: Name of the class and its description are not rendered correctly.
-        // Try to delete class above another one.
         return (
             <div className="panel panel-info class">
                 <div className="panel-heading">

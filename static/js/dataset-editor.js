@@ -1,22 +1,43 @@
 /** @jsx React.DOM */
+/*
+ This is a dataset editor. It works in two modes:
+ - create (creates new dataset from scratch)
+ - edit (edits existing dataset)
+
+ Mode is set by defining "data-mode" attribute on the container element which is
+ referenced in CONTAINER_ELEMENT_ID. Value of this attribute is either "create"
+ or "edit" (see definitions below: MODE_CREATE and MODE_EDIT).
+
+ When mode is set to "edit", attribute "data-edit-id" need to be specified. This
+ attribute references existing dataset by its ID. When Dataset component is
+ mounted, it pull existing dataset for editing from the server.
+ */
+
+var CONTAINER_ELEMENT_ID = "dataset-editor";
+var container = document.getElementById(CONTAINER_ELEMENT_ID);
+
+var MODE_CREATE = "create";
+var MODE_EDIT = "edit";
+
 
 var Dataset = React.createClass({
     handleClassCreate: function () {
-        var classes = this.state.classes;
-        var counter = this.state.classSeq + 1;
-        classes.push({
-            id: counter,
-            name: "Class " + counter,
+        var nextStateData = this.state.data;
+        nextStateData.classes.push({
+            id: this.state.classSeq,
+            name: "Class " + this.state.classSeq,
             description: "",
             recordings: []
         });
+        nextStateData.classSeq++;
         this.setState({
-            classes: classes,
-            classSeq: counter
+            data: nextStateData,
+            classSeq: this.state.classSeq + 1
         });
     },
     handleClassUpdate: function (id, name, description, recordings) {
-        var classes = this.state.classes;
+        var nextStateData = this.state.data;
+        var classes = nextStateData.classes;
         for (cls of classes) {
             if (cls.id == id) {
                 cls.name = name;
@@ -25,10 +46,12 @@ var Dataset = React.createClass({
                 break;
             }
         }
-        this.setState({classes: classes});
+        nextStateData.classes = classes;
+        this.setState({data: nextStateData});
     },
     handleClassDelete: function (id) {
-        var classes = this.state.classes;
+        var nextStateData = this.state.data;
+        var classes = nextStateData.classes;
         var index = -1;
         for (var i = 0; i < classes.length; ++i) {
             if (classes[i].id == id) {
@@ -39,64 +62,110 @@ var Dataset = React.createClass({
         if (index > -1) {
             classes.splice(index, 1);
         }
-        this.setState({classes: classes});
+        nextStateData.classes = classes;
+        this.setState({data: nextStateData});
     },
     handleDatasetUpdate: function () {
-        this.setState({
-            name: this.refs.name.getDOMNode().value,
-            description: this.refs.description.getDOMNode().value,
-            classes: this.state.classes
-        });
+        var nextStateData = this.state.data;
+        nextStateData.name = this.refs.name.getDOMNode().value;
+        nextStateData.description = this.refs.description.getDOMNode().value;
+        this.setState({data: nextStateData});
     },
     getInitialState: function () {
         return {
-            name: "",
-            description: "",
-            classes: [],
-            classSeq: 0 // Used for assigning internal class IDs
+            mode: container.dataset.mode,
+            id: container.dataset.editId,
+            classSeq: 1, // Used for assigning internal class IDs
+            data: null
         };
     },
+    componentDidMount: function() {
+        // This function is invoked when Dataset component is originally
+        // mounted. Here we need to check what mode dataset editor is in, and
+        // pull data from the server if mode is MODE_EDIT.
+        // Do not confuse property called "dataset" with our own datasets. See
+        // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
+        // for more info about it.
+        if (this.state.mode == MODE_EDIT) {
+            if (!this.state.id) {
+                console.error("ID of existing dataset needs to be specified" +
+                "in data-edit-id property.");
+                return;
+            }
+            $.get("/datasets/" + this.state.id + "/json", function(result) {
+                if (this.isMounted()) {
+                    // Assigning internal class IDs
+                    var classSeq = 1;
+                    for (cls of result.classes) {
+                        cls.id = classSeq++;
+                    }
+                    this.setState({
+                        classSeq: classSeq,
+                        data: result
+                    });
+                }
+            }.bind(this));
+        } else {
+            if (this.state.mode != MODE_CREATE) {
+                console.warn('Unknown dataset editor mode! Using default: MODE_CREATE.');
+            }
+            this.setState({
+                mode: MODE_CREATE,
+                data: {
+                    name: "",
+                    description: "",
+                    classes: []
+                }
+            });
+        }
+    },
     render: function () {
-        return (
-            <div>
-                <form className="form-horizontal dataset-details">
-                    <div className="form-group form-group-sm">
-                        <label for="inputName" className="col-sm-2 control-label">
-                            Name<span className="red">*</span>:
-                        </label>
-                        <div className="col-sm-3">
-                            <input type="text" className="form-control"
-                                ref="name" id="inputName" required="required"
-                                onChange={this.handleDatasetUpdate} />
+        if (this.state.data) {
+            return (
+                <div>
+                    <form className="form-horizontal dataset-details">
+                        <div className="form-group form-group-sm">
+                            <label for="inputName" className="col-sm-2 control-label">
+                                Name<span className="red">*</span>:
+                            </label>
+
+                            <div className="col-sm-3">
+                                <input type="text" className="form-control"
+                                       ref="name" id="inputName" required="required"
+                                       onChange={this.handleDatasetUpdate}/>
+                            </div>
                         </div>
-                    </div>
-                    <div className="form-group form-group-sm">
-                        <label for="inputDescr" className="col-sm-2 control-label">Description:</label>
-                        <div className="col-sm-3">
+                        <div className="form-group form-group-sm">
+                            <label for="inputDescr" className="col-sm-2 control-label">Description:</label>
+
+                            <div className="col-sm-3">
                             <textarea className="form-control"
-                                rows="2" ref="description" id="inputDescr"
-                                onChange={this.handleDatasetUpdate}></textarea>
+                                      rows="2" ref="description" id="inputDescr"
+                                      onChange={this.handleDatasetUpdate}></textarea>
+                            </div>
                         </div>
-                    </div>
-                </form>
-                <ClassList
-                    classes={this.state.classes}
-                    onClassUpdate={this.handleClassUpdate}
-                    onClassDelete={this.handleClassDelete} />
-                <AddClassButton onClassCreate={this.handleClassCreate} />
-                <SubmitDatasetButton
-                    name={this.state.name}
-                    description={this.state.description}
-                    classes={this.state.classes} />
-            </div>
-        );
+                    </form>
+                    <ClassList
+                        classes={this.state.data.classes}
+                        onClassUpdate={this.handleClassUpdate}
+                        onClassDelete={this.handleClassDelete}/>
+                    <AddClassButton onClassCreate={this.handleClassCreate}/>
+                    <SubmitDatasetButton
+                        name={this.state.data.name}
+                        description={this.state.data.description}
+                        classes={this.state.data.classes}/>
+                </div>
+            );
+        } else {
+            return (<strong>Loading...</strong>);
+        }
     }
 });
 
 var SubmitDatasetButton = React.createClass({
     handleSubmit: function (e) {
         e.preventDefault();
-        // TODO: Make sure that all classes contain at least one recording!
+        // TODO: Add support for MODE_EDIT.
         this.setState({
             enabled: false,
             errorMsg: null
@@ -137,8 +206,8 @@ var SubmitDatasetButton = React.createClass({
                     <br />{ this.state.errorMsg }
                 </p>
                 <button onClick={this.handleSubmit} type="button"
-                    disabled={this.state.enabled ? '' : 'disabled'}
-                    className="btn btn-default btn-primary">Submit</button>
+                        disabled={this.state.enabled ? '' : 'disabled'}
+                        className="btn btn-default btn-primary">Submit</button>
             </div>
         );
     }
@@ -149,7 +218,7 @@ var AddClassButton = React.createClass({
         return (
             <div className="form-group">
                 <button onClick={this.props.onClassCreate} type="button"
-                    className="btn btn-sm btn-success">Add class</button>
+                        className="btn btn-sm btn-success">Add class</button>
             </div>
         );
     }
@@ -160,8 +229,8 @@ var ClassList = React.createClass({
         var items = [];
         this.props.classes.forEach(function (cls) {
             items.push(<Class id={cls.id} name={cls.name} description={cls.description} recordings={cls.recordings}
-                onClassUpdate={this.props.onClassUpdate}
-                onClassDelete={this.props.onClassDelete} />);
+                              onClassUpdate={this.props.onClassUpdate}
+                              onClassDelete={this.props.onClassDelete} />);
         }.bind(this));
         return (<div>{items}</div>);
     }
@@ -196,12 +265,12 @@ var Class = React.createClass({
                         <tr>
                             <td className="name-col">
                                 <input type="text" placeholder="Class name" className="form-control"
-                                    ref="name" id="inputName" required="required"
-                                    onChange={this.handleClassUpdate}
-                                    value={this.props.name} /></td>
+                                       ref="name" id="inputName" required="required"
+                                       onChange={this.handleClassUpdate}
+                                       value={this.props.name} /></td>
                             <td className="remove-col">
                                 <button type="button" className="close" title="Remove class"
-                                    onClick={this.handleDelete}>&times;</button>
+                                        onClick={this.handleDelete}>&times;</button>
                             </td>
                         </tr>
                     </table>
@@ -211,9 +280,9 @@ var Class = React.createClass({
                         <div className="form-group form-group-sm">
                             <div className="col-sm-12">
                                 <textarea className="form-control" placeholder="Description (optional)"
-                                    rows="2" ref="description" id="inputDescr"
-                                    onChange={this.handleClassUpdate}
-                                    value={this.props.description}></textarea>
+                                          rows="2" ref="description" id="inputDescr"
+                                          onChange={this.handleClassUpdate}
+                                          value={this.props.description}></textarea>
                             </div>
                         </div>
                     </form>
@@ -280,10 +349,10 @@ var RecordingAddForm = React.createClass({
             <form className="recording-add clearfix form-inline form-group-sm" onSubmit={this.handleSubmit}>
                 <div className={this.state.validInput ? 'input-group' : 'input-group has-error'}>
                     <input type="text" className="form-control input-sm" placeholder="MusicBrainz ID"
-                        ref="mbid" onChange={this.handleChange} />
+                           ref="mbid" onChange={this.handleChange} />
                     <span className="input-group-btn">
                         <button disabled={this.state.validInput ? '' : 'disabled'}
-                            className="btn btn-default btn-sm" type="submit">Add recording</button>
+                                className="btn btn-default btn-sm" type="submit">Add recording</button>
                     </span>
                 </div>
             </form>
@@ -312,11 +381,12 @@ var Recording = React.createClass({
                 <td className="mbid-col">{this.props.mbid}</td>
                 <td className="remove-col">
                     <button type="button" className="close" title="Remove recording"
-                        onClick={this.handleDelete}>&times;</button>
+                            onClick={this.handleDelete}>&times;</button>
                 </td>
             </tr>
         );
     }
 });
 
-React.render(<Dataset />, document.getElementById('dataset-editor'));
+
+React.render(<Dataset />, container);

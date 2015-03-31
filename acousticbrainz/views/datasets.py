@@ -16,6 +16,14 @@ def details(id):
                            author=user_data.get(ds['author']))
 
 
+@datasets_bp.route('/<uuid:id>/json')
+def view_json(id):
+    ds = dataset.get(id)
+    if not ds:
+        raise NotFound("Can't find this dataset.")
+    return jsonify(ds)
+
+
 @datasets_bp.route('/create/', methods=('GET', 'POST'))
 @login_required
 def create():
@@ -46,7 +54,7 @@ def create():
             success=True,
             dataset_id=dataset_id,
         )
-    return render_template('datasets/create.html')
+    return render_template('datasets/editor.html', mode="create")
 
 
 @datasets_bp.route('/<uuid:id>/edit/', methods=('GET', 'POST'))
@@ -57,7 +65,7 @@ def edit(id):
         raise NotFound("Can't find this dataset.")
     # TODO: Check if author is editing.
     # TODO: Implement the rest of the editing stuff.
-    raise NotImplementedError
+    return render_template('datasets/editor.html', mode="edit", dataset_id=str(id))
 
 
 @datasets_bp.route('/<uuid:id>/delete/', methods=('GET', 'POST'))

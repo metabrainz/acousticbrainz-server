@@ -5,7 +5,8 @@
 {% block content %}
   <h2>Datasets</h2>
   <h3>Create new</h3>
-  <div id="dataset-editor"></div>
+  <div id="dataset-editor" data-mode="{{ mode }}"
+      {{ 'data-edit-id='+dataset_id if dataset_id }}></div>
 {% endblock %}
 
 {%- block scripts -%}

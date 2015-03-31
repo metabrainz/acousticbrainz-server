@@ -10,7 +10,7 @@
 
 {%- block scripts -%}
   {{ super() }}
-  <script src="{{ url_for('static', filename='js/react.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/react.js') }}"></script>
   <script src="{{ url_for('static', filename='js/JSXTransformer.js') }}"></script>
   <script type="text/jsx" src="{{ url_for('static', filename='js/dataset-editor.js') }}"></script>
 {%- endblock -%}

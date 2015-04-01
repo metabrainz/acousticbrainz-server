@@ -137,15 +137,22 @@ def count_lowlevel(mbid):
 
     return InternalServerError("Ouch!")
 
-
 def get_summary_data(mbid):
+    # Initialize the return variables at the top
+    genres = None
+    moods = None
+    other = None
+    lowlevel = None
+    highlevel = None
+
     mbid = str(mbid)
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
         cur.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
         if not cur.rowcount:
-            raise NotFound("We do not have data for this track. Please upload it!")
+            # Returning all None as the lowelevel data not found !!
+            return lowlevel, highlevel, genres, moods, other
 
         row = cur.fetchone()
         lowlevel = row[0]
@@ -164,10 +171,6 @@ def get_summary_data(mbid):
                     "FROM highlevel hl, highlevel_json hlj "
                     "WHERE hl.data = hlj.id "
                     "AND hl.mbid = %s", (mbid, ))
-        genres = None
-        moods = None
-        other = None
-        highlevel = None
         if cur.rowcount:
             row = cur.fetchone()
             highlevel = row[0]
@@ -184,6 +187,7 @@ def get_summary_data(mbid):
         raise ServiceUnavailable(e)
 
     return InternalServerError("whoops!")
+
 
 
 def run_sql_script(sql_file_path):

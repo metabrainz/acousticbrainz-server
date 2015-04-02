@@ -19,7 +19,21 @@ var container = document.getElementById(CONTAINER_ELEMENT_ID);
 var MODE_CREATE = "create";
 var MODE_EDIT = "edit";
 
-
+/*
+ Dataset is the primary class in the dataset editor. Its state contains
+ dataset itself and other internal variables:
+ - data:
+     - id (dataset ID that is used only when editing existing dataset)
+     - name (name of the dataset)
+     - description (optional description of the dataset)
+     - classes: [ (array of classes with the following structure)
+         - id (internal class ID that is used only in the editor)
+         - name
+         - description
+         - recordings (array of recording MBIDs)
+       ]
+ - classSeq (used for assigning internal class IDs)
+ */
 var Dataset = React.createClass({
     handleClassCreate: function () {
         var nextStateData = this.state.data;
@@ -74,7 +88,6 @@ var Dataset = React.createClass({
     getInitialState: function () {
         return {
             mode: container.dataset.mode,
-            id: container.dataset.editId,
             classSeq: 1, // Used for assigning internal class IDs
             data: null
         };
@@ -87,12 +100,12 @@ var Dataset = React.createClass({
         // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
         // for more info about it.
         if (this.state.mode == MODE_EDIT) {
-            if (!this.state.id) {
+            if (!container.dataset.editId) {
                 console.error("ID of existing dataset needs to be specified" +
                 "in data-edit-id property.");
                 return;
             }
-            $.get("/datasets/" + this.state.id + "/json", function(result) {
+            $.get("/datasets/" + container.dataset.editId + "/json", function(result) {
                 if (this.isMounted()) {
                     // Assigning internal class IDs
                     var classSeq = 1;
@@ -128,7 +141,6 @@ var Dataset = React.createClass({
                             <label for="inputName" className="col-sm-2 control-label">
                                 Name<span className="red">*</span>:
                             </label>
-
                             <div className="col-sm-3">
                                 <input type="text" className="form-control"
                                        ref="name" id="inputName" required="required"
@@ -137,7 +149,6 @@ var Dataset = React.createClass({
                         </div>
                         <div className="form-group form-group-sm">
                             <label for="inputDescr" className="col-sm-2 control-label">Description:</label>
-
                             <div className="col-sm-3">
                             <textarea className="form-control"
                                       rows="2" ref="description" id="inputDescr"
@@ -148,12 +159,11 @@ var Dataset = React.createClass({
                     <ClassList
                         classes={this.state.data.classes}
                         onClassUpdate={this.handleClassUpdate}
-                        onClassDelete={this.handleClassDelete}/>
-                    <AddClassButton onClassCreate={this.handleClassCreate}/>
+                        onClassDelete={this.handleClassDelete} />
+                    <AddClassButton onClassCreate={this.handleClassCreate} />
                     <SubmitDatasetButton
-                        name={this.state.data.name}
-                        description={this.state.data.description}
-                        classes={this.state.data.classes}/>
+                        mode={this.state.mode}
+                        data={this.state.data} />
                 </div>
             );
         } else {
@@ -165,19 +175,25 @@ var Dataset = React.createClass({
 var SubmitDatasetButton = React.createClass({
     handleSubmit: function (e) {
         e.preventDefault();
-        // TODO: Add support for MODE_EDIT.
         this.setState({
             enabled: false,
             errorMsg: null
         });
+        var submitEndpoint = null;
+        if (this.props.mode == MODE_CREATE) {
+            submitEndpoint = "/datasets/create";
+        } else { // MODE_EDIT
+            submitEndpoint = "/datasets/" + container.dataset.editId + "/edit";
+        }
         var so = this;
         $.ajax({
             type: "POST",
-            url: "/datasets/create/",
+            url: submitEndpoint,
             data: JSON.stringify({
-                'name': this.props.name,
-                'description': this.props.description,
-                'classes': this.props.classes
+                'id': this.props.data.id,  // used only with MODE_EDIT
+                'name': this.props.data.name,
+                'description': this.props.data.description,
+                'classes': this.props.data.classes
             }),
             dataType: "json",
             contentType: "application/json; charset=utf-8",
@@ -199,6 +215,10 @@ var SubmitDatasetButton = React.createClass({
         };
     },
     render: function () {
+        var buttonText = "Submit";
+        if (this.props.mode == MODE_EDIT) {
+            buttonText = "Update";
+        }
         return (
             <div className="form-group">
                 <p className={this.state.errorMsg ? 'text-danger' : 'hidden'}>
@@ -207,7 +227,7 @@ var SubmitDatasetButton = React.createClass({
                 </p>
                 <button onClick={this.handleSubmit} type="button"
                         disabled={this.state.enabled ? '' : 'disabled'}
-                        className="btn btn-default btn-primary">Submit</button>
+                        className="btn btn-default btn-primary">{buttonText}</button>
             </div>
         );
     }

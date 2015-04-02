@@ -78,6 +78,11 @@ def create_from_dict(dictionary, author_id=None):
     return dataset_id, None
 
 
+def update(id, dictionary, author_id):
+    # TODO: Implement this.
+    return id, None
+
+
 def get(id):
     """Get dataset with a specified ID.
 

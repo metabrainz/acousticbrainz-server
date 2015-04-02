@@ -28,10 +28,12 @@
         <td><a href="{{ url_for('datasets.details', id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
         <td>{{ dataset['created'] }}</td>
         <td>
-          <a class="btn btn-primary btn-xs"
-             href="{{ url_for('datasets.edit', id=dataset['id']) }}">Edit</a>
-          <a class="btn btn-danger btn-xs"
-             href="{{ url_for('datasets.delete', id=dataset['id']) }}">Delete</a>
+          {% if current_user.is_authenticated() and current_user == user %}
+            <a class="btn btn-primary btn-xs"
+               href="{{ url_for('datasets.edit', id=dataset['id']) }}">Edit</a>
+            <a class="btn btn-danger btn-xs"
+               href="{{ url_for('datasets.delete', id=dataset['id']) }}">Delete</a>
+          {% endif %}
         </td>
       </tr>
     {% endfor %}

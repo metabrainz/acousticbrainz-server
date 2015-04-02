@@ -1,10 +1,23 @@
 {% extends 'base.html' %}
 
-{% block title %}Create new dataset - AcousticBrainz{% endblock %}
+{% block title %}
+  {% if mode == "create" %}
+    Create new dataset
+  {% else %}{# edit mode #}
+    Edit dataset
+  {% endif %}
+   - AcousticBrainz
+ {% endblock %}
 
 {% block content %}
-  <h2>Datasets</h2>
-  <h3>Create new</h3>
+  {% if mode == "create" %}
+    <h2>Datasets</h2>
+    <h3>Create new</h3>
+  {% else %}{# edit mode #}
+    <h2>Dataset "{{ dataset_name }}"</h2>
+    <h3>Edit</h3>
+  {% endif %}
+
   <div id="dataset-editor" data-mode="{{ mode }}"
       {{ 'data-edit-id='+dataset_id if dataset_id }}></div>
 {% endblock %}

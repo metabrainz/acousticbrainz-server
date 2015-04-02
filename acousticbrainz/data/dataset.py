@@ -78,9 +78,37 @@ def create_from_dict(dictionary, author_id=None):
     return dataset_id, None
 
 
-def update(id, dictionary, author_id):
-    # TODO: Implement this.
-    return id, None
+def update(dataset_id, dictionary, author_id):
+    try:
+        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+        cursor = connection.cursor()
+
+        cursor.execute("""UPDATE dataset
+                          SET (name, description, author) = (%s, %s, %s)
+                          WHERE id = %s""",
+                       (dictionary["name"], dictionary["description"], author_id, dataset_id))
+
+        # Replacing old classes with new ones
+        cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
+
+        for cls in dictionary["classes"]:
+            cursor.execute("""INSERT INTO class (name, description, dataset)
+                              VALUES (%s, %s, %s) RETURNING id""",
+                           (cls["name"], cls["description"], dataset_id))
+            cls_id = cursor.fetchone()[0]
+
+            for recording_mbid in cls["recordings"]:
+                cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
+                               (cls_id, recording_mbid))
+
+        # If anything bad happens above, it should just rollback by default.
+        connection.commit()
+
+    except (psycopg2.ProgrammingError, psycopg2.IntegrityError, psycopg2.OperationalError) as e:
+        # TODO: Log this.
+        return e
+
+    return None
 
 
 def get(id):

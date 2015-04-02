@@ -31,17 +31,23 @@ ALTER TABLE class_member ADD CONSTRAINT class_member_pkey PRIMARY KEY (class, mb
 ALTER TABLE dataset
   ADD CONSTRAINT dataset_fk_user
   FOREIGN KEY (author)
-  REFERENCES "user" (id);
+  REFERENCES "user" (id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE;
 
 ALTER TABLE class
   ADD CONSTRAINT class_fk_dataset
   FOREIGN KEY (dataset)
-  REFERENCES dataset (id);
+  REFERENCES dataset (id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE;
 
 ALTER TABLE class_member
   ADD CONSTRAINT class_member_fk_class
   FOREIGN KEY (class)
-  REFERENCES class (id);
+  REFERENCES class (id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE;
 
 CREATE EXTENSION "uuid-ossp";
 

@@ -83,8 +83,8 @@ def edit(id):
                 error=str(e),
             ), 400
 
-        dataset_id, error = dataset.update(id, dataset_dict, current_user.id)
-        if dataset_id is None:
+        error = dataset.update(str(id), dataset_dict, current_user.id)
+        if error:
             return jsonify(
                 success=False,
                 error=str(error),
@@ -92,10 +92,11 @@ def edit(id):
 
         return jsonify(
             success=True,
-            dataset_id=dataset_id,
+            dataset_id=id,
         )
 
-    return render_template('datasets/editor.html', mode="edit", dataset_id=str(id))
+    return render_template('datasets/editor.html', mode="edit",
+                           dataset_id=str(id), dataset_name=ds['name'])
 
 
 @datasets_bp.route('/<uuid:id>/delete', methods=('GET', 'POST'))

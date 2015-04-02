@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, BadRequest
 from acousticbrainz.data import dataset, user as user_data
 from jsonschema import ValidationError, validate as validate_json
 
@@ -63,7 +63,9 @@ def edit(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    # TODO: Check if author is editing.
+
+    if ds['author'] is not None and ds['author'] != current_user.id:
+        raise BadRequest("You can't edit this dataset.")
 
     if request.method == 'POST':
         dataset_dict = request.get_json()

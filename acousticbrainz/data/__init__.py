@@ -173,10 +173,7 @@ def get_summary_data(mbid):
             highlevel = row[0]
             summary['highlevel'] = highlevel
             try:
-                genres, moods, other = interpret_high_level(highlevel)
-                summary['genres'] = genres
-                summary['moods'] = moods
-                summary['other'] = other
+                summary['genres'], summary['moods'], summary['other'] = interpret_high_level(highlevel)
             except KeyError:
                 pass
 

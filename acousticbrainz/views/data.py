@@ -5,6 +5,7 @@ from urllib import quote_plus
 import musicbrainzngs
 import json
 import time
+from werkzeug.exceptions import NotFound
 
 data_bp = Blueprint('data', __name__)
 
@@ -47,9 +48,7 @@ def view_high_level(mbid):
 def summary(mbid):
     summary = get_summary_data(mbid)
     
-    info = None
     info = _get_track_info(mbid, summary['lowlevel']['metadata'] if summary['lowlevel'] else None)
-
     # Tomahawk player stuff
     if not ('artist' in info and 'title' in info):
         tomahawk_url = None

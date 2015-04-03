@@ -173,6 +173,10 @@ var Dataset = React.createClass({
 });
 
 var SubmitDatasetButton = React.createClass({
+    propTypes: {
+        mode: React.PropTypes.string.isRequired,
+        data: React.PropTypes.object.isRequired
+    },
     handleSubmit: function (e) {
         e.preventDefault();
         this.setState({
@@ -234,6 +238,9 @@ var SubmitDatasetButton = React.createClass({
 });
 
 var AddClassButton = React.createClass({
+    propTypes: {
+        onClassCreate: React.PropTypes.func.isRequired
+    },
     render: function () {
         return (
             <div className="form-group">
@@ -245,6 +252,10 @@ var AddClassButton = React.createClass({
 });
 
 var ClassList = React.createClass({
+    propTypes: {
+        onClassUpdate: React.PropTypes.func.isRequired,
+        onClassDelete: React.PropTypes.func.isRequired
+    },
     render: function () {
         var items = [];
         this.props.classes.forEach(function (cls) {
@@ -257,6 +268,14 @@ var ClassList = React.createClass({
 });
 
 var Class = React.createClass({
+    propTypes: {
+        id: React.PropTypes.number.isRequired,
+        name: React.PropTypes.string.isRequired,
+        description: React.PropTypes.string.isRequired,
+        recordings: React.PropTypes.array.isRequired,
+        onClassUpdate: React.PropTypes.func.isRequired,
+        onClassDelete: React.PropTypes.func.isRequired
+    },
     handleClassUpdate: function() {
         this.props.onClassUpdate(
             this.props.id,
@@ -316,6 +335,10 @@ var Class = React.createClass({
 });
 
 var Recordings = React.createClass({
+    propTypes: {
+        recordings: React.PropTypes.array.isRequired,
+        onRecordingsUpdate: React.PropTypes.func.isRequired
+    },
     handleRecordingSubmit: function (mbid) {
         var recordings = this.props.recordings;
         recordings.push(mbid);
@@ -345,6 +368,10 @@ var Recordings = React.createClass({
 });
 
 var RecordingAddForm = React.createClass({
+    propTypes: {
+        recordings: React.PropTypes.array.isRequired,
+        onRecordingSubmit: React.PropTypes.func.isRequired
+    },
     handleSubmit: function (event) {
         event.preventDefault();
         var mbid = this.refs.mbid.getDOMNode().value.trim();
@@ -381,6 +408,9 @@ var RecordingAddForm = React.createClass({
 });
 
 var RecordingList = React.createClass({
+    propTypes: {
+        onRecordingDelete: React.PropTypes.func.isRequired
+    },
     render: function () {
         var items = [];
         this.props.recordings.forEach(function (recording) {
@@ -391,6 +421,9 @@ var RecordingList = React.createClass({
 });
 
 var Recording = React.createClass({
+    propTypes: {
+        mbid: React.PropTypes.string.isRequired
+    },
     handleDelete: function (event) {
         event.preventDefault();
         this.props.onRecordingDelete(this.props.mbid);

@@ -47,24 +47,8 @@ def view_high_level(mbid):
 def summary(mbid):
     summary = get_summary_data(mbid)
     
-    lowlevel = None
-    highlevel = None
-    genres = None
-    moods = None
-    other = None
-    if 'lowlevel' in summary:
-        lowlevel = summary['lowlevel']
-    if 'highlevel' in summary:
-        highlevel = summary['highlevel']
-    if 'genres' in summary:
-        genres = summary['genres']
-    if 'moods' in summary:
-        moods = summary['moods']
-    if 'other' in summary:
-        other = summary['other']
-    
     info = None
-    info = _get_track_info(mbid, lowlevel['metadata'] if lowlevel else None)
+    info = _get_track_info(mbid, summary['lowlevel']['metadata'] if summary['lowlevel'] else None)
 
     # Tomahawk player stuff
     if not ('artist' in info and 'title' in info):
@@ -74,13 +58,8 @@ def summary(mbid):
             artist=quote_plus(info['artist'].encode("UTF-8")),
             title=quote_plus(info['title'].encode("UTF-8")))
 
-    if lowlevel and info: # When all the data is available
-        return render_template("data/summary.html", lowlevel=lowlevel, highlevel=highlevel,
-                                genres=genres, moods=moods, other=other, mbid=mbid,
-                                info=info, tomahawk_url=tomahawk_url)
-    elif info: # When only metadata is available
-        return render_template("data/summary-metadata.html", info = info, tomahawk_url = tomahawk_url, mbid=mbid)
-    
+    if info:
+        return render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=tomahawk_url)
     else: # When there is no data
         raise NotFound("MusicBrainz does not have data for this track. Please upload it!")
 

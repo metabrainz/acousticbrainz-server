@@ -139,7 +139,7 @@ def count_lowlevel(mbid):
 
 
 def get_summary_data(mbid):
-    '''Fetches the lowlevel and highlevel features from abz database for the specified MBID'''
+    """Fetches the lowlevel and highlevel features from abz database for the specified MBID."""
     summary = {'lowlevel': None, 'highlevel': None, 'genres': None, 'moods': None, 'other': None}
     mbid = str(mbid)
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])

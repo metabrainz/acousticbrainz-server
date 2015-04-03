@@ -59,7 +59,7 @@ def summary(mbid):
 
     if info:
         return render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=tomahawk_url)
-    else: # When there is no data
+    else:  # When there is no data
         raise NotFound("MusicBrainz does not have data for this track. Please upload it!")
 
 
@@ -76,7 +76,7 @@ def _get_track_info(mbid, metadata):
     if good_metadata:
         info['title'] = good_metadata['title']
         if 'length' in good_metadata:
-            info['length'] = float(good_metadata['length']) / 1000 # Converting from ms to s
+            info['length'] = float(good_metadata['length']) / 1000  # Converting from ms to s
         info['artist_id'] = good_metadata['artist-credit'][0]['artist']['id']
         info['artist'] = good_metadata['artist-credit-phrase']
         info['release_id'] = good_metadata['release-list'][0]['id']
@@ -86,7 +86,7 @@ def _get_track_info(mbid, metadata):
             '%s / %s' % (good_metadata['release-list'][0]['medium-list'][0]['track-list'][0]['number'],
                          good_metadata['release-list'][0]['medium-list'][0]['track-count'])
 
-    elif metadata != None:
+    elif metadata is not None:
         info['title'] = metadata['tags']['title'][0]
         info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]
         info['artist'] = metadata['tags']['artist'][0]

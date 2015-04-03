@@ -27,6 +27,16 @@
           <td><a href="https://musicbrainz.org/artist/{{ info['artist_id'] }}">{{ info['artist'] }}</a></td>
         </tr>
         <tr>
+          <td>release</td>
+          <td>
+            <a href="https://musicbrainz.org/release/{{ info['release_id'] }}">{{ info['release'] }}</a>
+            {# TODO(roman): Get MBID of release group from MusicBrainz. #}
+            {% if lowlevel and lowlevel.metadata.tags.musicbrainz_releasegroupid %}
+              <span class="critiquebrainz">(<a href="https://critiquebrainz.org/release-group/{{ lowlevel.metadata.tags.musicbrainz_releasegroupid[0] }}">Reviews at CritiqueBrainz</a>)</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
           <td>track number</td>
           <td><a href="https://musicbrainz.org/track/{{ info['track_id'] }}">{{ info['track_number'] }}</a></td>
         </tr>
@@ -34,12 +44,16 @@
           <td>track length</td>
           <td>{{ info['length'] }}</td></tr>
       </table>
-    </div>
-
+    </div>	
     <div class="col-md-4">
       {% if tomahawk_url %}
         <iframe src="{{ tomahawk_url }}" width="200" scrolling="no" height="200" frameborder="0" allowtransparency="true"></iframe>
       {% endif %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-8">
+      	You have this track in your hard drive? Great !! You can be the first one to contribute for this track. You just need to run a very simple extractor. Find more information <a href="{{ url_for('index.contribute') }}">here</a>. 
     </div>
   </div>
 {%- endblock -%}

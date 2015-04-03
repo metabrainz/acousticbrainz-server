@@ -45,21 +45,28 @@ def view_high_level(mbid):
 
 @data_bp.route("/<uuid:mbid>", methods=["GET"])
 def summary(mbid):
-    lowlevel, highlevel, genres, moods, other = get_summary_data(mbid)
-
+    summary = get_summary_data(mbid)
+    
+    lowlevel = None
+    highlevel = None
+    genres = None
+    moods = None
+    other = None
+    if 'lowlevel' in summary:
+        lowlevel = summary['lowlevel']
+    if 'highlevel' in summary:
+        highlevel = summary['highlevel']
+    if 'genres' in summary:
+        genres = summary['genres']
+    if 'moods' in summary:
+        moods = summary['moods']
+    if 'other' in summary:
+        other = summary['other']
+    
     info = None
-
-    if lowlevel == None: # No metadata in acousticbrainz.. try to fetch data from musicbrainz
-        info = _get_track_info(mbid)
-    else: # Try to get metadata from musicbrainz with second priority as the one retrieved from acoustic
-        info = _get_track_info(mbid, lowlevel['metadata'])
-
+    info = _get_track_info(mbid, lowlevel['metadata'] if lowlevel else None)
 
     # Tomahawk player stuff
-    # Put additional check if the lowlevel has the metadata ????
-    # Why not directly take the data from info if present (doing that)
-    # Not checking if info is None or not because it is nver None
-
     if not ('artist' in info and 'title' in info):
         tomahawk_url = None
     else:
@@ -67,21 +74,18 @@ def summary(mbid):
             artist=quote_plus(info['artist'].encode("UTF-8")),
             title=quote_plus(info['title'].encode("UTF-8")))
 
-    # Checking for what all information we have and rendering the pages accordingly..
-
-    if lowlevel and info: # When we have the data from the acousticbrainz available.. the happy condition..
+    if lowlevel and info: # When all the data is available
         return render_template("data/summary.html", lowlevel=lowlevel, highlevel=highlevel,
                                 genres=genres, moods=moods, other=other, mbid=mbid,
                                 info=info, tomahawk_url=tomahawk_url)
-    
-    elif info: # When there is only metadata... TODO: Move into the same template with if conditions...
+    elif info: # When only metadata is available
         return render_template("data/summary-metadata.html", info = info, tomahawk_url = tomahawk_url, mbid=mbid)
     
     else: # When there is no data
         raise NotFound("MusicBrainz does not have data for this track. Please upload it!")
 
 
-def _get_track_info(mbid, metadata = None): # Defaulting the metadata to None
+def _get_track_info(mbid, metadata):
     info = {}
 
     # Getting good metadata from MusicBrainz
@@ -94,7 +98,7 @@ def _get_track_info(mbid, metadata = None): # Defaulting the metadata to None
     if good_metadata:
         info['title'] = good_metadata['title']
         if 'length' in good_metadata:
-            info['length'] = float(good_metadata['length']) / 1000 # Concerting from ms to s
+            info['length'] = float(good_metadata['length']) / 1000 # Converting from ms to s
         info['artist_id'] = good_metadata['artist-credit'][0]['artist']['id']
         info['artist'] = good_metadata['artist-credit-phrase']
         info['release_id'] = good_metadata['release-list'][0]['id']
@@ -104,7 +108,7 @@ def _get_track_info(mbid, metadata = None): # Defaulting the metadata to None
             '%s / %s' % (good_metadata['release-list'][0]['medium-list'][0]['track-list'][0]['number'],
                          good_metadata['release-list'][0]['medium-list'][0]['track-count'])
 
-    elif metadata != None: # Check if the metadata is not 'None'
+    elif metadata != None:
         info['title'] = metadata['tags']['title'][0]
         info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]
         info['artist'] = metadata['tags']['artist'][0]
@@ -119,10 +123,10 @@ def _get_track_info(mbid, metadata = None): # Defaulting the metadata to None
         else:
             info['track_number'] = metadata['tags']['tracknumber'][0]
 
-    # Giving priority to the data fetched from musicbrainz..
-    if 'length' in info:
-        info['length'] = time.strftime("%M:%S", time.gmtime(info['length']))
-    # If not in musicbrainz, try to get from AB data.
-    elif metadata and 'audio_properties' in metadata:        
+    # Try to get length from abz data
+    if metadata and 'audio_properties' in metadata:        
         info['length'] = metadata['audio_properties']['length_formatted']
+    # Getting time fetched from musicbrainz
+    elif 'length' in info:
+        info['length'] = time.strftime("%M:%S", time.gmtime(info['length']))
     return info

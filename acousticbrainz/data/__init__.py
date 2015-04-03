@@ -137,22 +137,17 @@ def count_lowlevel(mbid):
 
     return InternalServerError("Ouch!")
 
-def get_summary_data(mbid):
-    # Initialize the return variables at the top
-    genres = None
-    moods = None
-    other = None
-    lowlevel = None
-    highlevel = None
 
+def get_summary_data(mbid):
+    '''Fetches the lowlevel and highlevel features from abz database for the specified MBID'''
+    summary = {}
     mbid = str(mbid)
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
         cur.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
         if not cur.rowcount:
-            # Returning all None as the lowelevel data not found !!
-            return lowlevel, highlevel, genres, moods, other
+            return summary
 
         row = cur.fetchone()
         lowlevel = row[0]
@@ -167,6 +162,8 @@ def get_summary_data(mbid):
         lowlevel['metadata']['audio_properties']['length_formatted'] = \
             time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
 
+        summary['lowlevel'] = lowlevel
+
         cur.execute("SELECT hlj.data "
                     "FROM highlevel hl, highlevel_json hlj "
                     "WHERE hl.data = hlj.id "
@@ -174,12 +171,16 @@ def get_summary_data(mbid):
         if cur.rowcount:
             row = cur.fetchone()
             highlevel = row[0]
+            summary['highlevel'] = highlevel
             try:
                 genres, moods, other = interpret_high_level(highlevel)
+                summary['genres'] = genres
+                summary['moods'] = moods
+                summary['other'] = other
             except KeyError:
                 pass
 
-        return lowlevel, highlevel, genres, moods, other
+        return summary
 
     except psycopg2.IntegrityError as e:
         raise BadRequest(e)
@@ -187,7 +188,6 @@ def get_summary_data(mbid):
         raise ServiceUnavailable(e)
 
     return InternalServerError("whoops!")
-
 
 
 def run_sql_script(sql_file_path):

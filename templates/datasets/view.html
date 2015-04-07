@@ -6,12 +6,17 @@
   <h2>Datasets</h2>
   <h3>{{ dataset['name'] }}</h3>
 
-  {# TODO: Show "edit" and "delete" links if author is viewing. #}
-
   <p>
     <strong>Author:</strong> <a href="{{ url_for('user.profile', user_id=author.id) }}">{{ author.musicbrainz_id }}</a><br/>
     <strong>Created:</strong> {{ dataset['created'] }}
   </p>
+
+  {% if current_user.is_authenticated() and current_user == author %}
+    <a class="btn btn-primary btn-xs"
+       href="{{ url_for('datasets.edit', id=dataset['id']) }}">Edit</a>
+    <a class="btn btn-danger btn-xs"
+       href="{{ url_for('datasets.delete', id=dataset['id']) }}">Delete</a>
+  {% endif %}
 
   {% if dataset['description'] %}
     <p>

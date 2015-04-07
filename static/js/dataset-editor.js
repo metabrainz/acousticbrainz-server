@@ -35,6 +35,12 @@ var MODE_EDIT = "edit";
  - classSeq (used for assigning internal class IDs)
  */
 var Dataset = React.createClass({
+    handleDetailsUpdate: function (name, description) {
+        var nextStateData = this.state.data;
+        nextStateData.name = name;
+        nextStateData.description = description;
+        this.setState({data: nextStateData});
+    },
     handleClassCreate: function () {
         var nextStateData = this.state.data;
         nextStateData.classes.push({
@@ -77,12 +83,6 @@ var Dataset = React.createClass({
             classes.splice(index, 1);
         }
         nextStateData.classes = classes;
-        this.setState({data: nextStateData});
-    },
-    handleDatasetUpdate: function () {
-        var nextStateData = this.state.data;
-        nextStateData.name = this.refs.name.getDOMNode().value;
-        nextStateData.description = this.refs.description.getDOMNode().value;
         this.setState({data: nextStateData});
     },
     getInitialState: function () {
@@ -136,26 +136,10 @@ var Dataset = React.createClass({
         if (this.state.data) {
             return (
                 <div>
-                    <form className="form-horizontal dataset-details">
-                        <div className="form-group form-group-sm">
-                            <label for="inputName" className="col-sm-2 control-label">
-                                Name<span className="red">*</span>:
-                            </label>
-                            <div className="col-sm-3">
-                                <input type="text" className="form-control"
-                                       ref="name" id="inputName" required="required"
-                                       onChange={this.handleDatasetUpdate}/>
-                            </div>
-                        </div>
-                        <div className="form-group form-group-sm">
-                            <label for="inputDescr" className="col-sm-2 control-label">Description:</label>
-                            <div className="col-sm-3">
-                            <textarea className="form-control"
-                                      rows="2" ref="description" id="inputDescr"
-                                      onChange={this.handleDatasetUpdate}></textarea>
-                            </div>
-                        </div>
-                    </form>
+                    <DatasetDetails
+                        name={this.state.data.name}
+                        description={this.state.data.description}
+                        onDetailsUpdate={this.handleDetailsUpdate} />
                     <ClassList
                         classes={this.state.data.classes}
                         onClassUpdate={this.handleClassUpdate}
@@ -169,6 +153,46 @@ var Dataset = React.createClass({
         } else {
             return (<strong>Loading...</strong>);
         }
+    }
+});
+
+var DatasetDetails = React.createClass({
+    propTypes: {
+        name: React.PropTypes.string.isRequired,
+        description: React.PropTypes.string.isRequired,
+        onDetailsUpdate: React.PropTypes.func.isRequired
+    },
+    handleDetailsUpdate: function () {
+        this.props.onDetailsUpdate(
+            this.refs.name.getDOMNode().value,
+            this.refs.description.getDOMNode().value
+        );
+    },
+    render: function () {
+        return (
+            <form className="form-horizontal dataset-details">
+                <div className="form-group form-group-sm">
+                    <label for="inputName" className="col-sm-2 control-label">
+                        Name<span className="red">*</span>:
+                    </label>
+                    <div className="col-sm-3">
+                        <input type="text" className="form-control"
+                               id="inputName" required="required"
+                               value={this.props.name} ref="name"
+                               onChange={this.handleDetailsUpdate}/>
+                    </div>
+                </div>
+                <div className="form-group form-group-sm">
+                    <label for="inputDescr" className="col-sm-2 control-label">Description:</label>
+                    <div className="col-sm-3">
+                        <textarea className="form-control" rows="2"
+                                  id="inputDescr" ref="description"
+                                  value={this.props.description}
+                                  onChange={this.handleDetailsUpdate}></textarea>
+                    </div>
+                </div>
+            </form>
+        );
     }
 });
 

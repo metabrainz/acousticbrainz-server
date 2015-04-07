@@ -416,7 +416,7 @@ var RecordingList = React.createClass({
         this.props.recordings.forEach(function (recording) {
             items.push(<Recording mbid={recording} onRecordingDelete={this.props.onRecordingDelete} />);
         }.bind(this));
-        return (<table className="table recordings"><tbody>{items}</tbody></table>);
+        return (<table className="recordings"><tbody>{items}</tbody></table>);
     }
 });
 

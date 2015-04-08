@@ -10,14 +10,7 @@
  {% endblock %}
 
 {% block content %}
-  {% if mode == "create" %}
-    <h2>Datasets</h2>
-    <h3>Create new</h3>
-  {% else %}{# edit mode #}
-    <h2>Dataset "{{ dataset_name }}"</h2>
-    <h3>Edit</h3>
-  {% endif %}
-
+  <h1>Datasets</h1>
   <div id="dataset-editor" data-mode="{{ mode }}"
       {{ 'data-edit-id='+dataset_id if dataset_id }}></div>
 {% endblock %}

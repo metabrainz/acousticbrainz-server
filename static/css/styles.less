@@ -100,40 +100,40 @@ body {
 }
 
 #dataset-editor {
-  .dataset-details {
-    .col-sm-3 {
-      padding-left: 0px;
+  .class-list {
+    .thumbnail {
+      height: 82px;
+      margin-bottom: 0px;
+      text-align: center;
+      color: @text-color;
+      .name {
+        margin-top: 12px;
+        font-weight: bold;
+      }
+      .counter {
+        .text-muted;
+        font-style: italic;
+      }
+    }
+    .controls { margin-bottom: 6px; }
+
+    .add-class-link {
+      padding-top: 27px;
+      border-style: dashed;
+    }
+    .add-class-link:hover, .add-class-link:focus, .add-class-link.active {
+      border-color: @brand-success;
+      color: darken(@brand-success, 10%);
+      text-decoration: none;
     }
   }
-  .class {
-    max-width: 460px;
+  .thumbnail:hover, .thumbnail:focus, .thumbnail.active {
+    border-color: @link-color;
+    color: @link-color;
+    text-decoration: none;
+  }
 
-    .close {
-      @remove-color: red;
-      color: @remove-color;
-      .opacity(.7);
-      &:hover, &:focus {
-        color: @remove-color;
-        .opacity(1);
-      }
-    }
-
-    .panel-heading {
-      table {
-        width: 100%;
-        .name-col {
-          width: 100%;
-          .form-control { height: 28px; font-size: 14px; }
-        }
-        .remove-col { padding-left: 10px; }
-      }
-    }
-
-    h4 {
-      margin-bottom: 4px;
-      color: @ab-blueish;
-      .opacity(0.8);
-    }
+  .class-details {
     table.recordings {
       width: 100%;
       margin-bottom: 8px;
@@ -141,6 +141,31 @@ body {
     }
     form.recording-add {
       .input-group-btn { width: 1%; }
+    }
+  }
+
+  h2 {
+    input {
+      border: none;
+      border-bottom: 1px dashed @ab-reddish;
+      background: fade(@ab-blueish, 5%);
+    }
+  }
+
+  textarea {
+    min-width: 400px;
+    border: none;
+    border-bottom: 1px dashed @ab-reddish;
+    background: fade(@ab-blueish, 5%);
+  }
+
+  .close {
+    @remove-color: red;
+    color: @remove-color;
+    .opacity(.7);
+    &:hover, &:focus {
+      color: @remove-color;
+      .opacity(1);
     }
   }
 }

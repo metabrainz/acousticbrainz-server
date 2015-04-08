@@ -16,7 +16,7 @@ def login_forbidden(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if current_user.is_anonymous() is False:
-            return redirect(url_for('frontend.index'))
+            return redirect(url_for('index.index'))
         return f(*args, **kwargs)
 
     return decorated

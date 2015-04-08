@@ -21,6 +21,9 @@ echo "client_encoding = utf8" >> "$PG_CONF"
 
 service postgresql restart
 
+# Less compiler
+apt-get install -y node-less
+
 # Setting up the application
 cd /vagrant/
 pip install -r requirements.txt

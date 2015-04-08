@@ -5,9 +5,15 @@ import argparse
 application = create_app()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='AcousticBrainz dev server')
-    parser.add_argument("-d", "--debug", help="Turn on debugging mode to see stack traces in the error pages", default=True, action='store_true')
-    parser.add_argument("-t", "--host", help="Which interfaces to listen on. Default: 0.0.0.0", default="0.0.0.0", type=str)
-    parser.add_argument("-p", "--port", help="Which port to listen on. Default: 8080", default="8080", type=int)
+    parser = argparse.ArgumentParser(description="AcousticBrainz Server")
+    parser.add_argument("-d", "--debug", action="store_true",
+                        help="Turn on debugging mode to see stack traces on "
+                             "the error pages. This overrides 'DEBUG' value "
+                             "in config file.")
+    parser.add_argument("-t", "--host", default="0.0.0.0", type=str,
+                        help="Which interfaces to listen on. Default: 0.0.0.0.")
+    parser.add_argument("-p", "--port", default="8080", type=int,
+                        help="Which port to listen on. Default: 8080.")
     args = parser.parse_args()
-    application.run(debug=True, host=args.host, port=args.port)
+    application.run(debug=True if args.debug else None,
+                    host=args.host, port=args.port)

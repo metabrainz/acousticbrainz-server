@@ -413,7 +413,7 @@ var ClassDetails = React.createClass({
                 </h2>
                 <p>
                     <a href='#' onClick={this.props.onReturn}>
-                        <strong>&larr; Back to dataset details</strong>
+                        <strong>&larr; Back to class list</strong>
                     </a>
                 </p>
                 <textarea ref="description"

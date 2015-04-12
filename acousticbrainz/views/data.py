@@ -76,7 +76,7 @@ def _get_track_info(mbid, metadata):
     if good_metadata:
         info['title'] = good_metadata['title']
         if 'length' in good_metadata:
-            info['length'] = float(good_metadata['length']) / 1000  # Converting from ms to s
+            info['length'] = time.strftime("%M:%S", time.gmtime(float(good_metadata['length']) / 1000))  # Converting from ms to s and then converting to required format.
         info['artist_id'] = good_metadata['artist-credit'][0]['artist']['id']
         info['artist'] = good_metadata['artist-credit-phrase']
         info['release_id'] = good_metadata['release-list'][0]['id']
@@ -88,6 +88,7 @@ def _get_track_info(mbid, metadata):
 
     elif metadata is not None:
         info['title'] = metadata['tags']['title'][0]
+        info['length'] = metadata['audio_properties']['length_formatted']
         info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]
         info['artist'] = metadata['tags']['artist'][0]
         info['release_id'] = metadata['tags']['musicbrainz_albumid'][0]
@@ -101,10 +102,4 @@ def _get_track_info(mbid, metadata):
         else:
             info['track_number'] = metadata['tags']['tracknumber'][0]
 
-    # Try to get length from abz data
-    if metadata and 'audio_properties' in metadata:        
-        info['length'] = metadata['audio_properties']['length_formatted']
-    # Getting time fetched from musicbrainz
-    elif 'length' in info:
-        info['length'] = time.strftime("%M:%S", time.gmtime(info['length']))
     return info

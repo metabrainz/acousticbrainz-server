@@ -49,18 +49,22 @@ def summary(mbid):
     summary = get_summary_data(mbid)
     
     info = _get_track_info(mbid, summary['lowlevel']['metadata'] if summary['lowlevel'] else None)
-    # Tomahawk player stuff
-    if not ('artist' in info and 'title' in info):
-        tomahawk_url = None
-    else:
-        tomahawk_url = "http://toma.hk/embed.php?artist={artist}&title={title}".format(
-            artist=quote_plus(info['artist'].encode("UTF-8")),
-            title=quote_plus(info['title'].encode("UTF-8")))
+
+    tomahawk_url = _get_tomahawk_url(info)
 
     if info:
         return render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=tomahawk_url)
     else:  # When there is no data
         raise NotFound("MusicBrainz does not have data for this track. Please upload it!")
+
+def _get_tomahawk_url(metadata):
+    """Function inputting the metadata and returning the tomahawk url"""
+    if not ('artist' in metadata and 'title' in metadata):
+        return None
+    else:
+        return "http://toma.hk/embed.php?artist={artist}&title={title}".format(
+            artist=quote_plus(metadata['artist'].encode("UTF-8")),
+            title=quote_plus(metadata['title'].encode("UTF-8")))
 
 
 def _get_track_info(mbid, metadata):

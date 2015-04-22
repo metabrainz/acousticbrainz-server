@@ -510,22 +510,43 @@ var RecordingList = React.createClass({
         this.props.recordings.forEach(function (recording) {
             items.push(<Recording mbid={recording} onRecordingDelete={this.props.onRecordingDelete} />);
         }.bind(this));
-        return (<table className="recordings"><tbody>{items}</tbody></table>);
+        if (items.length > 0) {
+            return (
+                <table className="recordings table table-condensed table-hover">
+                    <thead>
+                    <tr>
+                        <th>MusicBrainz ID</th>
+                        <th>Recording</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>{items}</tbody>
+                </table>
+            );
+        } else {
+            return (<p className="text-muted">No recordings.</p>);
+        }
     }
 });
 
 var Recording = React.createClass({
     propTypes: {
-        mbid: React.PropTypes.string.isRequired
+        mbid: React.PropTypes.string.isRequired,
+        onRecordingDelete: React.PropTypes.func.isRequired
     },
     handleDelete: function (event) {
         event.preventDefault();
         this.props.onRecordingDelete(this.props.mbid);
     },
     render: function () {
+        // TODO: Pull info from MusicBrainz about this recording.
+        // If it's not actually a recording, show red text in the second
+        // column that would say "Not a recording" and set row background
+        // to red.
         return (
             <tr>
                 <td className="mbid-col">{this.props.mbid}</td>
+                <td className="details-col">Artist - Name</td>
                 <td className="remove-col">
                     <button type="button" className="close" title="Remove recording"
                             onClick={this.handleDelete}>&times;</button>

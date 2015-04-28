@@ -49,11 +49,10 @@ def summary(mbid):
     summary = get_summary_data(mbid)
     
     info = _get_track_info(mbid, summary['lowlevel']['metadata'] if summary['lowlevel'] else None)
-
-    tomahawk_url = _get_tomahawk_url(info)
-
-    if info:
-        return render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=tomahawk_url)
+    if info and summary['lowlevel']:
+        return render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=_get_tomahawk_url(info))
+    elif info:
+        return (render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=_get_tomahawk_url(info)), 404)
     else:  # When there is no data
         raise NotFound("MusicBrainz does not have data for this track. Please upload it!")
 

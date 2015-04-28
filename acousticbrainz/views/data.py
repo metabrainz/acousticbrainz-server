@@ -50,11 +50,14 @@ def summary(mbid):
     
     info = _get_track_info(mbid, summary['lowlevel']['metadata'] if summary['lowlevel'] else None)
     if info and summary['lowlevel']:
-        return render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=_get_tomahawk_url(info))
+        return render_template("data/summary-complete.html", summary=summary, mbid=mbid, info=info,
+                tomahawk_url=_get_tomahawk_url(info))
     elif info:
-        return (render_template("data/summary.html", summary=summary, mbid=mbid, info=info, tomahawk_url=_get_tomahawk_url(info)), 404)
+        return (render_template("data/summary-metadata.html", summary=summary, mbid=mbid, info=info,
+            tomahawk_url=_get_tomahawk_url(info)), 404)
     else:  # When there is no data
         raise NotFound("MusicBrainz does not have data for this track")
+
 
 def _get_tomahawk_url(metadata):
     """Function inputting the metadata and returning the tomahawk url"""

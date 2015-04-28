@@ -140,14 +140,14 @@ def count_lowlevel(mbid):
 
 def get_summary_data(mbid):
     """Fetches the lowlevel and highlevel features from abz database for the specified MBID."""
-    summary = {'lowlevel': None, 'highlevel': None, 'genres': None, 'moods': None, 'other': None}
+    summary = {}
     mbid = str(mbid)
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
         cur.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
         if not cur.rowcount:
-            return summary
+            raise NotFound
 
         row = cur.fetchone()
         lowlevel = row[0]

@@ -22,7 +22,7 @@
         <td>
           <a href="https://musicbrainz.org/release/{{ info['release_id'] }}">{{ info['release'] }}</a>
           {# TODO(roman): Get MBID of release group from MusicBrainz. #}
-          {% if summary.lowlevel and summary.lowlevel.metadata.tags.musicbrainz_releasegroupid %}
+          {% if summary and summary.lowlevel and summary.lowlevel.metadata.tags.musicbrainz_releasegroupid %}
             <span class="critiquebrainz">(<a href="https://critiquebrainz.org/release-group/{{ summary.lowlevel.metadata.tags.musicbrainz_releasegroupid[0] }}">Reviews at CritiqueBrainz</a>)</span>
           {% endif %}
         </td>

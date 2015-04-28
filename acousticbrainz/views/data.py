@@ -46,15 +46,18 @@ def view_high_level(mbid):
 
 @data_bp.route("/<uuid:mbid>", methods=["GET"])
 def summary(mbid):
-    summary = get_summary_data(mbid)
+    try:
+        summary = get_summary_data(mbid)
+    except NotFound:
+        summary = {}
     
-    info = _get_track_info(mbid, summary['lowlevel']['metadata'] if summary['lowlevel'] else None)
-    if info and summary['lowlevel']:
+    info = _get_track_info(mbid, summary['lowlevel']['metadata'] if summary and summary['lowlevel'] else None)
+    if info and summary and summary['lowlevel']:
         return render_template("data/summary-complete.html", summary=summary, mbid=mbid, info=info,
-                tomahawk_url=_get_tomahawk_url(info))
+                               tomahawk_url=_get_tomahawk_url(info))
     elif info:
         return (render_template("data/summary-metadata.html", summary=summary, mbid=mbid, info=info,
-            tomahawk_url=_get_tomahawk_url(info)), 404)
+                                tomahawk_url=_get_tomahawk_url(info)), 404)
     else:  # When there is no data
         raise NotFound("MusicBrainz does not have data for this track")
 

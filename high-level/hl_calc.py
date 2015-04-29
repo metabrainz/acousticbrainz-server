@@ -35,7 +35,7 @@ class HighLevel(Thread):
 
     def __init__(self, input_data, profile_file):
         Thread.__init__(self)
-        # (mbid, ll_id, ll_data)
+        # (mbid, ll_data, ll_id)
         self.input_data = input_data
         # (mbid, ll_id, hl_data)
         self.output_data = []
@@ -46,11 +46,11 @@ class HighLevel(Thread):
 
         in_out_args = []
         idfnames = []
-        for mbid, ll_id, ll_data in self.input_data:
+        for mbid, ll_data, ll_id in self.input_data:
             try:
                 f = tempfile.NamedTemporaryFile(delete=False)
                 name = f.name
-                f.write(self.ll_data)
+                f.write(ll_data)
                 f.close()
             except IOError:
                 print("IO Error while writing temp file")
@@ -68,9 +68,10 @@ class HighLevel(Thread):
         fnull = open(os.devnull, 'w')
         try:
             subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY)] +
-                    in_out_args + [self.profile_file],
-                                  stdout=fnull, stderr=fnull)
+                    in_out_args + [self.profile_file])
+                                  #stdout=fnull, stderr=fnull)
         except subprocess.CalledProcessError:
+            raise
             print("Cannot call high-level extractor")
             return "{}"
 
@@ -114,7 +115,7 @@ def get_documents(conn):
     return docs
 
 
-def create_profile(in_file, sha1):
+def create_profile(in_file, out_file, sha1):
     """Prepare a profile file for use with essentia. Sanity check to make sure
     important values are present.
     """
@@ -139,7 +140,6 @@ def create_profile(in_file, sha1):
     doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
 
     try:
-        with tempfile.TemporaryFile() as yaml_file:
         with open(out_file, 'w') as yaml_file:
             yaml_file.write( yaml.dump(doc, default_flow_style=False))
             return yaml_file.name
@@ -160,8 +160,7 @@ def get_build_sha1(binary):
 
     return sha1(bin).hexdigest()
 
-#def add_to_database(mbid, ll_id, hl_data, build_sha1):
-def add_to_database(data, build_sha1):
+def add_to_database(conn, data, build_sha1):
     # Calculate the sha for the data
 
     if not conn:
@@ -194,11 +193,11 @@ def add_to_database(data, build_sha1):
     conn.commit()
 
 
-def main(num_threads, profile_template):
+def main(num_threads):
     print("High-level extractor daemon starting with %d threads" % num_threads)
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
-    create_profile(profile_template, PROFILE_CONF, build_sha1)
+    create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
 
     conn = None
     num_processed = 0
@@ -221,12 +220,21 @@ def main(num_threads, profile_template):
                     filtered.append((mbid, doc, id))
             docs = filtered
 
-        if len(docs) > FILES_PER_BINARY:
-            # Start FILES_PER_BINARY documents
-            mbid, doc, id = docs.pop()
-            th = HighLevel(mbid, doc, id)
+        print("remaining %s docs" % len(docs))
+        if len(docs):
+            # Start up to FILES_PER_BINARY documents
+            thisthread = []
+            for i in range(FILES_PER_BINARY):
+                mbid, ll_data, ll_id = docs.pop()
+                thisthread.append( (mbid, ll_data, ll_id) )
+                in_progress.add(mbid)
+                if not docs:
+                    break
+            print ("starting thread with %s" % len(thisthread))
+            th = HighLevel(thisthread, PROFILE_CONF)
             th.start()
-            print("start %s" % mbid)
+            mbid = thisthread[0][0]
+            print("start %s - plus %s more" % (mbid, len(thisthread)-1))
             sys.stdout.flush()
             pool[mbid] = th
 
@@ -250,7 +258,10 @@ def main(num_threads, profile_template):
                     pool[mbid].join()
                     del pool[mbid]
 
-                    add_to_database(data, build_sha1)
+                    add_to_database(conn, data, build_sha1)
+                    # remove from in progress
+                    for mbid, ll_id, hl_doc in data:
+                        in_progress.remove(mbid)
 
                     num_processed += 1
 

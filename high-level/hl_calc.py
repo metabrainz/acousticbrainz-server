@@ -19,14 +19,10 @@ import config
 
 DEFAULT_NUM_THREADS = 1
 
-FILES_PER_BINARY = 2
+FILES_PER_BINARY = 5
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
-
-PROFILE_CONF_TEMPLATE = "profile.conf.in"
-PROFILE_CONF = "profile.conf"
-
 
 class HighLevel(Thread):
     """This thread class calculates the high-level data by calling the external
@@ -68,12 +64,11 @@ class HighLevel(Thread):
         fnull = open(os.devnull, 'w')
         try:
             subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY)] +
-                    in_out_args + [self.profile_file])
-                                  #stdout=fnull, stderr=fnull)
+                    in_out_args + [self.profile_file],
+                                  stdout=fnull, stderr=fnull)
         except subprocess.CalledProcessError:
-            raise
             print("Cannot call high-level extractor")
-            return "{}"
+            return []
 
         fnull.close()
 
@@ -88,7 +83,7 @@ class HighLevel(Thread):
                 os.unlink(out_file)
             except IOError:
                 print("IO Error while removing temp file")
-                return "{}"
+                continue
 
             all_data.append( (mbid, ll_id, hl_data) )
 
@@ -101,24 +96,29 @@ class HighLevel(Thread):
         self.output_data = self._calculate()
 
 
-def get_documents(conn):
+def get_documents(conn, hlname):
     """Fetch a number of low-level documents to process from the DB."""
     cur = conn.cursor()
-    cur.execute("""SELECT ll.mbid, ll.data::text, ll.id
+    duplimit = "INNER JOIN d2mbids on d2mbids.mbid=ll.mbid"
+    duplimit = ""
+    hl_get = """SELECT ll.mbid, ll.data::text, ll.id
                      FROM lowlevel AS ll
-                LEFT JOIN highlevel AS hl
+                LEFT JOIN %s AS hl
                        ON ll.id = hl.id
+                       %s
                     WHERE hl.mbid IS NULL
-                    LIMIT 100""")
+                    LIMIT 1000""" % (hlname, duplimit)
+    cur.execute(hl_get)
     docs = cur.fetchall()
     cur.close()
     return docs
 
 
-def create_profile(in_file, out_file, sha1):
+def create_profile(in_file, sha1):
     """Prepare a profile file for use with essentia. Sanity check to make sure
     important values are present.
     """
+    assert(in_file.endswith(".in"))
 
     try:
         with open(in_file, 'r') as f:
@@ -139,6 +139,7 @@ def create_profile(in_file, out_file, sha1):
 
     doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
 
+    out_file = in_file.replace(".in", "")
     try:
         with open(out_file, 'w') as yaml_file:
             yaml_file.write( yaml.dump(doc, default_flow_style=False))
@@ -160,7 +161,7 @@ def get_build_sha1(binary):
 
     return sha1(bin).hexdigest()
 
-def add_to_database(conn, data, build_sha1):
+def add_to_database(conn, hlname, data, build_sha1):
     # Calculate the sha for the data
 
     if not conn:
@@ -182,22 +183,24 @@ def add_to_database(conn, data, build_sha1):
         print("done  %s" % mbid)
         sys.stdout.flush()
 
-        cur.execute("""INSERT INTO highlevel_json (data, data_sha256)
-                            VALUES (%s, %s)
-                         RETURNING id""", (norm_data, sha))
+        hl_json_insert = """INSERT INTO %s_json (data, data_sha256)
+                            VALUES (%%s, %%s)
+                         RETURNING id""" % hlname
+        cur.execute(hl_json_insert, (norm_data, sha))
         id = cur.fetchone()[0]
-        cur.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
-                            VALUES (%s, %s, %s, %s, now())""", (ll_id, mbid, build_sha1, id))
+        hl_insert = """INSERT INTO %s (id, mbid, build_sha1, data, submitted)
+                            VALUES (%%s, %%s, %%s, %%s, now())""" % hlname
+        cur.execute(hl_insert, (ll_id, mbid, build_sha1, id))
 
     # only commit after all the data is done
     conn.commit()
 
 
-def main(num_threads):
+def main(num_threads, hlname, profile_template):
     print("High-level extractor daemon starting with %d threads" % num_threads)
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
-    create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
+    profile = create_profile(profile_template, build_sha1)
 
     conn = None
     num_processed = 0
@@ -211,7 +214,7 @@ def main(num_threads):
             # Fetch more rows from the DB
             if not conn:
                 conn = psycopg2.connect(config.PG_CONNECT)
-            docs = get_documents(conn)
+            docs = get_documents(conn, hlname)
 
             # We will fetch some rows that are already in progress. Remove those.
             filtered = []
@@ -231,7 +234,7 @@ def main(num_threads):
                 if not docs:
                     break
             print ("starting thread with %s" % len(thisthread))
-            th = HighLevel(thisthread, PROFILE_CONF)
+            th = HighLevel(thisthread, profile)
             th.start()
             mbid = thisthread[0][0]
             print("start %s - plus %s more" % (mbid, len(thisthread)-1))
@@ -258,12 +261,12 @@ def main(num_threads):
                     pool[mbid].join()
                     del pool[mbid]
 
-                    add_to_database(conn, data, build_sha1)
+                    add_to_database(conn, hlname, data, build_sha1)
                     # remove from in progress
                     for mbid, ll_id, hl_doc in data:
                         in_progress.remove(mbid)
 
-                    num_processed += 1
+                    num_processed += len(data)
 
             if len(pool) == num_threads:
                 # tranquilo!
@@ -275,5 +278,7 @@ if __name__ == "__main__":
     setproctitle("hl_calc")
     parser = argparse.ArgumentParser(description='Extract high-level data from low-level data')
     parser.add_argument("-t", "--threads", help="Number of threads to start", default=DEFAULT_NUM_THREADS, type=int)
+    parser.add_argument("hlname", help="Name of highlevel table")
+    parser.add_argument("profile", help="name of profile.in file with models")
     args = parser.parse_args()
-    main(args.threads)
+    main(args.threads, args.hlname, args.profile)

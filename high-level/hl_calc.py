@@ -19,6 +19,8 @@ import config
 
 DEFAULT_NUM_THREADS = 1
 
+FILES_PER_BINARY = 2
+
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
 
@@ -31,61 +33,71 @@ class HighLevel(Thread):
     high-level calculator.
     """
 
-    def __init__(self, mbid, ll_data, ll_id):
+    def __init__(self, input_data, profile_file):
         Thread.__init__(self)
-        self.mbid = mbid
-        self.ll_data = ll_data
-        self.hl_data = None
-        self.ll_id = ll_id
+        # (mbid, ll_id, ll_data)
+        self.input_data = input_data
+        # (mbid, ll_id, hl_data)
+        self.output_data = []
+        self.profile_file = profile_file
 
     def _calculate(self):
         """Invoke Essentia high-level extractor and return its JSON output."""
 
-        try:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            name = f.name
-            f.write(self.ll_data)
-            f.close()
-        except IOError:
-            print("IO Error while writing temp file")
-            return "{}"
+        in_out_args = []
+        idfnames = []
+        for mbid, ll_id, ll_data in self.input_data:
+            try:
+                f = tempfile.NamedTemporaryFile(delete=False)
+                name = f.name
+                f.write(self.ll_data)
+                f.close()
+            except IOError:
+                print("IO Error while writing temp file")
+                return "{}"
 
-        # Securely generate a temporary filename
-        tmp_file = tempfile.mkstemp()
-        out_file = tmp_file[1]
-        os.close(tmp_file[0])
+            # Securely generate a temporary filename
+            tmp_file = tempfile.mkstemp()
+            out_file = tmp_file[1]
+            os.close(tmp_file[0])
+
+            in_out_args.append(name)
+            in_out_args.append(out_file)
+            idfnames.append( (mbid, ll_id, name, out_file) )
 
         fnull = open(os.devnull, 'w')
         try:
-            subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY),
-                                   name, out_file, PROFILE_CONF],
+            subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY)] +
+                    in_out_args + [self.profile_file],
                                   stdout=fnull, stderr=fnull)
         except subprocess.CalledProcessError:
             print("Cannot call high-level extractor")
             return "{}"
 
         fnull.close()
-        os.unlink(name)
 
-        try:
-            f = open(out_file)
-            hl_data = f.read()
-            f.close()
-            os.unlink(out_file)
-        except IOError:
-            print("IO Error while removing temp file")
-            return "{}"
+        all_data = []
+        for mbid, ll_id, name, out_file in idfnames:
+            os.unlink(name)
 
-        return hl_data
+            try:
+                f = open(out_file)
+                hl_data = f.read()
+                f.close()
+                os.unlink(out_file)
+            except IOError:
+                print("IO Error while removing temp file")
+                return "{}"
 
-    def get_data(self):
-        return self.hl_data
+            all_data.append( (mbid, ll_id, hl_data) )
 
-    def get_ll_id(self):
-        return self.ll_id
+        return all_data
+
+    def get_all_data(self):
+        return self.output_data
 
     def run(self):
-        self.hl_data = self._calculate()
+        self.output_data = self._calculate()
 
 
 def get_documents(conn):
@@ -102,7 +114,7 @@ def get_documents(conn):
     return docs
 
 
-def create_profile(in_file, out_file, sha1):
+def create_profile(in_file, sha1):
     """Prepare a profile file for use with essentia. Sanity check to make sure
     important values are present.
     """
@@ -127,8 +139,10 @@ def create_profile(in_file, out_file, sha1):
     doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
 
     try:
+        with tempfile.TemporaryFile() as yaml_file:
         with open(out_file, 'w') as yaml_file:
             yaml_file.write( yaml.dump(doc, default_flow_style=False))
+            return yaml_file.name
     except IOError as e:
         print("Cannot write profile %s: %s" % (out_file, e))
         sys.exit(-1)
@@ -146,36 +160,69 @@ def get_build_sha1(binary):
 
     return sha1(bin).hexdigest()
 
+#def add_to_database(mbid, ll_id, hl_data, build_sha1):
+def add_to_database(data, build_sha1):
+    # Calculate the sha for the data
 
-def main(num_threads):
+    if not conn:
+        conn = psycopg2.connect(config.PG_CONNECT)
+    cur = conn.cursor()
+
+    for mbid, ll_id, hl_data in data:
+        try:
+            jdata = json.loads(hl_data)
+        except ValueError:
+            print("error %s: Cannot parse result document" % mbid)
+            print(hl_data)
+            sys.stdout.flush()
+            jdata = {}
+
+        norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
+        sha = sha256(norm_data).hexdigest()
+
+        print("done  %s" % mbid)
+        sys.stdout.flush()
+
+        cur.execute("""INSERT INTO highlevel_json (data, data_sha256)
+                            VALUES (%s, %s)
+                         RETURNING id""", (norm_data, sha))
+        id = cur.fetchone()[0]
+        cur.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
+                            VALUES (%s, %s, %s, %s, now())""", (ll_id, mbid, build_sha1, id))
+
+    # only commit after all the data is done
+    conn.commit()
+
+
+def main(num_threads, profile_template):
     print("High-level extractor daemon starting with %d threads" % num_threads)
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
-    create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
+    create_profile(profile_template, PROFILE_CONF, build_sha1)
 
     conn = None
     num_processed = 0
 
     pool = {}
+    in_progress = set()
     docs = []
     while True:
         # Check to see if we need more database rows
-        if len(docs) == 0:
+        if len(docs) < FILES_PER_BINARY:
             # Fetch more rows from the DB
             if not conn:
                 conn = psycopg2.connect(config.PG_CONNECT)
             docs = get_documents(conn)
 
             # We will fetch some rows that are already in progress. Remove those.
-            in_progress = pool.keys()
             filtered = []
             for mbid, doc, id in docs:
                 if mbid not in in_progress:
                     filtered.append((mbid, doc, id))
             docs = filtered
 
-        if len(docs):
-            # Start one document
+        if len(docs) > FILES_PER_BINARY:
+            # Start FILES_PER_BINARY documents
             mbid, doc, id = docs.pop()
             th = HighLevel(mbid, doc, id)
             th.start()
@@ -199,36 +246,12 @@ def main(num_threads):
                 if not pool[mbid].is_alive():
 
                     # Fetch the data and clean up the thread object
-                    hl_data = pool[mbid].get_data()
-                    ll_id = pool[mbid].get_ll_id()
+                    data = pool[mbid].get_all_data()
                     pool[mbid].join()
                     del pool[mbid]
 
-                    # Calculate the sha for the data
-                    try:
-                        jdata = json.loads(hl_data)
-                    except ValueError:
-                        print("error %s: Cannot parse result document" % mbid)
-                        print(hl_data)
-                        sys.stdout.flush()
-                        jdata = {}
+                    add_to_database(data, build_sha1)
 
-                    norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
-                    sha = sha256(norm_data).hexdigest()
-
-                    print("done  %s" % mbid)
-                    sys.stdout.flush()
-                    if not conn:
-                        conn = psycopg2.connect(config.PG_CONNECT)
-
-                    cur = conn.cursor()
-                    cur.execute("""INSERT INTO highlevel_json (data, data_sha256)
-                                        VALUES (%s, %s)
-                                     RETURNING id""", (norm_data, sha))
-                    id = cur.fetchone()[0]
-                    cur.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
-                                        VALUES (%s, %s, %s, %s, now())""", (ll_id, mbid, build_sha1, id))
-                    conn.commit()
                     num_processed += 1
 
             if len(pool) == num_threads:

@@ -4,7 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 # This value must be incremented after schema changes on replicated tables!
-__version__ = 4
+__version__ = 2
 
 STATIC_PATH = "/static"
 STATIC_FOLDER = "../static"

@@ -173,6 +173,8 @@ def _prep_key(key, namespace=None):
     if _mc is None: return
     if namespace:
         key = "%s:%s:%s" % (namespace, _get_namespace_version(namespace), key)
+    if not isinstance(key, basestring):
+        key = str(key)
     key = hashlib.sha1(key).hexdigest()
     _mc.check_key(key)
     return key

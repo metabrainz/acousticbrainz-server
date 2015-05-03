@@ -1,13 +1,19 @@
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import ResponseError
+from acousticbrainz import cache
+
+CACHE_TIMEOUT = 86400  # 1 day
 
 
 def get_recording_by_id(mbid):
-    # TODO: Implement caching.
-    try:
-        return musicbrainzngs.get_recording_by_id(mbid, includes=['artists', 'releases', 'media'])['recording']
-    except ResponseError as e:
-        raise DataUnavailable(e)
+    recording = cache.get(mbid)
+    if not recording:
+        try:
+            recording = musicbrainzngs.get_recording_by_id(mbid, includes=['artists', 'releases', 'media'])['recording']
+        except ResponseError as e:
+            raise DataUnavailable(e)
+    cache.set(mbid, recording, time=CACHE_TIMEOUT)
+    return recording
 
 
 class DataUnavailable(Exception):

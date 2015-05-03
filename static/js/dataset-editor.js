@@ -25,22 +25,24 @@ var SECTION_CLASS_DETAILS = "class_details";
 /*
  Dataset is the primary class in the dataset editor. Its state contains
  dataset itself and other internal variables:
- - data:
- - id (dataset ID that is used only when editing existing dataset)
- - name (name of the dataset)
- - description (optional description of the dataset)
- - classes: [ (array of classes with the following structure)
- - id (internal class ID that is used only in the editor)
- - name
- - description
- - recordings (array of recording MBIDs)
- ]
- - classSeq (used for assigning internal class IDs)
+   - mode (determines what mode dataset editor is in; can be either MODE_CREATE
+     when creating new dataset or MODE_EDIT when modifying existing dataset)
+   - data:
+     - id (dataset ID that is used only when editing existing dataset)
+     - name (name of the dataset)
+     - description (optional description of the dataset)
+     - classes: [ (array of classes with the following structure)
+       - name
+       - description
+       - recordings (array of recording MBIDs)
+     ]
+   - active_section (determines what major part of the UI is currently shown
+     to a user)
 
  It is divided into two sections (current section is set in active_section):
-  - SECTION_DATASET_DETAILS (editing dataset info and list of classes)
-  - SECTION_CLASS_DETAILS (editing specific class; this also requires
-      active_class_id variable to be set in Dataset state)
+   - SECTION_DATASET_DETAILS (editing dataset info and list of classes)
+   - SECTION_CLASS_DETAILS (editing specific class; this also requires
+     active_class_index variable to be set in Dataset state)
  */
 var Dataset = React.createClass({
     getInitialState: function () {

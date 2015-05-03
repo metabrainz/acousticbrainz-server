@@ -25,6 +25,13 @@ def create_app():
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
 
+    # Memcached
+    if 'MEMCACHED_SERVERS' in app.config:
+        from acousticbrainz import cache
+        cache.init(app.config['MEMCACHED_SERVERS'],
+                   app.config['MEMCACHED_NAMESPACE'],
+                   debug=1 if app.debug else 0)
+
     # Extensions
     FlaskUUID(app)
 

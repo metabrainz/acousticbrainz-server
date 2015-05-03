@@ -1,7 +1,7 @@
 #!/bin/sh
 # AcousicBrainz server setup
 
-apt-get -y install python-virtualenv python-dev pxz
+apt-get -y install python-virtualenv python-dev memcached pxz
 
 # Setting up PostgreSQL
 PG_VERSION=9.3

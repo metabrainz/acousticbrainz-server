@@ -33,7 +33,8 @@ def get_last_submitted_tracks():
 
 def get_stats():
     stats_keys = ["lowlevel-lossy", "lowlevel-lossy-unique", "lowlevel-lossless", "lowlevel-lossless-unique"]
-    stats = cache.get_multi(stats_keys, namespace="ac-num-")
+    # TODO: Port this to new implementation:
+    stats = cache._mc.get_multi(stats_keys, key_prefix="ac-num-")
     last_collected = cache.get('last-collected')
 
     # Recalculate everything together, always.
@@ -68,7 +69,8 @@ def get_stats():
         last_collected = cur.fetchone()[0]
         value = stats_parameters
 
-        cache.set_multi(stats_parameters, namespace="ac-num-", time=STATS_CACHE_TIMEOUT)
+        # TODO: Port this to new implementation:
+        cache._mc.set_multi(stats_parameters, key_prefix="ac-num-", time=STATS_CACHE_TIMEOUT)
         cache.set('last-collected', last_collected, time=STATS_CACHE_TIMEOUT)
     else:
         value = stats

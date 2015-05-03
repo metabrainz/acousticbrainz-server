@@ -494,24 +494,63 @@ var RecordingList = React.createClass({
     }
 });
 
+var RECORDING_STATUS_LOADING = 'loading'; // loading info from the server
+var RECORDING_STATUS_ERROR = 'error';     // failed to load info about recording
+var RECORDING_STATUS_LOADED = 'loaded';  // info has been loaded
 var Recording = React.createClass({
     propTypes: {
         mbid: React.PropTypes.string.isRequired,
         onRecordingDelete: React.PropTypes.func.isRequired
+    },
+    getInitialState: function () {
+        return {
+            status: RECORDING_STATUS_LOADING
+        };
+    },
+    componentDidMount: function () {
+        $.ajax({
+            type: "GET",
+            url: "/datasets/recording/" + this.props.mbid,
+            success: function (data) {
+                this.setState({
+                    details: data.recording,
+                    status: RECORDING_STATUS_LOADED
+                });
+            }.bind(this),
+            error: function () {
+                this.setState({
+                    error: "Recording not found!",
+                    status: RECORDING_STATUS_ERROR
+                });
+            }.bind(this)
+        });
     },
     handleDelete: function (event) {
         event.preventDefault();
         this.props.onRecordingDelete(this.props.mbid);
     },
     render: function () {
-        // TODO: Pull info from MusicBrainz about this recording.
-        // If it's not actually a recording, show red text in the second
-        // column that would say "Not a recording" and set row background
-        // to red.
+        var details = "";
+        var rowClassName = "";
+        switch (this.state.status) {
+            case RECORDING_STATUS_LOADED:
+                details = this.state.details.title + " - " + this.state.details.artist;
+                rowClassName = "";
+                break;
+            case RECORDING_STATUS_ERROR:
+                details = this.state.error;
+                rowClassName = "warning";
+                break;
+            case RECORDING_STATUS_LOADING:
+            default:
+                details = <em className="text-muted">loading information</em>;
+                rowClassName = "active";
+                break;
+        }
         return (
-            <tr>
+            <tr className={rowClassName}>
                 <td className="mbid-col">{this.props.mbid}</td>
-                <td className="details-col">Artist - Name</td>
+                <td className="details-col">{details}</td>
                 <td className="remove-col">
                     <button type="button" className="close" title="Remove recording"
                             onClick={this.handleDelete}>&times;</button>

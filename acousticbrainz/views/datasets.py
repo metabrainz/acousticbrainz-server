@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, BadRequest
 from acousticbrainz.data import dataset, user as user_data
+from acousticbrainz.external import musicbrainz
 from jsonschema import ValidationError, validate as validate_json
 
 datasets_bp = Blueprint('datasets', __name__)
@@ -108,3 +109,17 @@ def delete(id):
     # TODO: Check if author is deleting.
     # TODO: Show confirmation page and delete if POSTed.
     raise NotImplementedError
+
+
+@datasets_bp.route('/recording/<uuid:mbid>')
+@login_required
+def recording_info(mbid):
+    """Endpoint for getting information about recordings (title and artist)."""
+    try:
+        recording = musicbrainz.get_recording_by_id(mbid)
+        return jsonify(recording={
+            'title': recording['title'],
+            'artist': recording['artist-credit-phrase'],
+        })
+    except musicbrainz.DataUnavailable as e:
+        return jsonify(error=str(e)), 404

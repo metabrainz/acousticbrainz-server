@@ -51,8 +51,8 @@ def summary(mbid):
     except NotFound:
         summary_data = {}
     
-    info = _get_track_info(mbid, summary_data['lowlevel']['metadata'] if summary_data and summary_data['lowlevel'] else None)
-    if info and summary_data and summary_data['lowlevel']:
+    info = _get_track_info(mbid, summary_data['lowlevel']['metadata'] if summary_data else None)
+    if info and summary_data:
         return render_template("data/summary-complete.html", summary=summary_data, mbid=mbid, info=info,
                                tomahawk_url=_get_tomahawk_url(info))
     elif info:

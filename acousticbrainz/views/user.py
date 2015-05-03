@@ -6,12 +6,13 @@ from werkzeug.exceptions import NotFound
 user_bp = Blueprint('user', __name__)
 
 
-@user_bp.route('/<int:user_id>/')
-def profile(user_id):
-    if current_user.is_authenticated() and current_user.id == user_id:
+@user_bp.route('/<musicbrainz_id>/')
+def profile(musicbrainz_id):
+    if current_user.is_authenticated() and \
+       current_user.musicbrainz_id == musicbrainz_id:
         user = current_user
     else:
-        user = user_data.get(user_id)
+        user = user_data.get_by_mb_id(musicbrainz_id)
         if user is None:
             raise NotFound("Can't find this user.")
 

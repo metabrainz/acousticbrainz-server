@@ -7,7 +7,7 @@
   <h3>{{ dataset['name'] }}</h3>
 
   <p>
-    <strong>Author:</strong> <a href="{{ url_for('user.profile', user_id=author.id) }}">{{ author.musicbrainz_id }}</a><br/>
+    <strong>Author:</strong> <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">{{ author.musicbrainz_id }}</a><br/>
     <strong>Created:</strong> {{ dataset['created'] }}
   </p>
 

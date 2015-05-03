@@ -112,7 +112,7 @@ def delete(id):
     if request.method == 'POST':
         dataset.delete(ds['id'])
         flash.success("Dataset has been deleted.")
-        return redirect(url_for('user.profile', user_id=current_user.id))
+        return redirect(url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id))
     return render_template('datasets/delete.html', dataset=ds)
 
 

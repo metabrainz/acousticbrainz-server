@@ -6,6 +6,7 @@ import musicbrainzngs
 import json
 import time
 from werkzeug.exceptions import NotFound
+from acousticbrainz.data.exceptions import NoDataFoundException
 
 data_bp = Blueprint('data', __name__)
 
@@ -48,7 +49,7 @@ def view_high_level(mbid):
 def summary(mbid):
     try:
         summary_data = get_summary_data(mbid)
-    except NotFound:
+    except NoDataFoundException:
         summary_data = {}
     
     info = _get_track_info(mbid, summary_data['lowlevel']['metadata'] if summary_data else None)

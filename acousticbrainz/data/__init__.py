@@ -5,6 +5,7 @@ from flask import current_app
 from hashlib import sha256
 import json
 import time
+from exceptions import NoDataFoundException
 
 
 def submit_low_level_data(mbid, data):
@@ -147,7 +148,7 @@ def get_summary_data(mbid):
     try:
         cur.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
         if not cur.rowcount:
-            raise NotFound
+            raise NoDataFoundException("No data for the track in acousticbrainz database")
 
         row = cur.fetchone()
         lowlevel = row[0]

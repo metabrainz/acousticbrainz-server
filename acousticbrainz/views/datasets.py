@@ -66,7 +66,7 @@ def edit(id):
     if not ds:
         raise NotFound("Can't find this dataset.")
 
-    if ds['author'] != current_user.id:
+    if ds['author'] and ds['author'] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
 
     if request.method == 'POST':
@@ -107,7 +107,7 @@ def delete(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    if ds['author'] != current_user.id:
+    if ds['author'] and ds['author'] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
     if request.method == 'POST':
         dataset.delete(ds['id'])

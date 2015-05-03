@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for
 from acousticbrainz.data import load_low_level, load_high_level, get_summary_data
-from musicbrainzngs.musicbrainz import ResponseError
+from acousticbrainz.external import musicbrainz
 from urllib import quote_plus
-import musicbrainzngs
 import json
 import time
 from werkzeug.exceptions import NotFound
@@ -77,11 +76,7 @@ def _get_track_info(mbid, metadata):
     info = {}
 
     # Getting good metadata from MusicBrainz
-    try:
-        good_metadata = musicbrainzngs.get_recording_by_id(
-            mbid, includes=['artists', 'releases', 'media'])['recording']
-    except ResponseError:
-        good_metadata = None
+    good_metadata = musicbrainz.get_recording_by_id(mbid)
 
     if good_metadata:
         info['title'] = good_metadata['title']

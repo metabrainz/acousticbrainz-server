@@ -42,4 +42,24 @@ CREATE TABLE "user" (
 );
 ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id);
 
+CREATE TABLE dataset (
+  id          UUID,
+  name        VARCHAR NOT NULL,
+  description TEXT,
+  author      INT, -- FK to user
+  created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE class (
+  id          SERIAL,
+  name        VARCHAR NOT NULL,
+  description TEXT,
+  dataset     UUID    NOT NULL -- FK to dataset
+);
+
+CREATE TABLE class_member (
+  class INT, -- FK to class
+  mbid  UUID
+);
+
 COMMIT;

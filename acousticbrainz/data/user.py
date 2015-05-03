@@ -8,6 +8,7 @@ def create(musicbrainz_id):
     try:
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
+        # TODO(roman): Do we need to make sure that musicbrainz_id is case insensitive?
         cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
                        (musicbrainz_id,))
         connection.commit()
@@ -50,7 +51,9 @@ def get_by_mb_id(musicbrainz_id):
     try:
         connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
-        cursor.execute('SELECT id, created FROM "user" WHERE musicbrainz_id = %s',
+        cursor.execute("""SELECT id, created, musicbrainz_id
+                          FROM "user"
+                          WHERE LOWER(musicbrainz_id) = LOWER(%s)""",
                        (musicbrainz_id,))
     except psycopg2.IntegrityError as e:
         raise BadRequest(e)
@@ -62,7 +65,7 @@ def get_by_mb_id(musicbrainz_id):
         return User(
             id=row[0],
             created=row[1],
-            musicbrainz_id=musicbrainz_id,
+            musicbrainz_id=row[2],
         )
     else:
         return None

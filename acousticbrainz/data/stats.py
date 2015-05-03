@@ -1,7 +1,7 @@
 import psycopg2
+from acousticbrainz import cache
 from flask import current_app
 import datetime
-import memcache
 import time
 
 
@@ -10,8 +10,7 @@ LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 
 def get_last_submitted_tracks():
-    mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-    last_submitted_data = mc.get('last-submitted-data')
+    last_submitted_data = cache.get('last-submitted-data')
     if not last_submitted_data:
         conn = psycopg2.connect(current_app.config['PG_CONNECT'])
         cur = conn.cursor()
@@ -27,16 +26,16 @@ def get_last_submitted_tracks():
             (r[0], r[1].decode("UTF-8"), r[2].decode("UTF-8"))
             for r in last_submitted_data if r[1] and r[2]
         ]
-        mc.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
+        cache.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 
     return last_submitted_data
 
 
 def get_stats():
-    mc = memcache.Client(['127.0.0.1:11211'], debug=0)
     stats_keys = ["lowlevel-lossy", "lowlevel-lossy-unique", "lowlevel-lossless", "lowlevel-lossless-unique"]
-    stats = mc.get_multi(stats_keys, key_prefix="ac-num-")
-    last_collected = mc.get('last-collected')
+    # TODO: Port this to new implementation:
+    stats = cache._mc.get_multi(stats_keys, key_prefix="ac-num-")
+    last_collected = cache.get('last-collected')
 
     # Recalculate everything together, always.
     if sorted(stats_keys) != sorted(stats.keys()) or last_collected is None:
@@ -70,8 +69,9 @@ def get_stats():
         last_collected = cur.fetchone()[0]
         value = stats_parameters
 
-        mc.set_multi(stats_parameters, key_prefix="ac-num-", time=STATS_CACHE_TIMEOUT)
-        mc.set('last-collected', last_collected, time=STATS_CACHE_TIMEOUT)
+        # TODO: Port this to new implementation:
+        cache._mc.set_multi(stats_parameters, key_prefix="ac-num-", time=STATS_CACHE_TIMEOUT)
+        cache.set('last-collected', last_collected, time=STATS_CACHE_TIMEOUT)
     else:
         value = stats
 

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset "{{ dataset['name'] }}" by {{ author.musicbrainz_id }} - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2>Datasets</h2>
+  <h3>{{ dataset['name'] }}</h3>
+
+  <p>
+    <strong>Author:</strong> <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">{{ author.musicbrainz_id }}</a><br/>
+    <strong>Created:</strong> {{ dataset['created'] }}
+  </p>
+
+  {% if current_user.is_authenticated() and current_user == author %}
+    <a class="btn btn-primary btn-xs"
+       href="{{ url_for('datasets.edit', id=dataset['id']) }}">Edit</a>
+    <a class="btn btn-danger btn-xs"
+       href="{{ url_for('datasets.delete', id=dataset['id']) }}">Delete</a>
+  {% endif %}
+
+  {% if dataset['description'] %}
+    <p>
+      <strong>Description:</strong>
+      <blockquote>{{ dataset['description'] }}</blockquote>
+    </p>
+  {% endif %}
+
+  <h4>Classes</h4>
+  <code>{{ dataset['classes'] }}</code>
+
+{% endblock %}

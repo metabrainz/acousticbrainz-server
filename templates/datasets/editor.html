@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if mode == "create" %}
+    Create new dataset
+  {% else %}{# edit mode #}
+    Edit dataset "{{ dataset_name }}"
+  {% endif %}
+   - AcousticBrainz
+ {% endblock %}
+
+{% block content %}
+  <h1>Datasets</h1>
+  <div id="dataset-editor" data-mode="{{ mode }}"
+      {{ 'data-edit-id='+dataset_id if dataset_id }}></div>
+{% endblock %}
+
+{%- block scripts -%}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/react.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/JSXTransformer.js') }}"></script>
+  <script type="text/jsx" src="{{ url_for('static', filename='js/dataset-editor.js') }}"></script>
+{%- endblock -%}

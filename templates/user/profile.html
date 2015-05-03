@@ -1,14 +1,52 @@
 {% extends 'base.html' %}
 
-{% block title %}Profile - AcousticBrainz{% endblock %}
+{% block title %}User "{{ user.musicbrainz_id }}" - AcousticBrainz{% endblock %}
 
 {% block content %}
-  <h2>Your profile</h2>
-  <dl class="dl-horizontal">
-    <dt>ID</dt><dd>{{ user.id }}</dd>
-    <dt>Created</dt><dd>{{ user.created }}</dd>
-    <dt>MusicBrainz ID</dt><dd>
-        <a href="https://musicbrainz.org/user/{{ user.musicbrainz_id }}">{{ user.musicbrainz_id }}</a>
-    </dd>
-  </dl>
+  <h2>{{ user.musicbrainz_id }}</h2>
+  {% if current_user.is_authenticated() and current_user == user %}
+     <p class="text-muted"><em>This is you!</em></p>
+  {% endif %}
+
+  <h3>Datasets</h3>
+  {% if current_user.is_authenticated() and current_user == user %}
+    <div class="alert alert-warning" role="alert">
+      <strong>This is an experimental feature!</strong> You can report issues and suggest
+      improvements at the <a href="http://tickets.musicbrainz.org/browse/AB">bug tracker</a>.
+    </div>
+    <p>
+      <a class="btn btn-success btn-xs" href="{{ url_for('datasets.create') }}" role="button">
+        Create new dataset
+      </a>
+    </p>
+  {% endif %}
+  {% if datasets %}
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Creation time</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for dataset in datasets %}
+        <tr>
+          <td><a href="{{ url_for('datasets.details', id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
+          <td>{{ dataset['created'] }}</td>
+          <td>
+            {% if current_user.is_authenticated() and current_user == user %}
+              <a class="btn btn-primary btn-xs"
+                 href="{{ url_for('datasets.edit', id=dataset['id']) }}">Edit</a>
+              <a class="btn btn-danger btn-xs"
+                 href="{{ url_for('datasets.delete', id=dataset['id']) }}">Delete</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted"><em>No datasets.</em></p>
+  {% endif %}
 {% endblock %}

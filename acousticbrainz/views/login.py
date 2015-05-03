@@ -1,6 +1,7 @@
-from flask import Blueprint, request, redirect, render_template, url_for, session, flash
+from flask import Blueprint, request, redirect, render_template, url_for, session
 from flask_login import login_user, logout_user, login_required
 from acousticbrainz.login import login_forbidden, provider
+from acousticbrainz import flash
 
 login_bp = Blueprint('login', __name__)
 
@@ -28,7 +29,7 @@ def musicbrainz_post():
         if next:
             return redirect(next)
     else:
-        flash("Login failed.", 'error')
+        flash.error("Login failed.")
     return redirect(url_for('index.index'))
 
 

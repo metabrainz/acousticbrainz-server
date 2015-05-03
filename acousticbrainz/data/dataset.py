@@ -212,3 +212,16 @@ def get_by_user_id(user_id):
         "author": row[3],
         "created": row[4],
     } for row in cursor.fetchall()]
+
+
+def delete(id):
+    """Delete dataset with a specified ID."""
+    try:
+        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
+        connection.commit()
+    except psycopg2.IntegrityError, e:
+        raise BadRequest(str(e))
+    except psycopg2.OperationalError, e:
+        raise ServiceUnavailable(str(e))

@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import NotFound, Unauthorized
 from acousticbrainz.data import dataset, user as user_data
 from acousticbrainz.external import musicbrainz
+from acousticbrainz import flash
 from jsonschema import ValidationError, validate as validate_json
 
 datasets_bp = Blueprint('datasets', __name__)
@@ -66,7 +67,7 @@ def edit(id):
         raise NotFound("Can't find this dataset.")
 
     if ds['author'] is not None and ds['author'] != current_user.id:
-        raise BadRequest("You can't edit this dataset.")
+        raise Unauthorized("You can't edit this dataset.")
 
     if request.method == 'POST':
         dataset_dict = request.get_json()
@@ -106,9 +107,13 @@ def delete(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    # TODO: Check if author is deleting.
-    # TODO: Show confirmation page and delete if POSTed.
-    raise NotImplementedError
+    if ds['author'] is not None and ds['author'] != current_user.id:
+        raise Unauthorized("You can't edit this dataset.")
+    if request.method == 'POST':
+        dataset.delete(ds['id'])
+        flash.success("Dataset has been deleted.")
+        return redirect(url_for('user.profile', user_id=current_user.id))
+    return render_template('datasets/delete.html', dataset=ds)
 
 
 @datasets_bp.route('/recording/<uuid:mbid>')

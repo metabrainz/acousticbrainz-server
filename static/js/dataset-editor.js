@@ -473,7 +473,8 @@ var RecordingList = React.createClass({
     render: function () {
         var items = [];
         this.props.recordings.forEach(function (recording) {
-            items.push(<Recording mbid={recording} onRecordingDelete={this.props.onRecordingDelete} />);
+            items.push(<Recording key={recording} mbid={recording}
+                                  onRecordingDelete={this.props.onRecordingDelete} />);
         }.bind(this));
         if (items.length > 0) {
             return (

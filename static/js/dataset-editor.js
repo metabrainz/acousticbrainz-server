@@ -38,16 +38,15 @@ var SECTION_CLASS_DETAILS = "class_details";
  - classSeq (used for assigning internal class IDs)
 
  It is divided into two sections (current section is set in active_section):
- - SECTION_DATASET_DETAILS (editing dataset info and list of classes)
- - SECTION_CLASS_DETAILS (editing specific class; this also requires
- active_class_id variable to be set in Dataset state)
+  - SECTION_DATASET_DETAILS (editing dataset info and list of classes)
+  - SECTION_CLASS_DETAILS (editing specific class; this also requires
+      active_class_id variable to be set in Dataset state)
  */
 var Dataset = React.createClass({
     getInitialState: function () {
         return {
             mode: container.dataset.mode,
             active_section: SECTION_DATASET_DETAILS,
-            classSeq: 1, // Used for assigning internal class IDs
             data: null
         };
     },
@@ -65,17 +64,7 @@ var Dataset = React.createClass({
                 return;
             }
             $.get("/datasets/" + container.dataset.editId + "/json", function(result) {
-                if (this.isMounted()) {
-                    // Assigning internal class IDs
-                    var classSeq = 1;
-                    for (cls of result.classes) {
-                        cls.id = classSeq++;
-                    }
-                    this.setState({
-                        classSeq: classSeq,
-                        data: result
-                    });
-                }
+                if (this.isMounted()) { this.setState({data: result}); }
             }.bind(this));
         } else {
             if (this.state.mode != MODE_CREATE) {
@@ -100,58 +89,35 @@ var Dataset = React.createClass({
     handleReturn: function () {
         this.setState({
             active_section: SECTION_DATASET_DETAILS,
-            active_class_id: undefined
+            active_class_index: undefined
         });
     },
     handleClassCreate: function () {
         var nextStateData = this.state.data;
         nextStateData.classes.push({
-            id: this.state.classSeq,
-            name: "Class #" + this.state.classSeq,
+            name: "",
             description: "",
             recordings: []
         });
-        nextStateData.classSeq++;
-        this.setState({
-            data: nextStateData,
-            classSeq: this.state.classSeq + 1
-        });
+        this.setState({data: nextStateData});
     },
-    handleClassEdit: function (id) {
+    handleClassEdit: function (index) {
         this.setState({
             active_section: SECTION_CLASS_DETAILS,
-            active_class_id: id
+            active_class_index: index
         });
     },
-    handleClassDelete: function (id) {
-        var nextStateData = this.state.data;
-        var classes = nextStateData.classes;
-        var index = -1;
-        for (var i = 0; i < classes.length; ++i) {
-            if (classes[i].id == id) {
-                index = i;
-                break;
-            }
-        }
-        if (index > -1) {
-            classes.splice(index, 1);
-        }
-        nextStateData.classes = classes;
-        this.setState({data: nextStateData});
+    handleClassDelete: function (index) {
+        var data = this.state.data;
+        data.classes.splice(index, 1);
+        this.setState({data: data});
     },
-    handleClassUpdate: function (id, name, description, recordings) {
-        var nextStateData = this.state.data;
-        var classes = nextStateData.classes;
-        for (cls of classes) {
-            if (cls.id == id) {
-                cls.name = name;
-                cls.description = description;
-                cls.recordings = recordings;
-                break;
-            }
-        }
-        nextStateData.classes = classes;
-        this.setState({data: nextStateData});
+    handleClassUpdate: function (index, name, description, recordings) {
+        var data = this.state.data;
+        data.classes[index].name = name;
+        data.classes[index].description = description;
+        data.classes[index].recordings = recordings;
+        this.setState({data: data});
     },
     render: function () {
         if (this.state.data) {
@@ -175,20 +141,17 @@ var Dataset = React.createClass({
                     </div>
                 );
             } else { // SECTION_CLASS_DETAILS
-                for (cls of this.state.data.classes) {
-                    if (cls.id == this.state.active_class_id) {
-                        return (
-                            <ClassDetails
-                                id={cls.id}
-                                name={cls.name}
-                                description={cls.description}
-                                recordings={cls.recordings}
-                                datasetName={this.state.data.name}
-                                onReturn={this.handleReturn}
-                                onClassUpdate={this.handleClassUpdate} />
-                        );
-                    }
-                }
+                var active_class = this.state.data.classes[this.state.active_class_index];
+                return (
+                    <ClassDetails
+                        id={this.state.active_class_index}
+                        name={active_class.name}
+                        description={active_class.description}
+                        recordings={active_class.recordings}
+                        datasetName={this.state.data.name}
+                        onReturn={this.handleReturn}
+                        onClassUpdate={this.handleClassUpdate} />
+                );
             }
         } else {
             return (<strong>Loading...</strong>);
@@ -303,8 +266,8 @@ var ClassList = React.createClass({
     },
     render: function () {
         var items = [];
-        this.props.classes.forEach(function (cls) {
-            items.push(<Class id={cls.id}
+        this.props.classes.forEach(function (cls, index) {
+            items.push(<Class id={index}
                               name={cls.name}
                               description={cls.description}
                               recordingCounter={cls.recordings.length}
@@ -347,7 +310,7 @@ var Class = React.createClass({
     },
     render: function () {
         var name = this.props.name;
-        if (!name) name = "Class #" + this.props.id;
+        if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
         var recordingsCounterText = this.props.recordingCounter.toString() + " ";
         if (this.props.recordingCounter == 1) recordingsCounterText += "recording";
         else recordingsCounterText += "recordings";

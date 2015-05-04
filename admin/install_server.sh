@@ -25,7 +25,12 @@ service postgresql restart
 apt-get install -y node-less
 
 # Setting up the application
-cd /vagrant/
+if [ $# -eq 1 ]
+  then
+    cd $1
+else
+    echo "Application directory is not specified. Using current directory!"
+fi
 pip install -r requirements.txt
 python manage.py init_db
 python manage.py init_test_db

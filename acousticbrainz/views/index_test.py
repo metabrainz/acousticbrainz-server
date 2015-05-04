@@ -1,8 +1,8 @@
-from acousticbrainz.testing import FlaskTestCase
+from acousticbrainz.testing import ServerTestCase
 from flask import url_for
 
 
-class IndexViewsTestCase(FlaskTestCase):
+class IndexViewsTestCase(ServerTestCase):
 
     def test_index(self):
         resp = self.client.get(url_for('index.index'))

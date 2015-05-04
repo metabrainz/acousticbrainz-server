@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for
 from acousticbrainz.data import load_low_level, load_high_level, get_summary_data
+from acousticbrainz.data.exceptions import NoDataFoundException
 from acousticbrainz.external import musicbrainz
+from werkzeug.exceptions import NotFound
 from urllib import quote_plus
 import json
 import time
-from werkzeug.exceptions import NotFound
-from acousticbrainz.data.exceptions import NoDataFoundException
 
 data_bp = Blueprint('data', __name__)
 
@@ -32,16 +32,22 @@ def recording(mbid):
 
 @data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
-    data = json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True)
-    return render_template("data/json-display.html", mbid=mbid, data=data,
-                           title="Low-level JSON for %s" % mbid)
+    return render_template(
+        "data/json-display.html",
+        mbid=mbid,
+        data=json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True),
+        title="Low-level JSON for %s" % mbid,
+    )
 
 
 @data_bp.route("/<uuid:mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):
-    data = json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True)
-    return render_template("data/json-display.html", mbid=mbid, data=data,
-                           title="High-level JSON for %s" % mbid)
+    return render_template(
+        "data/json-display.html",
+        mbid=mbid,
+        data=json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True),
+        title="High-level JSON for %s" % mbid,
+    )
 
 
 @data_bp.route("/<uuid:mbid>", methods=["GET"])
@@ -50,7 +56,7 @@ def summary(mbid):
         summary_data = get_summary_data(mbid)
     except NoDataFoundException:
         summary_data = {}
-    
+
     info = _get_track_info(mbid, summary_data['lowlevel']['metadata'] if summary_data else None)
     if info and summary_data:
         return render_template("data/summary-complete.html", summary=summary_data, mbid=mbid, info=info,
@@ -59,29 +65,34 @@ def summary(mbid):
         return (render_template("data/summary-metadata.html", summary=summary_data, mbid=mbid, info=info,
                                 tomahawk_url=_get_tomahawk_url(info)), 404)
     else:  # When there is no data
-        raise NotFound("MusicBrainz does not have data for this track")
+        raise NotFound("MusicBrainz does not have data for this track.")
 
 
 def _get_tomahawk_url(metadata):
-    """Function inputting the metadata and returning the tomahawk url"""
+    """Generates URL for iframe with Tomahawk embedded player.
+
+    See http://toma.hk/tools/embeds.php for more info.
+    """
     if not ('artist' in metadata and 'title' in metadata):
         return None
     else:
         return "http://toma.hk/embed.php?artist={artist}&title={title}".format(
             artist=quote_plus(metadata['artist'].encode("UTF-8")),
-            title=quote_plus(metadata['title'].encode("UTF-8")))
+            title=quote_plus(metadata['title'].encode("UTF-8")),
+        )
 
 
 def _get_track_info(mbid, metadata):
     info = {}
 
     # Getting good metadata from MusicBrainz
-    good_metadata = musicbrainz.get_recording_by_id(mbid)
+    try:
+        good_metadata = musicbrainz.get_recording_by_id(mbid)
+    except musicbrainz.DataUnavailable:
+        good_metadata = None
 
     if good_metadata:
         info['title'] = good_metadata['title']
-        if 'length' in good_metadata:
-            info['length'] = time.strftime("%M:%S", time.gmtime(float(good_metadata['length']) / 1000))  # Converting from ms to s and then converting to required format.
         info['artist_id'] = good_metadata['artist-credit'][0]['artist']['id']
         info['artist'] = good_metadata['artist-credit-phrase']
         info['release_id'] = good_metadata['release-list'][0]['id']
@@ -91,7 +102,10 @@ def _get_track_info(mbid, metadata):
             '%s / %s' % (good_metadata['release-list'][0]['medium-list'][0]['track-list'][0]['number'],
                          good_metadata['release-list'][0]['medium-list'][0]['track-count'])
 
-    elif metadata is not None:
+        if 'length' in good_metadata:
+            info['length'] = time.strftime("%M:%S", time.gmtime(float(good_metadata['length']) / 1000))
+
+    elif metadata:
         info['title'] = metadata['tags']['title'][0]
         info['length'] = metadata['audio_properties']['length_formatted']
         info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]

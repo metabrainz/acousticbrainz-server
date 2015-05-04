@@ -1,8 +1,8 @@
-from acousticbrainz.testing import FlaskTestCase
+from acousticbrainz.testing import ServerTestCase
 from acousticbrainz import utils
 
 
-class UtilsTestCase(FlaskTestCase):
+class UtilsTestCase(ServerTestCase):
     def test_has_key(self):
         dictionary = {
             'test_1': {

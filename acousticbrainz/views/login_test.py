@@ -1,8 +1,8 @@
-from acousticbrainz.testing import FlaskTestCase
+from acousticbrainz.testing import ServerTestCase
 from flask import url_for
 
 
-class LoginViewsTestCase(FlaskTestCase):
+class LoginViewsTestCase(ServerTestCase):
 
     def test_login_page(self):
         response = self.client.get(url_for('login.index'))

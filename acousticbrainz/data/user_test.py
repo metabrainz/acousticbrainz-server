@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from acousticbrainz.testing import FlaskTestCase
+from acousticbrainz.testing import ServerTestCase
 from acousticbrainz.data import user as user_data
 
 
-class UserTestCase(FlaskTestCase):
+class UserTestCase(ServerTestCase):
 
     def test_create(self):
         user_id = user_data.create("fuzzy_dunlop")

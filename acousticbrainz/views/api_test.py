@@ -1,9 +1,9 @@
-from acousticbrainz.testing import FlaskTestCase
+from acousticbrainz.testing import ServerTestCase, TEST_DATA_PATH
 from flask import url_for
 import os
 
 
-class APIViewsTestCase(FlaskTestCase):
+class APIViewsTestCase(ServerTestCase):
 
     def test_get_low_level(self):
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
@@ -18,7 +18,7 @@ class APIViewsTestCase(FlaskTestCase):
     def test_submit_low_level(self):
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
 
-        with open(os.path.join('acousticbrainz', 'test_data', mbid + '.json')) as json_file:
+        with open(os.path.join(TEST_DATA_PATH, mbid + '.json')) as json_file:
             with self.app.test_client() as client:
                 sub_resp = client.post(url_for('api.submit_low_level', mbid=mbid),
                                        data=json_file.read(),

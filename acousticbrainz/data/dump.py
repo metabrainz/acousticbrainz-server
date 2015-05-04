@@ -122,54 +122,60 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
 
 
 def _copy_tables(location, start_time=None, end_time=None):
-    """Copies all tables into separate files within a specified directory.
+    """Copies all tables into separate files within a specified location (directory).
 
-    You can also define time frame that will be used during data selection.
-    This will only work on tables that support incremental dumping: "lowlevel"
-    and "highlevel".
+    ou can also define time frame that will be used during data selection.
+    Files in a specified directory will only contain rows that have timestamps
+    within specified time frame. We assume that each table contains some sort
+    of timestamp that can be used as a reference.
     """
     conn = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = conn.cursor()
 
-    # Copying tables that can be split up for incremental dumps
-
-    if start_time or end_time:
-        start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
-        end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
-        if start_time and end_time:
-            where = "WHERE %s AND %s" % (start_cond, end_cond)
+    def generate_where(row_name, start_t=start_time, end_t=end_time):
+        """This function generates SQL WHERE clause that can be used to select
+        rows only within specified time frame using `row_name` as a reference.
+        """
+        if start_t or end_t:
+            start_cond = "%s > '%s'" % (row_name, str(start_t)) if start_t else ""
+            end_cond = "%s <= '%s'" % (row_name, str(end_t)) if end_t else ""
+            if start_t and end_t:
+                return "WHERE %s AND %s" % (start_cond, end_cond)
+            else:
+                return "WHERE %s%s" % (start_cond, end_cond)
         else:
-            where = "WHERE %s%s" % (start_cond, end_cond)
-    else:
-        where = ""
+            return ""
 
     # lowlevel
     with open(os.path.join(location, "lowlevel"), "w") as f:
         print(" - Copying table lowlevel...")
         cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
-                       (", ".join(_TABLES["lowlevel"]), where))
+                       (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
 
     # highlevel
     with open(os.path.join(location, "highlevel"), "w") as f:
         print(" - Copying table highlevel...")
         cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
-                       (", ".join(_TABLES["highlevel"]), where))
+                       (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
 
     # highlevel_json
     with open(os.path.join(location, "highlevel_json"), "w") as f:
         print(" - Copying table highlevel_json...")
-        query = """SELECT %s FROM highlevel_json WHERE id IN (
-                       SELECT data FROM highlevel %s
-                )""" % (", ".join(_TABLES["highlevel_json"]), where)
+        query = "SELECT %s FROM highlevel_json WHERE id IN (SELECT data FROM highlevel %s)" \
+                % (", ".join(_TABLES["highlevel_json"]), generate_where("submitted"))
         cursor.copy_to(f, "(%s)" % query)
 
-    # Copying tables that are always dumped with all rows
-    for table in _TABLES.keys():
-        if table in ("lowlevel", "highlevel", "highlevel_json"):
-            continue
-        print(" - Copying table %s..." % table)
-        with open(os.path.join(location, table), "w") as f:
-            cursor.copy_to(f, table, columns=_TABLES[table])
+    # statistics
+    with open(os.path.join(location, "statistics"), "w") as f:
+        print(" - Copying table statistics...")
+        cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
+                       (", ".join(_TABLES["statistics"]), generate_where("collected")))
+
+    # incremental_dumps
+    with open(os.path.join(location, "incremental_dumps"), "w") as f:
+        print(" - Copying table incremental_dumps...")
+        cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
+                       (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
 
 
 def import_db_dump(archive_path):

@@ -5,7 +5,7 @@
 {%- endblock -%}
 
 {%- block content -%}
-  <h3>Details for track {{ mbid }}</h3>
+  <h3>Track "{{ info['title'] }}" by {{ info['artist'] }}</h3>
   
   {%- include 'data/metadata.html' -%}
   

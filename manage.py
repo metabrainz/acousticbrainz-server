@@ -66,10 +66,17 @@ def init_db(archive=None, force=False):
 
 
 @manager.command
-def init_test_db():
+def init_test_db(force=False):
     """Same as `init_db`, but creates a database that will be used to run tests
     and doesn't import data (no need to do that).
     """
+    if force:
+        exit_code = subprocess.call('sudo -u postgres psql < ' +
+                                    os.path.join('admin', 'sql', 'drop_test_db.sql'),
+                                    shell=True)
+        if exit_code != 0:
+            raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
+
     print('Creating database and user for testing...')
     exit_code = subprocess.call('sudo -u postgres psql < ' +
                                 os.path.join('admin', 'sql', 'create_test_db.sql'),

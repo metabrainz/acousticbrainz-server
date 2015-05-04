@@ -9,9 +9,9 @@ else
 fi
 
 # Installing dependencies
-apt-get -y --force-yes install build-essential libyaml-dev libfftw3-dev \
-    libavformat-dev python-dev python-numpy-dev python-numpy libqt4-dev \
-    libsamplerate0-dev libtag1-dev libavcodec-dev git swig pkg-config
+apt-get -y install build-essential libyaml-dev libfftw3-dev libavcodec-dev \
+    libavformat-dev python-dev python-numpy-dev python-numpy git \
+    libsamplerate0-dev libtag1-dev libqt4-dev swig pkg-config
 
 # Gaia
 # See https://github.com/MTG/gaia

@@ -5,12 +5,14 @@
 {%- endblock -%}
 
 {%- block content -%}
-  <h3>Details for track {{ mbid }}</h3>
+  <h3>Track "{{ info['title'] }}" by {{ info['artist'] }}</h3>
   
   {%- include 'data/metadata.html' -%}
   
   <div class="alert alert-warning">   
-    We don't have any information about this recording yet. If you have it you can help us increase the size and quality of the AcousticBrainz database. You just need to run a very simple tool. <a href="{{ url_for('index.contribute') }}">Find more information here</a>. 
+    We don't have any information about this recording yet. If you have this recording,
+    you can help us increase the size and quality of the AcousticBrainz database.
+    <a href="{{ url_for('index.contribute') }}">Find more information here</a>.
   </div>
 {%- endblock -%}
 

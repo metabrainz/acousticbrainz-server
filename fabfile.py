@@ -4,6 +4,11 @@ from fabric.colors import green
 from acousticbrainz import create_app, cache
 
 
+def git_pull():
+    local("git pull origin")
+    print(green("Updated local code.", bold=True))
+
+
 def compile_styling():
     """Compile styles.less into styles.css.
     This command requires Less (CSS pre-processor). More information about it can be
@@ -21,5 +26,6 @@ def clear_memcached():
 
 
 def deploy():
+    git_pull()
     compile_styling()
     clear_memcached()

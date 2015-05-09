@@ -9,6 +9,11 @@ def git_pull():
     print(green("Updated local code.", bold=True))
 
 
+def install_requirements():
+    local("pip install -r requirements.txt")
+    print(green("Installed requirements.", bold=True))
+
+
 def compile_styling():
     """Compile styles.less into styles.css.
     This command requires Less (CSS pre-processor). More information about it can be
@@ -27,5 +32,6 @@ def clear_memcached():
 
 def deploy():
     git_pull()
+    install_requirements()
     compile_styling()
     clear_memcached()

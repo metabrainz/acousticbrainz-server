@@ -7,7 +7,10 @@ import json
 import os
 
 
-class FlaskTestCase(TestCase):
+TEST_DATA_PATH = os.path.join('acousticbrainz', 'data', 'test_data')
+
+
+class ServerTestCase(TestCase):
 
     def create_app(self):
         app = create_app()
@@ -35,8 +38,8 @@ class FlaskTestCase(TestCase):
         connection.close()
 
     def load_low_level_data(self, mbid):
-        """Loads low-level data from JSON file in `acousticbrainz/test_data`
+        """Loads low-level data from JSON file in `acousticbrainz/data/test_data`
         directory into the database.
         """
-        with open(os.path.join('acousticbrainz', 'test_data', mbid + '.json')) as json_file:
+        with open(os.path.join(TEST_DATA_PATH, mbid + '.json')) as json_file:
             submit_low_level_data(mbid, json.loads(json_file.read()))

@@ -10,9 +10,9 @@ import os
 
 manager = Manager(create_app)
 
+manager.add_command('runserver', Server(host='0.0.0.0', port=8080))
 manager.add_command('dump', dump_manager)
 
-manager.add_command("runserver", Server(host="0.0.0.0", port=8080))
 
 @manager.command
 def init_db(archive=None, force=False):
@@ -26,7 +26,7 @@ def init_db(archive=None, force=False):
 
     Data dump needs to be a .tar.xz archive produced by export command.
 
-    More information about populating a PostgreSQL database efficently can be
+    More information about populating a PostgreSQL database efficiently can be
     found at http://www.postgresql.org/docs/current/static/populate.html.
     """
     if force:

@@ -1,8 +1,8 @@
-from acousticbrainz.testing import FlaskTestCase
+from acousticbrainz.testing import ServerTestCase
 from flask import url_for
 
 
-class StatsViewsTestCase(FlaskTestCase):
+class StatsViewsTestCase(ServerTestCase):
 
     def test_graph(self):
         resp = self.client.get(url_for('stats.graph'))

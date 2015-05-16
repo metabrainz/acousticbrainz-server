@@ -1,11 +1,11 @@
 import psycopg2
 from acousticbrainz.utils import sanity_check_data, clean_metadata, interpret_high_level
+from acousticbrainz.data.exceptions import NoDataFoundException
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, InternalServerError, NotFound
 from flask import current_app
 from hashlib import sha256
 import json
 import time
-from exceptions import NoDataFoundException
 
 
 def submit_low_level_data(mbid, data):
@@ -123,7 +123,7 @@ def load_high_level(mbid):
 
 
 def count_lowlevel(mbid):
-    """Count number of stored datasets for a specified MBID."""
+    """Count number of stored low-level submissions for a specified MBID."""
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
     cur = conn.cursor()
     try:
@@ -140,7 +140,7 @@ def count_lowlevel(mbid):
 
 
 def get_summary_data(mbid):
-    """Fetches the lowlevel and highlevel features from abz database for the specified MBID."""
+    """Fetches the low-level and high-level features from for the specified MBID."""
     summary = {}
     mbid = str(mbid)
     conn = psycopg2.connect(current_app.config['PG_CONNECT'])
@@ -148,7 +148,7 @@ def get_summary_data(mbid):
     try:
         cur.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
         if not cur.rowcount:
-            raise NoDataFoundException("No data for the track in acousticbrainz database")
+            raise NoDataFoundException("Can't find low-level data for this recording.")
 
         row = cur.fetchone()
         lowlevel = row[0]
@@ -159,7 +159,6 @@ def get_summary_data(mbid):
         if 'title' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
-        # Format track length readably (mm:ss)
         lowlevel['metadata']['audio_properties']['length_formatted'] = \
             time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
 
@@ -170,11 +169,10 @@ def get_summary_data(mbid):
                     "WHERE hl.data = hlj.id "
                     "AND hl.mbid = %s", (mbid, ))
         if cur.rowcount:
-            row = cur.fetchone()
-            highlevel = row[0]
-            summary['highlevel'] = highlevel
+            summary['highlevel'] = cur.fetchone()[0]
             try:
-                summary['genres'], summary['moods'], summary['other'] = interpret_high_level(highlevel)
+                summary['genres'], summary['moods'], summary['other'] = \
+                    interpret_high_level(summary['highlevel'])
             except KeyError:
                 pass
 

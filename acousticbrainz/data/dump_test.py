@@ -1,11 +1,11 @@
-from acousticbrainz.testing import FlaskTestCase
+from acousticbrainz.testing import ServerTestCase
 from acousticbrainz.data import dump
 import os.path
 import tempfile
 import shutil
 
 
-class DataDumpTestCase(FlaskTestCase):
+class DataDumpTestCase(ServerTestCase):
 
     def setUp(self):
         super(DataDumpTestCase, self).setUp()
@@ -53,7 +53,12 @@ class DataDumpTestCase(FlaskTestCase):
         self.assertEqual(start_t_same, start_t_first)
         self.assertEqual(end_t_same, end_t_first)
 
-        dump_id_second, start_t_second, end_t_second = dump.prepare_incremental_dump()
-        self.assertNotEqual(dump_id_second, dump_id_first)
-        self.assertEqual(start_t_second, end_t_first)
-        self.assertIsNotNone(end_t_second)
+        with self.assertRaises(dump.NoNewData):
+            dump.prepare_incremental_dump()
+
+        self.load_low_level_data("0dad432b-16cc-4bf0-8961-fd31d124b01b")
+
+        dump_id_last, start_t_last, end_t_last = dump.prepare_incremental_dump()
+        self.assertNotEqual(dump_id_last, dump_id_first)
+        self.assertNotEqual(start_t_last, start_t_first)
+        self.assertNotEqual(end_t_last, end_t_first)

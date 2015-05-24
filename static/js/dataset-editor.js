@@ -179,13 +179,13 @@ var DatasetDetails = React.createClass({
     render: function () {
         return (
             <div className="dataset-details">
-                <h2>
+                <h3>
                     <input type="text"
                            placeholder="Name" required="required"
                            value={this.props.name} ref="name"
                            size={this.props.name.length}
                            onChange={this.handleDetailsUpdate} />
-                </h2>
+                </h3>
                 <textarea ref="description"
                           placeholder="Description (optional)"
                           value={this.props.description}
@@ -278,7 +278,7 @@ var ClassList = React.createClass({
         }.bind(this));
         return (
             <div>
-                <h3>Classes</h3>
+                <h4>Classes</h4>
                 <div className="class-list row">
                     {items}
                     <div className="col-md-3">
@@ -363,7 +363,7 @@ var ClassDetails = React.createClass({
     render: function () {
         return (
             <div className="class-details">
-                <h2>
+                <h3>
                     <a href='#' onClick={this.props.onReturn}
                        title="Back to dataset details">
                         {this.props.datasetName}
@@ -375,7 +375,7 @@ var ClassDetails = React.createClass({
                            onChange={this.handleClassUpdate}
                            size={this.props.name.length}
                            value={this.props.name} />
-                </h2>
+                </h3>
                 <p>
                     <a href='#' onClick={this.props.onReturn}>
                         <strong>&larr; Back to class list</strong>

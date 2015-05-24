@@ -1,9 +1,10 @@
 {%- extends 'base.html' -%}
 {%- block content -%}
-  <h3><strong>Welcome to AcousticBrainz!</strong></h3>
-  <div class="row">
+  <div id="homepage" class="row">
 
     <div class="col-md-7 col-lg-8">
+      <img src="{{ url_for('static', filename='img/logo_big.svg') }}" id="big-logo" />
+      <h2 class="page-title">Welcome to AcousticBrainz!</h2>
       <p>
         The AcousticBrainz project aims to crowd source acoustic information for all music in the world and to make it
         available to the public. This acoustic information describes the acoustic characteristics of music and includes
@@ -51,7 +52,7 @@
     </div>
 
     <div class="col-md-5 col-lg-4">
-      <div class="panel panel-default">
+      <div id="stats" class="panel panel-default">
         <div class="panel-heading"><strong>Track Statistics</strong></div>
         <div class="panel-body">
           <table class="table table-collapsed">
@@ -84,7 +85,7 @@
         </div>
       </div>
 
-      <div class="twitter-block">
+      <div id="twitter-block">
         <a class="twitter-timeline" data-dnt="true" data-lang="en" href="https://twitter.com/AcousticBrainz" data-widget-id="535534957591281664">Tweets by @AcousticBrainz</a>
         <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
       </div>

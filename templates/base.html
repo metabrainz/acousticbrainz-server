@@ -2,43 +2,42 @@
 
 <!DOCTYPE html>
 <html>
-  <head>
-    {%- block head -%}
-    <meta charset="utf-8">
+<head>
+  {%- block head -%}
+    <meta charset="utf-8" />
     <title>{% block title %}AcousticBrainz{% endblock %}</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="image/x-icon" />
 
-    <link href='https://fonts.googleapis.com/css?family=Bitter:700' rel='stylesheet' type='text/css'>
     {% if config.COMPILE_LESS %}
-      <link href="{{ url_for('static', filename='css/styles.less') }}" rel="stylesheet/less" type="text/css">
+      <link href="{{ url_for('static', filename='css/main.less') }}" rel="stylesheet/less" type="text/css" />
       <script src="{{ url_for('static', filename='js/less.min.js') }}"></script>
     {% else %}
-      <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" media="screen">
+      <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet" media="screen" />
     {% endif %}
-    {%- endblock -%}
-  </head>
+  {%- endblock -%}
+</head>
 
-  <body>
-    {%- include 'navbar.html' -%}
+<body>
+  {%- include 'navbar.html' -%}
 
-    <div class="container">
+  <div class="container">
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-          {{ print_message(message, category) }}
+            {{ print_message(message, category) }}
         {% endfor %}
-      {% endwith %}
+    {% endwith %}
 
-      {%- block wrapper -%}
+    {%- block wrapper -%}
         {%- block content -%}
-        <!-- Page content -->
+          <!-- Page content -->
         {%- endblock -%}
-      {%- endblock -%}
-      <div class="clearfix"></div>
+    {%- endblock -%}
+    <div class="clearfix"></div>
 
-      {%- block footer -%}
+    {%- block footer -%}
       <hr />
       <div class="footer clearfix">
         <ul class="list-inline pull-left">
@@ -48,16 +47,16 @@
           <li><a href="http://tickets.musicbrainz.org/browse/AB">Bug Tracker</a></li>
         </ul>
         <ul class="list-inline pull-right">
-          <li><a href="http://mtg.upf.edu" title="UPF"><img width="108" height="45" src="/static/img/mtg_upf.png"></a></li>
-          <li><a href="http://musicbrainz.org" title="MusicBrainz"><img width="67" height="46" src="/static/img/musicbrainz.png"></a></li>
+          <li><a href="http://mtg.upf.edu" title="UPF"><img src="/static/img/mtg_upf.png" /></a></li>
+          <li><a href="https://musicbrainz.org" title="MusicBrainz"><img src="{{ url_for('static', filename='img/musicbrainz.svg') }}" /></a></li>
         </ul>
       </div>
-      {%- endblock -%}
-    </div>
-
-    {%- block scripts -%}
-      <script src="{{ url_for('static', filename='js/jquery-2.1.0.min.js') }}"></script>
-      <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     {%- endblock -%}
-  </body>
+  </div>
+
+  {%- block scripts -%}
+    <script src="{{ url_for('static', filename='js/jquery-2.1.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  {%- endblock -%}
+</body>
 </html>

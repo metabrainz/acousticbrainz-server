@@ -2,14 +2,14 @@
 {%- block title -%}{{ title }} - AcousticBrainz{%- endblock -%}
 
 {%- block content -%}
-  <h3>{{ title }}</h3>
+  <h2 class="page-title">{{ title }}</h2>
   <strong><a href="{{ url_for('data.summary', mbid=mbid) }}">&#8592; Back to summary page</a></strong>
   <pre><code class="json">{{ data }}</code></pre>
   <strong><a href="{{ url_for('data.summary', mbid=mbid) }}">&#8592; Back to summary page</a></strong>
 {%- endblock -%}
 
 {%- block scripts -%}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/highlight.pack.js') }}"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
 {%- endblock -%}

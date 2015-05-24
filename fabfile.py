@@ -15,12 +15,12 @@ def install_requirements():
 
 
 def compile_styling():
-    """Compile styles.less into styles.css.
+    """Compile main.less into main.css.
     This command requires Less (CSS pre-processor). More information about it can be
     found at http://lesscss.org/.
     """
     style_path = "static/css/"
-    local("lessc --clean-css %sstyles.less > %sstyles.css" % (style_path, style_path))
+    local("lessc --clean-css %smain.less > %smain.css" % (style_path, style_path))
     print(green("Style sheets have been compiled successfully.", bold=True))
 
 

@@ -9,12 +9,12 @@ from jsonschema import ValidationError, validate as validate_json
 datasets_bp = Blueprint('datasets', __name__)
 
 
-@datasets_bp.route('/<uuid:id>/')
-def details(id):
+@datasets_bp.route('/<uuid:id>')
+def view(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    return render_template('datasets/view.html', dataset=ds,
+    return render_template('datasets/viewer.html', dataset_id=str(id),
                            author=user_data.get(ds['author']))
 
 

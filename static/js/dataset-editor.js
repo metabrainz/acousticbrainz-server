@@ -262,6 +262,7 @@ var SubmitDatasetButton = React.createClass({
 
 var ClassList = React.createClass({
     propTypes: {
+        classes: React.PropTypes.array.isRequired,
         onClassCreate: React.PropTypes.func.isRequired,
         onClassEdit: React.PropTypes.func.isRequired,
         onClassDelete: React.PropTypes.func.isRequired
@@ -468,6 +469,7 @@ var RecordingAddForm = React.createClass({
 
 var RecordingList = React.createClass({
     propTypes: {
+        recordings: React.PropTypes.array.isRequired,
         onRecordingDelete: React.PropTypes.func.isRequired
     },
     render: function () {

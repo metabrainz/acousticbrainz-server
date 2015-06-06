@@ -58,24 +58,31 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
   #twitter-block > iframe { width: 100%; }
 }
 
-#dataset-editor {
+#dataset-viewer {
+  .dataset-description {
+    .text-muted;
+    font-style: italic;
+  }
+}
+#dataset-editor, #dataset-viewer #dataset-class-viewer {
   .class-list {
-    .thumbnail {
-      height: 82px;
-      margin-bottom: 0px;
-      text-align: center;
-      color: @text-color;
-      .name {
-        margin-top: 14px;
-        font-weight: bold;
-      }
-      .counter {
-        .text-muted;
-        font-style: italic;
+    .class {
+      margin-bottom: 12px;
+      .thumbnail {
+        height: 82px;
+        margin-bottom: 0px;
+        text-align: center;
+        color: @text-color;
+        .name {
+          margin-top: 14px;
+          font-weight: bold;
+        }
+        .counter {
+          .text-muted;
+          font-style: italic;
+        }
       }
     }
-    .controls { margin-bottom: 6px; }
-
     .add-class-link {
       padding-top: 29px;
       border-style: dashed;
@@ -86,6 +93,7 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
       text-decoration: none;
     }
   }
+
   .thumbnail:hover, .thumbnail:focus, .thumbnail.active {
     border-color: @link-color;
     color: @link-color;

@@ -1,13 +1,13 @@
 /** @jsx React.DOM */
 /*
- This is a viewer for existing datasets.
+ This is a viewer for classes in existing datasets.
 
  Attribute "data-dataset-id" which references existing dataset by its ID need
  to be specified on container element. When Dataset component is mounted, it
  fetches existing dataset from the server.
  */
 
-var CONTAINER_ELEMENT_ID = "dataset-viewer";
+var CONTAINER_ELEMENT_ID = "dataset-class-viewer";
 var container = document.getElementById(CONTAINER_ELEMENT_ID);
 
 var SECTION_DATASET_DETAILS = "dataset_details";
@@ -53,6 +53,12 @@ var Dataset = React.createClass({
             if (this.isMounted()) { this.setState({data: result}); }
         }.bind(this));
     },
+    handleViewDetails: function (index) {
+        this.setState({
+            active_section: SECTION_CLASS_DETAILS,
+            active_class_index: index
+        });
+    },
     handleReturn: function () {
         this.setState({
             active_section: SECTION_DATASET_DETAILS,
@@ -64,14 +70,9 @@ var Dataset = React.createClass({
             if (this.state.active_section == SECTION_DATASET_DETAILS) {
                 // TODO: Move ClassList into DatasetDetails
                 return (
-                    <div>
-                        <DatasetDetails
-                            name={this.state.data.name}
-                            description={this.state.data.description} />
-                        <ClassList
-                            classes={this.state.data.classes} />
-                        <hr />
-                    </div>
+                    <ClassList
+                        classes={this.state.data.classes}
+                        onViewClass={this.handleViewDetails} />
                 );
             } else { // SECTION_CLASS_DETAILS
                 var active_class = this.state.data.classes[this.state.active_class_index];
@@ -94,24 +95,10 @@ var Dataset = React.createClass({
 
 // Classes used with SECTION_DATASET_DETAILS:
 
-var DatasetDetails = React.createClass({
-    propTypes: {
-        name: React.PropTypes.string.isRequired,
-        description: React.PropTypes.string.isRequired
-    },
-    render: function () {
-        return (
-            <div className="dataset-details">
-                <h3>{this.props.name}</h3>
-                <p>{this.props.description}</p>
-            </div>
-        );
-    }
-});
-
 var ClassList = React.createClass({
     propTypes: {
-        classes: React.PropTypes.array.isRequired
+        classes: React.PropTypes.array.isRequired,
+        onViewClass: React.PropTypes.func.isRequired
     },
     render: function () {
         var items = [];
@@ -119,7 +106,8 @@ var ClassList = React.createClass({
             items.push(<Class id={index}
                               name={cls.name}
                               description={cls.description}
-                              recordingCounter={cls.recordings.length} />);
+                              recordingCounter={cls.recordings.length}
+                              onViewClass={this.props.onViewClass} />);
         }.bind(this));
         return (
             <div>
@@ -135,7 +123,12 @@ var Class = React.createClass({
         id: React.PropTypes.number.isRequired,
         name: React.PropTypes.string.isRequired,
         description: React.PropTypes.string.isRequired,
-        recordingCounter: React.PropTypes.number.isRequired
+        recordingCounter: React.PropTypes.number.isRequired,
+        onViewClass: React.PropTypes.func.isRequired
+    },
+    handleViewDetails: function (event) {
+        event.preventDefault();
+        this.props.onViewClass(this.props.id);
     },
     render: function () {
         var name = this.props.name;
@@ -144,8 +137,8 @@ var Class = React.createClass({
         if (this.props.recordingCounter == 1) recordingsCounterText += "recording";
         else recordingsCounterText += "recordings";
         return (
-            <div className="col-md-3">
-                <a href="#" onClick={this.handleEdit} className="thumbnail">
+            <div className="col-md-3 class">
+                <a href="#" onClick={this.handleViewDetails} className="thumbnail">
                     <div className="name">{name}</div>
                     <div className="counter">{recordingsCounterText}</div>
                 </a>

@@ -14,8 +14,11 @@ def view(id):
     ds = dataset.get(id)
     if not ds:
         raise NotFound("Can't find this dataset.")
-    return render_template('datasets/viewer.html', dataset_id=str(id),
-                           author=user_data.get(ds['author']))
+    return render_template(
+        'datasets/viewer.html',
+        dataset=ds,
+        author=user_data.get(ds['author']),
+    )
 
 
 @datasets_bp.route('/<uuid:id>/json')

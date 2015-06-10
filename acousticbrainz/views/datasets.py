@@ -15,7 +15,7 @@ def view(id):
     if not ds:
         raise NotFound("Can't find this dataset.")
     return render_template(
-        'datasets/viewer.html',
+        'datasets/view.html',
         dataset=ds,
         author=user_data.get(ds['author']),
     )

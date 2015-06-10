@@ -1,9 +1,14 @@
 import psycopg2
+import copy
 from flask import current_app
 from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
+# JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
+# defines basic structure of a dataset. JSON_SCHEMA_COMPLETE adds additional
+# constraints required for further processing of a dataset. More information
+# about JSON schema is available at http://json-schema.org/.
 
-DATASET_JSON_SCHEMA = {
+BASE_JSON_SCHEMA = {
     "type": "object",
     "properties": {
         "name": {
@@ -14,7 +19,6 @@ DATASET_JSON_SCHEMA = {
         "description": {"type": "string"},
         "classes": {
             "type": "array",
-            "minItems": 2,  # must have at least two classes
             "items": {
                 # CLASS
                 "type": "object",
@@ -28,7 +32,6 @@ DATASET_JSON_SCHEMA = {
                     "recordings": {
                         # CLASS_MEMBER
                         "type": "array",
-                        "minItems": 1,  # must have at one recording
                         "items": {"type": "string"},  # FIXME: This should be a UUID
                     },
                 },
@@ -36,6 +39,11 @@ DATASET_JSON_SCHEMA = {
         },
     },
 }
+
+JSON_SCHEMA_COMPLETE = copy.deepcopy(BASE_JSON_SCHEMA)
+# Must have at least two classes with at least one recording in each.
+JSON_SCHEMA_COMPLETE["properties"]["classes"]["minItems"] = 2
+JSON_SCHEMA_COMPLETE["properties"]["classes"]["items"]["properties"]["recordings"]["minItems"] = 2
 
 
 def create_from_dict(dictionary, author_id=None):

@@ -38,7 +38,7 @@ def create():
             ), 400
 
         try:
-            validate_json(dataset_dict, dataset.DATASET_JSON_SCHEMA)
+            validate_json(dataset_dict, dataset.BASE_JSON_SCHEMA)
         except ValidationError as e:
             return jsonify(
                 success=False,
@@ -78,7 +78,7 @@ def edit(id):
             ), 400
 
         try:
-            validate_json(dataset_dict, dataset.DATASET_JSON_SCHEMA)
+            validate_json(dataset_dict, dataset.BASE_JSON_SCHEMA)
         except ValidationError as e:
             return jsonify(
                 success=False,

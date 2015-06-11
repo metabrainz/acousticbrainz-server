@@ -32,7 +32,7 @@
       <tbody>
       {% for dataset in datasets %}
         <tr>
-          <td><a href="{{ url_for('datasets.details', id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
+          <td><a href="{{ url_for('datasets.view', id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
           <td>{{ dataset['created'] }}</td>
           <td>
             {% if current_user.is_authenticated() and current_user == user %}

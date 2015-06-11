@@ -10,7 +10,7 @@
 
 {%- block scripts -%}
   {{ super() }}
-  <script src="{{ url_for('static', filename="js/highstock.js") }}"></script>
+  <script src="{{ url_for('static', filename="js/lib/highstock.js") }}"></script>
   <script>
     $(function () {
       $.getJSON('{{ url_for('stats.data') }}', function (data) {

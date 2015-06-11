@@ -262,6 +262,7 @@ var SubmitDatasetButton = React.createClass({
 
 var ClassList = React.createClass({
     propTypes: {
+        classes: React.PropTypes.array.isRequired,
         onClassCreate: React.PropTypes.func.isRequired,
         onClassEdit: React.PropTypes.func.isRequired,
         onClassDelete: React.PropTypes.func.isRequired
@@ -281,7 +282,7 @@ var ClassList = React.createClass({
                 <h4>Classes</h4>
                 <div className="class-list row">
                     {items}
-                    <div className="col-md-3">
+                    <div className="col-md-3 class">
                         <a className="thumbnail add-class-link" href='#'
                            onClick={this.props.onClassCreate}>
                             + Add new class
@@ -317,7 +318,7 @@ var Class = React.createClass({
         if (this.props.recordingCounter == 1) recordingsCounterText += "recording";
         else recordingsCounterText += "recordings";
         return (
-            <div className="col-md-3">
+            <div className="col-md-3 class">
                 <a href="#" onClick={this.handleEdit} className="thumbnail">
                     <div className="name">{name}</div>
                     <div className="counter">{recordingsCounterText}</div>
@@ -468,6 +469,7 @@ var RecordingAddForm = React.createClass({
 
 var RecordingList = React.createClass({
     propTypes: {
+        recordings: React.PropTypes.array.isRequired,
         onRecordingDelete: React.PropTypes.func.isRequired
     },
     render: function () {

@@ -12,7 +12,7 @@
 
     {% if config.COMPILE_LESS %}
       <link href="{{ url_for('static', filename='css/main.less') }}" rel="stylesheet/less" type="text/css" />
-      <script src="{{ url_for('static', filename='js/less.min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/lib/less.min.js') }}"></script>
     {% else %}
       <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet" media="screen" />
     {% endif %}
@@ -55,8 +55,8 @@
   </div>
 
   {%- block scripts -%}
-    <script src="{{ url_for('static', filename='js/jquery-2.1.0.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lib/jquery-2.1.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lib/bootstrap.min.js') }}"></script>
   {%- endblock -%}
 </body>
 </html>

@@ -53,7 +53,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 1)
 
     def test_edit(self):
-        # Should redirect to login page even if trying to edit review that
+        # Should redirect to login page even if trying to edit dataset that
         # doesn't exist.
         resp = self.client.get(url_for('datasets.edit', id=self.test_uuid))
         self.assertStatus(resp, 302)
@@ -94,7 +94,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assert200(resp)
 
     def test_delete(self):
-        # Should redirect to login page even if trying to delete review that
+        # Should redirect to login page even if trying to delete dataset that
         # doesn't exist.
         resp = self.client.get(url_for('datasets.delete', id=self.test_uuid))
         self.assertStatus(resp, 302)

@@ -21,14 +21,6 @@ def view(id):
     )
 
 
-@datasets_bp.route('/<uuid:id>/json')
-def view_json(id):
-    ds = dataset.get(id)
-    if not ds:
-        raise NotFound("Can't find this dataset.")
-    return jsonify(ds)
-
-
 @datasets_bp.route('/create', methods=('GET', 'POST'))
 @login_required
 def create():

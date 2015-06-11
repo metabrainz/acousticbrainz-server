@@ -4,7 +4,7 @@ from werkzeug.exceptions import NotFound, Unauthorized
 from acousticbrainz.data import dataset, user as user_data
 from acousticbrainz.external import musicbrainz
 from acousticbrainz import flash
-from jsonschema import ValidationError, validate as validate_json
+import jsonschema
 
 datasets_bp = Blueprint('datasets', __name__)
 
@@ -41,18 +41,11 @@ def create():
             ), 400
 
         try:
-            validate_json(dataset_dict, dataset.BASE_JSON_SCHEMA)
-        except ValidationError as e:
+            dataset_id = dataset.create_from_dict(dataset_dict, current_user.id)
+        except jsonschema.ValidationError as e:
             return jsonify(
                 success=False,
                 error=str(e),
-            ), 400
-
-        dataset_id, error = dataset.create_from_dict(dataset_dict, current_user.id)
-        if dataset_id is None:
-            return jsonify(
-                success=False,
-                error=str(error),
             ), 400
 
         return jsonify(
@@ -81,18 +74,11 @@ def edit(id):
             ), 400
 
         try:
-            validate_json(dataset_dict, dataset.BASE_JSON_SCHEMA)
-        except ValidationError as e:
+            dataset.update(str(id), dataset_dict, current_user.id)
+        except jsonschema.ValidationError as e:
             return jsonify(
                 success=False,
                 error=str(e),
-            ), 400
-
-        error = dataset.update(str(id), dataset_dict, current_user.id)
-        if error:
-            return jsonify(
-                success=False,
-                error=str(error),
             ), 400
 
         return jsonify(

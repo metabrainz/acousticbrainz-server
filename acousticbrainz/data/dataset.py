@@ -1,5 +1,6 @@
 import psycopg2
 import copy
+import jsonschema
 from flask import current_app
 from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
@@ -49,74 +50,63 @@ JSON_SCHEMA_COMPLETE["properties"]["classes"]["items"]["properties"]["recordings
 def create_from_dict(dictionary, author_id=None):
     """Creates a new dataset from a dictionary.
 
-    Data in the dictionary must be validated using `DATASET_JSON_SCHEMA` before
-    being passed to this function.
-
     Returns:
         Tuple with two values: new dataset ID and error. If error occurs first
         will be None and second is an exception. If there are no errors, second
         value will be None.
     """
-    try:
-        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
-        cursor = connection.cursor()
+    jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-        cursor.execute("""INSERT INTO dataset (id, name, description, author)
-                          VALUES (uuid_generate_v4(), %s, %s, %s) RETURNING id""",
-                       (dictionary["name"], dictionary["description"], author_id))
-        dataset_id = cursor.fetchone()[0]
+    connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+    cursor = connection.cursor()
 
-        for cls in dictionary["classes"]:
-            cursor.execute("""INSERT INTO class (name, description, dataset)
-                              VALUES (%s, %s, %s) RETURNING id""",
-                           (cls["name"], cls["description"], dataset_id))
-            cls_id = cursor.fetchone()[0]
+    cursor.execute("""INSERT INTO dataset (id, name, description, author)
+                      VALUES (uuid_generate_v4(), %s, %s, %s) RETURNING id""",
+                   (dictionary["name"], dictionary["description"], author_id))
+    dataset_id = cursor.fetchone()[0]
 
-            for recording_mbid in cls["recordings"]:
-                cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
-                               (cls_id, recording_mbid))
+    for cls in dictionary["classes"]:
+        cursor.execute("""INSERT INTO class (name, description, dataset)
+                          VALUES (%s, %s, %s) RETURNING id""",
+                       (cls["name"], cls["description"], dataset_id))
+        cls_id = cursor.fetchone()[0]
 
-        # If anything bad happens above, it should just rollback by default.
-        connection.commit()
+        for recording_mbid in cls["recordings"]:
+            cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
+                           (cls_id, recording_mbid))
 
-    except (psycopg2.ProgrammingError, psycopg2.IntegrityError, psycopg2.OperationalError) as e:
-        # TODO: Log this.
-        return None, e
+    # If anything bad happens above, it should just rollback by default.
+    connection.commit()
 
-    return dataset_id, None
+    return dataset_id
 
 
 def update(dataset_id, dictionary, author_id):
-    try:
-        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
-        cursor = connection.cursor()
+    jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-        cursor.execute("""UPDATE dataset
-                          SET (name, description, author) = (%s, %s, %s)
-                          WHERE id = %s""",
-                       (dictionary["name"], dictionary["description"], author_id, dataset_id))
+    connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+    cursor = connection.cursor()
 
-        # Replacing old classes with new ones
-        cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
+    cursor.execute("""UPDATE dataset
+                      SET (name, description, author) = (%s, %s, %s)
+                      WHERE id = %s""",
+                   (dictionary["name"], dictionary["description"], author_id, dataset_id))
 
-        for cls in dictionary["classes"]:
-            cursor.execute("""INSERT INTO class (name, description, dataset)
-                              VALUES (%s, %s, %s) RETURNING id""",
-                           (cls["name"], cls["description"], dataset_id))
-            cls_id = cursor.fetchone()[0]
+    # Replacing old classes with new ones
+    cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
 
-            for recording_mbid in cls["recordings"]:
-                cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
-                               (cls_id, recording_mbid))
+    for cls in dictionary["classes"]:
+        cursor.execute("""INSERT INTO class (name, description, dataset)
+                          VALUES (%s, %s, %s) RETURNING id""",
+                       (cls["name"], cls["description"], dataset_id))
+        cls_id = cursor.fetchone()[0]
 
-        # If anything bad happens above, it should just rollback by default.
-        connection.commit()
+        for recording_mbid in cls["recordings"]:
+            cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
+                           (cls_id, recording_mbid))
 
-    except (psycopg2.ProgrammingError, psycopg2.IntegrityError, psycopg2.OperationalError) as e:
-        # TODO: Log this.
-        return e
-
-    return None
+    # If anything bad happens above, it should just rollback by default.
+    connection.commit()
 
 
 def get(id):

@@ -36,9 +36,19 @@ BASE_JSON_SCHEMA = {
                         "items": {"type": "string"},  # FIXME: This should be a UUID
                     },
                 },
+                "required": [
+                    "name",
+                    "description",
+                    "recordings",
+                ],
             },
         },
     },
+    "required": [
+        "name",
+        "description",
+        "classes",
+    ],
 }
 
 JSON_SCHEMA_COMPLETE = copy.deepcopy(BASE_JSON_SCHEMA)

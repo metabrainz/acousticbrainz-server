@@ -44,7 +44,9 @@ def create():
             success=True,
             dataset_id=dataset_id,
         )
-    return render_template('datasets/editor.html', mode="create")
+
+    else:  # GET
+        return render_template('datasets/editor.html', mode="create")
 
 
 @datasets_bp.route('/<uuid:id>/edit', methods=('GET', 'POST'))
@@ -78,8 +80,13 @@ def edit(id):
             dataset_id=id,
         )
 
-    return render_template('datasets/editor.html', mode="edit",
-                           dataset_id=str(id), dataset_name=ds['name'])
+    else:  # GET
+        return render_template(
+            'datasets/editor.html',
+            mode="edit",
+            dataset_id=str(id),
+            dataset_name=ds['name'],
+        )
 
 
 @datasets_bp.route('/<uuid:id>/delete', methods=('GET', 'POST'))
@@ -89,7 +96,7 @@ def delete(id):
     if not ds:
         raise NotFound("Can't find this dataset.")
     if ds['author'] and ds['author'] != current_user.id:
-        raise Unauthorized("You can't edit this dataset.")
+        raise Unauthorized("You can't delete this dataset.")
     if request.method == 'POST':
         dataset.delete(ds['id'])
         flash.success("Dataset has been deleted.")

@@ -27,6 +27,14 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.view", id=dataset_id))
         self.assert200(resp)
 
+    def test_view_json(self):
+        resp = self.client.get(url_for("datasets.view_json", id=self.test_uuid))
+        self.assert404(resp)
+
+        dataset_id = dataset.create_from_dict(self.test_data)
+        resp = self.client.get(url_for("datasets.view_json", id=dataset_id))
+        self.assert200(resp)
+
     def test_create(self):
         resp = self.client.get(url_for("datasets.create"))
         self.assertStatus(resp, 302)

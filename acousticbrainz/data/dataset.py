@@ -18,6 +18,7 @@ BASE_JSON_SCHEMA = {
             "maxLength": 100
         },
         "description": {"type": "string"},
+        "public": {"type": "boolean"},
         "classes": {
             "type": "array",
             "items": {
@@ -48,6 +49,7 @@ BASE_JSON_SCHEMA = {
         "name",
         "description",
         "classes",
+        "public",
     ],
 }
 
@@ -57,7 +59,7 @@ JSON_SCHEMA_COMPLETE["properties"]["classes"]["minItems"] = 2
 JSON_SCHEMA_COMPLETE["properties"]["classes"]["items"]["properties"]["recordings"]["minItems"] = 2
 
 
-def create_from_dict(dictionary, author_id=None):
+def create_from_dict(dictionary, author_id):
     """Creates a new dataset from a dictionary.
 
     Returns:
@@ -70,9 +72,9 @@ def create_from_dict(dictionary, author_id=None):
     connection = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = connection.cursor()
 
-    cursor.execute("""INSERT INTO dataset (id, name, description, author)
-                      VALUES (uuid_generate_v4(), %s, %s, %s) RETURNING id""",
-                   (dictionary["name"], dictionary["description"], author_id))
+    cursor.execute("""INSERT INTO dataset (id, name, description, public, author)
+                      VALUES (uuid_generate_v4(), %s, %s, %s, %s) RETURNING id""",
+                   (dictionary["name"], dictionary["description"], dictionary["public"], author_id))
     dataset_id = cursor.fetchone()[0]
 
     for cls in dictionary["classes"]:
@@ -98,9 +100,9 @@ def update(dataset_id, dictionary, author_id):
     cursor = connection.cursor()
 
     cursor.execute("""UPDATE dataset
-                      SET (name, description, author) = (%s, %s, %s)
+                      SET (name, description, public, author) = (%s, %s, %s, %s)
                       WHERE id = %s""",
-                   (dictionary["name"], dictionary["description"], author_id, dataset_id))
+                   (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
 
     # Replacing old classes with new ones
     cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
@@ -129,7 +131,7 @@ def get(id):
     try:
         connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
-        cursor.execute("""SELECT id, name, description, author, created
+        cursor.execute("""SELECT id, name, description, author, created, public
                           FROM dataset
                           WHERE id = %s""",
                        (str(id),))
@@ -146,6 +148,7 @@ def get(id):
             "description": row[2],
             "author": row[3],
             "created": row[4],
+            "public": row[5],
             "classes": get_classes(row[0]),
         }
     else:
@@ -195,7 +198,7 @@ def get_recordings_in_class(class_id):
     return recordings
 
 
-def get_by_user_id(user_id):
+def get_by_user_id(user_id, public_only=True):
     """Get datasets created by a specified user.
 
     Returns:
@@ -204,9 +207,11 @@ def get_by_user_id(user_id):
     try:
         connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
-        cursor.execute("""SELECT id, name, description, author, created
-                          FROM dataset
-                          WHERE author = %s""",
+        where = "WHERE author = %s"
+        if public_only:
+            where += " AND public = TRUE"
+        cursor.execute("SELECT id, name, description, author, created "
+                       "FROM dataset " + where,
                        (user_id,))
     except psycopg2.IntegrityError, e:
         raise BadRequest(str(e))

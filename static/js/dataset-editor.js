@@ -77,7 +77,8 @@ var Dataset = React.createClass({
                 data: {
                     name: "",
                     description: "",
-                    classes: []
+                    classes: [],
+                    public: true
                 }
             });
         }
@@ -86,6 +87,11 @@ var Dataset = React.createClass({
         var nextStateData = this.state.data;
         nextStateData.name = name;
         nextStateData.description = description;
+        this.setState({data: nextStateData});
+    },
+    handlePrivacyUpdate: function () {
+        var nextStateData = this.state.data;
+        nextStateData.public = this.refs.public.getDOMNode().checked;
         this.setState({data: nextStateData});
     },
     handleReturn: function () {
@@ -137,6 +143,16 @@ var Dataset = React.createClass({
                             onClassEdit={this.handleClassEdit}
                             onClassDelete={this.handleClassDelete} />
                         <hr />
+                        <p class="checkbox">
+                            <label>
+                                <input
+                                    ref="public"
+                                    type="checkbox"
+                                    checked={this.state.data.public}
+                                    onChange={this.handlePrivacyUpdate} />
+                                &nbsp;<strong>Make this dataset public</strong>
+                            </label>
+                        </p>
                         <SubmitDatasetButton
                             mode={this.state.mode}
                             data={this.state.data} />
@@ -220,7 +236,8 @@ var SubmitDatasetButton = React.createClass({
                 'id': this.props.data.id,  // used only with MODE_EDIT
                 'name': this.props.data.name,
                 'description': this.props.data.description,
-                'classes': this.props.data.classes
+                'classes': this.props.data.classes,
+                'public': this.props.data.public
             }),
             dataType: "json",
             contentType: "application/json; charset=utf-8",

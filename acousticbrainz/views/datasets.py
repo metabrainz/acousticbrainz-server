@@ -12,7 +12,7 @@ datasets_bp = Blueprint("datasets", __name__)
 @datasets_bp.route("/<uuid:id>")
 def view(id):
     ds = dataset.get(id)
-    if not ds:
+    if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
         raise NotFound("Can't find this dataset.")
     return render_template(
         "datasets/view.html",
@@ -24,7 +24,7 @@ def view(id):
 @datasets_bp.route("/<uuid:id>/json")
 def view_json(id):
     ds = dataset.get(id)
-    if not ds:
+    if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
         raise NotFound("Can't find this dataset.")
     return jsonify(ds)
 
@@ -54,17 +54,16 @@ def create():
         )
 
     else:  # GET
-        return render_template("datasets/editor.html", mode="create")
+        return render_template("datasets/edit.html", mode="create")
 
 
 @datasets_bp.route("/<uuid:id>/edit", methods=("GET", "POST"))
 @login_required
 def edit(id):
     ds = dataset.get(id)
-    if not ds:
+    if not ds or (not ds["public"] and ds["author"] != current_user.id):
         raise NotFound("Can't find this dataset.")
-
-    if ds["author"] and ds["author"] != current_user.id:
+    if ds["author"] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
 
     if request.method == "POST":
@@ -90,7 +89,7 @@ def edit(id):
 
     else:  # GET
         return render_template(
-            "datasets/editor.html",
+            "datasets/edit.html",
             mode="edit",
             dataset_id=str(id),
             dataset_name=ds["name"],
@@ -101,15 +100,17 @@ def edit(id):
 @login_required
 def delete(id):
     ds = dataset.get(id)
-    if not ds:
+    if not ds or (not ds["public"] and ds["author"] != current_user.id):
         raise NotFound("Can't find this dataset.")
-    if ds["author"] and ds["author"] != current_user.id:
+    if ds["author"] != current_user.id:
         raise Unauthorized("You can't delete this dataset.")
+
     if request.method == "POST":
         dataset.delete(ds["id"])
         flash.success("Dataset has been deleted.")
         return redirect(url_for("user.profile", musicbrainz_id=current_user.musicbrainz_id))
-    return render_template("datasets/delete.html", dataset=ds)
+    else:  # GET
+        return render_template("datasets/delete.html", dataset=ds)
 
 
 @datasets_bp.route("/recording/<uuid:mbid>")

@@ -14,6 +14,7 @@ class DatasetTestCase(ServerTestCase):
             "name": "Test",
             "description": "",
             "classes": [],
+            "public": True,
         }
 
     def test_create_from_dict(self):

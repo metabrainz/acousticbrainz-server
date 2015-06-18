@@ -17,13 +17,14 @@ class DatasetsViewsTestCase(ServerTestCase):
             "name": "Test",
             "description": "",
             "classes": [],
+            "public": True,
         }
 
     def test_view(self):
         resp = self.client.get(url_for("datasets.view", id=self.test_uuid))
         self.assert404(resp)
 
-        dataset_id = dataset.create_from_dict(self.test_data)
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         resp = self.client.get(url_for("datasets.view", id=dataset_id))
         self.assert200(resp)
 
@@ -31,7 +32,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.view_json", id=self.test_uuid))
         self.assert404(resp)
 
-        dataset_id = dataset.create_from_dict(self.test_data)
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         resp = self.client.get(url_for("datasets.view_json", id=dataset_id))
         self.assert200(resp)
 
@@ -62,7 +63,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
     def test_edit(self):
         # Should redirect to login page even if trying to edit dataset that
-        # doesn"t exist.
+        # doesn't exist.
         resp = self.client.get(url_for("datasets.edit", id=self.test_uuid))
         self.assertStatus(resp, 302)
 
@@ -103,7 +104,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
     def test_delete(self):
         # Should redirect to login page even if trying to delete dataset that
-        # doesn"t exist.
+        # doesn't exist.
         resp = self.client.get(url_for("datasets.delete", id=self.test_uuid))
         self.assertStatus(resp, 302)
 

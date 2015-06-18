@@ -7,6 +7,8 @@ index_bp = Blueprint('index', __name__)
 @index_bp.route("/")
 def index():
     stats, last_collected = get_stats()
+    for key in stats:
+        stats[key] = "{:,}".format(stats[key])
     return render_template("index/index.html", stats=stats, last_collected=last_collected,
                            last_submitted_data=get_last_submitted_tracks())
 

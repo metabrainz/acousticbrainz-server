@@ -94,6 +94,7 @@ def create_from_dict(dictionary, author_id):
 
 
 def update(dataset_id, dictionary, author_id):
+    # TODO(roman): Make author_id argument optional (keep old author if None).
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
     connection = psycopg2.connect(current_app.config["PG_CONNECT"])
@@ -149,13 +150,13 @@ def get(id):
             "author": row[3],
             "created": row[4],
             "public": row[5],
-            "classes": get_classes(row[0]),
+            "classes": _get_classes(row[0]),
         }
     else:
         return None
 
 
-def get_classes(dataset_id):
+def _get_classes(dataset_id):
     try:
         connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
@@ -175,12 +176,12 @@ def get_classes(dataset_id):
             "id": row[0],
             "name": row[1],
             "description": row[2],
-            "recordings": get_recordings_in_class(row[0])
+            "recordings": _get_recordings_in_class(row[0])
         })
     return classes
 
 
-def get_recordings_in_class(class_id):
+def _get_recordings_in_class(class_id):
     try:
         connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()

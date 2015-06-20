@@ -17,7 +17,7 @@ BASE_JSON_SCHEMA = {
             "minLength": 1,
             "maxLength": 100
         },
-        "description": {"type": "string"},
+        "description": {"type": ["string", "null"]},
         "public": {"type": "boolean"},
         "classes": {
             "type": "array",
@@ -30,7 +30,7 @@ BASE_JSON_SCHEMA = {
                         "minLength": 1,
                         "maxLength": 100
                     },
-                    "description": {"type": "string"},
+                    "description": {"type": ["string", "null"]},
                     "recordings": {
                         # CLASS_MEMBER
                         "type": "array",

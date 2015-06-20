@@ -34,7 +34,11 @@ BASE_JSON_SCHEMA = {
                     "recordings": {
                         # CLASS_MEMBER
                         "type": "array",
-                        "items": {"type": "string"},  # FIXME: This should be a UUID
+                        "items": {
+                            # UUID (MusicBrainz ID)
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                        },
                     },
                 },
                 "required": [

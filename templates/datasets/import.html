@@ -7,10 +7,11 @@
     <h2 class="page-title">Datasets</h2>
     <h3>Import dataset</h3>
 
-    <p>
-      You can import datasets in <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</a>
-      format.
-    </p>
+    <div class="alert alert-info" role="alert">
+      <strong>You can import datasets in <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</a> format.</strong>
+      Each row in the file must contain information about a single class. First
+      column is a class name followed by MBIDs of recordings in that class.
+    </div>
 
     {% for field in form.errors %}
       {% for error in form.errors[field] %}
@@ -30,18 +31,18 @@
         </div>
         <div class="form-group">
           <label class="col-sm-2 control-label">{{ form.description.label.text }}</label>
-          <div class="col-sm-5">{{ form.description(class="form-control") }}</div>
+          <div class="col-sm-4">{{ form.description(class="form-control") }}</div>
         </div>
         <div class="form-group">
           <label class="col-sm-2 control-label">
             {{ form.file.label.text }}
             <span style="color: red">*</span>
           </label>
-          <div class="col-sm-5">{{ form.file(class="form-control", required="required") }}</div>
+          <div class="col-sm-4">{{ form.file(class="form-control", required="required") }}</div>
         </div>
       </fieldset>
       <div class="form-group">
-        <div class="col-sm-offset-2 col-sm-10">
+        <div class="col-sm-offset-2 col-sm-4">
           <button type="submit" class="btn btn-primary">Import</button>
         </div>
       </div>

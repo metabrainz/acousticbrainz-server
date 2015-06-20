@@ -1,4 +1,5 @@
 import psycopg2
+from acousticbrainz.external import musicbrainz
 from acousticbrainz.utils import sanity_check_data, clean_metadata, interpret_high_level
 from acousticbrainz.data.exceptions import NoDataFoundException
 from werkzeug.exceptions import BadRequest, ServiceUnavailable, InternalServerError, NotFound
@@ -43,6 +44,12 @@ def submit_low_level_data(mbid, data):
         raise BadRequest("The musicbrainz_trackid/musicbrainz_recordingid in"
                          "the submitted data does not match the MBID that is"
                          "part of this resource URL.")
+
+    # Check if MBID is legit
+    try:
+        musicbrainz.get_recording_by_id(mbid)
+    except musicbrainz.DataUnavailable:
+        raise BadRequest("Can't find recording in MusicBrainz.")
 
     # The data looks good, lets see about saving it
     is_lossless_submit = data['metadata']['audio_properties']['lossless']

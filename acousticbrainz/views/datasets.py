@@ -1,10 +1,15 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from werkzeug.exceptions import NotFound, Unauthorized
+from flask_wtf import Form
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+from wtforms import StringField, TextAreaField
+from wtforms.validators import DataRequired
+from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from acousticbrainz.data import dataset, user as user_data
 from acousticbrainz.external import musicbrainz
 from acousticbrainz import flash
 import jsonschema
+import csv
 
 datasets_bp = Blueprint("datasets", __name__)
 
@@ -55,6 +60,40 @@ def create():
 
     else:  # GET
         return render_template("datasets/edit.html", mode="create")
+
+
+@datasets_bp.route("/import", methods=("GET", "POST"))
+@login_required
+def import_csv():
+    form = CSVImportForm()
+    if form.validate_on_submit():
+        dataset_dict = {
+            "name": form.name.data,
+            "description": form.description.data,
+            "classes": _parse_dataset_csv(request.files[form.file.name]),
+            "public": False,
+        }
+        try:
+            dataset_id = dataset.create_from_dict(dataset_dict, current_user.id)
+        except jsonschema.ValidationError as e:
+            raise BadRequest(str(e))
+        flash.info("Dataset has been imported successfully.")
+        return redirect(url_for(".edit", id=dataset_id))
+
+    else:
+        return render_template("datasets/import.html", form=form)
+
+
+def _parse_dataset_csv(file):
+    classes = []
+    for class_row in csv.reader(file):
+        if not class_row:
+            pass  # Skipping empty row
+        classes.append({
+            "name": class_row[0],
+            "recordings": class_row[1:],
+        })
+    return classes
 
 
 @datasets_bp.route("/<uuid:id>/edit", methods=("GET", "POST"))
@@ -125,3 +164,12 @@ def recording_info(mbid):
         })
     except musicbrainz.DataUnavailable as e:
         return jsonify(error=str(e)), 404
+
+
+class CSVImportForm(Form):
+    name = StringField("Name", validators=[DataRequired("Dataset name is required!")])
+    description = TextAreaField("Description")
+    file = FileField("CSV file", validators=[
+        FileRequired(),
+        FileAllowed(["csv"], "Dataset needs to be in CSV format!"),
+    ])

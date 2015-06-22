@@ -5,6 +5,9 @@
 {% block content %}
   <div id="dataset-viewer">
     <h2 class="page-title">Datasets</h2>
+    <a href="{{ url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}">
+      <strong>&larr; Back to your profile</strong>
+    </a>
     <h3>Import dataset</h3>
 
     <div class="alert alert-info" role="alert">

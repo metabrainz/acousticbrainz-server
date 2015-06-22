@@ -8,6 +8,7 @@ from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from acousticbrainz.data import dataset, user as user_data
 from acousticbrainz.external import musicbrainz
 from acousticbrainz import flash
+from collections import defaultdict
 import jsonschema
 import csv
 
@@ -85,13 +86,16 @@ def import_csv():
 
 
 def _parse_dataset_csv(file):
-    classes = []
+    classes_dict = defaultdict(list)
     for class_row in csv.reader(file):
-        if not class_row:
-            pass  # Skipping empty row
+        if len(class_row) != 2:
+            raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
+        classes_dict[class_row[1]].append(class_row[0])
+    classes = []
+    for name, recordings in classes_dict.iteritems():
         classes.append({
-            "name": class_row[0],
-            "recordings": class_row[1:],
+            "name": name,
+            "recordings": recordings,
         })
     return classes
 

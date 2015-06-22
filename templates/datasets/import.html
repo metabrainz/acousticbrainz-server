@@ -12,8 +12,9 @@
 
     <div class="alert alert-info" role="alert">
       <strong>You can import datasets in <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</a> format.</strong>
-      Each row in the file must contain information about a single class. First
-      column is a class name followed by MBIDs of recordings in that class.
+      Each row in the file must contain information about a single recording.
+      First column is a MusicBrainz ID of recording, second is a name of the
+      class this recording needs to be associated with.
     </div>
 
     {% for field in form.errors %}

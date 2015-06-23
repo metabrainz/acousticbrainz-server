@@ -1,12 +1,11 @@
 import psycopg2
-from flask import current_app
 from flask_login import UserMixin
 from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 
 def create(musicbrainz_id):
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         # TODO(roman): Do we need to make sure that musicbrainz_id is case insensitive?
         cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
@@ -25,8 +24,8 @@ def create(musicbrainz_id):
 
 def get(id):
     """Get user with a specified ID (integer)."""
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
                        (id,))
@@ -48,8 +47,8 @@ def get(id):
 
 def get_by_mb_id(musicbrainz_id):
     """Get user with a specified MusicBrainz ID."""
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config['PG_CONNECT'])
         cursor = connection.cursor()
         cursor.execute("""SELECT id, created, musicbrainz_id
                           FROM "user"

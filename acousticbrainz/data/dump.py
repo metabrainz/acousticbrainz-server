@@ -9,13 +9,11 @@ include information from the previous dumps).
 """
 from __future__ import print_function
 from collections import defaultdict
-from flask import current_app
 from datetime import datetime
 from acousticbrainz.utils import create_path
 import acousticbrainz
 import subprocess
 import tempfile
-import psycopg2
 import tarfile
 import shutil
 import os
@@ -129,8 +127,8 @@ def _copy_tables(location, start_time=None, end_time=None):
     within specified time frame. We assume that each table contains some sort
     of timestamp that can be used as a reference.
     """
-    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = conn.cursor()
+    from acousticbrainz.data import connection
+    cursor = connection.cursor()
 
     def generate_where(row_name, start_t=start_time, end_t=end_time):
         """This function generates SQL WHERE clause that can be used to select
@@ -185,8 +183,8 @@ def import_db_dump(archive_path):
 
     table_names = _TABLES.keys()
 
-    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = conn.cursor()
+    from acousticbrainz.data import connection
+    cursor = connection.cursor()
 
     with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
         for member in tar:
@@ -208,7 +206,7 @@ def import_db_dump(archive_path):
                     cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
                                      columns=_TABLES[file_name])
 
-    conn.commit()
+    connection.commit()
     pxz.stdout.close()
 
 
@@ -237,8 +235,8 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
-        db = psycopg2.connect(current_app.config["PG_CONNECT"])
-        cursor = db.cursor()
+        from acousticbrainz.data import connection
+        cursor = connection.cursor()
 
         mbid_occurences = defaultdict(int)
 
@@ -265,7 +263,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
             where = ""
         cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
 
-        cursor_inner = db.cursor()
+        cursor_inner = connection.cursor()
         temp_dir = tempfile.mkdtemp()
 
         dumped_count = 0
@@ -333,8 +331,8 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
-        db = psycopg2.connect(current_app.config["PG_CONNECT"])
-        cursor = db.cursor()
+        from acousticbrainz.data import connection
+        cursor = connection.cursor()
 
         mbid_occurences = defaultdict(int)
 
@@ -364,7 +362,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                           WHERE hl.data = hlj.id %s
                           ORDER BY mbid""" % where)
 
-        cursor_inner = db.cursor()
+        cursor_inner = connection.cursor()
         temp_dir = tempfile.mkdtemp()
 
         dumped_count = 0
@@ -414,7 +412,8 @@ def list_incremental_dumps():
         List of (id, created) pairs ordered by dump identifier, or None if
         there are no incremental dumps yet.
     """
-    cursor = psycopg2.connect(current_app.config["PG_CONNECT"]).cursor()
+    from acousticbrainz.data import connection
+    cursor = connection.cursor()
     cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
     return cursor.fetchall()
 
@@ -451,8 +450,8 @@ def _any_new_data(from_time):
         True if there is new data in one of tables that support incremental
         dumps, False if there is no new data there.
     """
-    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = conn.cursor()
+    from acousticbrainz.data import connection
+    cursor = connection.cursor()
     cursor.execute("SELECT count(*) FROM lowlevel WHERE submitted > %s", (from_time,))
     lowlevel_count = cursor.fetchone()[0]
     cursor.execute("SELECT count(*) FROM highlevel WHERE submitted > %s", (from_time,))
@@ -462,17 +461,18 @@ def _any_new_data(from_time):
 
 def _create_new_inc_dump_record():
     """Creates new record for incremental dump and returns its ID and creation time."""
-    db = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = db.cursor()
+    from acousticbrainz.data import connection
+    cursor = connection.cursor()
     cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
-    db.commit()
+    connection.commit()
     row = cursor.fetchone()
     print("Created new incremental dump record (ID: %s)." % row[0])
     return row
 
 
 def _get_incremental_dump_timestamp(dump_id=None):
-    cursor = psycopg2.connect(current_app.config["PG_CONNECT"]).cursor()
+    from acousticbrainz.data import connection
+    cursor = connection.cursor()
     if dump_id:
         cursor.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
     else:

@@ -25,6 +25,10 @@ def create_app():
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
 
+    # Database connection
+    from acousticbrainz import data
+    data.init_connection(app.config['PG_CONNECT'])
+
     # Memcached
     if 'MEMCACHED_SERVERS' in app.config:
         from acousticbrainz import cache

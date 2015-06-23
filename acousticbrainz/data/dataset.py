@@ -1,8 +1,8 @@
 import psycopg2
 import copy
 import jsonschema
-from flask import current_app
 from werkzeug.exceptions import BadRequest, ServiceUnavailable
+
 
 # JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
 # defines basic structure of a dataset. JSON_SCHEMA_COMPLETE adds additional
@@ -71,7 +71,7 @@ def create_from_dict(dictionary, author_id):
     """
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+    from acousticbrainz.data import connection
     cursor = connection.cursor()
 
     if "description" not in dictionary:
@@ -104,7 +104,7 @@ def update(dataset_id, dictionary, author_id):
     # TODO(roman): Make author_id argument optional (keep old author if None).
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    connection = psycopg2.connect(current_app.config["PG_CONNECT"])
+    from acousticbrainz.data import connection
     cursor = connection.cursor()
 
     if "description" not in dictionary:
@@ -141,8 +141,8 @@ def get(id):
         Dictionary with dataset details if it has been found, None
         otherwise.
     """
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
         cursor.execute("""SELECT id, name, description, author, created, public
                           FROM dataset
@@ -169,8 +169,8 @@ def get(id):
 
 
 def _get_classes(dataset_id):
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
         cursor.execute("""SELECT id, name, description
                           FROM class
@@ -194,8 +194,8 @@ def _get_classes(dataset_id):
 
 
 def _get_recordings_in_class(class_id):
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
         cursor.execute("""SELECT mbid FROM class_member WHERE class = %s""",
                        (class_id,))
@@ -217,8 +217,8 @@ def get_by_user_id(user_id, public_only=True):
     Returns:
         List of dictionaries with dataset details.
     """
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
         where = "WHERE author = %s"
         if public_only:
@@ -242,8 +242,8 @@ def get_by_user_id(user_id, public_only=True):
 
 def delete(id):
     """Delete dataset with a specified ID."""
+    from acousticbrainz.data import connection
     try:
-        connection = psycopg2.connect(current_app.config["PG_CONNECT"])
         cursor = connection.cursor()
         cursor.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
         connection.commit()

@@ -65,15 +65,15 @@
             <tbody>
             <tr>
               <th>Unique</th>
-              <td>{{ stats['lowlevel-lossy-unique'] }}</td>
-              <td>{{ stats['lowlevel-lossless-unique'] }}</td>
-              <td><strong>{{ stats['lowlevel-lossy-unique'] + stats['lowlevel-lossless-unique'] }}</strong></td>
+              <td>{{ "{:,}".format(stats['lowlevel-lossy-unique']) }}</td>
+              <td>{{ "{:,}".format(stats['lowlevel-lossless-unique']) }}</td>
+              <td><strong>{{ "{:,}".format(stats['lowlevel-lossy-unique'] + stats['lowlevel-lossless-unique']) }}</strong></td>
             </tr>
             <tr>
               <th>All</th>
-              <td>{{ stats['lowlevel-lossy'] }}</td>
-              <td>{{ stats['lowlevel-lossless'] }}</td>
-              <td><strong>{{ stats['lowlevel-lossy'] + stats['lowlevel-lossless'] }}</strong></td>
+              <td>{{ "{:,}".format(stats['lowlevel-lossy']) }}</td>
+              <td>{{ "{:,}".format(stats['lowlevel-lossless']) }}</td>
+              <td><strong>{{ "{:,}".format(stats['lowlevel-lossy'] + stats['lowlevel-lossless']) }}</strong></td>
             </tr>
             </tbody>
           </table>

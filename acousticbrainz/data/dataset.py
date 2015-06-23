@@ -17,7 +17,7 @@ BASE_JSON_SCHEMA = {
             "minLength": 1,
             "maxLength": 100
         },
-        "description": {"type": "string"},
+        "description": {"type": ["string", "null"]},
         "public": {"type": "boolean"},
         "classes": {
             "type": "array",
@@ -30,16 +30,19 @@ BASE_JSON_SCHEMA = {
                         "minLength": 1,
                         "maxLength": 100
                     },
-                    "description": {"type": "string"},
+                    "description": {"type": ["string", "null"]},
                     "recordings": {
                         # CLASS_MEMBER
                         "type": "array",
-                        "items": {"type": "string"},  # FIXME: This should be a UUID
+                        "items": {
+                            # UUID (MusicBrainz ID)
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+                        },
                     },
                 },
                 "required": [
                     "name",
-                    "description",
                     "recordings",
                 ],
             },
@@ -47,7 +50,6 @@ BASE_JSON_SCHEMA = {
     },
     "required": [
         "name",
-        "description",
         "classes",
         "public",
     ],
@@ -72,12 +74,17 @@ def create_from_dict(dictionary, author_id):
     connection = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = connection.cursor()
 
+    if "description" not in dictionary:
+        dictionary["description"] = None
+
     cursor.execute("""INSERT INTO dataset (id, name, description, public, author)
                       VALUES (uuid_generate_v4(), %s, %s, %s, %s) RETURNING id""",
                    (dictionary["name"], dictionary["description"], dictionary["public"], author_id))
     dataset_id = cursor.fetchone()[0]
 
     for cls in dictionary["classes"]:
+        if "description" not in cls:
+            cls["description"] = None
         cursor.execute("""INSERT INTO class (name, description, dataset)
                           VALUES (%s, %s, %s) RETURNING id""",
                        (cls["name"], cls["description"], dataset_id))
@@ -100,6 +107,9 @@ def update(dataset_id, dictionary, author_id):
     connection = psycopg2.connect(current_app.config["PG_CONNECT"])
     cursor = connection.cursor()
 
+    if "description" not in dictionary:
+        dictionary["description"] = None
+
     cursor.execute("""UPDATE dataset
                       SET (name, description, public, author) = (%s, %s, %s, %s)
                       WHERE id = %s""",
@@ -109,6 +119,8 @@ def update(dataset_id, dictionary, author_id):
     cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
 
     for cls in dictionary["classes"]:
+        if "description" not in cls:
+            cls["description"] = None
         cursor.execute("""INSERT INTO class (name, description, dataset)
                           VALUES (%s, %s, %s) RETURNING id""",
                        (cls["name"], cls["description"], dataset_id))

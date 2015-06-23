@@ -18,6 +18,9 @@
       <a class="btn btn-success btn-xs" href="{{ url_for('datasets.create') }}" role="button">
         Create new dataset
       </a>
+      <a class="btn btn-default btn-xs" href="{{ url_for('datasets.import_csv') }}" role="button">
+        Import from CSV
+      </a>
     </p>
   {% endif %}
   {% if datasets %}

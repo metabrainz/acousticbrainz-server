@@ -9,6 +9,6 @@ def init_connection(dsn):
 
 def run_sql_script(sql_file_path):
     global connection
-    cursor = connection.cursor()
-    with open(sql_file_path) as sql:
-        cursor.execute(sql.read())
+    with connection.cursor() as cursor:
+        with open(sql_file_path) as sql:
+            cursor.execute(sql.read())

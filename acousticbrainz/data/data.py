@@ -1,7 +1,6 @@
-import psycopg2
 from acousticbrainz.utils import sanity_check_data, clean_metadata, interpret_high_level
 from acousticbrainz.data.exceptions import NoDataFoundException
-from werkzeug.exceptions import BadRequest, ServiceUnavailable, InternalServerError, NotFound
+from werkzeug.exceptions import BadRequest, NotFound
 from flask import current_app
 from hashlib import sha256
 import json
@@ -52,96 +51,65 @@ def submit_low_level_data(mbid, data):
 
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            # Checking to see if we already have this data
-            cursor.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
+        # Checking to see if we already have this data
+        cursor.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
-            # if we don't have this data already, add it
-            sha_values = [v[0] for v in cursor.fetchall()]
+        # if we don't have this data already, add it
+        sha_values = [v[0] for v in cursor.fetchall()]
 
-            if data_sha256 not in sha_values:
-                current_app.logger.info("Saved %s" % mbid)
-                cursor.execute(
-                    "INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
-                    "VALUES (%s, %s, %s, %s, %s)",
-                    (mbid, build_sha1, data_sha256, is_lossless_submit, data_json)
-                )
-                connection.commit()
-                return ""
+        if data_sha256 not in sha_values:
+            current_app.logger.info("Saved %s" % mbid)
+            cursor.execute(
+                "INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
+                "VALUES (%s, %s, %s, %s, %s)",
+                (mbid, build_sha1, data_sha256, is_lossless_submit, data_json)
+            )
+            connection.commit()
+            return ""
 
-            current_app.logger.info("Already have %s" % data_sha256)
-
-        except psycopg2.ProgrammingError as e:
-            raise BadRequest(e)
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
+        current_app.logger.info("Already have %s" % data_sha256)
 
 
 def load_low_level(mbid, offset=0):
     """Load low-level data for a given MBID."""
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute(
-                "SELECT data::text FROM lowlevel WHERE mbid = %s OFFSET %s",
-                (str(mbid), offset)
-            )
-            if not cursor.rowcount:
-                raise NotFound
+        cursor.execute(
+            "SELECT data::text FROM lowlevel WHERE mbid = %s OFFSET %s",
+            (str(mbid), offset)
+        )
+        if not cursor.rowcount:
+            raise NotFound
 
-            row = cursor.fetchone()
-            return row[0]
-
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
-
-    return InternalServerError("whoops, looks like a cock-up on our part!")
+        row = cursor.fetchone()
+        return row[0]
 
 
 def load_high_level(mbid):
     """Load high-level data for a given MBID."""
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute("""SELECT hlj.data::text
-                                FROM highlevel hl
-                                JOIN highlevel_json hlj
-                                  ON hl.data = hlj.id
-                               WHERE mbid = %s""", (str(mbid), ))
-            if not cursor.rowcount:
-                raise NotFound
+        cursor.execute("""SELECT hlj.data::text
+                            FROM highlevel hl
+                            JOIN highlevel_json hlj
+                              ON hl.data = hlj.id
+                           WHERE mbid = %s""", (str(mbid), ))
+        if not cursor.rowcount:
+            raise NotFound
 
-            row = cursor.fetchone()
-            return row[0]
-
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
-
-    return InternalServerError("Bummer, dude.")
+        row = cursor.fetchone()
+        return row[0]
 
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute(
-                "SELECT count(*) FROM lowlevel WHERE mbid = %s",
-                (str(mbid),)
-            )
-            return cursor.fetchone()[0]
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
-
-    return InternalServerError("Ouch!")
+        cursor.execute(
+            "SELECT count(*) FROM lowlevel WHERE mbid = %s",
+            (str(mbid),)
+        )
+        return cursor.fetchone()[0]
 
 
 def get_summary_data(mbid):
@@ -150,48 +118,40 @@ def get_summary_data(mbid):
     mbid = str(mbid)
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
-            if not cursor.rowcount:
-                raise NoDataFoundException("Can't find low-level data for this recording.")
+        cursor.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
+        if not cursor.rowcount:
+            raise NoDataFoundException("Can't find low-level data for this recording.")
 
-            row = cursor.fetchone()
-            lowlevel = row[0]
-            if 'artist' not in lowlevel['metadata']['tags']:
-                lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
-            if 'release' not in lowlevel['metadata']['tags']:
-                lowlevel['metadata']['tags']['release'] = ["[unknown]"]
-            if 'title' not in lowlevel['metadata']['tags']:
-                lowlevel['metadata']['tags']['title'] = ["[unknown]"]
+        row = cursor.fetchone()
+        lowlevel = row[0]
+        if 'artist' not in lowlevel['metadata']['tags']:
+            lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
+        if 'release' not in lowlevel['metadata']['tags']:
+            lowlevel['metadata']['tags']['release'] = ["[unknown]"]
+        if 'title' not in lowlevel['metadata']['tags']:
+            lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
-            lowlevel['metadata']['audio_properties']['length_formatted'] = \
-                time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
+        lowlevel['metadata']['audio_properties']['length_formatted'] = \
+            time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
 
-            summary['lowlevel'] = lowlevel
+        summary['lowlevel'] = lowlevel
 
-            cursor.execute(
-                "SELECT hlj.data "
-                "FROM highlevel hl, highlevel_json hlj "
-                "WHERE hl.data = hlj.id "
-                "AND hl.mbid = %s",
-                (mbid, )
-            )
-            if cursor.rowcount:
-                summary['highlevel'] = cursor.fetchone()[0]
-                try:
-                    summary['genres'], summary['moods'], summary['other'] = \
-                        interpret_high_level(summary['highlevel'])
-                except KeyError:
-                    pass
+        cursor.execute(
+            "SELECT hlj.data "
+            "FROM highlevel hl, highlevel_json hlj "
+            "WHERE hl.data = hlj.id "
+            "AND hl.mbid = %s",
+            (mbid, )
+        )
+        if cursor.rowcount:
+            summary['highlevel'] = cursor.fetchone()[0]
+            try:
+                summary['genres'], summary['moods'], summary['other'] = \
+                    interpret_high_level(summary['highlevel'])
+            except KeyError:
+                pass
 
-            return summary
-
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
-
-    return InternalServerError("whoops!")
+        return summary
 
 
 def run_sql_script(sql_file_path):

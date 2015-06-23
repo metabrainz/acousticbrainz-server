@@ -1,39 +1,23 @@
-import psycopg2
 from flask_login import UserMixin
-from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 
 def create(musicbrainz_id):
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            # TODO(roman): Do we need to make sure that musicbrainz_id is case insensitive?
-            cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
-                           (musicbrainz_id,))
-            connection.commit()
-            new_id = cursor.fetchone()[0]
-        except psycopg2.ProgrammingError as e:
-            raise BadRequest(e)
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
-
-    return new_id
+        # TODO(roman): Do we need to make sure that musicbrainz_id is case insensitive?
+        cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
+                       (musicbrainz_id,))
+        connection.commit()
+        new_id = cursor.fetchone()[0]
+        return new_id
 
 
 def get(id):
     """Get user with a specified ID (integer)."""
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
-                           (id,))
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
-
+        cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
+                       (id,))
         row = cursor.fetchone()
         if row:
             return User(
@@ -49,16 +33,12 @@ def get_by_mb_id(musicbrainz_id):
     """Get user with a specified MusicBrainz ID."""
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute("""SELECT id, created, musicbrainz_id
-                              FROM "user"
-                              WHERE LOWER(musicbrainz_id) = LOWER(%s)""",
-                           (musicbrainz_id,))
-        except psycopg2.IntegrityError as e:
-            raise BadRequest(e)
-        except psycopg2.OperationalError as e:
-            raise ServiceUnavailable(e)
-
+        cursor.execute(
+            'SELECT id, created, musicbrainz_id '
+            'FROM "user" '
+            'WHERE LOWER(musicbrainz_id) = LOWER(%s)',
+            (musicbrainz_id,)
+        )
         row = cursor.fetchone()
         if row:
             return User(

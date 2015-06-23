@@ -1,7 +1,5 @@
-import psycopg2
 import copy
 import jsonschema
-from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 
 # JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
@@ -141,16 +139,12 @@ def get(id):
     """
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-                cursor.execute("""SELECT id, name, description, author, created, public
-                                  FROM dataset
-                                  WHERE id = %s""",
-                               (str(id),))
-        except psycopg2.IntegrityError, e:
-            raise BadRequest(str(e))
-        except psycopg2.OperationalError, e:
-            raise ServiceUnavailable(str(e))
-
+        cursor.execute(
+            "SELECT id, name, description, author, created, public "
+            "FROM dataset "
+            "WHERE id = %s",
+            (str(id),)
+        )
         if cursor.rowcount > 0:
             row = cursor.fetchone()
             return {
@@ -169,16 +163,12 @@ def get(id):
 def _get_classes(dataset_id):
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute("""SELECT id, name, description
-                              FROM class
-                              WHERE dataset = %s""",
-                           (dataset_id,))
-        except psycopg2.IntegrityError, e:
-            raise BadRequest(str(e))
-        except psycopg2.OperationalError, e:
-            raise ServiceUnavailable(str(e))
-
+        cursor.execute(
+            "SELECT id, name, description "
+            "FROM class "
+            "WHERE dataset = %s",
+            (dataset_id,)
+        )
         rows = cursor.fetchall()
         classes = []
         for row in rows:
@@ -194,14 +184,8 @@ def _get_classes(dataset_id):
 def _get_recordings_in_class(class_id):
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute("""SELECT mbid FROM class_member WHERE class = %s""",
-                           (class_id,))
-        except psycopg2.IntegrityError, e:
-            raise BadRequest(str(e))
-        except psycopg2.OperationalError, e:
-            raise ServiceUnavailable(str(e))
-
+        cursor.execute("SELECT mbid FROM class_member WHERE class = %s",
+                       (class_id,))
         rows = cursor.fetchall()
         recordings = []
         for row in rows:
@@ -217,18 +201,12 @@ def get_by_user_id(user_id, public_only=True):
     """
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            where = "WHERE author = %s"
-            if public_only:
-                where += " AND public = TRUE"
-            cursor.execute("SELECT id, name, description, author, created "
-                           "FROM dataset " + where,
-                           (user_id,))
-        except psycopg2.IntegrityError, e:
-            raise BadRequest(str(e))
-        except psycopg2.OperationalError, e:
-            raise ServiceUnavailable(str(e))
-
+        where = "WHERE author = %s"
+        if public_only:
+            where += " AND public = TRUE"
+        cursor.execute("SELECT id, name, description, author, created "
+                       "FROM dataset " + where,
+                       (user_id,))
         return [{
             "id": row[0],
             "name": row[1],
@@ -242,10 +220,5 @@ def delete(id):
     """Delete dataset with a specified ID."""
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        try:
-            cursor.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
-            connection.commit()
-        except psycopg2.IntegrityError, e:
-            raise BadRequest(str(e))
-        except psycopg2.OperationalError, e:
-            raise ServiceUnavailable(str(e))
+        cursor.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
+        connection.commit()

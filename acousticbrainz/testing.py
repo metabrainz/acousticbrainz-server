@@ -25,17 +25,16 @@ class ServerTestCase(TestCase):
 
     def truncate_all(self):
         from acousticbrainz.data import connection
-        cursor = connection.cursor()
-        cursor.execute('TRUNCATE highlevel_json    RESTART IDENTITY CASCADE;')
-        cursor.execute('TRUNCATE highlevel         RESTART IDENTITY CASCADE;')
-        cursor.execute('TRUNCATE lowlevel          RESTART IDENTITY CASCADE;')
-        cursor.execute('TRUNCATE statistics        RESTART IDENTITY CASCADE;')
-        cursor.execute('TRUNCATE incremental_dumps RESTART IDENTITY CASCADE;')
-        cursor.execute('TRUNCATE "user"            RESTART IDENTITY CASCADE;')
-        cursor.execute('TRUNCATE dataset           RESTART IDENTITY CASCADE;')
-        cursor.execute('TRUNCATE class             RESTART IDENTITY CASCADE;')
+        with connection.cursor() as cursor:
+            cursor.execute('TRUNCATE highlevel_json    RESTART IDENTITY CASCADE;')
+            cursor.execute('TRUNCATE highlevel         RESTART IDENTITY CASCADE;')
+            cursor.execute('TRUNCATE lowlevel          RESTART IDENTITY CASCADE;')
+            cursor.execute('TRUNCATE statistics        RESTART IDENTITY CASCADE;')
+            cursor.execute('TRUNCATE incremental_dumps RESTART IDENTITY CASCADE;')
+            cursor.execute('TRUNCATE "user"            RESTART IDENTITY CASCADE;')
+            cursor.execute('TRUNCATE dataset           RESTART IDENTITY CASCADE;')
+            cursor.execute('TRUNCATE class             RESTART IDENTITY CASCADE;')
         connection.commit()
-        cursor.close()
 
     def load_low_level_data(self, mbid):
         """Loads low-level data from JSON file in `acousticbrainz/data/test_data`

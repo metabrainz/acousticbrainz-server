@@ -72,27 +72,26 @@ def create_from_dict(dictionary, author_id):
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
     from acousticbrainz.data import connection
-    cursor = connection.cursor()
+    with connection.cursor() as cursor:
+        if "description" not in dictionary:
+            dictionary["description"] = None
 
-    if "description" not in dictionary:
-        dictionary["description"] = None
+        cursor.execute("""INSERT INTO dataset (id, name, description, public, author)
+                          VALUES (uuid_generate_v4(), %s, %s, %s, %s) RETURNING id""",
+                       (dictionary["name"], dictionary["description"], dictionary["public"], author_id))
+        dataset_id = cursor.fetchone()[0]
 
-    cursor.execute("""INSERT INTO dataset (id, name, description, public, author)
-                      VALUES (uuid_generate_v4(), %s, %s, %s, %s) RETURNING id""",
-                   (dictionary["name"], dictionary["description"], dictionary["public"], author_id))
-    dataset_id = cursor.fetchone()[0]
+        for cls in dictionary["classes"]:
+            if "description" not in cls:
+                cls["description"] = None
+            cursor.execute("""INSERT INTO class (name, description, dataset)
+                              VALUES (%s, %s, %s) RETURNING id""",
+                           (cls["name"], cls["description"], dataset_id))
+            cls_id = cursor.fetchone()[0]
 
-    for cls in dictionary["classes"]:
-        if "description" not in cls:
-            cls["description"] = None
-        cursor.execute("""INSERT INTO class (name, description, dataset)
-                          VALUES (%s, %s, %s) RETURNING id""",
-                       (cls["name"], cls["description"], dataset_id))
-        cls_id = cursor.fetchone()[0]
-
-        for recording_mbid in cls["recordings"]:
-            cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
-                           (cls_id, recording_mbid))
+            for recording_mbid in cls["recordings"]:
+                cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
+                               (cls_id, recording_mbid))
 
     # If anything bad happens above, it should just rollback by default.
     connection.commit()
@@ -105,30 +104,29 @@ def update(dataset_id, dictionary, author_id):
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
     from acousticbrainz.data import connection
-    cursor = connection.cursor()
+    with connection.cursor() as cursor:
+        if "description" not in dictionary:
+            dictionary["description"] = None
 
-    if "description" not in dictionary:
-        dictionary["description"] = None
+        cursor.execute("""UPDATE dataset
+                          SET (name, description, public, author) = (%s, %s, %s, %s)
+                          WHERE id = %s""",
+                       (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
 
-    cursor.execute("""UPDATE dataset
-                      SET (name, description, public, author) = (%s, %s, %s, %s)
-                      WHERE id = %s""",
-                   (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
+        # Replacing old classes with new ones
+        cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
 
-    # Replacing old classes with new ones
-    cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
+        for cls in dictionary["classes"]:
+            if "description" not in cls:
+                cls["description"] = None
+            cursor.execute("""INSERT INTO class (name, description, dataset)
+                              VALUES (%s, %s, %s) RETURNING id""",
+                           (cls["name"], cls["description"], dataset_id))
+            cls_id = cursor.fetchone()[0]
 
-    for cls in dictionary["classes"]:
-        if "description" not in cls:
-            cls["description"] = None
-        cursor.execute("""INSERT INTO class (name, description, dataset)
-                          VALUES (%s, %s, %s) RETURNING id""",
-                       (cls["name"], cls["description"], dataset_id))
-        cls_id = cursor.fetchone()[0]
-
-        for recording_mbid in cls["recordings"]:
-            cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
-                           (cls_id, recording_mbid))
+            for recording_mbid in cls["recordings"]:
+                cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
+                               (cls_id, recording_mbid))
 
     # If anything bad happens above, it should just rollback by default.
     connection.commit()
@@ -142,73 +140,73 @@ def get(id):
         otherwise.
     """
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""SELECT id, name, description, author, created, public
-                          FROM dataset
-                          WHERE id = %s""",
-                       (str(id),))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    with connection.cursor() as cursor:
+        try:
+                cursor.execute("""SELECT id, name, description, author, created, public
+                                  FROM dataset
+                                  WHERE id = %s""",
+                               (str(id),))
+        except psycopg2.IntegrityError, e:
+            raise BadRequest(str(e))
+        except psycopg2.OperationalError, e:
+            raise ServiceUnavailable(str(e))
 
-    if cursor.rowcount > 0:
-        row = cursor.fetchone()
-        return {
-            "id": row[0],
-            "name": row[1],
-            "description": row[2],
-            "author": row[3],
-            "created": row[4],
-            "public": row[5],
-            "classes": _get_classes(row[0]),
-        }
-    else:
-        return None
+        if cursor.rowcount > 0:
+            row = cursor.fetchone()
+            return {
+                "id": row[0],
+                "name": row[1],
+                "description": row[2],
+                "author": row[3],
+                "created": row[4],
+                "public": row[5],
+                "classes": _get_classes(row[0]),
+            }
+        else:
+            return None
 
 
 def _get_classes(dataset_id):
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""SELECT id, name, description
-                          FROM class
-                          WHERE dataset = %s""",
-                       (dataset_id,))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("""SELECT id, name, description
+                              FROM class
+                              WHERE dataset = %s""",
+                           (dataset_id,))
+        except psycopg2.IntegrityError, e:
+            raise BadRequest(str(e))
+        except psycopg2.OperationalError, e:
+            raise ServiceUnavailable(str(e))
 
-    rows = cursor.fetchall()
-    classes = []
-    for row in rows:
-        classes.append({
-            "id": row[0],
-            "name": row[1],
-            "description": row[2],
-            "recordings": _get_recordings_in_class(row[0])
-        })
-    return classes
+        rows = cursor.fetchall()
+        classes = []
+        for row in rows:
+            classes.append({
+                "id": row[0],
+                "name": row[1],
+                "description": row[2],
+                "recordings": _get_recordings_in_class(row[0])
+            })
+        return classes
 
 
 def _get_recordings_in_class(class_id):
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""SELECT mbid FROM class_member WHERE class = %s""",
-                       (class_id,))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("""SELECT mbid FROM class_member WHERE class = %s""",
+                           (class_id,))
+        except psycopg2.IntegrityError, e:
+            raise BadRequest(str(e))
+        except psycopg2.OperationalError, e:
+            raise ServiceUnavailable(str(e))
 
-    rows = cursor.fetchall()
-    recordings = []
-    for row in rows:
-        recordings.append(row[0])
-    return recordings
+        rows = cursor.fetchall()
+        recordings = []
+        for row in rows:
+            recordings.append(row[0])
+        return recordings
 
 
 def get_by_user_id(user_id, public_only=True):
@@ -218,36 +216,36 @@ def get_by_user_id(user_id, public_only=True):
         List of dictionaries with dataset details.
     """
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        where = "WHERE author = %s"
-        if public_only:
-            where += " AND public = TRUE"
-        cursor.execute("SELECT id, name, description, author, created "
-                       "FROM dataset " + where,
-                       (user_id,))
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    with connection.cursor() as cursor:
+        try:
+            where = "WHERE author = %s"
+            if public_only:
+                where += " AND public = TRUE"
+            cursor.execute("SELECT id, name, description, author, created "
+                           "FROM dataset " + where,
+                           (user_id,))
+        except psycopg2.IntegrityError, e:
+            raise BadRequest(str(e))
+        except psycopg2.OperationalError, e:
+            raise ServiceUnavailable(str(e))
 
-    return [{
-        "id": row[0],
-        "name": row[1],
-        "description": row[2],
-        "author": row[3],
-        "created": row[4],
-    } for row in cursor.fetchall()]
+        return [{
+            "id": row[0],
+            "name": row[1],
+            "description": row[2],
+            "author": row[3],
+            "created": row[4],
+        } for row in cursor.fetchall()]
 
 
 def delete(id):
     """Delete dataset with a specified ID."""
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        cursor.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
-        connection.commit()
-    except psycopg2.IntegrityError, e:
-        raise BadRequest(str(e))
-    except psycopg2.OperationalError, e:
-        raise ServiceUnavailable(str(e))
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
+            connection.commit()
+        except psycopg2.IntegrityError, e:
+            raise BadRequest(str(e))
+        except psycopg2.OperationalError, e:
+            raise ServiceUnavailable(str(e))

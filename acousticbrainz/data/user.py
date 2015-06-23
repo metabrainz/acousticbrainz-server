@@ -5,19 +5,19 @@ from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 def create(musicbrainz_id):
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        # TODO(roman): Do we need to make sure that musicbrainz_id is case insensitive?
-        cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
-                       (musicbrainz_id,))
-        connection.commit()
-        new_id = cursor.fetchone()[0]
-    except psycopg2.ProgrammingError as e:
-        raise BadRequest(e)
-    except psycopg2.IntegrityError as e:
-        raise BadRequest(e)
-    except psycopg2.OperationalError as e:
-        raise ServiceUnavailable(e)
+    with connection.cursor() as cursor:
+        try:
+            # TODO(roman): Do we need to make sure that musicbrainz_id is case insensitive?
+            cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
+                           (musicbrainz_id,))
+            connection.commit()
+            new_id = cursor.fetchone()[0]
+        except psycopg2.ProgrammingError as e:
+            raise BadRequest(e)
+        except psycopg2.IntegrityError as e:
+            raise BadRequest(e)
+        except psycopg2.OperationalError as e:
+            raise ServiceUnavailable(e)
 
     return new_id
 
@@ -25,49 +25,49 @@ def create(musicbrainz_id):
 def get(id):
     """Get user with a specified ID (integer)."""
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
-                       (id,))
-    except psycopg2.IntegrityError as e:
-        raise BadRequest(e)
-    except psycopg2.OperationalError as e:
-        raise ServiceUnavailable(e)
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
+                           (id,))
+        except psycopg2.IntegrityError as e:
+            raise BadRequest(e)
+        except psycopg2.OperationalError as e:
+            raise ServiceUnavailable(e)
 
-    row = cursor.fetchone()
-    if row:
-        return User(
-            id=row[0],
-            created=row[1],
-            musicbrainz_id=row[2],
-        )
-    else:
-        return None
+        row = cursor.fetchone()
+        if row:
+            return User(
+                id=row[0],
+                created=row[1],
+                musicbrainz_id=row[2],
+            )
+        else:
+            return None
 
 
 def get_by_mb_id(musicbrainz_id):
     """Get user with a specified MusicBrainz ID."""
     from acousticbrainz.data import connection
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""SELECT id, created, musicbrainz_id
-                          FROM "user"
-                          WHERE LOWER(musicbrainz_id) = LOWER(%s)""",
-                       (musicbrainz_id,))
-    except psycopg2.IntegrityError as e:
-        raise BadRequest(e)
-    except psycopg2.OperationalError as e:
-        raise ServiceUnavailable(e)
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("""SELECT id, created, musicbrainz_id
+                              FROM "user"
+                              WHERE LOWER(musicbrainz_id) = LOWER(%s)""",
+                           (musicbrainz_id,))
+        except psycopg2.IntegrityError as e:
+            raise BadRequest(e)
+        except psycopg2.OperationalError as e:
+            raise ServiceUnavailable(e)
 
-    row = cursor.fetchone()
-    if row:
-        return User(
-            id=row[0],
-            created=row[1],
-            musicbrainz_id=row[2],
-        )
-    else:
-        return None
+        row = cursor.fetchone()
+        if row:
+            return User(
+                id=row[0],
+                created=row[1],
+                musicbrainz_id=row[2],
+            )
+        else:
+            return None
 
 
 def get_or_create(musicbrainz_id):

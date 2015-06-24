@@ -1,4 +1,5 @@
 import psycopg2
+import psycopg2.extras
 import logging
 
 # Be careful when importing `_connection` before init_connection function is
@@ -26,7 +27,7 @@ def commit():
 def init_connection(dsn):
     global _connection
     try:
-        _connection = psycopg2.connect(dsn)
+        _connection = psycopg2.connect(dsn, cursor_factory=psycopg2.extras.DictCursor)
     except psycopg2.OperationalError as e:
         logging.error("Failed to initialize database connection: %s" % str(e))
 

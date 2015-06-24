@@ -144,16 +144,9 @@ def get(id):
             (str(id),)
         )
         if cursor.rowcount > 0:
-            row = cursor.fetchone()
-            return {
-                "id": row[0],
-                "name": row[1],
-                "description": row[2],
-                "author": row[3],
-                "created": row[4],
-                "public": row[5],
-                "classes": _get_classes(row[0]),
-            }
+            row = dict(cursor.fetchone())
+            row["classes"] = _get_classes(row["id"])
+            return row
         else:
             return None
 
@@ -169,12 +162,9 @@ def _get_classes(dataset_id):
         rows = cursor.fetchall()
         classes = []
         for row in rows:
-            classes.append({
-                "id": row[0],
-                "name": row[1],
-                "description": row[2],
-                "recordings": _get_recordings_in_class(row[0])
-            })
+            row = dict(row)
+            row["recordings"] = _get_recordings_in_class(row["id"])
+            classes.append(row)
         return classes
 
 
@@ -185,7 +175,7 @@ def _get_recordings_in_class(class_id):
         rows = cursor.fetchall()
         recordings = []
         for row in rows:
-            recordings.append(row[0])
+            recordings.append(row["mbid"])
         return recordings
 
 
@@ -202,13 +192,7 @@ def get_by_user_id(user_id, public_only=True):
         cursor.execute("SELECT id, name, description, author, created "
                        "FROM dataset " + where,
                        (user_id,))
-        return [{
-            "id": row[0],
-            "name": row[1],
-            "description": row[2],
-            "author": row[3],
-            "created": row[4],
-        } for row in cursor.fetchall()]
+        return [dict(row) for row in cursor.fetchall()]
 
 
 def delete(id):

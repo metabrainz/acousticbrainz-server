@@ -20,9 +20,9 @@ def get(id):
         row = cursor.fetchone()
         if row:
             return User(
-                id=row[0],
-                created=row[1],
-                musicbrainz_id=row[2],
+                id=row["id"],
+                created=row["created"],
+                musicbrainz_id=row["musicbrainz_id"],
             )
         else:
             return None
@@ -40,9 +40,9 @@ def get_by_mb_id(musicbrainz_id):
         row = cursor.fetchone()
         if row:
             return User(
-                id=row[0],
-                created=row[1],
-                musicbrainz_id=row[2],
+                id=row["id"],
+                created=row["created"],
+                musicbrainz_id=row["musicbrainz_id"],
             )
         else:
             return None

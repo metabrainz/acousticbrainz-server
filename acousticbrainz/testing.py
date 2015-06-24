@@ -1,6 +1,7 @@
 from flask_testing import TestCase
 from acousticbrainz import create_app
 from acousticbrainz import data
+from acousticbrainz.data import run_sql_script
 from acousticbrainz.data.data import submit_low_level_data
 import json
 import os
@@ -18,22 +19,34 @@ class ServerTestCase(TestCase):
         return app
 
     def setUp(self):
-        pass
+        self.reset_db()
 
     def tearDown(self):
-        self.truncate_all()
+        pass
 
-    def truncate_all(self):
+    def reset_db(self):
+        self.drop_tables()
+        self.init_db()
+
+    def init_db(self):
+        run_sql_script(os.path.join('admin', 'sql', 'create_tables.sql'))
+        run_sql_script(os.path.join('admin', 'sql', 'create_primary_keys.sql'))
+        run_sql_script(os.path.join('admin', 'sql', 'create_foreign_keys.sql'))
+        run_sql_script(os.path.join('admin', 'sql', 'create_indexes.sql'))
+
+    def drop_tables(self):
         from acousticbrainz.data import connection
         with connection.cursor() as cursor:
-            cursor.execute('TRUNCATE highlevel_json    RESTART IDENTITY CASCADE;')
-            cursor.execute('TRUNCATE highlevel         RESTART IDENTITY CASCADE;')
-            cursor.execute('TRUNCATE lowlevel          RESTART IDENTITY CASCADE;')
-            cursor.execute('TRUNCATE statistics        RESTART IDENTITY CASCADE;')
-            cursor.execute('TRUNCATE incremental_dumps RESTART IDENTITY CASCADE;')
-            cursor.execute('TRUNCATE "user"            RESTART IDENTITY CASCADE;')
-            cursor.execute('TRUNCATE dataset           RESTART IDENTITY CASCADE;')
-            cursor.execute('TRUNCATE class             RESTART IDENTITY CASCADE;')
+            # TODO(roman): See if there's a better way to drop all tables.
+            cursor.execute('DROP TABLE IF EXISTS highlevel_json       CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS highlevel            CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS lowlevel             CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS statistics           CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS incremental_dumps    CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS dataset_class_member CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS dataset_class        CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS dataset              CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
         connection.commit()
 
     def load_low_level_data(self, mbid):

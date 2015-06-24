@@ -35,8 +35,8 @@ class ServerTestCase(TestCase):
         run_sql_script(os.path.join('admin', 'sql', 'create_indexes.sql'))
 
     def drop_tables(self):
-        from acousticbrainz.data import connection
-        with connection.cursor() as cursor:
+        from acousticbrainz.data import _connection
+        with _connection.cursor() as cursor:
             # TODO(roman): See if there's a better way to drop all tables.
             cursor.execute('DROP TABLE IF EXISTS highlevel_json       CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS highlevel            CASCADE;')
@@ -47,7 +47,7 @@ class ServerTestCase(TestCase):
             cursor.execute('DROP TABLE IF EXISTS dataset_class        CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS dataset              CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
-        connection.commit()
+        _connection.commit()
 
     def load_low_level_data(self, mbid):
         """Loads low-level data from JSON file in `acousticbrainz/data/test_data`

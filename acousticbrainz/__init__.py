@@ -27,8 +27,6 @@ def create_app():
 
     # Database connection
     from acousticbrainz import data
-    # FIXME(roman): This fails during testing if database referenced in PG_CONNECT doesn't exist.
-    # TODO: It's probably good idea to check if PG_CONNECT is defined.
     data.init_connection(app.config['PG_CONNECT'])
 
     # Memcached

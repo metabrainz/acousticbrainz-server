@@ -1,14 +1,17 @@
 import psycopg2
+import logging
 
-# Be careful when importing this before init_connection function is called!
-connection = None
+_connection = None
 
 def init_connection(dsn):
-    global connection
-    connection = psycopg2.connect(dsn)
+    global _connection
+    try:
+        _connection = psycopg2.connect(dsn)
+    except psycopg2.OperationalError as e:
+        logging.error("Failed to initialize database connection: %s" % str(e))
 
 def run_sql_script(sql_file_path):
-    global connection
-    with connection.cursor() as cursor:
+    global _connection
+    with _connection.cursor() as cursor:
         with open(sql_file_path) as sql:
             cursor.execute(sql.read())

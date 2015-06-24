@@ -141,8 +141,8 @@ def _copy_tables(location, start_time=None, end_time=None):
         else:
             return ""
 
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
 
         # lowlevel
         with open(os.path.join(location, "lowlevel"), "w") as f:
@@ -183,9 +183,9 @@ def import_db_dump(archive_path):
 
     table_names = _TABLES.keys()
 
-    from acousticbrainz.data import connection
+    from acousticbrainz.data import _connection
 
-    with connection.cursor() as cursor:
+    with _connection.cursor() as cursor:
         with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
             for member in tar:
                 file_name = member.name.split("/")[-1]
@@ -206,7 +206,7 @@ def import_db_dump(archive_path):
                         cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
                                          columns=_TABLES[file_name])
 
-    connection.commit()
+    _connection.commit()
     pxz.stdout.close()
 
 
@@ -235,8 +235,8 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
-        from acousticbrainz.data import connection
-        with connection.cursor() as cursor:
+        from acousticbrainz.data import _connection
+        with _connection.cursor() as cursor:
 
             mbid_occurences = defaultdict(int)
 
@@ -263,7 +263,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 where = ""
             cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
 
-            with connection.cursor() as cursor_inner:
+            with _connection.cursor() as cursor_inner:
                 temp_dir = tempfile.mkdtemp()
 
                 dumped_count = 0
@@ -331,8 +331,8 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
-        from acousticbrainz.data import connection
-        with connection.cursor() as cursor:
+        from acousticbrainz.data import _connection
+        with _connection.cursor() as cursor:
             mbid_occurences = defaultdict(int)
 
             # Need to count how many duplicate MBIDs are there before start_time
@@ -361,7 +361,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                               WHERE hl.data = hlj.id %s
                               ORDER BY mbid""" % where)
 
-            with connection.cursor() as cursor_inner:
+            with _connection.cursor() as cursor_inner:
                 temp_dir = tempfile.mkdtemp()
 
                 dumped_count = 0
@@ -411,8 +411,8 @@ def list_incremental_dumps():
         List of (id, created) pairs ordered by dump identifier, or None if
         there are no incremental dumps yet.
     """
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
         return cursor.fetchall()
 
@@ -449,8 +449,8 @@ def _any_new_data(from_time):
         True if there is new data in one of tables that support incremental
         dumps, False if there is no new data there.
     """
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute("SELECT count(*) FROM lowlevel WHERE submitted > %s", (from_time,))
         lowlevel_count = cursor.fetchone()[0]
         cursor.execute("SELECT count(*) FROM highlevel WHERE submitted > %s", (from_time,))
@@ -460,18 +460,18 @@ def _any_new_data(from_time):
 
 def _create_new_inc_dump_record():
     """Creates new record for incremental dump and returns its ID and creation time."""
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
-        connection.commit()
+        _connection.commit()
         row = cursor.fetchone()
     print("Created new incremental dump record (ID: %s)." % row[0])
     return row
 
 
 def _get_incremental_dump_timestamp(dump_id=None):
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         if dump_id:
             cursor.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
         else:

@@ -2,20 +2,20 @@ from flask_login import UserMixin
 
 
 def create(musicbrainz_id):
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         # TODO(roman): Do we need to make sure that musicbrainz_id is case insensitive?
         cursor.execute('INSERT INTO "user" (musicbrainz_id) VALUES (%s) RETURNING id',
                        (musicbrainz_id,))
-        connection.commit()
+        _connection.commit()
         new_id = cursor.fetchone()[0]
         return new_id
 
 
 def get(id):
     """Get user with a specified ID (integer)."""
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute('SELECT id, created, musicbrainz_id FROM "user" WHERE id = %s',
                        (id,))
         row = cursor.fetchone()
@@ -31,8 +31,8 @@ def get(id):
 
 def get_by_mb_id(musicbrainz_id):
     """Get user with a specified MusicBrainz ID."""
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute(
             'SELECT id, created, musicbrainz_id '
             'FROM "user" '

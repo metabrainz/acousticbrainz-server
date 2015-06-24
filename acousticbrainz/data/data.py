@@ -49,8 +49,8 @@ def submit_low_level_data(mbid, data):
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json).hexdigest()
 
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         # Checking to see if we already have this data
         cursor.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
@@ -64,7 +64,7 @@ def submit_low_level_data(mbid, data):
                 "VALUES (%s, %s, %s, %s, %s)",
                 (mbid, build_sha1, data_sha256, is_lossless_submit, data_json)
             )
-            connection.commit()
+            _connection.commit()
             return ""
 
         current_app.logger.info("Already have %s" % data_sha256)
@@ -72,8 +72,8 @@ def submit_low_level_data(mbid, data):
 
 def load_low_level(mbid, offset=0):
     """Load low-level data for a given MBID."""
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute(
             "SELECT data::text FROM lowlevel WHERE mbid = %s OFFSET %s",
             (str(mbid), offset)
@@ -87,8 +87,8 @@ def load_low_level(mbid, offset=0):
 
 def load_high_level(mbid):
     """Load high-level data for a given MBID."""
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute("""SELECT hlj.data::text
                             FROM highlevel hl
                             JOIN highlevel_json hlj
@@ -103,8 +103,8 @@ def load_high_level(mbid):
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute(
             "SELECT count(*) FROM lowlevel WHERE mbid = %s",
             (str(mbid),)
@@ -116,8 +116,8 @@ def get_summary_data(mbid):
     """Fetches the low-level and high-level features from for the specified MBID."""
     summary = {}
     mbid = str(mbid)
-    from acousticbrainz.data import connection
-    with connection.cursor() as cursor:
+    from acousticbrainz.data import _connection
+    with _connection.cursor() as cursor:
         cursor.execute("SELECT data FROM lowlevel WHERE mbid = %s", (mbid, ))
         if not cursor.rowcount:
             raise NoDataFoundException("Can't find low-level data for this recording.")
@@ -155,7 +155,7 @@ def get_summary_data(mbid):
 
 
 def run_sql_script(sql_file_path):
-    from acousticbrainz.data import connection
-    cursor = connection.cursor()
+    from acousticbrainz.data import _connection
+    cursor = _connection.cursor()
     with open(sql_file_path) as sql:
         cursor.execute(sql.read())

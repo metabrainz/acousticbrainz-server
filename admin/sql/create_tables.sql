@@ -51,14 +51,14 @@ CREATE TABLE dataset (
   created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE class (
+CREATE TABLE dataset_class (
   id          SERIAL,
   name        VARCHAR NOT NULL,
   description TEXT,
   dataset     UUID    NOT NULL -- FK to dataset
 );
 
-CREATE TABLE class_member (
+CREATE TABLE dataset_class_member (
   class INT, -- FK to class
   mbid  UUID
 );

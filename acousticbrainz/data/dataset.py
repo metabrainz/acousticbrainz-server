@@ -82,13 +82,13 @@ def create_from_dict(dictionary, author_id):
         for cls in dictionary["classes"]:
             if "description" not in cls:
                 cls["description"] = None
-            cursor.execute("""INSERT INTO class (name, description, dataset)
+            cursor.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
                            (cls["name"], cls["description"], dataset_id))
             cls_id = cursor.fetchone()[0]
 
             for recording_mbid in cls["recordings"]:
-                cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
+                cursor.execute("INSERT INTO dataset_class_member (class, mbid) VALUES (%s, %s)",
                                (cls_id, recording_mbid))
 
     # If anything bad happens above, it should just rollback by default.
@@ -112,18 +112,18 @@ def update(dataset_id, dictionary, author_id):
                        (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
 
         # Replacing old classes with new ones
-        cursor.execute("""DELETE FROM class WHERE dataset = %s""", (dataset_id,))
+        cursor.execute("""DELETE FROM dataset_class WHERE dataset = %s""", (dataset_id,))
 
         for cls in dictionary["classes"]:
             if "description" not in cls:
                 cls["description"] = None
-            cursor.execute("""INSERT INTO class (name, description, dataset)
+            cursor.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
                            (cls["name"], cls["description"], dataset_id))
             cls_id = cursor.fetchone()[0]
 
             for recording_mbid in cls["recordings"]:
-                cursor.execute("INSERT INTO class_member (class, mbid) VALUES (%s, %s)",
+                cursor.execute("INSERT INTO dataset_class_member (class, mbid) VALUES (%s, %s)",
                                (cls_id, recording_mbid))
 
     # If anything bad happens above, it should just rollback by default.
@@ -165,7 +165,7 @@ def _get_classes(dataset_id):
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT id, name, description "
-            "FROM class "
+            "FROM dataset_class "
             "WHERE dataset = %s",
             (dataset_id,)
         )
@@ -184,7 +184,7 @@ def _get_classes(dataset_id):
 def _get_recordings_in_class(class_id):
     from acousticbrainz.data import connection
     with connection.cursor() as cursor:
-        cursor.execute("SELECT mbid FROM class_member WHERE class = %s",
+        cursor.execute("SELECT mbid FROM dataset_class_member WHERE class = %s",
                        (class_id,))
         rows = cursor.fetchall()
         recordings = []

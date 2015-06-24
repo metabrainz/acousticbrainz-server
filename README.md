@@ -91,4 +91,4 @@ low-level and high-level JSON.*
 
     $ python manage.py dump incremental -i=42
 
-*Same as the previous but recreates previous incremental dump.*
+*Same as another one, but recreates previously created incremental dump.*

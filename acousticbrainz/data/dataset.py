@@ -1,5 +1,6 @@
 import copy
 import jsonschema
+from acousticbrainz import data
 
 
 # JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
@@ -69,8 +70,7 @@ def create_from_dict(dictionary, author_id):
     """
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         if "description" not in dictionary:
             dictionary["description"] = None
 
@@ -92,7 +92,7 @@ def create_from_dict(dictionary, author_id):
                                (cls_id, recording_mbid))
 
     # If anything bad happens above, it should just rollback by default.
-    _connection.commit()
+    data.commit()
 
     return dataset_id
 
@@ -101,8 +101,7 @@ def update(dataset_id, dictionary, author_id):
     # TODO(roman): Make author_id argument optional (keep old author if None).
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         if "description" not in dictionary:
             dictionary["description"] = None
 
@@ -127,7 +126,7 @@ def update(dataset_id, dictionary, author_id):
                                (cls_id, recording_mbid))
 
     # If anything bad happens above, it should just rollback by default.
-    _connection.commit()
+    data.commit()
 
 
 def get(id):
@@ -137,8 +136,7 @@ def get(id):
         Dictionary with dataset details if it has been found, None
         otherwise.
     """
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         cursor.execute(
             "SELECT id, name, description, author, created, public "
             "FROM dataset "
@@ -161,8 +159,7 @@ def get(id):
 
 
 def _get_classes(dataset_id):
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         cursor.execute(
             "SELECT id, name, description "
             "FROM dataset_class "
@@ -182,8 +179,7 @@ def _get_classes(dataset_id):
 
 
 def _get_recordings_in_class(class_id):
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         cursor.execute("SELECT mbid FROM dataset_class_member WHERE class = %s",
                        (class_id,))
         rows = cursor.fetchall()
@@ -199,8 +195,7 @@ def get_by_user_id(user_id, public_only=True):
     Returns:
         List of dictionaries with dataset details.
     """
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         where = "WHERE author = %s"
         if public_only:
             where += " AND public = TRUE"
@@ -218,7 +213,6 @@ def get_by_user_id(user_id, public_only=True):
 
 def delete(id):
     """Delete dataset with a specified ID."""
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         cursor.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
-        _connection.commit()
+    data.commit()

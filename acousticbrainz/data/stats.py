@@ -1,4 +1,4 @@
-from acousticbrainz import cache
+from acousticbrainz import cache, data
 import datetime
 import time
 
@@ -10,8 +10,7 @@ LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 def get_last_submitted_tracks():
     last_submitted_data = cache.get('last-submitted-data')
     if not last_submitted_data:
-        from acousticbrainz.data import _connection
-        with _connection.cursor() as cursor:
+        with data.create_cursor() as cursor:
             cursor.execute("""SELECT mbid,
                                      data->'metadata'->'tags'->'artist'->>0,
                                      data->'metadata'->'tags'->'title'->>0
@@ -39,8 +38,7 @@ def get_stats():
     if sorted(stats_keys) != sorted(stats.keys()) or last_collected is None:
         stats_parameters = dict([(a, 0) for a in stats_keys])
 
-        from acousticbrainz.data import _connection
-        with _connection.cursor() as cursor:
+        with data.create_cursor() as cursor:
             cursor.execute("SELECT now() as now, collected FROM statistics ORDER BY collected DESC LIMIT 1")
             update_db = False
             if cursor.rowcount > 0:
@@ -61,7 +59,7 @@ def get_stats():
             if update_db:
                 for key, value in stats_parameters.iteritems():
                     cursor.execute("INSERT INTO statistics (collected, name, value) VALUES (now(), %s, %s) RETURNING collected", (key, value))
-                _connection.commit()
+                data.commit()
 
             cursor.execute("SELECT now()")
             last_collected = cursor.fetchone()[0]
@@ -78,8 +76,7 @@ def get_stats():
 
 
 def get_statistics_data():
-    from acousticbrainz.data import _connection
-    with _connection.cursor() as cursor:
+    with data.create_cursor() as cursor:
         cursor.execute(
             "SELECT name, array_agg(collected ORDER BY collected ASC) AS times,"
             "       array_agg(value ORDER BY collected ASC) AS values "

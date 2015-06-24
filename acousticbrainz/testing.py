@@ -1,7 +1,6 @@
 from flask_testing import TestCase
 from acousticbrainz import create_app
 from acousticbrainz import data
-from acousticbrainz.data import run_sql_script
 from acousticbrainz.data.data import submit_low_level_data
 import json
 import os
@@ -29,14 +28,13 @@ class ServerTestCase(TestCase):
         self.init_db()
 
     def init_db(self):
-        run_sql_script(os.path.join('admin', 'sql', 'create_tables.sql'))
-        run_sql_script(os.path.join('admin', 'sql', 'create_primary_keys.sql'))
-        run_sql_script(os.path.join('admin', 'sql', 'create_foreign_keys.sql'))
-        run_sql_script(os.path.join('admin', 'sql', 'create_indexes.sql'))
+        data.run_sql_script(os.path.join('admin', 'sql', 'create_tables.sql'))
+        data.run_sql_script(os.path.join('admin', 'sql', 'create_primary_keys.sql'))
+        data.run_sql_script(os.path.join('admin', 'sql', 'create_foreign_keys.sql'))
+        data.run_sql_script(os.path.join('admin', 'sql', 'create_indexes.sql'))
 
     def drop_tables(self):
-        from acousticbrainz.data import _connection
-        with _connection.cursor() as cursor:
+        with data.create_cursor() as cursor:
             # TODO(roman): See if there's a better way to drop all tables.
             cursor.execute('DROP TABLE IF EXISTS highlevel_json       CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS highlevel            CASCADE;')
@@ -47,7 +45,7 @@ class ServerTestCase(TestCase):
             cursor.execute('DROP TABLE IF EXISTS dataset_class        CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS dataset              CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
-        _connection.commit()
+        data.commit()
 
     def load_low_level_data(self, mbid):
         """Loads low-level data from JSON file in `acousticbrainz/data/test_data`

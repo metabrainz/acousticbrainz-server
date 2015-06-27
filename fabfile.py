@@ -1,7 +1,7 @@
 from __future__ import with_statement
 from fabric.api import local
 from fabric.colors import green, yellow
-from acousticbrainz import create_app, cache
+from web_server import create_app, cache
 
 
 def git_pull():
@@ -19,7 +19,7 @@ def compile_styling():
     This command requires Less (CSS pre-processor). More information about it can be
     found at http://lesscss.org/.
     """
-    style_path = "static/css/"
+    style_path = "web_server/static/css/"
     local("lessc --clean-css %smain.less > %smain.css" % (style_path, style_path))
     print(green("Style sheets have been compiled successfully.", bold=True))
 
@@ -44,7 +44,8 @@ def test(coverage=True):
     will be located in cover/index.html file.
     """
     if coverage:
-        local("nosetests --exe --with-coverage --cover-package=acousticbrainz --cover-erase --cover-html")
+        # TODO(roman): Add support for other parts of the server there.
+        local("nosetests --exe --with-coverage --cover-package=web_server --cover-erase --cover-html")
         print(yellow("Coverage report can be found in cover/index.html file.", bold=True))
     else:
         local("nosetests --exe")

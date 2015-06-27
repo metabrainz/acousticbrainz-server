@@ -35,7 +35,7 @@ mkdir /tmp/models
 cd /tmp/models
 curl --silent -o models.tar.gz http://essentia.upf.edu/documentation/svm_models/music%201.0/essentia-extractor-svm_models-v2.1_beta1.tar.gz
 tar -xvzf models.tar.gz
-mv /tmp/models/v2.1_beta1/svm_models $APP_DIR/high-level
+mv /tmp/models/v2.1_beta1/svm_models $APP_DIR/hl_extractor
 
 # Cleanup
 rm -rf /tmp/gaia

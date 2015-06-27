@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from flask_wtf import Form
@@ -5,7 +6,7 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
-from web_server.data import dataset, user as user_data
+from data import dataset, user as user_data
 from web_server.external import musicbrainz
 from web_server import flash
 from collections import defaultdict

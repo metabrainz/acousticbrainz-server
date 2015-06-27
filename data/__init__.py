@@ -8,6 +8,14 @@ import logging
 _connection = None
 
 
+def init_db_connection(dsn):
+    global _connection
+    try:
+        _connection = psycopg2.connect(dsn, cursor_factory=psycopg2.extras.DictCursor)
+    except psycopg2.OperationalError as e:
+        logging.error("Failed to initialize database connection: %s" % str(e))
+
+
 def create_cursor():
     """Creates a new psycopg `cursor` object.
 
@@ -22,14 +30,6 @@ def commit():
     See http://initd.org/psycopg/docs/connection.html#connection.commit.
     """
     return _connection.commit()
-
-
-def init_connection(dsn):
-    global _connection
-    try:
-        _connection = psycopg2.connect(dsn, cursor_factory=psycopg2.extras.DictCursor)
-    except psycopg2.OperationalError as e:
-        logging.error("Failed to initialize database connection: %s" % str(e))
 
 
 def run_sql_script(sql_file_path):

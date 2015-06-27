@@ -21,12 +21,12 @@ def create_app():
     app.logger.addHandler(handler)
 
     # Database connection
-    from web_server import data
-    data.init_connection(app.config['PG_CONNECT'])
+    from data import init_db_connection
+    init_db_connection(app.config['PG_CONNECT'])
 
     # Memcached
     if 'MEMCACHED_SERVERS' in app.config:
-        from web_server import cache
+        from data import cache
         cache.init(app.config['MEMCACHED_SERVERS'],
                    app.config['MEMCACHED_NAMESPACE'],
                    debug=1 if app.debug else 0)

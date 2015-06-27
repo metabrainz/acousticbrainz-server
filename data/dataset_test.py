@@ -1,10 +1,10 @@
-from web_server.testing import ServerTestCase
-from web_server.data import dataset, user
+from data.testing import DataTestCase
+from data import dataset, user
 import jsonschema
 import copy
 
 
-class DatasetTestCase(ServerTestCase):
+class DatasetTestCase(DataTestCase):
 
     def setUp(self):
         super(DatasetTestCase, self).setUp()

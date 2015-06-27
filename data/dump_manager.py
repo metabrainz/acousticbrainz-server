@@ -1,6 +1,6 @@
 from __future__ import print_function
 from flask_script import Manager
-from web_server.data.dump import NoNewData, dump_db, dump_lowlevel_json, \
+from data.dump import NoNewData, dump_db, dump_lowlevel_json, \
     dump_highlevel_json, prepare_incremental_dump, list_incremental_dumps
 import shutil
 import re

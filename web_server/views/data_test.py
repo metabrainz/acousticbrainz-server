@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from web_server.testing import ServerTestCase
 from web_server.views import data
 from web_server.external import musicbrainz

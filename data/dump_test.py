@@ -1,11 +1,11 @@
-from web_server.testing import ServerTestCase
-from web_server.data import dump
+from data.testing import DataTestCase
+from data import dump
 import os.path
 import tempfile
 import shutil
 
 
-class DataDumpTestCase(ServerTestCase):
+class DataDumpTestCase(DataTestCase):
 
     def setUp(self):
         super(DataDumpTestCase, self).setUp()

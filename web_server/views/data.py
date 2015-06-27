@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 from flask import Blueprint, render_template, redirect, url_for
-from web_server.data.data import load_low_level, load_high_level, get_summary_data
-from web_server.data.exceptions import NoDataFoundException
+from data.main import load_low_level, load_high_level, get_summary_data
+from data.exceptions import NoDataFoundException
 from web_server.external import musicbrainz
 from werkzeug.exceptions import NotFound
 from urllib import quote_plus
@@ -32,22 +33,28 @@ def recording(mbid):
 
 @data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])
 def view_low_level(mbid):
-    return render_template(
-        "data/json-display.html",
-        mbid=mbid,
-        data=json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True),
-        title="Low-level JSON for %s" % mbid,
-    )
+    try:
+        return render_template(
+            "data/json-display.html",
+            mbid=mbid,
+            data=json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True),
+            title="Low-level JSON for %s" % mbid,
+        )
+    except NoDataFoundException:
+        raise NotFound
 
 
 @data_bp.route("/<uuid:mbid>/high-level/view", methods=["GET"])
 def view_high_level(mbid):
-    return render_template(
-        "data/json-display.html",
-        mbid=mbid,
-        data=json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True),
-        title="High-level JSON for %s" % mbid,
-    )
+    try:
+        return render_template(
+            "data/json-display.html",
+            mbid=mbid,
+            data=json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True),
+            title="High-level JSON for %s" % mbid,
+        )
+    except NoDataFoundException:
+        raise NotFound
 
 
 @data_bp.route("/<uuid:mbid>", methods=["GET"])

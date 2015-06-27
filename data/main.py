@@ -1,9 +1,8 @@
-from web_server.utils import sanity_check_data, clean_metadata, interpret_high_level
-from web_server.data import create_cursor, commit
-from web_server.data.exceptions import NoDataFoundException
-from werkzeug.exceptions import BadRequest, NotFound
-from flask import current_app
+from data import create_cursor, commit
+from data.utils import sanity_check_data, clean_metadata, interpret_high_level
+from data.exceptions import NoDataFoundException, BadDataException
 from hashlib import sha256
+import logging
 import json
 import time
 
@@ -36,13 +35,16 @@ def submit_low_level_data(mbid, data):
 
     missing_key = sanity_check_data(data)
     if missing_key is not None:
-        raise BadRequest("Key '%s' was not found in submitted data." % ' : '.join(missing_key))
+        raise BadDataException("Key '%s' was not found in submitted data." %
+                               ' : '.join(missing_key))
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
     if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
-        raise BadRequest("The musicbrainz_trackid/musicbrainz_recordingid in"
-                         "the submitted data does not match the MBID that is"
-                         "part of this resource URL.")
+        raise BadDataException(
+            "The musicbrainz_trackid/musicbrainz_recordingid in "
+            "the submitted data does not match the MBID that is "
+            "part of this resource URL."
+        )
 
     # The data looks good, lets see about saving it
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
@@ -58,7 +60,7 @@ def submit_low_level_data(mbid, data):
         sha_values = [v[0] for v in cursor.fetchall()]
 
         if data_sha256 not in sha_values:
-            current_app.logger.info("Saved %s" % mbid)
+            logging.info("Saved %s" % mbid)
             cursor.execute(
                 "INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
                 "VALUES (%s, %s, %s, %s, %s)",
@@ -67,7 +69,7 @@ def submit_low_level_data(mbid, data):
             commit()
             return ""
 
-        current_app.logger.info("Already have %s" % data_sha256)
+        logging.info("Already have %s" % data_sha256)
 
 
 def load_low_level(mbid, offset=0):
@@ -78,7 +80,7 @@ def load_low_level(mbid, offset=0):
             (str(mbid), offset)
         )
         if not cursor.rowcount:
-            raise NotFound
+            raise NoDataFoundException
 
         row = cursor.fetchone()
         return row[0]
@@ -93,7 +95,7 @@ def load_high_level(mbid):
                               ON hl.data = hlj.id
                            WHERE mbid = %s""", (str(mbid), ))
         if not cursor.rowcount:
-            raise NotFound
+            raise NoDataFoundException
 
         row = cursor.fetchone()
         return row[0]

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from web_server.testing import ServerTestCase
 from flask import url_for
 

@@ -1,7 +1,7 @@
 from __future__ import with_statement
 from fabric.api import local
 from fabric.colors import green, yellow
-from web_server import create_app, cache
+from data import cache
 
 
 def git_pull():
@@ -25,8 +25,7 @@ def compile_styling():
 
 
 def clear_memcached():
-    with create_app().app_context():
-        cache.flush_all()
+    cache.flush_all()
     print(green("Flushed everything from memcached.", bold=True))
 
 
@@ -44,8 +43,8 @@ def test(coverage=True):
     will be located in cover/index.html file.
     """
     if coverage:
-        # TODO(roman): Add support for other parts of the server there.
-        local("nosetests --exe --with-coverage --cover-package=web_server --cover-erase --cover-html")
+        local("nosetests --exe --with-coverage --cover-erase --cover-html "
+              "--cover-package=data,web_server,hl_extractor")
         print(yellow("Coverage report can be found in cover/index.html file.", bold=True))
     else:
         local("nosetests --exe")

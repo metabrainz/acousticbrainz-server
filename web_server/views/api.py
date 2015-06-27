@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from flask import Blueprint, request, Response, jsonify
-from web_server.data.data import load_low_level, load_high_level, submit_low_level_data, count_lowlevel
+from data.main import load_low_level, load_high_level, submit_low_level_data, count_lowlevel
+from data.exceptions import NoDataFoundException, BadDataException
 from web_server.decorators import crossdomain
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 import json
 
 api_bp = Blueprint('api', __name__)
@@ -32,14 +34,20 @@ def get_low_level(mbid):
             offset = int(offset)
     else:
         offset = 0
-    return Response(load_low_level(mbid, offset), content_type='application/json')
+    try:
+        return Response(load_low_level(mbid, offset), content_type='application/json')
+    except NoDataFoundException:
+        raise NotFound
 
 
 @api_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
 @crossdomain()
 def get_high_level(mbid):
     """Endpoint for fetching high-level information to AcousticBrainz."""
-    return Response(load_high_level(mbid), content_type='application/json')
+    try:
+        return Response(load_high_level(mbid), content_type='application/json')
+    except NoDataFoundException:
+        raise NotFound
 
 
 @api_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
@@ -51,5 +59,8 @@ def submit_low_level(mbid):
     except ValueError as e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 
-    submit_low_level_data(mbid, data)
+    try:
+        submit_low_level_data(mbid, data)
+    except BadDataException as e:
+        raise BadRequest(e)
     return ""

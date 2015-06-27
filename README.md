@@ -14,9 +14,8 @@ The easiest way to start is to setup ready-to-use [Vagrant](https://www.vagrantu
 VM. To do that [download](https://www.vagrantup.com/downloads.html) and install
 Vagrant for your OS. Then copy two config files:
 
-1. `config.py.sample` to `config.py` in the `acousticbrainz/` directory *(you
-don't need to modify this file)*
-2. `profile.conf.in.sample` to `profile.conf.in` in the `high-level/` directory
+1. `config.py.sample` to `config.py` *(you don't need to modify this file)*
+2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
 *(in this file you need to set `models_essentia_git_sha` value)*
 
 After that you can spin up the VM and start working with it:
@@ -31,7 +30,7 @@ You can start the web server (will be available at http://127.0.0.1:8080/):
 
 or high-level data extractor:
 
-    # cd /high-level
+    # cd /hl_extractor
     # python hl_calc.py
 
 ### The Usual Way

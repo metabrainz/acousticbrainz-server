@@ -1,7 +1,8 @@
 from __future__ import with_statement
 from fabric.api import local
-from fabric.colors import green, yellow
+from fabric.colors import green, yellow, red
 from data import cache
+import config
 
 
 def git_pull():
@@ -25,8 +26,12 @@ def compile_styling():
 
 
 def clear_memcached():
-    cache.flush_all()
-    print(green("Flushed everything from memcached.", bold=True))
+    try:
+        cache.init(config.MEMCACHED_SERVERS)
+        cache.flush_all()
+        print(green("Flushed everything from memcached.", bold=True))
+    except AttributeError as e:
+        print(red("Failed to clear memcached! Check your config file.\nError: %s" % e))
 
 
 def deploy():

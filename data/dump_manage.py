@@ -1,16 +1,20 @@
 from __future__ import print_function
-from flask_script import Manager
-from data.dump import NoNewData, dump_db, dump_lowlevel_json, \
-    dump_highlevel_json, prepare_incremental_dump, list_incremental_dumps
+from data import dump
 import shutil
+import click
 import re
 import os
 
-manager = Manager()
+cli = click.Group()
 
 
-@manager.command
-def full(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=True):
+@cli.command()
+@click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
+              help="Directory where dumps need to be created")
+@click.option("--threads", "-t", type=int)
+@click.option("--rotate", "-r", is_flag=True)
+@click.pass_context
+def full(ctx, location, threads, rotate):
     """This command creates:
     1. New incremental dump record (+ incremental dumps unless it's the first record)
     2. Full database dump
@@ -19,22 +23,26 @@ def full(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=True
     Archive rotation is enabled by default for full dumps.
     """
     try:
-        start_t = prepare_incremental_dump()[1]
+        start_t = dump.prepare_incremental_dump()[1]
         if start_t:  # not the first incremental dump
             incremental(location, id=None, threads=None)
         else:
             print("Skipping incremental dump creation since it's the first one.\n")
-    except NoNewData:
+    except dump.NoNewData:
         print("Skipping incremental dump creation. No new data.\n")
 
-    full_db(location, threads=threads, rotate=rotate)
-    json(location, rotate=rotate)
+    ctx.invoke(full_db, location=location, threads=threads, rotate=rotate)
+    ctx.invoke(json, location=location, rotate=rotate)
 
 
-@manager.command
-def full_db(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=False):
+@cli.command()
+@click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
+              help="Directory where dumps need to be created")
+@click.option("--threads", "-t", type=int)
+@click.option("--rotate", "-r", is_flag=True)
+def full_db(location, threads, rotate):
     print("Creating full database dump...")
-    path = dump_db(location, threads)
+    path = dump.dump_db(location, threads)
     print("Done! Created:", path)
 
     if rotate:
@@ -43,15 +51,13 @@ def full_db(location=os.path.join(os.getcwd(), 'export'), threads=None, rotate=F
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-@manager.option('-l', '--location', dest='location', action='store_true',
-                default=os.path.join(os.getcwd(), 'export'),
-                help="Directory where dumps need to be created")
-@manager.option('-r', '--rotate', dest='rotate', action='store_true', default=False)
-@manager.option('-nl', '--no-lowlevel', dest='no_lowlevel',
-                action='store_true', help="Don't tump low-level data.")
-@manager.option('-nh', '--no-highlevel', dest='no_highlevel',
-                action='store_true', help="Don't dump high-level data.")
-def json(location, rotate, no_lowlevel=False, no_highlevel=False):
+@cli.command()
+@click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
+              help="Directory where dumps need to be created")
+@click.option("--rotate", "-r", is_flag=True)
+@click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
+@click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
+def json(location, rotate, no_lowlevel, no_highlevel):
     if no_lowlevel and no_highlevel:
         print("wut? check your options, mate!")
 
@@ -64,7 +70,7 @@ def json(location, rotate, no_lowlevel=False, no_highlevel=False):
 
 def _json_lowlevel(location, rotate):
     print("Creating low-level JSON data dump...")
-    path = dump_lowlevel_json(location)
+    path = dump.dump_lowlevel_json(location)
     print("Done! Created: %s" % path)
 
     if rotate:
@@ -75,7 +81,7 @@ def _json_lowlevel(location, rotate):
 
 def _json_highlevel(location, rotate):
     print("Creating high-level JSON data dump...")
-    path = dump_highlevel_json(location)
+    path = dump.dump_highlevel_json(location)
     print("Done! Created: %s" % path)
 
     if rotate:
@@ -84,9 +90,13 @@ def _json_highlevel(location, rotate):
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-@manager.command
-def incremental(location=os.path.join(os.getcwd(), 'export'), id=None, threads=None):
-    dump_id, start_t, end_t = prepare_incremental_dump(int(id) if id else None)
+@cli.command()
+@click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
+              help="Directory where dumps need to be created")
+@click.option("--id", type=int)
+@click.option("--threads", "-t", type=int)
+def incremental(location, id, threads):
+    dump_id, start_t, end_t = dump.prepare_incremental_dump(int(id) if id else None)
     print("Creating incremental dumps with data between %s and %s:\n" % (start_t, end_t))
     _incremental_db(location, dump_id, threads)
     _incremental_json_lowlevel(location, dump_id)
@@ -95,25 +105,30 @@ def incremental(location=os.path.join(os.getcwd(), 'export'), id=None, threads=N
 
 def _incremental_db(location, id, threads):
     print("Creating incremental database dump...")
-    path = dump_db(location, threads, incremental=True, dump_id=id)
+    path = dump.dump_db(location, threads, incremental=True, dump_id=id)
     print("Done! Created: %s\n" % path)
 
 
 def _incremental_json_lowlevel(location, id):
     print("Creating incremental low-level JSON data dump...")
-    path = dump_lowlevel_json(location, incremental=True, dump_id=id)
+    path = dump.dump_lowlevel_json(location, incremental=True, dump_id=id)
     print("Done! Created: %s\n" % path)
 
 
 def _incremental_json_highlevel(location, id):
     print("Creating incremental high-level JSON data dump...")
-    path = dump_highlevel_json(location, incremental=True, dump_id=id)
+    path = dump.dump_highlevel_json(location, incremental=True, dump_id=id)
     print("Done! Created: %s\n" % path)
 
 
-@manager.command
+@cli.command()
+@click.option("--all", "-a", is_flag=True, help="Print info about all incremental dumps.")
 def incremental_info(all=False):
-    info = list_incremental_dumps()
+    """Prints information about incremental dumps: id, timestamp.
+
+    By default outputs information for the latest dump.
+    """
+    info = dump.list_incremental_dumps()
     if info:
         if all:
             print('Incremental dumps:')
@@ -157,7 +172,3 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
             shutil.rmtree(entry)
         else:
             os.remove(entry)
-
-
-if __name__ == '__main__':
-    manager.run()

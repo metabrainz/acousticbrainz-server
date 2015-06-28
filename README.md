@@ -88,6 +88,6 @@ low-level and high-level JSON.*
 
 **Previous incremental dumps:**
 
-    $ python manage.py dump incremental -i=42
+    $ python manage.py dump incremental --id 42
 
 *Same as the previous but recreates previous incremental dump.*

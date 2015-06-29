@@ -250,8 +250,8 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     GROUP BY mbid
                     """, (start_time,))
                 counts = cursor.fetchall()
-                for count in counts:
-                    mbid_occurences[count[0]] = count[1]
+                for mbid, count in counts:
+                    mbid_occurences[mbid] = count
 
             if start_time or end_time:
                 start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
@@ -345,8 +345,8 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                     GROUP BY mbid
                     """, (start_time,))
                 counts = cursor.fetchall()
-                for count in counts:
-                    mbid_occurences[count[0]] = count[1]
+                for mbid, count in counts:
+                    mbid_occurences[mbid] = count
 
             if start_time or end_time:
                 start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ""

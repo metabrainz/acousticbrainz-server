@@ -1,5 +1,5 @@
 from flask import Blueprint, request, Response, jsonify
-from acousticbrainz.data import load_low_level, load_high_level, submit_low_level_data, count_lowlevel
+from acousticbrainz.data.data import load_low_level, load_high_level, submit_low_level_data, count_lowlevel
 from acousticbrainz.decorators import crossdomain
 from werkzeug.exceptions import BadRequest
 import json

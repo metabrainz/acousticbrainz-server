@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for
-from acousticbrainz.data import load_low_level, load_high_level, get_summary_data
+from acousticbrainz.data.data import load_low_level, load_high_level, get_summary_data
 from acousticbrainz.data.exceptions import NoDataFoundException
 from acousticbrainz.external import musicbrainz
 from werkzeug.exceptions import NotFound

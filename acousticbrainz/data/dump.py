@@ -9,13 +9,12 @@ include information from the previous dumps).
 """
 from __future__ import print_function
 from collections import defaultdict
-from flask import current_app
 from datetime import datetime
+from acousticbrainz import data
 from acousticbrainz.utils import create_path
 import acousticbrainz
 import subprocess
 import tempfile
-import psycopg2
 import tarfile
 import shutil
 import os
@@ -129,9 +128,6 @@ def _copy_tables(location, start_time=None, end_time=None):
     within specified time frame. We assume that each table contains some sort
     of timestamp that can be used as a reference.
     """
-    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = conn.cursor()
-
     def generate_where(row_name, start_t=start_time, end_t=end_time):
         """This function generates SQL WHERE clause that can be used to select
         rows only within specified time frame using `row_name` as a reference.
@@ -146,36 +142,38 @@ def _copy_tables(location, start_time=None, end_time=None):
         else:
             return ""
 
-    # lowlevel
-    with open(os.path.join(location, "lowlevel"), "w") as f:
-        print(" - Copying table lowlevel...")
-        cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
-                       (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
+    with data.create_cursor() as cursor:
 
-    # highlevel
-    with open(os.path.join(location, "highlevel"), "w") as f:
-        print(" - Copying table highlevel...")
-        cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
-                       (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
+        # lowlevel
+        with open(os.path.join(location, "lowlevel"), "w") as f:
+            print(" - Copying table lowlevel...")
+            cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
+                           (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
 
-    # highlevel_json
-    with open(os.path.join(location, "highlevel_json"), "w") as f:
-        print(" - Copying table highlevel_json...")
-        query = "SELECT %s FROM highlevel_json WHERE id IN (SELECT data FROM highlevel %s)" \
-                % (", ".join(_TABLES["highlevel_json"]), generate_where("submitted"))
-        cursor.copy_to(f, "(%s)" % query)
+        # highlevel
+        with open(os.path.join(location, "highlevel"), "w") as f:
+            print(" - Copying table highlevel...")
+            cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
+                           (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
 
-    # statistics
-    with open(os.path.join(location, "statistics"), "w") as f:
-        print(" - Copying table statistics...")
-        cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
-                       (", ".join(_TABLES["statistics"]), generate_where("collected")))
+        # highlevel_json
+        with open(os.path.join(location, "highlevel_json"), "w") as f:
+            print(" - Copying table highlevel_json...")
+            query = "SELECT %s FROM highlevel_json WHERE id IN (SELECT data FROM highlevel %s)" \
+                    % (", ".join(_TABLES["highlevel_json"]), generate_where("submitted"))
+            cursor.copy_to(f, "(%s)" % query)
 
-    # incremental_dumps
-    with open(os.path.join(location, "incremental_dumps"), "w") as f:
-        print(" - Copying table incremental_dumps...")
-        cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
-                       (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
+        # statistics
+        with open(os.path.join(location, "statistics"), "w") as f:
+            print(" - Copying table statistics...")
+            cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
+                           (", ".join(_TABLES["statistics"]), generate_where("collected")))
+
+        # incremental_dumps
+        with open(os.path.join(location, "incremental_dumps"), "w") as f:
+            print(" - Copying table incremental_dumps...")
+            cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
+                           (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
 
 
 def import_db_dump(archive_path):
@@ -185,30 +183,29 @@ def import_db_dump(archive_path):
 
     table_names = _TABLES.keys()
 
-    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = conn.cursor()
+    with data.create_cursor() as cursor:
 
-    with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
-        for member in tar:
-            file_name = member.name.split("/")[-1]
+        with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
+            for member in tar:
+                file_name = member.name.split("/")[-1]
 
-            if file_name == "SCHEMA_SEQUENCE":
-                # Verifying schema version
-                schema_seq = int(tar.extractfile(member).read().strip())
-                if schema_seq != acousticbrainz.__version__:
-                    raise Exception("Incorrect schema version! Expected: %d, got: %d."
-                                    "Please, get the latest version of the dump."
-                                    % (acousticbrainz.__version__, schema_seq))
+                if file_name == "SCHEMA_SEQUENCE":
+                    # Verifying schema version
+                    schema_seq = int(tar.extractfile(member).read().strip())
+                    if schema_seq != acousticbrainz.__version__:
+                        raise Exception("Incorrect schema version! Expected: %d, got: %d."
+                                        "Please, get the latest version of the dump."
+                                        % (acousticbrainz.__version__, schema_seq))
+                    else:
+                        print("Schema version verified.")
+
                 else:
-                    print("Schema version verified.")
+                    if file_name in table_names:
+                        print(" - Importing data into %s table..." % file_name)
+                        cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
+                                         columns=_TABLES[file_name])
 
-            else:
-                if file_name in table_names:
-                    print(" - Importing data into %s table..." % file_name)
-                    cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
-                                     columns=_TABLES[file_name])
-
-    conn.commit()
+    data.commit()
     pxz.stdout.close()
 
 
@@ -237,65 +234,65 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
-        db = psycopg2.connect(current_app.config["PG_CONNECT"])
-        cursor = db.cursor()
 
-        mbid_occurences = defaultdict(int)
+        with data.create_cursor() as cursor:
 
-        # Need to count how many duplicate MBIDs are there before start_time
-        if start_time:
-            cursor.execute("""
-                SELECT mbid, count(id)
-                FROM lowlevel
-                WHERE submitted <= %s
-                GROUP BY mbid
-                """, (start_time,))
-            counts = cursor.fetchall()
-            for count in counts:
-                mbid_occurences[count[0]] = count[1]
+            mbid_occurences = defaultdict(int)
 
-        if start_time or end_time:
-            start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
-            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
-            if start_time and end_time:
-                where = "WHERE %s AND %s" % (start_cond, end_cond)
+            # Need to count how many duplicate MBIDs are there before start_time
+            if start_time:
+                cursor.execute("""
+                    SELECT mbid, count(id)
+                    FROM lowlevel
+                    WHERE submitted <= %s
+                    GROUP BY mbid
+                    """, (start_time,))
+                counts = cursor.fetchall()
+                for count in counts:
+                    mbid_occurences[count[0]] = count[1]
+
+            if start_time or end_time:
+                start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
+                end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
+                if start_time and end_time:
+                    where = "WHERE %s AND %s" % (start_cond, end_cond)
+                else:
+                    where = "WHERE %s%s" % (start_cond, end_cond)
             else:
-                where = "WHERE %s%s" % (start_cond, end_cond)
-        else:
-            where = ""
-        cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
+                where = ""
+            cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
 
-        cursor_inner = db.cursor()
-        temp_dir = tempfile.mkdtemp()
+            with data.create_cursor() as cursor_inner:
+                temp_dir = tempfile.mkdtemp()
 
-        dumped_count = 0
+                dumped_count = 0
 
-        while True:
-            id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
-            if not id_list:
-                break
-            id_list = tuple([i[0] for i in id_list])
+                while True:
+                    id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
+                    if not id_list:
+                        break
+                    id_list = tuple([i[0] for i in id_list])
 
-            cursor_inner.execute("""SELECT mbid, data::text
-                                    FROM lowlevel
-                                    WHERE id IN %s
-                                    ORDER BY mbid""", (id_list,))
-            while True:
-                row = cursor_inner.fetchone()
-                if not row:
-                    break
-                mbid, json = row
+                    cursor_inner.execute("""SELECT mbid, data::text
+                                            FROM lowlevel
+                                            WHERE id IN %s
+                                            ORDER BY mbid""", (id_list,))
+                    while True:
+                        row = cursor_inner.fetchone()
+                        if not row:
+                            break
+                        mbid, json = row
 
-                json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
-                dump_tempfile = os.path.join(temp_dir, json_filename)
-                with open(dump_tempfile, "w") as f:
-                    f.write(json)
-                tar.add(dump_tempfile, arcname=os.path.join(
-                    archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
-                os.unlink(dump_tempfile)
+                        json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
+                        dump_tempfile = os.path.join(temp_dir, json_filename)
+                        with open(dump_tempfile, "w") as f:
+                            f.write(json)
+                        tar.add(dump_tempfile, arcname=os.path.join(
+                            archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
+                        os.unlink(dump_tempfile)
 
-                mbid_occurences[mbid] += 1
-                dumped_count += 1
+                        mbid_occurences[mbid] += 1
+                        dumped_count += 1
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
@@ -333,68 +330,67 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
-        db = psycopg2.connect(current_app.config["PG_CONNECT"])
-        cursor = db.cursor()
 
-        mbid_occurences = defaultdict(int)
+        with data.create_cursor() as cursor:
+            mbid_occurences = defaultdict(int)
 
-        # Need to count how many duplicate MBIDs are there before start_time
-        if start_time:
-            cursor.execute("""
-                SELECT mbid, count(id)
-                FROM highlevel
-                WHERE submitted <= %s
-                GROUP BY mbid
-                """, (start_time,))
-            counts = cursor.fetchall()
-            for count in counts:
-                mbid_occurences[count[0]] = count[1]
+            # Need to count how many duplicate MBIDs are there before start_time
+            if start_time:
+                cursor.execute("""
+                    SELECT mbid, count(id)
+                    FROM highlevel
+                    WHERE submitted <= %s
+                    GROUP BY mbid
+                    """, (start_time,))
+                counts = cursor.fetchall()
+                for count in counts:
+                    mbid_occurences[count[0]] = count[1]
 
-        if start_time or end_time:
-            start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ""
-            end_cond = "hl.submitted <= '%s'" % str(end_time) if end_time else ""
-            if start_time and end_time:
-                where = "AND %s AND %s" % (start_cond, end_cond)
+            if start_time or end_time:
+                start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ""
+                end_cond = "hl.submitted <= '%s'" % str(end_time) if end_time else ""
+                if start_time and end_time:
+                    where = "AND %s AND %s" % (start_cond, end_cond)
+                else:
+                    where = "AND %s%s" % (start_cond, end_cond)
             else:
-                where = "AND %s%s" % (start_cond, end_cond)
-        else:
-            where = ""
-        cursor.execute("""SELECT hl.id
-                          FROM highlevel hl, highlevel_json hlj
-                          WHERE hl.data = hlj.id %s
-                          ORDER BY mbid""" % where)
+                where = ""
+            cursor.execute("""SELECT hl.id
+                              FROM highlevel hl, highlevel_json hlj
+                              WHERE hl.data = hlj.id %s
+                              ORDER BY mbid""" % where)
 
-        cursor_inner = db.cursor()
-        temp_dir = tempfile.mkdtemp()
+            with data.create_cursor() as cursor_inner:
+                temp_dir = tempfile.mkdtemp()
 
-        dumped_count = 0
+                dumped_count = 0
 
-        while True:
-            id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
-            if not id_list:
-                break
-            id_list = tuple([i[0] for i in id_list])
+                while True:
+                    id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
+                    if not id_list:
+                        break
+                    id_list = tuple([i[0] for i in id_list])
 
-            cursor_inner.execute("""SELECT mbid, hlj.data::text
-                                    FROM highlevel hl, highlevel_json hlj
-                                    WHERE hl.data = hlj.id AND hl.id IN %s
-                                    ORDER BY mbid""", (id_list, ))
-            while True:
-                row = cursor_inner.fetchone()
-                if not row:
-                    break
-                mbid, json = row
+                    cursor_inner.execute("""SELECT mbid, hlj.data::text
+                                            FROM highlevel hl, highlevel_json hlj
+                                            WHERE hl.data = hlj.id AND hl.id IN %s
+                                            ORDER BY mbid""", (id_list, ))
+                    while True:
+                        row = cursor_inner.fetchone()
+                        if not row:
+                            break
+                        mbid, json = row
 
-                json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
-                dump_tempfile = os.path.join(temp_dir, json_filename)
-                with open(dump_tempfile, "w") as f:
-                    f.write(json)
-                tar.add(dump_tempfile, arcname=os.path.join(
-                    archive_name, "highlevel", mbid[0:1], mbid[0:2], json_filename))
-                os.unlink(dump_tempfile)
+                        json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
+                        dump_tempfile = os.path.join(temp_dir, json_filename)
+                        with open(dump_tempfile, "w") as f:
+                            f.write(json)
+                        tar.add(dump_tempfile, arcname=os.path.join(
+                            archive_name, "highlevel", mbid[0:1], mbid[0:2], json_filename))
+                        os.unlink(dump_tempfile)
 
-                mbid_occurences[mbid] += 1
-                dumped_count += 1
+                        mbid_occurences[mbid] += 1
+                        dumped_count += 1
 
         # Copying legal text
         tar.add(os.path.join("licenses", "COPYING-PublicDomain"),
@@ -414,9 +410,9 @@ def list_incremental_dumps():
         List of (id, created) pairs ordered by dump identifier, or None if
         there are no incremental dumps yet.
     """
-    cursor = psycopg2.connect(current_app.config["PG_CONNECT"]).cursor()
-    cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
-    return cursor.fetchall()
+    with data.create_cursor() as cursor:
+        cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
+        return cursor.fetchall()
 
 
 def prepare_incremental_dump(dump_id=None):
@@ -451,33 +447,31 @@ def _any_new_data(from_time):
         True if there is new data in one of tables that support incremental
         dumps, False if there is no new data there.
     """
-    conn = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = conn.cursor()
-    cursor.execute("SELECT count(*) FROM lowlevel WHERE submitted > %s", (from_time,))
-    lowlevel_count = cursor.fetchone()[0]
-    cursor.execute("SELECT count(*) FROM highlevel WHERE submitted > %s", (from_time,))
-    highlevel_count = cursor.fetchone()[0]
+    with data.create_cursor() as cursor:
+        cursor.execute("SELECT count(*) FROM lowlevel WHERE submitted > %s", (from_time,))
+        lowlevel_count = cursor.fetchone()[0]
+        cursor.execute("SELECT count(*) FROM highlevel WHERE submitted > %s", (from_time,))
+        highlevel_count = cursor.fetchone()[0]
     return lowlevel_count > 0 or highlevel_count > 0
 
 
 def _create_new_inc_dump_record():
     """Creates new record for incremental dump and returns its ID and creation time."""
-    db = psycopg2.connect(current_app.config["PG_CONNECT"])
-    cursor = db.cursor()
-    cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
-    db.commit()
-    row = cursor.fetchone()
+    with data.create_cursor() as cursor:
+        cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
+        data.commit()
+        row = cursor.fetchone()
     print("Created new incremental dump record (ID: %s)." % row[0])
     return row
 
 
 def _get_incremental_dump_timestamp(dump_id=None):
-    cursor = psycopg2.connect(current_app.config["PG_CONNECT"]).cursor()
-    if dump_id:
-        cursor.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
-    else:
-        cursor.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
-    row = cursor.fetchone()
+    with data.create_cursor() as cursor:
+        if dump_id:
+            cursor.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
+        else:
+            cursor.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
+        row = cursor.fetchone()
     return row[0] if row else None
 
 

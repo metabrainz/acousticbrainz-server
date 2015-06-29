@@ -7,7 +7,7 @@ ALTER TABLE statistics ADD CONSTRAINT statistics_pkey PRIMARY KEY (name, collect
 ALTER TABLE incremental_dumps ADD CONSTRAINT incremental_dumps_pkey PRIMARY KEY (id);
 ALTER TABLE "user" ADD CONSTRAINT user_pkey PRIMARY KEY (id);
 ALTER TABLE dataset ADD CONSTRAINT dataset_pkey PRIMARY KEY (id);
-ALTER TABLE class ADD CONSTRAINT class_pkey PRIMARY KEY (id);
-ALTER TABLE class_member ADD CONSTRAINT class_member_pkey PRIMARY KEY (class, mbid);
+ALTER TABLE dataset_class ADD CONSTRAINT dataset_class_pkey PRIMARY KEY (id);
+ALTER TABLE dataset_class_member ADD CONSTRAINT dataset_class_member_pkey PRIMARY KEY (class, mbid);
 
 COMMIT;

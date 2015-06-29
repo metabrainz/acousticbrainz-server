@@ -1,6 +1,6 @@
 from __future__ import with_statement
 from fabric.api import local
-from fabric.colors import green
+from fabric.colors import green, yellow
 from acousticbrainz import create_app, cache
 
 
@@ -35,3 +35,16 @@ def deploy():
     install_requirements()
     compile_styling()
     clear_memcached()
+
+
+def test(coverage=True):
+    """Run all tests.
+
+    It will also create code coverage report, unless specified otherwise. It
+    will be located in cover/index.html file.
+    """
+    if coverage:
+        local("nosetests --exe --with-coverage --cover-package=acousticbrainz --cover-erase --cover-html")
+        print(yellow("Coverage report can be found in cover/index.html file.", bold=True))
+    else:
+        local("nosetests --exe")

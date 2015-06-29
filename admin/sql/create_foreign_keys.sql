@@ -17,17 +17,17 @@ ALTER TABLE dataset
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 
-ALTER TABLE class
+ALTER TABLE dataset_class
   ADD CONSTRAINT class_fk_dataset
   FOREIGN KEY (dataset)
   REFERENCES dataset (id)
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 
-ALTER TABLE class_member
+ALTER TABLE dataset_class_member
   ADD CONSTRAINT class_member_fk_class
   FOREIGN KEY (class)
-  REFERENCES class (id)
+  REFERENCES dataset_class (id)
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 

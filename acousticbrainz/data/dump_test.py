@@ -21,7 +21,7 @@ class DataDumpTestCase(ServerTestCase):
 
     def test_import_db_dump(self):
         path = dump.dump_db(self.temp_dir)
-        self.truncate_all()
+        self.reset_db()
         dump.import_db_dump(path)
 
     def test_dump_lowlevel_json(self):
@@ -42,7 +42,7 @@ class DataDumpTestCase(ServerTestCase):
         self.assertEqual(dump.list_incremental_dumps()[0][1], dump_time)
 
     def test_prepare_incremental_dump(self):
-        self.truncate_all()
+        self.reset_db()
 
         dump_id_first, start_t_first, end_t_first = dump.prepare_incremental_dump()
         self.assertIsNone(start_t_first)

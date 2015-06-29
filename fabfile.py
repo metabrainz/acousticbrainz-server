@@ -20,7 +20,7 @@ def compile_styling():
     This command requires Less (CSS pre-processor). More information about it can be
     found at http://lesscss.org/.
     """
-    style_path = "web_server/static/css/"
+    style_path = "webserver/static/css/"
     local("lessc --clean-css %smain.less > %smain.css" % (style_path, style_path))
     print(green("Style sheets have been compiled successfully.", bold=True))
 
@@ -49,7 +49,7 @@ def test(coverage=True):
     """
     if coverage:
         local("nosetests --exe --with-coverage --cover-erase --cover-html "
-              "--cover-package=data,web_server,hl_extractor")
+              "--cover-package=data,webserver,hl_extractor")
         print(yellow("Coverage report can be found in cover/index.html file.", bold=True))
     else:
         local("nosetests --exe")

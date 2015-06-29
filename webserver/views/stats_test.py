@@ -1,4 +1,4 @@
-from web_server.testing import ServerTestCase
+from webserver.testing import ServerTestCase
 from flask import url_for
 
 

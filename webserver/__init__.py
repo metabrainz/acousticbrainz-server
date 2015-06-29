@@ -42,23 +42,23 @@ def create_app():
         musicbrainzngs.set_hostname(app.config['MUSICBRAINZ_HOSTNAME'])
 
     # OAuth
-    from web_server.login import login_manager, provider
+    from webserver.login import login_manager, provider
     login_manager.init_app(app)
     provider.init(app.config['MUSICBRAINZ_CLIENT_ID'],
                   app.config['MUSICBRAINZ_CLIENT_SECRET'])
 
     # Error handling
-    from web_server.errors import init_error_handlers
+    from webserver.errors import init_error_handlers
     init_error_handlers(app)
 
     # Blueprints
-    from web_server.views.index import index_bp
-    from web_server.views.data import data_bp
-    from web_server.views.api import api_bp
-    from web_server.views.stats import stats_bp
-    from web_server.views.login import login_bp
-    from web_server.views.user import user_bp
-    from web_server.views.datasets import datasets_bp
+    from webserver.views.index import index_bp
+    from webserver.views.data import data_bp
+    from webserver.views.api import api_bp
+    from webserver.views.stats import stats_bp
+    from webserver.views.login import login_bp
+    from webserver.views.user import user_bp
+    from webserver.views.datasets import datasets_bp
     app.register_blueprint(index_bp)
     app.register_blueprint(data_bp)
     app.register_blueprint(api_bp)

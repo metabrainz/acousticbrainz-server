@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from flask import Blueprint, render_template, redirect, url_for
 from data.main import load_low_level, load_high_level, get_summary_data
 from data.exceptions import NoDataFoundException
-from web_server.external import musicbrainz
+from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound
 from urllib import quote_plus
 import json

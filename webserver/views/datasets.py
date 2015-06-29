@@ -7,8 +7,8 @@ from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from data import dataset, user as user_data
-from web_server.external import musicbrainz
-from web_server import flash
+from webserver.external import musicbrainz
+from webserver import flash
 from collections import defaultdict
 import jsonschema
 import csv

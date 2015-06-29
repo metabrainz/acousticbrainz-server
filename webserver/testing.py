@@ -1,6 +1,6 @@
 import flask_testing
 from data.testing import DataTestCase
-from web_server import create_app
+from webserver import create_app
 
 
 class ServerTestCase(flask_testing.TestCase, DataTestCase):

@@ -1,8 +1,8 @@
 from rauth import OAuth2Service
 from flask import request, session, url_for
 from data import user as user_data
-from web_server.login import User
-from web_server.utils import generate_string
+from webserver.login import User
+from webserver.utils import generate_string
 import json
 
 _musicbrainz = None

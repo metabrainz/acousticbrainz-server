@@ -1,5 +1,5 @@
-from web_server.testing import ServerTestCase
-from web_server import utils
+from webserver.testing import ServerTestCase
+from webserver import utils
 
 
 class UtilsTestCase(ServerTestCase):

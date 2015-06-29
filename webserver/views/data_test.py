@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-from web_server.testing import ServerTestCase
-from web_server.views import data
-from web_server.external import musicbrainz
+from webserver.testing import ServerTestCase
+from webserver.views import data
+from webserver.external import musicbrainz
 from flask import url_for
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from web_server import create_app
+from webserver import create_app
 import argparse
 
 application = create_app()

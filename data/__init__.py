@@ -33,7 +33,6 @@ def commit():
 
 
 def run_sql_script(sql_file_path):
-    global _connection
     with _connection.cursor() as cursor:
         with open(sql_file_path) as sql:
             cursor.execute(sql.read())

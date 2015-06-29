@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from db.testing import DataTestCase
+from db.testing import DatabaseTestCase
 from db import user as user_data
 
 
-class UserTestCase(DataTestCase):
+class UserTestCase(DatabaseTestCase):
 
     def test_create(self):
         user_id = user_data.create("fuzzy_dunlop")

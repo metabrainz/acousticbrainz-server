@@ -1,10 +1,10 @@
-from db.testing import DataTestCase
+from db.testing import DatabaseTestCase
 from db import dataset, user
 import jsonschema
 import copy
 
 
-class DatasetTestCase(DataTestCase):
+class DatasetTestCase(DatabaseTestCase):
 
     def setUp(self):
         super(DatasetTestCase, self).setUp()

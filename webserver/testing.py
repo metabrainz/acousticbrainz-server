@@ -1,9 +1,9 @@
 import flask_testing
-from db.testing import DataTestCase
+from db.testing import DatabaseTestCase
 from webserver import create_app
 
 
-class ServerTestCase(flask_testing.TestCase, DataTestCase):
+class ServerTestCase(flask_testing.TestCase, DatabaseTestCase):
 
     def create_app(self):
         app = create_app()

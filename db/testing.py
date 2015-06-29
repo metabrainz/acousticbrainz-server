@@ -13,7 +13,7 @@ ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_data')
 
 
-class DataTestCase(unittest.TestCase):
+class DatabaseTestCase(unittest.TestCase):
 
     def setUp(self):
         init_db_connection(config.PG_CONNECT_TEST)

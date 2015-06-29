@@ -1,10 +1,10 @@
-from db.testing import DataTestCase, TEST_DATA_PATH
+from db.testing import DatabaseTestCase, TEST_DATA_PATH
 from db import data
 import os.path
 import json
 
 
-class DataTestCase(DataTestCase):
+class DataTestCase(DatabaseTestCase):
 
     def setUp(self):
         super(DataTestCase, self).setUp()

@@ -1,18 +1,18 @@
-from db.testing import DataTestCase
+from db.testing import DatabaseTestCase
 from db import dump
 import os.path
 import tempfile
 import shutil
 
 
-class DataDumpTestCase(DataTestCase):
+class DatabaseDumpTestCase(DatabaseTestCase):
 
     def setUp(self):
-        super(DataDumpTestCase, self).setUp()
+        super(DatabaseDumpTestCase, self).setUp()
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        super(DataDumpTestCase, self).setUp()
+        super(DatabaseDumpTestCase, self).setUp()
         shutil.rmtree(self.temp_dir)
 
     def test_dump_db(self):

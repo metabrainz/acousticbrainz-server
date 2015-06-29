@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from data.testing import DataTestCase
-from data import user as user_data
+from db.testing import DataTestCase
+from db import user as user_data
 
 
 class UserTestCase(DataTestCase):

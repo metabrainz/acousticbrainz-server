@@ -1,4 +1,4 @@
-from data import create_cursor, commit
+from db import create_cursor, commit
 
 
 def create(musicbrainz_id):

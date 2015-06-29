@@ -1,5 +1,5 @@
 from __future__ import print_function
-from data import dump
+from db import dump
 import shutil
 import click
 import re

@@ -10,8 +10,8 @@ include information from the previous dumps).
 from __future__ import print_function
 from collections import defaultdict
 from datetime import datetime
-from data import create_cursor, commit
-from data.utils import create_path
+from db import create_cursor, commit
+from db.utils import create_path
 import webserver
 import subprocess
 import tempfile

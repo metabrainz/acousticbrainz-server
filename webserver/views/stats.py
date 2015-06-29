@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, Response, render_template
-from data.stats import get_statistics_data
+from db.stats import get_statistics_data
 from operator import itemgetter
 import json
 

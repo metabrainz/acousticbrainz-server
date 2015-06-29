@@ -1,5 +1,5 @@
 import unittest
-from data import utils
+from db import utils
 
 
 class DataUtilsTestCase(unittest.TestCase):

@@ -1,5 +1,5 @@
 import flask_testing
-from data.testing import DataTestCase
+from db.testing import DataTestCase
 from webserver import create_app
 
 

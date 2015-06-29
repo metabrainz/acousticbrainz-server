@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from webserver.testing import ServerTestCase
-from data import dataset, user
+from db import dataset, user
 from flask import url_for
 import json
 

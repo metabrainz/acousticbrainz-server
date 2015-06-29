@@ -1,5 +1,5 @@
-from data.testing import DataTestCase
-from data import dump
+from db.testing import DataTestCase
+from db import dump
 import os.path
 import tempfile
 import shutil

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template
-from data.stats import get_last_submitted_tracks, get_stats
+from db.stats import get_last_submitted_tracks, get_stats
 
 index_bp = Blueprint('index', __name__)
 

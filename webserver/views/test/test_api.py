@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from webserver.testing import ServerTestCase
-from data.testing import TEST_DATA_PATH
+from db.testing import TEST_DATA_PATH
 from flask import url_for
 import os
 

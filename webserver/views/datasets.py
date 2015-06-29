@@ -6,7 +6,7 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
-from data import dataset, user as user_data
+from db import dataset, user as user_data
 from webserver.external import musicbrainz
 from webserver import flash
 from collections import defaultdict

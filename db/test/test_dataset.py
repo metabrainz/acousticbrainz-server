@@ -1,5 +1,5 @@
-from data.testing import DataTestCase
-from data import dataset, user
+from db.testing import DataTestCase
+from db import dataset, user
 import jsonschema
 import copy
 

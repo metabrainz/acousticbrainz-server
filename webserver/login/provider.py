@@ -1,6 +1,6 @@
 from rauth import OAuth2Service
 from flask import request, session, url_for
-from data import user as user_data
+from db import user as user_data
 from webserver.login import User
 from webserver.utils import generate_string
 import json

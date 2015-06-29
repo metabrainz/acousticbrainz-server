@@ -1,7 +1,7 @@
 from __future__ import with_statement
 from fabric.api import local
 from fabric.colors import green, yellow, red
-from data import cache
+from db import cache
 import config
 
 

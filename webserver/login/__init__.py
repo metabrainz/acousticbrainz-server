@@ -1,6 +1,6 @@
 from flask import redirect, url_for
 from flask_login import LoginManager, UserMixin, current_user
-from data import user as user_data
+from db import user as user_data
 from functools import wraps
 
 login_manager = LoginManager()

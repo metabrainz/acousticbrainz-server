@@ -1,5 +1,5 @@
-from data import run_sql_script, create_cursor, commit, init_db_connection
-from data.main import submit_low_level_data
+from db import run_sql_script, create_cursor, commit, init_db_connection
+from db.data import submit_low_level_data
 import unittest
 import json
 import os

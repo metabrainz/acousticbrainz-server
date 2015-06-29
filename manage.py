@@ -1,7 +1,7 @@
 from __future__ import print_function
-import data
-import data.dump
-import data.dump_manage
+import db
+import db.dump
+import db.dump_manage
 from webserver import create_app
 import subprocess
 import os
@@ -60,19 +60,19 @@ def init_db(archive, force):
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
-    data.init_db_connection(config.PG_CONNECT)
+    db.init_db_connection(config.PG_CONNECT)
 
     print('Creating tables...')
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
 
     import_data(archive) if archive else print('Skipping data importing.')
 
     print('Creating primary and foreign keys...')
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
 
     print('Creating indexes...')
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
 
     print("Done!")
 
@@ -105,12 +105,12 @@ def init_test_db(force=False):
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
-    data.init_db_connection(config.PG_CONNECT_TEST)
+    db.init_db_connection(config.PG_CONNECT_TEST)
 
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
-    data.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
 
     print("Done!")
 
@@ -120,13 +120,13 @@ def init_test_db(force=False):
 def import_data(archive):
     """Imports data dump into the database."""
     print('Importing data...')
-    data.dump.import_db_dump(archive)
+    db.dump.import_db_dump(archive)
 
 
-cli.add_command(data.dump_manage.cli, name="dump")
+cli.add_command(db.dump_manage.cli, name="dump")
 
 
 if __name__ == '__main__':
     import config
-    data.init_db_connection(config.PG_CONNECT)
+    db.init_db_connection(config.PG_CONNECT)
     cli()

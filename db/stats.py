@@ -1,4 +1,4 @@
-from data import create_cursor, commit, cache
+from db import create_cursor, commit, cache
 import datetime
 import time
 

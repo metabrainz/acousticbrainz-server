@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template
 from flask_login import current_user
-from data import user as user_data, dataset
+from db import user as user_data, dataset
 from werkzeug.exceptions import NotFound
 
 user_bp = Blueprint("user", __name__)

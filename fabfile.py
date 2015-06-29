@@ -4,6 +4,18 @@ from fabric.colors import green, yellow, red
 from db import cache
 import config
 
+import os
+
+def vpsql():
+    local("psql -h localhost -p 15432 -U postgres template1")
+
+def vssh():
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    configfile = os.path.join(curdir, '.vagrant', 'ssh_config')
+    if not os.path.exists(configfile):
+        local('vagrant ssh-config acousticbrainz > .vagrant/ssh_config')
+
+    local("ssh -F .vagrant/ssh_config -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/ab_vagrant_control' -o 'ControlPersist 4h' acousticbrainz")
 
 def git_pull():
     local("git pull origin")

@@ -58,6 +58,8 @@ JSON_SCHEMA_COMPLETE = copy.deepcopy(BASE_JSON_SCHEMA)
 # Must have at least two classes with at least one recording in each.
 JSON_SCHEMA_COMPLETE["properties"]["classes"]["minItems"] = 2
 JSON_SCHEMA_COMPLETE["properties"]["classes"]["items"]["properties"]["recordings"]["minItems"] = 2
+# Keep in mind that we still need to manually check if all recordings are in
+# AcousticBrainz database!
 
 
 def create_from_dict(dictionary, author_id):

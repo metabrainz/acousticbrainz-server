@@ -63,4 +63,14 @@ CREATE TABLE dataset_class_member (
   mbid  UUID
 );
 
+CREATE TABLE dataset_eval_jobs (
+  id         UUID,
+  dataset_id UUID                     NOT NULL,
+  status     eval_job_status          NOT NULL DEFAULT 'pending',
+  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  parameters JSON,
+  accuracy   JSON
+);
+
 COMMIT;

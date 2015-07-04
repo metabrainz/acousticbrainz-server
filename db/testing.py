@@ -24,9 +24,11 @@ class DatabaseTestCase(unittest.TestCase):
 
     def reset_db(self):
         self.drop_tables()
+        self.drop_types()
         self.init_db()
 
     def init_db(self):
+        run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
         run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
         run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
         run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
@@ -40,10 +42,16 @@ class DatabaseTestCase(unittest.TestCase):
             cursor.execute('DROP TABLE IF EXISTS lowlevel             CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS statistics           CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS incremental_dumps    CASCADE;')
+            cursor.execute('DROP TABLE IF EXISTS dataset_eval_jobs    CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS dataset_class_member CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS dataset_class        CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS dataset              CASCADE;')
             cursor.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
+        commit()
+
+    def drop_types(self):
+        with create_cursor() as cursor:
+            cursor.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
         commit()
 
     def load_low_level_data(self, mbid):

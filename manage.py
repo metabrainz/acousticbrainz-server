@@ -62,6 +62,9 @@ def init_db(archive, force):
 
     db.init_db_connection(config.PG_CONNECT)
 
+    print('Creating types...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
+
     print('Creating tables...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
 
@@ -107,6 +110,7 @@ def init_test_db(force=False):
 
     db.init_db_connection(config.PG_CONNECT_TEST)
 
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))

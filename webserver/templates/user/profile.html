@@ -39,6 +39,8 @@
           <td>{{ dataset['created'] }}</td>
           <td>
             {% if current_user.is_authenticated() and current_user == user %}
+              <a class="btn btn-success btn-xs"
+                 href="{{ url_for('datasets.evaluate', id=dataset['id']) }}">Evaluate</a>
               <a class="btn btn-primary btn-xs"
                  href="{{ url_for('datasets.edit', id=dataset['id']) }}">Edit</a>
               <a class="btn btn-danger btn-xs"

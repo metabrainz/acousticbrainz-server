@@ -7,6 +7,7 @@ from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from db import dataset, user as user_data
+import db.dataset_eval
 from webserver.external import musicbrainz
 from webserver import flash
 from collections import defaultdict
@@ -26,6 +27,22 @@ def view(id):
         dataset=ds,
         author=user_data.get(ds["author"]),
     )
+
+
+@datasets_bp.route("/<uuid:id>/evaluate")
+def evaluate(id):
+    ds = dataset.get(id)
+    if not current_user.is_authenticated() or ds["author"] != current_user.id:
+        raise NotFound
+    try:
+        db.dataset_eval.evaluate_dataset(ds["id"])
+        flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
+    except db.dataset_eval.IncompleteDatasetException:
+        # TODO(roman): Show more informative error message.
+        flash.error("Can't add dataset into evaluation queue because it's incomplete.")
+    except db.dataset_eval.JobExistsException:
+        flash.warn("Evaluation job for this dataset has been already created.")
+    return redirect(url_for("user.profile", musicbrainz_id=current_user.musicbrainz_id))
 
 
 @datasets_bp.route("/<uuid:id>/json")

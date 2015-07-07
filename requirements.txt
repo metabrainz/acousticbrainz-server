@@ -13,6 +13,6 @@ musicbrainzngs == 0.5
 jsonschema == 2.4.0
 rauth == 0.7.1
 Fabric == 1.10.1
+pyyaml == 3.11
 python-memcached
-pyyaml
 setproctitle

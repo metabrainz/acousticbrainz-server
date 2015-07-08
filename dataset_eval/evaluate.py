@@ -16,21 +16,10 @@ import tempfile
 import shutil
 import json
 import yaml
-import copy
 
 import config
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
-
-BASE_PROJECT_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "base_project.yaml")
-with open(BASE_PROJECT_FILE) as f:
-    BASE_PROJECT_DICT = yaml.load(f)
-BASE_GROUNDTRUTH_DICT = {
-    "type": "singleClass",  # FIXME: What's that?
-    "version": 1.0,         # FIXME: Is this important? Documentation?
-    "className": "",        # FIXME: ???
-    "groundTruth": {},
-}
 
 
 def main():
@@ -52,35 +41,23 @@ def evaluate_dataset(eval_job):
     temp_dir = tempfile.mkdtemp()
 
     try:
-        project_dict = copy.deepcopy(BASE_PROJECT_DICT)
-        project_dict["className"] = "class"  # FIXME(roman): Do we need to change this?
-        project_dict["datasetsDirectory"] = os.path.join(temp_dir, "datasets")
-        project_dict["resultsDirectory"] = os.path.join(temp_dir, "results")
-        project_dict["filelist"] = os.path.join(temp_dir, "filelist.yaml")
-        project_dict["groundtruth"] = os.path.join(temp_dir, "groundtruth.yaml")
-
-        project_file_path = os.path.join(temp_dir, "project.yaml")
-        with open(project_file_path, "w") as f:
-            yaml.dump(project_dict, f)
-
         dataset = db.dataset.get(eval_job["dataset_id"])
 
-        data_path = os.path.join(temp_dir, "data")
-        create_path(data_path)
-        filelist = dump_lowlevel_data(extract_recordings(dataset), data_path)
-
-        with open(project_dict["filelist"], "w") as f:
+        filelist_path = os.path.join(temp_dir, "filelist.yaml")
+        filelist = dump_lowlevel_data(extract_recordings(dataset), os.path.join(temp_dir, "data"))
+        with open(filelist_path, "w") as f:
             yaml.dump(filelist, f)
 
-        with open(project_dict["groundtruth"], "w") as f:
+        groundtruth_path = os.path.join(temp_dir, "groundtruth.yaml")
+        with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth(dataset), f)
 
         results_model_file = os.path.join(temp_dir, "result.history")
 
         gaia_train_model.trainModel(
-            groundtruth_file=project_dict["groundtruth"],
-            filelist_file=project_dict["filelist"],
-            project_file=project_file_path,
+            groundtruth_file=groundtruth_path,
+            filelist_file=filelist_path,
+            project_file=os.path.join(temp_dir, "project.yaml"),  # automatically generated
             project_dir=temp_dir,
             results_model_file=results_model_file,
         )
@@ -99,11 +76,15 @@ def evaluate_dataset(eval_job):
 
 
 def create_groundtruth(dataset):
-    groundtruth = copy.deepcopy(BASE_GROUNDTRUTH_DICT)
+    groundtruth = {
+        "type": "testing",      # FIXME: What's that?
+        "version": 1.0,         # FIXME: Is this important? Documentation?
+        "className": "hello",   # FIXME: ???
+        "groundTruth": {},
+    }
     for cls in dataset["classes"]:
         for recording_mbid in cls["recordings"]:
-            # TODO: Implement this.
-            pass
+            groundtruth["groundTruth"][recording_mbid] = cls["name"]
     return groundtruth
 
 
@@ -117,6 +98,7 @@ def dump_lowlevel_data(recordings, location):
     Returns:
         Filelist.
     """
+    create_path(location)
     filelist = {}
     for recording in recordings:
         filelist[recording] = os.path.join(location, "%s.yaml" % recording)

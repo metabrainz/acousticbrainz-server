@@ -33,6 +33,11 @@ or high-level data extractor:
     # cd /hl_extractor
     # python hl_calc.py
 
+or dataset evaluator:
+
+    # cd /dataset_eval
+    # python evaluate.py
+
 ### The Usual Way
 
 Full installation instructions are available in [INSTALL.md](https://github.com/metabrainz/acousticbrainz-server/blob/master/INSTALL.md) file.

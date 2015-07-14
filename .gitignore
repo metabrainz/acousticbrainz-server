@@ -29,13 +29,13 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Configuration
-acousticbrainz/config.py
+config.py
 ve
 *.swp
-high-level/streaming_extractor_music_svm
-high-level/svm_models
-high-level/profile.conf
-high-level/profile.conf.in
+hl_extractor/streaming_extractor_music_svm
+hl_extractor/svm_models
+hl_extractor/profile.conf
+hl_extractor/profile.conf.in
 
 # Other stuff
 /static/download

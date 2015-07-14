@@ -1,7 +1,8 @@
 from __future__ import with_statement
 from fabric.api import local
-from fabric.colors import green, yellow
-from acousticbrainz import create_app, cache
+from fabric.colors import green, yellow, red
+from db import cache
+import config
 
 
 def git_pull():
@@ -19,15 +20,18 @@ def compile_styling():
     This command requires Less (CSS pre-processor). More information about it can be
     found at http://lesscss.org/.
     """
-    style_path = "static/css/"
+    style_path = "webserver/static/css/"
     local("lessc --clean-css %smain.less > %smain.css" % (style_path, style_path))
     print(green("Style sheets have been compiled successfully.", bold=True))
 
 
 def clear_memcached():
-    with create_app().app_context():
+    try:
+        cache.init(config.MEMCACHED_SERVERS)
         cache.flush_all()
-    print(green("Flushed everything from memcached.", bold=True))
+        print(green("Flushed everything from memcached.", bold=True))
+    except AttributeError as e:
+        print(red("Failed to clear memcached! Check your config file.\nError: %s" % e))
 
 
 def deploy():
@@ -44,7 +48,8 @@ def test(coverage=True):
     will be located in cover/index.html file.
     """
     if coverage:
-        local("nosetests --exe --with-coverage --cover-package=acousticbrainz --cover-erase --cover-html")
+        local("nosetests --exe --with-coverage --cover-erase --cover-html "
+              "--cover-package=data,webserver,hl_extractor")
         print(yellow("Coverage report can be found in cover/index.html file.", bold=True))
     else:
         local("nosetests --exe")

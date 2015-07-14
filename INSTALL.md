@@ -37,8 +37,8 @@ Then use `pip` to install the required Python dependencies:
 
 ### Configuration
 
-Copy over `config.py.sample` to `config.py` in the *acousticbrainz/* directory
-and edit its content to fit your environment.
+Copy over `config.py.sample` to `config.py` and edit its content to fit your
+environment.
 
 #### Configuring MusicBrainz OAuth
 
@@ -86,12 +86,12 @@ configuration step
         $ ./waf configure --mode=release --with-gaia --with-example=streaming_extractor_music_svm
 
 3. Build Essentia and copy `streaming_extractor_music_svm` binary from *build/src/examples/*
-directory into */high-level* in the project root.
+directory into *./hl_extractor/* in the project root.
 
 ### Installing SVM models
 
 Download archive from http://essentia.upf.edu/documentation/svm_models/, extract
-it, and move contents of *svm_models* directory into */high-level/svm_models*
+it, and move contents of *svm_models* directory into */hl_extractor/svm_models*
 in the project root.
 
 ### Starting the extractor

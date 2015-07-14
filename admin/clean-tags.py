@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.append("../acousticbrainz")
+sys.path.append("../")
 import psycopg2
 import config
 import json

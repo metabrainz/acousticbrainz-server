@@ -12,7 +12,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.memory = 1024
   end
 
-  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.provision :shell, path: "admin/bootstrap.sh"
 
   # Web server forwarding:
   config.vm.network "forwarded_port", guest: 8080, host: 8080

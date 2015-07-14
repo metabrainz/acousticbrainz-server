@@ -6,10 +6,11 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
-from db import dataset, user as user_data
 from webserver.external import musicbrainz
 from webserver import flash
 from collections import defaultdict
+import db.dataset
+import db.user
 import jsonschema
 import csv
 
@@ -18,19 +19,19 @@ datasets_bp = Blueprint("datasets", __name__)
 
 @datasets_bp.route("/<uuid:id>")
 def view(id):
-    ds = dataset.get(id)
+    ds = db.dataset.get(id)
     if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
         raise NotFound("Can't find this dataset.")
     return render_template(
         "datasets/view.html",
         dataset=ds,
-        author=user_data.get(ds["author"]),
+        author=db.user.get(ds["author"]),
     )
 
 
 @datasets_bp.route("/<uuid:id>/json")
 def view_json(id):
-    ds = dataset.get(id)
+    ds = db.dataset.get(id)
     if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
         raise NotFound("Can't find this dataset.")
     return jsonify(ds)
@@ -48,7 +49,7 @@ def create():
             ), 400
 
         try:
-            dataset_id = dataset.create_from_dict(dataset_dict, current_user.id)
+            dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
         except jsonschema.ValidationError as e:
             return jsonify(
                 success=False,
@@ -76,7 +77,7 @@ def import_csv():
             "public": False,
         }
         try:
-            dataset_id = dataset.create_from_dict(dataset_dict, current_user.id)
+            dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
         except jsonschema.ValidationError as e:
             raise BadRequest(str(e))
         flash.info("Dataset has been imported successfully.")
@@ -104,7 +105,7 @@ def _parse_dataset_csv(file):
 @datasets_bp.route("/<uuid:id>/edit", methods=("GET", "POST"))
 @login_required
 def edit(id):
-    ds = dataset.get(id)
+    ds = db.dataset.get(id)
     if not ds or (not ds["public"] and ds["author"] != current_user.id):
         raise NotFound("Can't find this dataset.")
     if ds["author"] != current_user.id:
@@ -119,7 +120,7 @@ def edit(id):
             ), 400
 
         try:
-            dataset.update(str(id), dataset_dict, current_user.id)
+            db.dataset.update(str(id), dataset_dict, current_user.id)
         except jsonschema.ValidationError as e:
             return jsonify(
                 success=False,
@@ -143,14 +144,14 @@ def edit(id):
 @datasets_bp.route("/<uuid:id>/delete", methods=("GET", "POST"))
 @login_required
 def delete(id):
-    ds = dataset.get(id)
+    ds = db.dataset.get(id)
     if not ds or (not ds["public"] and ds["author"] != current_user.id):
         raise NotFound("Can't find this dataset.")
     if ds["author"] != current_user.id:
         raise Unauthorized("You can't delete this dataset.")
 
     if request.method == "POST":
-        dataset.delete(ds["id"])
+        db.dataset.delete(ds["id"])
         flash.success("Dataset has been deleted.")
         return redirect(url_for("user.profile", musicbrainz_id=current_user.musicbrainz_id))
     else:  # GET

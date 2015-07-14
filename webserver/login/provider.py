@@ -1,8 +1,8 @@
 from rauth import OAuth2Service
 from flask import request, session, url_for
-from db import user as user_data
 from webserver.login import User
 from webserver.utils import generate_string
+import db.user
 import json
 
 _musicbrainz = None
@@ -30,7 +30,7 @@ def get_user():
         'redirect_uri': url_for('login.musicbrainz_post', _external=True)
     }, decoder=json.loads)
     data = s.get('oauth2/userinfo').json()
-    user = user_data.get_or_create(data.get('sub'))
+    user = db.user.get_or_create(data.get('sub'))
     if user:
         return User(
             id=user['id'],

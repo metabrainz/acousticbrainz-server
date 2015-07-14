@@ -1,46 +1,46 @@
 # -*- coding: utf-8 -*-
 from db.testing import DatabaseTestCase
-from db import user as user_data
+import db.user
 
 
 class UserTestCase(DatabaseTestCase):
 
     def test_create(self):
-        user_id = user_data.create("fuzzy_dunlop")
+        user_id = db.user.create("fuzzy_dunlop")
 
-        self.assertIsNotNone(user_data.get(user_id))
+        self.assertIsNotNone(db.user.get(user_id))
 
         # Testing Unicode
-        user_id = user_data.create(u"Пользователь")
+        user_id = db.user.create(u"Пользователь")
         self.assertIsNotNone(user_id)
 
     def test_get(self):
-        user_id = user_data.create("fuzzy_dunlop")
-        self.assertIsNotNone(user_data.get(user_id))
+        user_id = db.user.create("fuzzy_dunlop")
+        self.assertIsNotNone(db.user.get(user_id))
 
-        self.assertIsNone(user_data.get(user_id + 2))
+        self.assertIsNone(db.user.get(user_id + 2))
 
     def test_get_by_mb_id(self):
-        self.assertIsNone(user_data.get_by_mb_id("fuzzy"))
+        self.assertIsNone(db.user.get_by_mb_id("fuzzy"))
 
         musicbrainz_id = "fuzzy_dunlop"
-        user_id = user_data.create(musicbrainz_id)
-        user = user_data.get_by_mb_id(musicbrainz_id)
+        user_id = db.user.create(musicbrainz_id)
+        user = db.user.get_by_mb_id(musicbrainz_id)
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
 
     def test_get_or_create(self):
         musicbrainz_id = "User"
-        user = user_data.get_or_create(musicbrainz_id)
+        user = db.user.get_or_create(musicbrainz_id)
         self.assertIsNotNone(user)
 
-        same_user = user_data.get_or_create(musicbrainz_id)
+        same_user = db.user.get_or_create(musicbrainz_id)
         self.assertEqual(user["id"], same_user["id"])
 
         # Testing Unicode
         musicbrainz_id = u"Пользователь"
-        user = user_data.get_or_create(musicbrainz_id)
+        user = db.user.get_or_create(musicbrainz_id)
         self.assertIsNotNone(user)
 
-        same_user = user_data.get_or_create(musicbrainz_id)
+        same_user = db.user.get_or_create(musicbrainz_id)
         self.assertEqual(user["id"], same_user["id"])

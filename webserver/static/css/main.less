@@ -58,6 +58,12 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
   #twitter-block > iframe { width: 100%; }
 }
 
+#page-recording-summary {
+  .table-row-variant(success; fadeout(@state-success-bg, 60%));
+  .table-row-variant(warning;  fadeout(@state-warning-bg, 60%));
+  .table-row-variant(danger;  fadeout(@state-danger-bg, 60%));
+}
+
 #dataset-viewer {
   .dataset-description {
     .text-muted;

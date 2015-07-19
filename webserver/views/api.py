@@ -44,8 +44,16 @@ def get_low_level(mbid):
 @crossdomain()
 def get_high_level(mbid):
     """Endpoint for fetching high-level information to AcousticBrainz."""
+    offset = request.args.get("n")
+    if offset:
+        if not offset.isdigit():
+            raise BadRequest("Offset must be an integer value!")
+        else:
+            offset = int(offset)
+    else:
+        offset = 0
     try:
-        return Response(load_high_level(mbid), content_type='application/json')
+        return Response(load_high_level(mbid, offset), content_type='application/json')
     except NoDataFoundException:
         raise NotFound
 

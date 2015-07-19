@@ -1,0 +1,97 @@
+{%- extends 'base.html' -%}
+
+{%- block title -%}
+  Track "{{ metadata['title'] }}" by {{ metadata['artist'] }} - AcousticBrainz
+{%- endblock -%}
+
+{%- block content -%}
+  <h2 class="page-title">Track "{{ metadata['title'] }}" by {{ metadata['artist'] }}</h2>
+  
+  {%- include 'data/summary-metadata.html' -%}
+
+  {% if submission_count > 1 %}
+    <h3 class="text-center">
+      {% if offset > 0 %}
+        <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=offset-1) }}"
+           title="View previous submission">&larr;</a>
+      {% endif %}
+      Submission #{{ offset + 1 }} <small>out of {{ submission_count }}</small>
+      {% if offset < submission_count - 1 %}
+        <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=offset+1) }}"
+           title="View next submission">&rarr;</a>
+      {% endif %}
+    </h3>
+  {% endif %}
+
+  <h3>Low-level information <small>Summary</small></h3>
+
+  <table class="table table-striped table-bordered">
+    <thead><tr><th style="width: 30%;">Tonal & Rhythm</th><th>value</th></tr></thead>
+    <tr>
+      <td><a href="http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html">key</a></td>
+      <td>{{ data.lowlevel.tonal.key_key }}</td>
+    </tr>
+    <tr>
+      <td><a href="http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html">scale</a></td>
+      <td>{{ data.lowlevel.tonal.chords_scale }}</td>
+    </tr>
+    <tr>
+      <td><a href="http://essentia.upf.edu/documentation/reference/streaming_Danceability.html">danceability</a></td>
+      <td>{{ data.lowlevel.rhythm.danceability }}</td>
+    </tr>
+    <tr>
+      <td><a href="http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html">bpm</a></td>
+      <td>{{ data.lowlevel.rhythm.bpm }}</td></tr>
+    <tr>
+      <td>beat count</td>
+      <td>{{ data.lowlevel.rhythm.beats_count }}</td>
+    </tr>
+  </table>
+  
+  {% if data.highlevel %}
+    <h3>High-level information</h3>
+
+    <table class="table table-striped table-bordered">
+      <thead><th style="width: 30%;">Voice, timbre, gender, etc.</th><th style="width: 25%;">value</th><th>probability</th></thead>
+      {% for row in data.highlevel.other %}
+        <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+      {% endfor %}
+    </table>
+
+    <table class="table table-striped table-bordered">
+      <thead><th style="width: 30%;">Moods</th><th style="width: 25%;">value</th><th>probability</th></thead>
+      {% for row in data.highlevel.moods %}
+        <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+      {% endfor %}
+    </table>
+
+    <table class="table table-striped table-bordered">
+      <thead><th style="width: 30%;">Genres</th><th style="width: 25%;">value</th><th>probability</th></thead>
+      {% for row in data.highlevel.genres %}
+        <tr><td>{{ row[0] }}</td><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+      {% endfor %}
+    </table>
+
+  {% else %}
+    <div class="alert alert-warning">
+      Sorry, we have not had a chance to calculate the high-level data for this
+      submission yet. It should be done pretty soon. In the meantime, you can
+      have a look at our <a href="{{ url_for('data.data') }}#sample-data">sample data</a>.
+    </div>
+  {% endif %}
+
+  <h3>View all data</h3>
+  <ul>
+    <li>
+      <a href="{{ url_for('data.view_low_level', mbid=metadata['mbid'], n=offset) }}">Low-level</a>
+      (<a href="{{ url_for('api.get_low_level', mbid=metadata['mbid'], n=offset) }}">raw JSON</a>)
+    </li>
+    {% if data.highlevel %}
+      <li>
+        {# FIXME(roman): Offset might not point to the right high-level data there. #}
+        <a href="{{ url_for('data.view_high_level', mbid=metadata['mbid'], n=offset) }}">High-level</a>
+        (<a href="{{ url_for('api.get_high_level', mbid=metadata['mbid'], n=offset) }}">raw JSON</a>)
+      </li>
+    {% endif %}
+  </ul>
+{%- endblock -%}

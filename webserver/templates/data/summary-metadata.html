@@ -1,18 +1,49 @@
-{%- extends 'base.html' -%}
-
-{%- block title -%}
-  Track "{{ info['title'] }}" by {{ info['artist'] }} - AcousticBrainz
-{%- endblock -%}
-
-{%- block content -%}
-  <h2 class="page-title">Track "{{ info['title'] }}" by {{ info['artist'] }}</h2>
-  
-  {%- include 'data/metadata.html' -%}
-  
-  <div class="alert alert-warning">   
-    We don't have any information about this recording yet. If you have this recording,
-    you can help us increase the size and quality of the AcousticBrainz database.
-    <a href="{{ url_for('index.contribute') }}">Find more information here</a>.
+<div class="row">
+  <div class="col-md-8">
+    <table class="table table-striped table-bordered">
+      <thead>
+      <tr>
+        <th style="width: 30%;">Track information</th>
+        <th>value</th>
+      </tr>
+      </thead>
+      <tr>
+        <td><a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MBID</a></td>
+        <td><code>{{ metadata['mbid'] }}</code></td>
+      </tr>
+      <tr>
+        <td>title</td>
+        <td>
+          <a href="https://musicbrainz.org/recording/{{ metadata['mbid'] }}">{{ metadata['title'] }}</a>
+        </td>
+      </tr>
+      <tr>
+        <td>artist</td>
+        <td><a href="https://musicbrainz.org/artist/{{ metadata['artist_id'] }}">{{ metadata['artist'] }}</a></td>
+      </tr>
+      <tr>
+        <td>release</td>
+        <td>
+          <a href="https://musicbrainz.org/release/{{ metadata['release_id'] }}">{{ metadata['release'] }}</a>
+          {# TODO(roman): Get MBID of release group from MusicBrainz. #}
+          {% if summary and summary.lowlevel.metadata.tags.musicbrainz_releasegroupid %}
+            <span class="critiquebrainz">(<a href="https://critiquebrainz.org/release-group/{{ summary.lowlevel.metadata.tags.musicbrainz_releasegroupid[0] }}">Reviews at CritiqueBrainz</a>)</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>track number</td>
+        <td><a href="https://musicbrainz.org/track/{{ metadata['track_id'] }}">{{ metadata['track_number'] }}</a></td>
+      </tr>
+      <tr>
+        <td>track length</td>
+        <td>{{ metadata['length'] }}</td></tr>
+    </table>
   </div>
-{%- endblock -%}
 
+  <div class="col-md-4 text-center">
+    {% if tomahawk_url %}
+      <iframe src="{{ tomahawk_url }}" width="200" scrolling="no" height="200" frameborder="0" allowtransparency="true"></iframe>
+    {% endif %}
+  </div>
+</div>

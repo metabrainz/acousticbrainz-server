@@ -47,10 +47,10 @@ def _has_key(dictionary, key):
 
 
 def sanity_check_data(data):
-    """Checks if data about the track contains all required keys.
+    """Checks if data about the recording contains all required keys.
 
     Args:
-        data: Dictionary that contains information about the track.
+        data: Dictionary that contains information about the recording.
     Returns:
         First key that is missing or None if everything is in place.
     """
@@ -75,9 +75,9 @@ def submit_low_level_data(mbid, data):
     """Function for submitting low-level data.
 
     Args:
-        mbid: MusicBrainz ID of the track that corresponds to the data that is
-            being submitted.
-        data: Low-level data about the track.
+        mbid: MusicBrainz ID of the recording that corresponds to the data
+            that is being submitted.
+        data: Low-level data about the recording.
     """
     mbid = str(mbid)
     data = clean_metadata(data)

@@ -3,7 +3,7 @@ Installing AcousticBrainz Server
 
 AcousticBrainz Server consists of two parts: web server that powers
 acousticbrainz.org website and high-level data extractor that processes
-incoming low-level information about tracks.
+incoming low-level information about recordings.
 
 Prerequisites
 -------------

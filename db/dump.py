@@ -2,7 +2,7 @@
 Functions for exporting and importing AcousticBrainz data in various formats.
 
 There are two types of data dumps:
-1. Full dumps (high/low level information about all tracks in JSON format
+1. Full dumps (high/low level information about all recordings in JSON format
 or raw information from all tables in TSV format).
 2. Incremental dumps (similar to the first one, but some dumped tables don't
 include information from the previous dumps).
@@ -302,7 +302,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
         shutil.rmtree(temp_dir)  # Cleanup
 
-        print("Dumped %s tracks." % dumped_count)
+        print("Dumped %s recordings." % dumped_count)
 
     return archive_path
 
@@ -400,7 +400,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
         shutil.rmtree(temp_dir)  # Cleanup
 
-        print("Dumped %s tracks." % dumped_count)
+        print("Dumped %s recordings." % dumped_count)
 
     return archive_path
 

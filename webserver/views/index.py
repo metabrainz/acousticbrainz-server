@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template
-from db.stats import get_last_submitted_tracks, get_stats
+from db.stats import get_last_submitted_recordings, get_stats
 
 index_bp = Blueprint('index', __name__)
 
@@ -9,7 +9,7 @@ index_bp = Blueprint('index', __name__)
 def index():
     stats, last_collected = get_stats()
     return render_template("index/index.html", stats=stats, last_collected=last_collected,
-                           last_submitted_data=get_last_submitted_tracks())
+                           last_submitted_data=get_last_submitted_recordings())
 
 
 @index_bp.route("/download")

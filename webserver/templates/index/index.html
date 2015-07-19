@@ -23,7 +23,7 @@
         made available to the public.
       </p>
       <p>
-        AcousticBrainz organizes the data on a track basis, indexed by the
+        AcousticBrainz organizes the data on a recording basis, indexed by the
         <a href="https://musicbrainz.org/doc/MusicBrainz_Identifier">MusicBrainz ID</a>
         for <a href="https://musicbrainz.org/doc/Recording">recordings</a>. If you know
         the MBID for a recording, you can easily fetch from AcousticBrainz. For details
@@ -37,7 +37,7 @@
         <h4>Examples</h4>
         <p>
           If you're wondering what this collected data actually looks like,
-          have a look at the last 5 tracks that have been submitted:
+          have a look at the last 5 recordings that have been submitted:
         </p>
         <ol>
            {% for mbid, artist, recording in last_submitted_data %}
@@ -53,7 +53,7 @@
 
     <div class="col-md-5 col-lg-4">
       <div id="stats" class="panel panel-default">
-        <div class="panel-heading"><strong>Track Statistics</strong></div>
+        <div class="panel-heading"><strong>Data Statistics</strong></div>
         <div class="panel-body">
           <table class="table table-collapsed">
             <thead><tr>

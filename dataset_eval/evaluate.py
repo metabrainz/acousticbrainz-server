@@ -11,11 +11,11 @@ import db.dataset_eval
 import db.exceptions
 from db.utils import create_path
 from gaia2.scripts.classification import train_model as gaia_train_model
+import gaia2.fastyaml as yaml
 from time import sleep
 import tempfile
 import shutil
 import json
-import yaml
 
 import config
 

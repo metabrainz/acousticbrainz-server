@@ -55,14 +55,11 @@
 
       {% macro print_row(row) %}
         {# Prints <name, value, probability> table row. #}
-          {% set probability = row[2]|float * 100 %}
-          <tr class="{{ 'success' if probability > 75 else (
-                        'warning' if probability > 25 else
-                        'danger') }}">
-            <td>{{ row[0] }}</td> {# Name #}
-            <td>{{ row[1] }}</td> {# Value #}
-            <td>{{ probability }}%</td>
-          </tr>
+        <tr>
+          <td>{{ row[0] }}</td> {# Name #}
+          <td>{{ row[1] }}</td> {# Value #}
+          <td>{{ row[2]|float * 100 }}%</td>
+        </tr>
       {% endmacro %}
 
       <table class="table table-bordered">

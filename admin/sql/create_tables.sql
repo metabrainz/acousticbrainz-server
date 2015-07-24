@@ -69,8 +69,7 @@ CREATE TABLE dataset_eval_jobs (
   status     eval_job_status          NOT NULL DEFAULT 'pending',
   created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  parameters JSON,
-  accuracy   JSON
+  result     JSON
 );
 
 COMMIT;

@@ -6,8 +6,7 @@ CREATE TABLE dataset_eval_jobs (
   id         UUID,
   dataset_id UUID                     NOT NULL,
   status     eval_job_status          NOT NULL DEFAULT 'pending',
-  parameters JSON,
-  accuracy   JSON,
+  result     JSON,
   created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

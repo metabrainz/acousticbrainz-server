@@ -57,7 +57,7 @@ def evaluate_dataset(eval_job):
             filelist_file=filelist_path,
             project_dir=temp_dir,
         )
-        # TODO: Save results in the database.
+        db.dataset_eval.set_job_result(eval_job["id"], json.dumps(results))
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
 
     except db.exceptions.DatabaseException:

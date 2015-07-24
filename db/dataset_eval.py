@@ -58,7 +58,7 @@ def validate_dataset(dataset):
 def get_next_pending_job():
     with create_cursor() as cursor:
         cursor.execute(
-            "SELECT id, dataset_id, status, parameters, accuracy, created, updated "
+            "SELECT id, dataset_id, status, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE status = %s "
             "ORDER BY created ASC "
@@ -71,7 +71,7 @@ def get_next_pending_job():
 def get_job(job_id):
     with create_cursor() as cursor:
         cursor.execute(
-            "SELECT id, dataset_id, status, parameters, accuracy, created, updated "
+            "SELECT id, dataset_id, status, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE id = %s",
             (job_id,)
@@ -79,13 +79,13 @@ def get_job(job_id):
         return dict(cursor.fetchone()) if cursor.rowcount > 0 else None
 
 
-def set_job_results(job_id, parameters, accuracy):
+def set_job_result(job_id, result):
     with create_cursor() as cursor:
         cursor.execute(
             "UPDATE dataset_eval_jobs "
-            "SET (parameters, accuracy, status, updated) = (%s, %s, %s, current_timestamp) "
+            "SET (result, updated) = (%s, current_timestamp) "
             "WHERE id = %s",
-            (parameters, accuracy, STATUS_DONE, job_id)
+            (result, job_id)
         )
     commit()
 

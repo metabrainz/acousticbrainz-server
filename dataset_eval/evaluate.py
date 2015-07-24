@@ -4,13 +4,13 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
+from dataset_eval import gaia_wrapper
 import db
 import db.data
 import db.dataset
 import db.dataset_eval
 import db.exceptions
 from db.utils import create_path
-from gaia2.scripts.classification import train_model as gaia_train_model
 import gaia2.fastyaml as yaml
 from time import sleep
 import tempfile
@@ -52,18 +52,12 @@ def evaluate_dataset(eval_job):
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth(dataset), f)
 
-        results_model_file = os.path.join(temp_dir, "result.history")
-
-        gaia_train_model.trainModel(
+        results = gaia_wrapper.train_model(
             groundtruth_file=groundtruth_path,
             filelist_file=filelist_path,
-            project_file=os.path.join(temp_dir, "project.yaml"),  # automatically generated
             project_dir=temp_dir,
-            results_model_file=results_model_file,
         )
-
         # TODO: Save results in the database.
-
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
 
     except db.exceptions.DatabaseException:

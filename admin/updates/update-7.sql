@@ -16,6 +16,8 @@ ALTER TABLE dataset_eval_jobs ADD CONSTRAINT dataset_eval_jobs_pkey PRIMARY KEY 
 ALTER TABLE dataset_eval_jobs
   ADD CONSTRAINT dataset_eval_jobs_fk_dataset
   FOREIGN KEY (dataset_id)
-  REFERENCES dataset (id);
+  REFERENCES dataset (id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE;
 
 COMMIT;

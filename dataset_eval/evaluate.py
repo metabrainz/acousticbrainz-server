@@ -3,21 +3,20 @@ from __future__ import print_function
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+import config
 
 from dataset_eval import gaia_wrapper
+import gaia2.fastyaml as yaml
 import db
 import db.data
 import db.dataset
 import db.dataset_eval
 import db.exceptions
 from db.utils import create_path
-import gaia2.fastyaml as yaml
-from time import sleep
 import tempfile
 import shutil
+import time
 import json
-
-import config
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
@@ -33,7 +32,7 @@ def main():
         else:
             print("No pending datasets. Sleeping %s seconds." % SLEEP_DURATION)
             db.close_connection()
-            sleep(SLEEP_DURATION)
+            time.sleep(SLEEP_DURATION)
 
 
 def evaluate_dataset(eval_job):
@@ -60,10 +59,12 @@ def evaluate_dataset(eval_job):
         db.dataset_eval.set_job_result(eval_job["id"], json.dumps(results))
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
 
-    except db.exceptions.DatabaseException:
+    # TODO(roman): Also need to catch exceptions from Gaia.
+    except db.exceptions.DatabaseException as e:
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_FAILED)
-        # TODO(roman): Maybe log this exception? (Would also be nice to provide
-        # a nice error message to the user.)
+        # TODO(roman): Maybe log this exception? Would also be nice to provide
+        # an error message to the user.
+        print(e)
 
     finally:
         shutil.rmtree(temp_dir)  # Cleanup
@@ -107,10 +108,10 @@ def lowlevel_data_to_yaml(data):
     """
     # Removing descriptors, that will otherwise break gaia_fusion due to
     # incompatibility of layouts (see Gaia implementation for more details).
-    if 'tags' in data['metadata']:
-        del data['metadata']['tags']
-    if 'sample_rate' in data['metadata']['audio_properties']:
-        del data['metadata']['audio_properties']['sample_rate']
+    if "tags" in data["metadata"]:
+        del data["metadata"]["tags"]
+    if "sample_rate" in data["metadata"]["audio_properties"]:
+        del data["metadata"]["audio_properties"]["sample_rate"]
 
     return yaml.dump(data)
 

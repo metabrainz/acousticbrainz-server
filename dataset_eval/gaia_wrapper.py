@@ -35,5 +35,5 @@ def select_best_model(project_file_path):
     return {
         "parameters": best_params,
         "accuracy": best_accuracy,
-        "confusion_matrix": cm.matrix,
+        "confusion_matrix": dict((k, dict(v)) for k, v in cm.matrix.items()),
     }

@@ -48,23 +48,23 @@ class DatasetEvalTestCase(DatabaseTestCase):
         self.assertIsNotNone(job)
         self.assertEqual(type(job), dict)
 
-        self.assertIsNone(dataset_eval.get_job("123e4567-e89b-12d3-a456-426655440000"))
+        self.assertIsNone(dataset_eval.get_job("f47ac10b-58cc-4372-a567-0e02b2c3d479"))
 
-    def test_set_job_results(self):
+    def test_set_job_result(self):
         job_id = dataset_eval._create_job(self.test_dataset_id)
 
-        test_parameters = {u"parameters": 1}
-        test_accuracy = {u"accuracy": 1}
-        dataset_eval.set_job_results(
+        result = {
+            u"accuracy": 1,
+            u"parameters": {},
+            u"confusion_matrix": {},
+        }
+        dataset_eval.set_job_result(
             job_id=job_id,
-            parameters=json.dumps(test_parameters),
-            accuracy=json.dumps(test_accuracy),
+            result=json.dumps(result),
         )
 
         job = dataset_eval.get_job(job_id)
-        self.assertEqual(job["status"], dataset_eval.STATUS_DONE)
-        self.assertEqual(job["parameters"], test_parameters)
-        self.assertEqual(job["accuracy"], test_accuracy)
+        self.assertEqual(job["result"], result)
 
     def test_set_job_status(self):
         job_id = dataset_eval._create_job(self.test_dataset_id)

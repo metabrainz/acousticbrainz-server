@@ -13,10 +13,13 @@ import db.dataset
 import db.dataset_eval
 import db.exceptions
 from db.utils import create_path
+import unicodedata
 import tempfile
 import shutil
 import time
 import json
+import os
+import re
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
@@ -72,9 +75,9 @@ def evaluate_dataset(eval_job):
 
 def create_groundtruth(dataset):
     groundtruth = {
-        "type": "testing",      # FIXME: What's that?
-        "version": 1.0,         # FIXME: Is this important? Documentation?
-        "className": "hello",   # FIXME: ???
+        "type": "unknown",  # TODO: See if that needs to be modified.
+        "version": 1.0,
+        "className": _slugify(unicode(dataset["name"])),
         "groundTruth": {},
     }
     for cls in dataset["classes"]:
@@ -123,6 +126,16 @@ def extract_recordings(dataset):
         for recording_mbid in cls["recordings"]:
             recordings.add(recording_mbid)
     return recordings
+
+
+def _slugify(string):
+    """Converts unicode string to lowercase, removes alphanumerics and
+    underscores, and converts spaces to hyphens. Also strips leading and
+    trailing whitespace.
+    """
+    string = unicodedata.normalize('NFKD', string).encode('ascii', 'ignore').decode('ascii')
+    string = re.sub('[^\w\s-]', '', string).strip().lower()
+    return re.sub('[-\s]+', '-', string)
 
 
 if __name__ == "__main__":

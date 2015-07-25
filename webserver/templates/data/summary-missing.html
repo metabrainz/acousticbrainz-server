@@ -1,11 +1,11 @@
 {%- extends 'base.html' -%}
 
 {%- block title -%}
-  Track "{{ metadata['title'] }}" by {{ metadata['artist'] }} - AcousticBrainz
+  Recording "{{ metadata['title'] }}" by {{ metadata['artist'] }} - AcousticBrainz
 {%- endblock -%}
 
 {%- block content -%}
-  <h2 class="page-title">Track "{{ metadata['title'] }}" by {{ metadata['artist'] }}</h2>
+  <h2 class="page-title">Recoding "{{ metadata['title'] }}" by {{ metadata['artist'] }}</h2>
   
   {%- include 'data/summary-metadata.html' -%}
   

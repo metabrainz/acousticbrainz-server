@@ -2,8 +2,9 @@
 import psycopg2
 
 # Configuration
+import os
 import sys
-sys.path.append("..")
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 import config
 
 if __name__ == "__main__":

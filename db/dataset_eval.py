@@ -1,4 +1,5 @@
 from db import create_cursor, commit
+import db.exceptions
 import db.dataset
 import db.data
 import jsonschema
@@ -118,12 +119,12 @@ def _create_job(dataset_id):
     return job_id
 
 
-class IncorrectJobStatusException(Exception):
+class IncorrectJobStatusException(db.exceptions.DatabaseException):
     pass
 
-class JobExistsException(Exception):
+class JobExistsException(db.exceptions.DatabaseException):
     """Should be raised when trying to add a job for dataset that already has one."""
     pass
 
-class IncompleteDatasetException(Exception):
+class IncompleteDatasetException(db.exceptions.DatabaseException):
     pass

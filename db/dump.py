@@ -12,6 +12,7 @@ from collections import defaultdict
 from datetime import datetime
 from db import create_cursor, commit
 from db.utils import create_path
+import db.exceptions
 import webserver
 import subprocess
 import tempfile
@@ -477,5 +478,5 @@ def _get_incremental_dump_timestamp(dump_id=None):
     return row[0] if row else None
 
 
-class NoNewData(Exception):
+class NoNewData(db.exceptions.DatabaseException):
     pass

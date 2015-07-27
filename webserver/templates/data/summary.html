@@ -16,7 +16,7 @@
         <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=previous) }}"
            title="View previous submission">&larr;</a>
       {% endif %}
-      Submission #{{ offset + 1 }} <small>out of {{ submission_count }}</small>
+      Submission #{{ position }} <small>out of {{ submission_count }}</small>
       {% if next != None %}
         <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=next) }}"
            title="View next submission">&rarr;</a>

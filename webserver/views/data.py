@@ -1,14 +1,14 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for
-from db.data import load_low_level, load_high_level, get_summary_data
-from db.exceptions import NoDataFoundException
+from flask import Blueprint, render_template, redirect, url_for, request
 from webserver.external import musicbrainz
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, BadRequest
 from urllib import quote_plus
+import db.data
+import db.exceptions
 import json
 import time
 
-data_bp = Blueprint('data', __name__)
+data_bp = Blueprint("data", __name__)
 
 
 @data_bp.route("/api")
@@ -31,47 +31,95 @@ def recording(mbid):
     return redirect(url_for(".summary", mbid=mbid))
 
 
-@data_bp.route("/<uuid:mbid>/low-level/view", methods=["GET"])
+@data_bp.route("/<uuid:mbid>/low-level/view")
 def view_low_level(mbid):
+    offset = request.args.get("n")
+    if offset:
+        if not offset.isdigit():
+            raise BadRequest("Offset must be an integer value!")
+        else:
+            offset = int(offset)
+    else:
+        offset = 0
+
     try:
         return render_template(
             "data/json-display.html",
             mbid=mbid,
-            data=json.dumps(json.loads(load_low_level(mbid)), indent=4, sort_keys=True),
+            data=json.dumps(json.loads(db.data.load_low_level(mbid, offset)),
+                            indent=4, sort_keys=True),
             title="Low-level JSON for %s" % mbid,
         )
-    except NoDataFoundException:
+    except db.exceptions.NoDataFoundException:
         raise NotFound
 
 
-@data_bp.route("/<uuid:mbid>/high-level/view", methods=["GET"])
+@data_bp.route("/<uuid:mbid>/high-level/view")
 def view_high_level(mbid):
+    offset = request.args.get("n")
+    if offset:
+        if not offset.isdigit():
+            raise BadRequest("Offset must be an integer value!")
+        else:
+            offset = int(offset)
+    else:
+        offset = 0
+
     try:
         return render_template(
             "data/json-display.html",
             mbid=mbid,
-            data=json.dumps(json.loads(load_high_level(mbid)), indent=4, sort_keys=True),
+            data=json.dumps(json.loads(db.data.load_high_level(mbid, offset)),
+                            indent=4, sort_keys=True),
             title="High-level JSON for %s" % mbid,
         )
-    except NoDataFoundException:
+    except db.exceptions.NoDataFoundException:
         raise NotFound
 
 
-@data_bp.route("/<uuid:mbid>", methods=["GET"])
+@data_bp.route("/<uuid:mbid>")
 def summary(mbid):
+    offset = request.args.get("n")
+    if offset:
+        if not offset.isdigit():
+            raise BadRequest("Offset must be an integer value!")
+        else:
+            offset = int(offset)
+    else:
+        offset = 0
+
     try:
-        summary_data = get_summary_data(mbid)
-    except NoDataFoundException:
+        summary_data = db.data.get_summary_data(mbid, offset=offset)
+    except db.exceptions.NoDataFoundException:
         summary_data = {}
 
-    info = _get_track_info(mbid, summary_data['lowlevel']['metadata'] if summary_data else None)
-    if info and summary_data:
-        return render_template("data/summary-complete.html", summary=summary_data, mbid=mbid, info=info,
-                               tomahawk_url=_get_tomahawk_url(info))
-    elif info:
-        return (render_template("data/summary-metadata.html", summary=summary_data, mbid=mbid, info=info,
-                                tomahawk_url=_get_tomahawk_url(info)), 404)
-    else:  # When there is no data
+    if "highlevel" in summary_data:
+        genres, moods, other = _interpret_high_level(summary_data["highlevel"])
+        summary_data["highlevel"] = {
+            "genres": genres,
+            "moods": moods,
+            "other": other,
+        }
+
+    recording_info = _get_recording_info(mbid, summary_data["lowlevel"]["metadata"]
+                                         if summary_data else None)
+    if recording_info and summary_data:
+        submission_count = db.data.count_lowlevel(mbid)
+        return render_template(
+            "data/summary.html",
+            metadata=recording_info,
+            tomahawk_url=_get_tomahawk_url(recording_info),
+            submission_count=submission_count,
+            position=offset + 1,
+            previous=offset - 1 if offset > 0 else None,
+            next=offset + 1 if offset < submission_count - 1 else None,
+            offset=offset,
+            data=summary_data,
+        )
+    elif recording_info:
+        return render_template("data/summary-missing.html", metadata=recording_info,
+                               tomahawk_url=_get_tomahawk_url(recording_info)), 404
+    else:  # Recording doesn't exist in MusicBrainz
         raise NotFound("MusicBrainz does not have data for this track.")
 
 
@@ -89,8 +137,10 @@ def _get_tomahawk_url(metadata):
         )
 
 
-def _get_track_info(mbid, metadata):
-    info = {}
+def _get_recording_info(mbid, metadata):
+    info = {
+        'mbid': mbid,
+    }
 
     # Getting good metadata from MusicBrainz
     try:
@@ -129,3 +179,38 @@ def _get_track_info(mbid, metadata):
             info['track_number'] = metadata['tags']['tracknumber'][0]
 
     return info
+
+
+def _interpret_high_level(hl):
+
+    def interpret(text, data, threshold=.6):
+        if data['probability'] >= threshold:
+            return text, data['value'].replace("_", " "), "%.3f" % data['probability']
+        else:
+            return text, "unsure", "%.3f" % data['probability']
+
+    genres = []
+    genres.append(interpret("Tzanetakis' method", hl['highlevel']['genre_tzanetakis']))
+    genres.append(interpret("Electronic classification", hl['highlevel']['genre_electronic']))
+    genres.append(interpret("Dortmund method", hl['highlevel']['genre_dortmund']))
+    genres.append(interpret("Rosamerica method", hl['highlevel']['genre_rosamerica']))
+
+    moods = []
+    moods.append(interpret("Electronic", hl['highlevel']['mood_electronic']))
+    moods.append(interpret("Party", hl['highlevel']['mood_party']))
+    moods.append(interpret("Aggressive", hl['highlevel']['mood_aggressive']))
+    moods.append(interpret("Acoustic", hl['highlevel']['mood_acoustic']))
+    moods.append(interpret("Happy", hl['highlevel']['mood_happy']))
+    moods.append(interpret("Sad", hl['highlevel']['mood_sad']))
+    moods.append(interpret("Relaxed", hl['highlevel']['mood_relaxed']))
+    moods.append(interpret("Mirex method", hl['highlevel']['moods_mirex']))
+
+    other = []
+    other.append(interpret("Voice", hl['highlevel']['voice_instrumental']))
+    other.append(interpret("Gender", hl['highlevel']['gender']))
+    other.append(interpret("Danceability", hl['highlevel']['danceability']))
+    other.append(interpret("Tonal", hl['highlevel']['tonal_atonal']))
+    other.append(interpret("Timbre", hl['highlevel']['timbre']))
+    other.append(interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm']))
+
+    return genres, moods, other

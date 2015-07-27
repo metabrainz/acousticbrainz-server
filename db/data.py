@@ -184,7 +184,16 @@ def count_lowlevel(mbid):
 
 
 def get_summary_data(mbid, offset=0):
-    """Fetches the low-level and high-level features from for the specified MBID."""
+    """Fetches the low-level and high-level features from for the specified MBID.
+
+    Args:
+        offset: Offset can be specified if you need to get summary for a
+        different submission. They are ordered by creation time.
+
+    Returns:
+        Dictionary with low-level data ("lowlevel" key) for the specified MBID
+        and, if it has been calculated, high-level data ("highlevel" key).
+    """
     summary = {}
     mbid = str(mbid)
     with db.create_cursor() as cursor:
@@ -221,46 +230,6 @@ def get_summary_data(mbid, offset=0):
             (ll_row_id, mbid)
         )
         if cursor.rowcount:
-            genres, moods, other = _interpret_high_level(cursor.fetchone()[0])
-            summary['highlevel'] = {
-                'genres': genres,
-                'moods': moods,
-                'other': other,
-            }
+            summary['highlevel'] = cursor.fetchone()[0]
 
         return summary
-
-
-def _interpret_high_level(hl):
-
-    def interpret(text, data, threshold=.6):
-        if data['probability'] >= threshold:
-            return text, data['value'].replace("_", " "), "%.3f" % data['probability']
-        else:
-            return text, "unsure", "%.3f" % data['probability']
-
-    genres = []
-    genres.append(interpret("Tzanetakis' method", hl['highlevel']['genre_tzanetakis']))
-    genres.append(interpret("Electronic classification", hl['highlevel']['genre_electronic']))
-    genres.append(interpret("Dortmund method", hl['highlevel']['genre_dortmund']))
-    genres.append(interpret("Rosamerica method", hl['highlevel']['genre_rosamerica']))
-
-    moods = []
-    moods.append(interpret("Electronic", hl['highlevel']['mood_electronic']))
-    moods.append(interpret("Party", hl['highlevel']['mood_party']))
-    moods.append(interpret("Aggressive", hl['highlevel']['mood_aggressive']))
-    moods.append(interpret("Acoustic", hl['highlevel']['mood_acoustic']))
-    moods.append(interpret("Happy", hl['highlevel']['mood_happy']))
-    moods.append(interpret("Sad", hl['highlevel']['mood_sad']))
-    moods.append(interpret("Relaxed", hl['highlevel']['mood_relaxed']))
-    moods.append(interpret("Mirex method", hl['highlevel']['moods_mirex']))
-
-    other = []
-    other.append(interpret("Voice", hl['highlevel']['voice_instrumental']))
-    other.append(interpret("Gender", hl['highlevel']['gender']))
-    other.append(interpret("Danceability", hl['highlevel']['danceability']))
-    other.append(interpret("Tonal", hl['highlevel']['tonal_atonal']))
-    other.append(interpret("Timbre", hl['highlevel']['timbre']))
-    other.append(interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm']))
-
-    return genres, moods, other

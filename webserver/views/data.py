@@ -93,6 +93,14 @@ def summary(mbid):
     except db.exceptions.NoDataFoundException:
         summary_data = {}
 
+    if "highlevel" in summary_data:
+        genres, moods, other = _interpret_high_level(summary_data["highlevel"])
+        summary_data["highlevel"] = {
+            "genres": genres,
+            "moods": moods,
+            "other": other,
+        }
+
     recording_info = _get_recording_info(mbid, summary_data["lowlevel"]["metadata"]
                                          if summary_data else None)
     if recording_info and summary_data:
@@ -167,3 +175,38 @@ def _get_recording_info(mbid, metadata):
             info['track_number'] = metadata['tags']['tracknumber'][0]
 
     return info
+
+
+def _interpret_high_level(hl):
+
+    def interpret(text, data, threshold=.6):
+        if data['probability'] >= threshold:
+            return text, data['value'].replace("_", " "), "%.3f" % data['probability']
+        else:
+            return text, "unsure", "%.3f" % data['probability']
+
+    genres = []
+    genres.append(interpret("Tzanetakis' method", hl['highlevel']['genre_tzanetakis']))
+    genres.append(interpret("Electronic classification", hl['highlevel']['genre_electronic']))
+    genres.append(interpret("Dortmund method", hl['highlevel']['genre_dortmund']))
+    genres.append(interpret("Rosamerica method", hl['highlevel']['genre_rosamerica']))
+
+    moods = []
+    moods.append(interpret("Electronic", hl['highlevel']['mood_electronic']))
+    moods.append(interpret("Party", hl['highlevel']['mood_party']))
+    moods.append(interpret("Aggressive", hl['highlevel']['mood_aggressive']))
+    moods.append(interpret("Acoustic", hl['highlevel']['mood_acoustic']))
+    moods.append(interpret("Happy", hl['highlevel']['mood_happy']))
+    moods.append(interpret("Sad", hl['highlevel']['mood_sad']))
+    moods.append(interpret("Relaxed", hl['highlevel']['mood_relaxed']))
+    moods.append(interpret("Mirex method", hl['highlevel']['moods_mirex']))
+
+    other = []
+    other.append(interpret("Voice", hl['highlevel']['voice_instrumental']))
+    other.append(interpret("Gender", hl['highlevel']['gender']))
+    other.append(interpret("Danceability", hl['highlevel']['danceability']))
+    other.append(interpret("Tonal", hl['highlevel']['tonal_atonal']))
+    other.append(interpret("Timbre", hl['highlevel']['timbre']))
+    other.append(interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm']))
+
+    return genres, moods, other

@@ -104,11 +104,14 @@ def summary(mbid):
     recording_info = _get_recording_info(mbid, summary_data["lowlevel"]["metadata"]
                                          if summary_data else None)
     if recording_info and summary_data:
+        submission_count = db.data.count_lowlevel(mbid)
         return render_template(
             "data/summary.html",
             metadata=recording_info,
             tomahawk_url=_get_tomahawk_url(recording_info),
-            submission_count=db.data.count_lowlevel(mbid),
+            submission_count=submission_count,
+            previous=offset - 1 if offset > 0 else None,
+            next=offset + 1 if offset < submission_count - 1 else None,
             offset=offset,
             data=summary_data,
         )

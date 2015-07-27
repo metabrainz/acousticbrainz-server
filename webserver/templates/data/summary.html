@@ -11,19 +11,17 @@
 
     {%- include 'data/summary-metadata.html' -%}
 
-    {% if submission_count > 1 %}
-      <h3 class="text-center">
-        {% if offset > 0 %}
-          <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=offset-1) }}"
-             title="View previous submission">&larr;</a>
-        {% endif %}
-        Submission #{{ offset + 1 }} <small>out of {{ submission_count }}</small>
-        {% if offset < submission_count - 1 %}
-          <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=offset+1) }}"
-             title="View next submission">&rarr;</a>
-        {% endif %}
-      </h3>
-    {% endif %}
+    <h3 class="text-center">
+      {% if previous != None %}
+        <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=previous) }}"
+           title="View previous submission">&larr;</a>
+      {% endif %}
+      Submission #{{ offset + 1 }} <small>out of {{ submission_count }}</small>
+      {% if next != None %}
+        <a href="{{ url_for('data.summary', mbid=metadata['mbid'], n=next) }}"
+           title="View next submission">&rarr;</a>
+      {% endif %}
+    </h3>
 
     <h3>Low-level information <small>Summary</small></h3>
 

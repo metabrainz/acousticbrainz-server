@@ -251,7 +251,7 @@ def prepare_table_from_cm(confusion_matrix):
 
         row = {
             "total": predicted_class_size,
-            "proportion": (predicted_class_size / dataset_size) * 100.0,
+            "proportion": predicted_class_size * 100.0 / dataset_size,
             "predicted": [],
         }
 
@@ -263,7 +263,7 @@ def prepare_table_from_cm(confusion_matrix):
             if actual in confusion_matrix:
                 if predicted in confusion_matrix[actual]:
                     current_cls["count"] = confusion_matrix[actual][predicted]
-                    current_cls["percentage"] = (current_cls["count"] / predicted_class_size) * 100.0
+                    current_cls["percentage"] = current_cls["count"] * 100.0 / predicted_class_size
             row["predicted"].append(current_cls)
 
         table_data["rows"].append(row)

@@ -18,6 +18,6 @@ def profile(musicbrainz_id):
         user = db.user.get_by_mb_id(musicbrainz_id)
         if user is None:
             raise NotFound("Can't find this user.")
-        datasets = db.dataset.get_by_user_id(user.id)
+        datasets = db.dataset.get_by_user_id(user["id"])
 
     return render_template("user/profile.html", user=user, datasets=datasets)

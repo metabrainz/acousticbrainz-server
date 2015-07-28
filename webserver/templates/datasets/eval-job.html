@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset "{{ dataset['name'] }}" by {{ author.musicbrainz_id }} - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <div id="dataset-viewer">
+    <h2 class="page-title">Datasets</h2>
+    <h3>{{ dataset['name'] }}</h3>
+    <p class="dataset-description">{{ dataset['description'] }}</p>
+    <p>
+      <strong>Author:</strong> <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">{{ author.musicbrainz_id }}</a><br/>
+      <strong>Created:</strong> {{ dataset['created'] }}
+    </p>
+
+    <h4>Evaluation results</h4>
+    <table class="table table-bordered">
+      <tbody>
+      <tr>
+        <th>{# Class names in rows #}</th>
+        {% for class in job['result']['table']['classes'] %}
+          <th>{{ class }}</th>
+        {% endfor %}
+        <th>{# Class names again #}</th>
+        <th>Proportion</th>
+      </tr>
+      {% for row in job['result']['table']['rows'] %}
+        <tr>
+          <th>{{ job['result']['table']['classes'][loop.index0] }}</th>
+          {% for predicted in row['predicted'] %}
+            <td>{{ predicted['percentage'] }}%</td>
+          {% endfor %}
+          <th>{{ job['result']['table']['classes'][loop.index0] }}</th>
+          <td>{{ row['proportion'] }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/lib/react.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/lib/JSXTransformer.js') }}"></script>
+  <script type="text/jsx" src="{{ url_for('static', filename='js/dataset-class-viewer.js') }}"></script>
+{% endblock %}

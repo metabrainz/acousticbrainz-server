@@ -3,6 +3,7 @@ import db.exceptions
 import db.dataset
 import db.data
 import jsonschema
+import json
 
 # Job statuses are defined in `eval_job_status` type. See schema definition.
 STATUS_PENDING = "pending"
@@ -78,6 +79,27 @@ def get_job(job_id):
             (job_id,)
         )
         return dict(cursor.fetchone()) if cursor.rowcount > 0 else None
+
+
+def get_jobs_for_dataset(dataset_id):
+    """Get a list of evaluation jobs for the specified dataset.
+
+    Args:
+        dataset_id: UUID of the dataset.
+
+    Returns:
+        List of evaluation jobs (dicts) for the dataset. Ordered by creation
+        time (oldest job first)
+    """
+    with create_cursor() as cursor:
+        cursor.execute(
+            "SELECT id, dataset_id, status, result, created, updated "
+            "FROM dataset_eval_jobs "
+            "WHERE dataset_id = %s "
+            "ORDER BY created ASC",
+            (dataset_id,)
+        )
+        return [dict(j) for j in cursor.fetchall()]
 
 
 def set_job_result(job_id, result):

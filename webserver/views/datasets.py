@@ -30,6 +30,25 @@ def view(id):
     )
 
 
+@datasets_bp.route("/<uuid:dataset_id>/evaluation")
+def view_latest_job(dataset_id):
+    ds = db.dataset.get(dataset_id)
+    if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
+        raise NotFound("Can't find specified dataset.")
+    jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
+    if not jobs:
+        raise NotFound("Can't find any evaluation jobs for the specified dataset.")
+    latest_job = jobs[-1]
+    if latest_job["result"]:
+        latest_job["result"]["table"] = prepare_table_from_cm(latest_job["result"]["confusion_matrix"])
+    return render_template(
+        "datasets/eval-job.html",
+        dataset=ds,
+        author=db.user.get(ds["author"]),
+        job=latest_job,
+    )
+
+
 @datasets_bp.route("/<uuid:id>/evaluate")
 def evaluate(id):
     ds = db.dataset.get(id)
@@ -196,3 +215,57 @@ class CSVImportForm(Form):
         FileRequired(),
         FileAllowed(["csv"], "Dataset needs to be in CSV format!"),
     ])
+
+
+def prepare_table_from_cm(confusion_matrix):
+    """Prepares data for table to visualize confusion matrix from Gaia.
+
+    This works with modified version of confusion matrix that we store in our
+    database (we store number of recordings in each predicted class instead of
+    actual UUIDs of recordings). See gaia_wrapper.py in dataset_eval package
+    for implementation details.
+    """
+    all_classes = set()
+    dataset_size = 0  # Number of recordings in the dataset
+    for actual_cls in confusion_matrix:
+        all_classes.add(actual_cls)
+        for predicted_cls in confusion_matrix[actual_cls]:
+            # Need to add to class list from there as well because some classes
+            # might be missing from the outer dictionary.
+            all_classes.add(predicted_cls)
+            dataset_size += confusion_matrix[actual_cls][predicted_cls]
+
+    # Sorting to be able to match columns in the table.
+    all_classes = sorted(all_classes)
+
+    table_data = {
+        "classes": all_classes,
+        "rows": [],
+    }
+
+    for actual in all_classes:
+        # Counting how many tracks were associated with that class during classification
+        predicted_class_size = 0
+        for predicted in confusion_matrix[actual].values():
+            predicted_class_size += predicted
+
+        row = {
+            "total": predicted_class_size,
+            "proportion": (predicted_class_size / dataset_size) * 100.0,
+            "predicted": [],
+        }
+
+        for predicted in all_classes:
+            current_cls = {
+                "count": 0,
+                "percentage": 0,
+            }
+            if actual in confusion_matrix:
+                if predicted in confusion_matrix[actual]:
+                    current_cls["count"] = confusion_matrix[actual][predicted]
+                    current_cls["percentage"] = (current_cls["count"] / predicted_class_size) * 100.0
+            row["predicted"].append(current_cls)
+
+        table_data["rows"].append(row)
+
+    return table_data

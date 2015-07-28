@@ -13,6 +13,9 @@ body {
 .table {
   > thead > tr > th { border-bottom-width: 1px; }
 }
+.table-nonfluid {
+   width: auto !important;
+}
 
 .nav {
   > li {
@@ -139,6 +142,18 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
     &:hover, &:focus {
       color: @remove-color;
       .opacity(1);
+    }
+  }
+}
+
+#evaluation-results {
+  table {
+    .table-nonfluid;
+  }
+  table#results {
+    td {
+      text-align: right;
+      padding: 5px;
     }
   }
 }

@@ -32,8 +32,14 @@ def select_best_model(project_file_path):
 
     cm = ConfusionMatrix()
     cm.load(best_result_file)
+    simplified_cm = {}
+    for key, val in cm.matrix.items():
+        simplified_cm[key] = {}
+        for predicted_key, predicted_val in val.items():
+            simplified_cm[key][predicted_key] = len(predicted_val)
+
     return {
         "parameters": best_params,
         "accuracy": best_accuracy,
-        "confusion_matrix": dict((k, dict(v)) for k, v in cm.matrix.items()),
+        "confusion_matrix": simplified_cm,
     }

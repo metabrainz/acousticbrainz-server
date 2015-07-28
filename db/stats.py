@@ -7,7 +7,7 @@ STATS_CACHE_TIMEOUT = 60 * 10  # ten minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 
-def get_last_submitted_tracks():
+def get_last_submitted_recordings():
     last_submitted_data = cache.get('last-submitted-data')
     if not last_submitted_data:
         with create_cursor() as cursor:

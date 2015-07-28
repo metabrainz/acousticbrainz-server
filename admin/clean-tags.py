@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+import os
 import sys
-sys.path.append("../")
-import psycopg2
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 import config
+
+import psycopg2
 import json
 from hashlib import sha256
 

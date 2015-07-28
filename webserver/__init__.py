@@ -2,6 +2,7 @@ from flask import Flask
 from logging.handlers import RotatingFileHandler
 import logging
 import sys
+import os
 
 # This value must be incremented after schema changes on replicated tables!
 __version__ = 2
@@ -11,7 +12,7 @@ def create_app():
     app = Flask(__name__)
 
     # Configuration
-    sys.path.append("../")
+    sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
     import config
     app.config.from_object(config)
 

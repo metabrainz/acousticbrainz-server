@@ -6,7 +6,7 @@ import os
 
 # Configuration
 import sys
-sys.path.append("../")
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 import config
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'admin', 'sql')

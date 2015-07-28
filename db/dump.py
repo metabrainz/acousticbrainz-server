@@ -2,7 +2,7 @@
 Functions for exporting and importing AcousticBrainz data in various formats.
 
 There are two types of data dumps:
-1. Full dumps (high/low level information about all tracks in JSON format
+1. Full dumps (high/low level information about all recordings in JSON format
 or raw information from all tables in TSV format).
 2. Incremental dumps (similar to the first one, but some dumped tables don't
 include information from the previous dumps).
@@ -11,13 +11,13 @@ from __future__ import print_function
 from collections import defaultdict
 from datetime import datetime
 from db import create_cursor, commit
-from db.utils import create_path
 import db.exceptions
 import webserver
 import subprocess
 import tempfile
 import tarfile
 import shutil
+import errno
 import os
 
 DUMP_CHUNK_SIZE = 1000
@@ -303,7 +303,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
         shutil.rmtree(temp_dir)  # Cleanup
 
-        print("Dumped %s tracks." % dumped_count)
+        print("Dumped %s recordings." % dumped_count)
 
     return archive_path
 
@@ -401,7 +401,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
         shutil.rmtree(temp_dir)  # Cleanup
 
-        print("Dumped %s tracks." % dumped_count)
+        print("Dumped %s recordings." % dumped_count)
 
     return archive_path
 
@@ -476,6 +476,16 @@ def _get_incremental_dump_timestamp(dump_id=None):
             cursor.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
         row = cursor.fetchone()
     return row[0] if row else None
+
+
+def create_path(path):
+    """Creates a directory structure if it doesn't exist yet."""
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise Exception("Failed to create directory structure %s. Error: %s" %
+                            (path, exception))
 
 
 class NoNewData(db.exceptions.DatabaseException):

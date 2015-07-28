@@ -1,0 +1,18 @@
+{%- extends 'base.html' -%}
+
+{%- block title -%}
+  Recording "{{ metadata['title'] }}" by {{ metadata['artist'] }} - AcousticBrainz
+{%- endblock -%}
+
+{%- block content -%}
+  <h2 class="page-title">Recording "{{ metadata['title'] }}" by {{ metadata['artist'] }}</h2>
+  
+  {%- include 'data/summary-metadata.html' -%}
+  
+  <div class="alert alert-warning">   
+    We don't have any information about this recording yet. If you have this recording,
+    you can help us increase the size and quality of the AcousticBrainz database.
+    <a href="{{ url_for('index.contribute') }}">Find more information here</a>.
+  </div>
+{%- endblock -%}
+

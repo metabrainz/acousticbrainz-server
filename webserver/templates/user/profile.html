@@ -29,7 +29,6 @@
       <tr>
         <th>Name</th>
         <th>Creation time</th>
-        <th></th>
       </tr>
       </thead>
       <tbody>
@@ -41,6 +40,12 @@
             {% if current_user.is_authenticated() and current_user == user %}
               <a class="btn btn-success btn-xs"
                  href="{{ url_for('datasets.evaluate', dataset_id=dataset['id']) }}">Evaluate</a>
+            {% endif %}
+              <a class="btn btn-default btn-xs"
+                 href="{{ url_for('datasets.view_latest_job', dataset_id=dataset['id']) }}">Evaluation results</a>
+          </td>
+          <td>
+            {% if current_user.is_authenticated() and current_user == user %}
               <a class="btn btn-primary btn-xs"
                  href="{{ url_for('datasets.edit', dataset_id=dataset['id']) }}">Edit</a>
               <a class="btn btn-danger btn-xs"

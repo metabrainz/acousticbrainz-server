@@ -4,8 +4,11 @@
 
 {% block content %}
   <div id="dataset-viewer">
-    <h2 class="page-title">Datasets</h2>
-    <h3>{{ dataset['name'] }}</h3>
+    <h2 class="page-title">Dataset "{{ dataset['name'] }}"</h2>
+    <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">
+      &larr; Back to author's dataset list
+    </a>
+
     <p class="dataset-description">{{ dataset['description'] }}</p>
     <p>
       <strong>Author:</strong> <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">{{ author.musicbrainz_id }}</a><br/>

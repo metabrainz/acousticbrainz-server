@@ -20,6 +20,7 @@
       <a class="btn btn-danger btn-xs"
          href="{{ url_for('datasets.delete', id=dataset['id']) }}">Delete</a>
     {% endif %}
+    <hr />
     <div id="dataset-class-viewer" data-dataset-id="{{ dataset['id'] }}"></div>
   </div>
 {% endblock %}

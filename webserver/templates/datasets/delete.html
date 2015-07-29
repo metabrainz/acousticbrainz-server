@@ -4,6 +4,9 @@
 
 {% block content %}
   <h2 class="page-title">Dataset "{{ dataset['name'] }}"</h2>
+  <a href="{{ url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}">
+    &larr; Back to dataset list
+  </a>
   <p class="dataset-description">{{ dataset['description'] }}</p>
   <hr />
   <form method="POST" role="form">

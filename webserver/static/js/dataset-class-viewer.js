@@ -111,7 +111,7 @@ var ClassList = React.createClass({
         }.bind(this));
         return (
             <div>
-                <h4>Classes</h4>
+                <h3>Classes</h3>
                 <div className="class-list row">{items}</div>
             </div>
         );

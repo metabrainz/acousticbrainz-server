@@ -13,7 +13,6 @@ PG_CONNECT_TEST = "dbname=ab_test user=ab_test password= host=localhost port=543
 # Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
 COMPILE_LESS = True
 
-LOG_FILE = "./acousticbrainz.log"
 
 MUSICBRAINZ_USERAGENT = "acousticbrainz-server"
 MUSICBRAINZ_HOSTNAME = None
@@ -23,3 +22,22 @@ MUSICBRAINZ_CLIENT_SECRET = "CLIENT_SECRET"
 
 MEMCACHED_SERVERS = ["127.0.0.1:11211"]
 MEMCACHED_NAMESPACE = "AB"
+
+# LOGGING
+
+#LOG_FILE_ENABLED = True
+#LOG_FILE = "./acousticbrainz.log"
+
+#LOG_EMAIL_ENABLED = True
+#LOG_EMAIL_TOPIC = "AcousticBrainz Webserver Failure"
+#LOG_EMAIL_RECIPIENTS = []  # List of email addresses (strings)
+
+#LOG_SENTRY_ENABLED = True
+#SENTRY_DSN = ""
+
+
+# Mail server
+# These variables need to be defined if you enabled log emails.
+#SMTP_SERVER = "localhost"
+#SMTP_PORT = 25
+#MAIL_FROM_DOMAIN = "acousticbrainz.org"

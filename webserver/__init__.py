@@ -1,6 +1,4 @@
 from flask import Flask
-from logging.handlers import RotatingFileHandler
-import logging
 import sys
 import os
 
@@ -16,10 +14,9 @@ def create_app():
     import config
     app.config.from_object(config)
 
-    # Error handling and logging
-    handler = RotatingFileHandler(app.config['LOG_FILE'])
-    handler.setLevel(logging.INFO)
-    app.logger.addHandler(handler)
+    # Logging
+    from webserver.loggers import init_loggers
+    init_loggers(app)
 
     # Database connection
     from db import init_db_connection

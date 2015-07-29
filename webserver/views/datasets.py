@@ -5,7 +5,7 @@ from flask_wtf import Form
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from webserver.external import musicbrainz
 from webserver import flash
 from collections import defaultdict
@@ -136,6 +136,8 @@ def _parse_dataset_csv(file):
 @login_required
 def edit(dataset_id):
     ds = get_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise Unauthorized("You can't edit this dataset.")
 
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -171,6 +173,8 @@ def edit(dataset_id):
 @login_required
 def delete(dataset_id):
     ds = get_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise Unauthorized("You can't delete this dataset.")
     if request.method == "POST":
         db.dataset.delete(ds["id"])
         flash.success("Dataset has been deleted.")

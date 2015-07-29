@@ -20,8 +20,7 @@ def get_last_submitted_recordings():
                               OFFSET 10""")
             last_submitted_data = cursor.fetchall()
         last_submitted_data = [
-            (r[0], r[1].decode("UTF-8"), r[2].decode("UTF-8"))
-            for r in last_submitted_data if r[1] and r[2]
+            (r[0], r[1], r[2]) for r in last_submitted_data if r[1] and r[2]
         ]
         cache.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 

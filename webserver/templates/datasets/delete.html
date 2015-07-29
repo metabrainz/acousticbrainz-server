@@ -4,10 +4,6 @@
 
 {% block content %}
   <h2 class="page-title">Dataset "{{ dataset['name'] }}"</h2>
-  <a href="{{ url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}">
-    &larr; Back to dataset list
-  </a>
-  <p class="dataset-description">{{ dataset['description'] }}</p>
   <hr />
   <form method="POST" role="form">
     <div class="form-group">
@@ -16,7 +12,8 @@
     </div>
     <div class="form-group">
       <button type="submit" class="btn btn-danger">Delete dataset</button>
-      <a href="{{ url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}" class="btn btn-default">Cancel</a>
+      <a href="{{ request.referrer or url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}"
+         class="btn btn-default">Cancel</a>
     </div>
   </form>
 {% endblock %}

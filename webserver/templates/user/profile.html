@@ -15,10 +15,12 @@
       improvements at the <a href="http://tickets.musicbrainz.org/browse/AB">bug tracker</a>.
     </div>
     <p>
-      <a class="btn btn-success btn-xs" href="{{ url_for('datasets.create') }}" role="button">
+      <a class="btn btn-success btn-sm" href="{{ url_for('datasets.create') }}" role="button">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
         Create new dataset
       </a>
-      <a class="btn btn-default btn-xs" href="{{ url_for('datasets.import_csv') }}" role="button">
+      <a class="btn btn-default btn-sm" href="{{ url_for('datasets.import_csv') }}" role="button">
+        <span class="glyphicon glyphicon-save" aria-hidden="true"></span>
         Import from CSV
       </a>
     </p>
@@ -36,14 +38,6 @@
         <tr>
           <td><a href="{{ url_for('datasets.view', id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
           <td>{{ dataset['created'] }}</td>
-          <td>
-            {% if current_user.is_authenticated() and current_user == user %}
-              <a class="btn btn-success btn-xs"
-                 href="{{ url_for('datasets.evaluate', dataset_id=dataset['id']) }}">Evaluate</a>
-            {% endif %}
-              <a class="btn btn-default btn-xs"
-                 href="{{ url_for('datasets.view_latest_job', dataset_id=dataset['id']) }}">Evaluation results</a>
-          </td>
           <td>
             {% if current_user.is_authenticated() and current_user == user %}
               <a class="btn btn-primary btn-xs"

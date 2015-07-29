@@ -23,6 +23,12 @@ body {
   }
 }
 
+.btn {
+  .glyphicon {
+    margin-right: 4px;
+  }
+}
+
 // Navbar
 @grid-float-breakpoint: @screen-md-min; // Point at which the navbar becomes uncollapsed
 .navbar {
@@ -146,7 +152,25 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
   }
 }
 
+#dataset-header {
+  #control-buttons {
+    @media (min-width: @grid-float-breakpoint) {
+      margin-top: 26px;
+      .text-right;
+    }
+    @media (max-width: @grid-float-breakpoint) {
+      margin-bottom: 10px;
+    }
+  }
+  #dataset-info {
+    margin-bottom: 22px;
+  }
+}
+
 #evaluation-results {
+  #status {
+    margin-top: 10px;
+  }
   table {
     .table-nonfluid;
   }

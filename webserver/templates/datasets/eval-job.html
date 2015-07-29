@@ -4,36 +4,27 @@
 
 {% block content %}
   <div id="evaluation-results">
-    <h2 class="page-title">Dataset "{{ dataset['name'] }}"</h2>
-    <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">
-      &larr; Back to author's dataset list
-    </a>
-    <p class="dataset-description">{{ dataset['description'] }}</p>
-    <p>
-      <strong>Author:</strong> <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">{{ author.musicbrainz_id }}</a><br/>
-      <strong>Created:</strong> {{ dataset['created'] }}
-    </p>
-    <hr />
 
-    <h3>Evaluation</h3>
+    {% from 'datasets/macros.html' import print_header %}
+    {{ print_header(dataset, author, current_user, 'evaluation') }}
 
     {% if job['status'] == 'pending' %}
-      <div class="alert alert-info">
+      <div id="status" class="alert alert-info">
         This dataset has not been evaluated yet.
       </div>
 
     {% elif job['status'] == 'running' %}
-      <div class="alert alert-info">
+      <div id="status" class="alert alert-info">
         This dataset is being evaluated right now. Results should be available soon.
       </div>
 
     {% elif job['status'] == 'failed' %}
-      <div class="alert alert-danger">
+      <div id="status" class="alert alert-danger">
         Evaluation of this dataset has failed!
       </div>
 
     {% elif job['status'] == 'done' %}
-      <div class="alert alert-info">
+      <div id="status" class="alert alert-info">
         Evaluation of this dataset has been completed on {{ job['updated'] }}.
         You can find results below.
       </div>

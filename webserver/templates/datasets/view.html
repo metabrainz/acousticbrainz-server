@@ -4,23 +4,8 @@
 
 {% block content %}
   <div id="dataset-viewer">
-    <h2 class="page-title">Dataset "{{ dataset['name'] }}"</h2>
-    <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">
-      &larr; Back to author's dataset list
-    </a>
-
-    <p class="dataset-description">{{ dataset['description'] }}</p>
-    <p>
-      <strong>Author:</strong> <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">{{ author.musicbrainz_id }}</a><br/>
-      <strong>Created:</strong> {{ dataset['created'] }}
-    </p>
-    {% if current_user.is_authenticated() and current_user == author %}
-      <a class="btn btn-primary btn-xs"
-         href="{{ url_for('datasets.edit', dataset_id=dataset['id']) }}">Edit</a>
-      <a class="btn btn-danger btn-xs"
-         href="{{ url_for('datasets.delete', dataset_id=dataset['id']) }}">Delete</a>
-    {% endif %}
-    <hr />
+    {% from 'datasets/macros.html' import print_header %}
+    {{ print_header(dataset, author, current_user, 'view') }}
     <div id="dataset-class-viewer" data-dataset-id="{{ dataset['id'] }}"></div>
   </div>
 {% endblock %}

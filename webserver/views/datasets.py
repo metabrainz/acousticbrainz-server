@@ -5,7 +5,7 @@ from flask_wtf import Form
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField
 from wtforms.validators import DataRequired
-from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
+from werkzeug.exceptions import NotFound, BadRequest
 from webserver.external import musicbrainz
 from webserver import flash
 from collections import defaultdict
@@ -20,9 +20,7 @@ datasets_bp = Blueprint("datasets", __name__)
 
 @datasets_bp.route("/<uuid:id>")
 def view(id):
-    ds = db.dataset.get(id)
-    if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
-        raise NotFound("Can't find this dataset.")
+    ds = get_dataset(id)
     return render_template(
         "datasets/view.html",
         dataset=ds,
@@ -32,9 +30,7 @@ def view(id):
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluation")
 def view_latest_job(dataset_id):
-    ds = db.dataset.get(dataset_id)
-    if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
-        raise NotFound("Can't find specified dataset.")
+    ds = get_dataset(dataset_id)
     jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
     if not jobs:
         raise NotFound("Can't find any evaluation jobs for the specified dataset.")
@@ -49,28 +45,26 @@ def view_latest_job(dataset_id):
     )
 
 
-@datasets_bp.route("/<uuid:id>/evaluate")
-def evaluate(id):
-    ds = db.dataset.get(id)
-    if not current_user.is_authenticated() or ds["author"] != current_user.id:
-        raise NotFound
-    try:
-        db.dataset_eval.evaluate_dataset(ds["id"])
-        flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
-    except db.dataset_eval.IncompleteDatasetException:
-        # TODO(roman): Show more informative error message.
-        flash.error("Can't add dataset into evaluation queue because it's incomplete.")
-    except db.dataset_eval.JobExistsException:
-        flash.warn("Evaluation job for this dataset has been already created.")
+@datasets_bp.route("/<uuid:dataset_id>/evaluate")
+def evaluate(dataset_id):
+    ds = get_dataset(dataset_id)
+    if not ds["public"]:
+        flash.warn("Can't add private datasets into evaluation queue.")
+    else:
+        try:
+            db.dataset_eval.evaluate_dataset(ds["id"])
+            flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
+        except db.dataset_eval.IncompleteDatasetException:
+            # TODO(roman): Show more informative error message.
+            flash.error("Can't add dataset into evaluation queue because it's incomplete.")
+        except db.dataset_eval.JobExistsException:
+            flash.warn("Evaluation job for this dataset has been already created.")
     return redirect(url_for("user.profile", musicbrainz_id=current_user.musicbrainz_id))
 
 
 @datasets_bp.route("/<uuid:id>/json")
 def view_json(id):
-    ds = db.dataset.get(id)
-    if not ds or (not ds["public"] and (not current_user.is_authenticated() or ds["author"] != current_user.id)):
-        raise NotFound("Can't find this dataset.")
-    return jsonify(ds)
+    return jsonify(get_dataset(id))
 
 
 @datasets_bp.route("/create", methods=("GET", "POST"))
@@ -138,14 +132,10 @@ def _parse_dataset_csv(file):
     return classes
 
 
-@datasets_bp.route("/<uuid:id>/edit", methods=("GET", "POST"))
+@datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", "POST"))
 @login_required
-def edit(id):
-    ds = db.dataset.get(id)
-    if not ds or (not ds["public"] and ds["author"] != current_user.id):
-        raise NotFound("Can't find this dataset.")
-    if ds["author"] != current_user.id:
-        raise Unauthorized("You can't edit this dataset.")
+def edit(dataset_id):
+    ds = get_dataset(dataset_id)
 
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -156,7 +146,7 @@ def edit(id):
             ), 400
 
         try:
-            db.dataset.update(str(id), dataset_dict, current_user.id)
+            db.dataset.update(str(dataset_id), dataset_dict, current_user.id)
         except jsonschema.ValidationError as e:
             return jsonify(
                 success=False,
@@ -165,27 +155,22 @@ def edit(id):
 
         return jsonify(
             success=True,
-            dataset_id=id,
+            dataset_id=dataset_id,
         )
 
     else:  # GET
         return render_template(
             "datasets/edit.html",
             mode="edit",
-            dataset_id=str(id),
+            dataset_id=str(dataset_id),
             dataset_name=ds["name"],
         )
 
 
-@datasets_bp.route("/<uuid:id>/delete", methods=("GET", "POST"))
+@datasets_bp.route("/<uuid:dataset_id>/delete", methods=("GET", "POST"))
 @login_required
-def delete(id):
-    ds = db.dataset.get(id)
-    if not ds or (not ds["public"] and ds["author"] != current_user.id):
-        raise NotFound("Can't find this dataset.")
-    if ds["author"] != current_user.id:
-        raise Unauthorized("You can't delete this dataset.")
-
+def delete(dataset_id):
+    ds = get_dataset(dataset_id)
     if request.method == "POST":
         db.dataset.delete(ds["id"])
         flash.success("Dataset has been deleted.")
@@ -215,6 +200,22 @@ class CSVImportForm(Form):
         FileRequired(),
         FileAllowed(["csv"], "Dataset needs to be in CSV format!"),
     ])
+
+
+def get_dataset(dataset_id):
+    """Wrapper for `dataset.get` function in `db` package.
+
+    Checks the following conditions and raises NotFound exception if they
+    aren't met:
+    * Specified dataset exists.
+    * Current user is allowed to access this dataset.
+    """
+    ds = db.dataset.get(dataset_id)
+    if ds:
+        if ds["public"] or (current_user.is_authenticated()
+                            and ds["author"] == current_user.id):
+            return ds
+    raise NotFound("Can't find this dataset.")
 
 
 def prepare_table_from_cm(confusion_matrix):

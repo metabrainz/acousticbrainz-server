@@ -1,6 +1,9 @@
-DEBUG = False
+DEBUG = False  # set to False in production mode
 
 SECRET_KEY = "CHANGE_ME"
+
+
+# DATABASES
 
 # PostgreSQL connection string
 # See http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
@@ -10,18 +13,22 @@ PG_CONNECT = "dbname=acousticbrainz user=acousticbrainz password= host=localhost
 # This connection string will be used for testing
 PG_CONNECT_TEST = "dbname=ab_test user=ab_test password= host=localhost port=5432"
 
-# Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
-COMPILE_LESS = True
 
+# MUSICBRAINZ
 
 MUSICBRAINZ_USERAGENT = "acousticbrainz-server"
 MUSICBRAINZ_HOSTNAME = None
 
+# OAuth
 MUSICBRAINZ_CLIENT_ID = "CLIENT_ID"
 MUSICBRAINZ_CLIENT_SECRET = "CLIENT_SECRET"
 
+
+# CACHE
+
 MEMCACHED_SERVERS = ["127.0.0.1:11211"]
 MEMCACHED_NAMESPACE = "AB"
+
 
 # LOGGING
 
@@ -36,8 +43,13 @@ MEMCACHED_NAMESPACE = "AB"
 #SENTRY_DSN = ""
 
 
+# MISCELLANEOUS
+
 # Mail server
 # These variables need to be defined if you enabled log emails.
 #SMTP_SERVER = "localhost"
 #SMTP_PORT = 25
 #MAIL_FROM_DOMAIN = "acousticbrainz.org"
+
+# Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
+COMPILE_LESS = True

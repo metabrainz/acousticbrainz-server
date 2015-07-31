@@ -15,6 +15,7 @@ More information about memcached can be found at http://memcached.org/.
 """
 import memcache
 import hashlib
+import six
 
 _mc = None
 _glob_namespace = "AB"
@@ -125,12 +126,12 @@ def gen_key(key, *attributes):
     Returns:
         Key that can be used with cache.
     """
-    if not isinstance(key, basestring):
+    if not isinstance(key, six.string_types):
         key = str(key)
     key = key.encode('ascii', errors='xmlcharrefreplace')
 
     for attr in attributes:
-        if not isinstance(attr, basestring):
+        if not isinstance(attr, six.string_types):
             attr = str(attr)
         key += '_' + attr.encode('ascii', errors='xmlcharrefreplace')
 
@@ -173,9 +174,9 @@ def _prep_key(key, namespace=None):
     if _mc is None: return
     if namespace:
         key = "%s:%s:%s" % (namespace, _get_namespace_version(namespace), key)
-    if not isinstance(key, basestring):
+    if not isinstance(key, six.string_types):
         key = str(key)
-    key = hashlib.sha1(key).hexdigest()
+    key = six.b(hashlib.sha1(six.b(key)).hexdigest())
     _mc.check_key(key)
     return key
 

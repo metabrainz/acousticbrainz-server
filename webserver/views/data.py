@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from flask import Blueprint, render_template, redirect, url_for, request
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
-from urllib import quote_plus
+from six.moves.urllib.parse import quote_plus
 import db.data
 import db.exceptions
 import json

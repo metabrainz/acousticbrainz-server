@@ -1,5 +1,6 @@
 from hashlib import sha256
 import logging
+import copy
 import time
 import json
 import os
@@ -62,12 +63,11 @@ def sanity_check_data(data):
 
 def clean_metadata(data):
     """Check that tags are in our whitelist. If not, throw them away."""
-    tags = data["metadata"]["tags"]
-    for tag in tags.keys():
-        tag = tag.lower()
-        if tag not in _whitelist_tags:
-            del tags[tag]
-    data["metadata"]["tags"] = tags
+    clean_tags = copy.deepcopy(data["metadata"]["tags"])
+    for tag in data["metadata"]["tags"].keys():
+        if tag.lower() not in _whitelist_tags:
+            del clean_tags[tag]
+    data["metadata"]["tags"] = clean_tags
     return data
 
 
@@ -116,7 +116,7 @@ def submit_low_level_data(mbid, data):
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     build_sha1 = data['metadata']['version']['essentia_build_sha']
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    data_sha256 = sha256(data_json).hexdigest()
+    data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
 
     with db.create_cursor() as cursor:
         # Checking to see if we already have this data

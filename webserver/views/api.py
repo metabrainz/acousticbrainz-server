@@ -63,7 +63,7 @@ def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz."""
     raw_data = request.get_data()
     try:
-        data = json.loads(raw_data)
+        data = json.loads(raw_data.decode("utf-8"))
     except ValueError as e:
         raise BadRequest("Cannot parse JSON document: %s" % e)
 

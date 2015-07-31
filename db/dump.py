@@ -16,7 +16,6 @@ import subprocess
 import tempfile
 import tarfile
 import shutil
-import errno
 import os
 
 DUMP_CHUNK_SIZE = 1000
@@ -73,7 +72,8 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
     Returns:
         Path to created dump.
     """
-    create_path(location)
+    if not os.path.exists(location):
+        os.makedirs(location)
     time_now = datetime.today()
 
     if incremental:
@@ -111,7 +111,8 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
                     arcname=os.path.join(archive_name, "COPYING"))
 
             archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
-            create_path(archive_tables_dir)
+            if not os.path.exists(archive_tables_dir):
+                os.makedirs(archive_tables_dir)
             _copy_tables(archive_tables_dir, start_t, end_t)
             tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
 
@@ -224,7 +225,8 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
     Returns:
         Path to created low level JSON dump.
     """
-    create_path(location)
+    if not os.path.exists(location):
+        os.makedirs(location)
 
     if incremental:
         dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
@@ -320,7 +322,8 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     Returns:
         Path to created high-level JSON dump.
     """
-    create_path(location)
+    if not os.path.exists(location):
+        os.makedirs(location)
 
     if incremental:
         dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
@@ -475,16 +478,6 @@ def _get_incremental_dump_timestamp(dump_id=None):
             cursor.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
         row = cursor.fetchone()
     return row[0] if row else None
-
-
-def create_path(path):
-    """Creates a directory structure if it doesn't exist yet."""
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise Exception("Failed to create directory structure %s. Error: %s" %
-                            (path, exception))
 
 
 class NoNewData(Exception):

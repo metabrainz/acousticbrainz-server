@@ -72,7 +72,8 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
     Returns:
         Path to created dump.
     """
-    os.makedirs(location, exist_ok=True)
+    if not os.path.exists(location):
+        os.makedirs(location)
     time_now = datetime.today()
 
     if incremental:
@@ -110,7 +111,8 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
                     arcname=os.path.join(archive_name, "COPYING"))
 
             archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
-            os.makedirs(archive_tables_dir, exist_ok=True)
+            if not os.path.exists(archive_tables_dir):
+                os.makedirs(archive_tables_dir)
             _copy_tables(archive_tables_dir, start_t, end_t)
             tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
 
@@ -223,7 +225,8 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
     Returns:
         Path to created low level JSON dump.
     """
-    os.makedirs(location, exist_ok=True)
+    if not os.path.exists(location):
+        os.makedirs(location)
 
     if incremental:
         dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
@@ -319,7 +322,8 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     Returns:
         Path to created high-level JSON dump.
     """
-    os.makedirs(location, exist_ok=True)
+    if not os.path.exists(location):
+        os.makedirs(location)
 
     if incremental:
         dump_id, start_time, end_time = prepare_incremental_dump(dump_id)

@@ -1,6 +1,7 @@
 from db import create_cursor, commit, cache
 import datetime
 import time
+import six
 
 
 STATS_CACHE_TIMEOUT = 60 * 10  # ten minutes
@@ -20,8 +21,7 @@ def get_last_submitted_recordings():
                               OFFSET 10""")
             last_submitted_data = cursor.fetchall()
         last_submitted_data = [
-            (r[0], r[1].decode("UTF-8"), r[2].decode("UTF-8"))
-            for r in last_submitted_data if r[1] and r[2]
+            (r[0], r[1], r[2]) for r in last_submitted_data if r[1] and r[2]
         ]
         cache.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
 
@@ -57,7 +57,7 @@ def get_stats():
                 if not row[0]: stats_parameters['lowlevel-lossy-unique'] = row[1]
 
             if update_db:
-                for key, value in stats_parameters.iteritems():
+                for key, value in six.iteritems(stats_parameters):
                     cursor.execute("INSERT INTO statistics (collected, name, value) VALUES (now(), %s, %s) RETURNING collected", (key, value))
                 commit()
 

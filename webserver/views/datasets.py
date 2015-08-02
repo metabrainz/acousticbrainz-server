@@ -13,6 +13,7 @@ import db.dataset
 import db.user
 import jsonschema
 import csv
+import six
 
 datasets_bp = Blueprint("datasets", __name__)
 
@@ -94,7 +95,7 @@ def _parse_dataset_csv(file):
             raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
         classes_dict[class_row[1]].append(class_row[0])
     classes = []
-    for name, recordings in classes_dict.iteritems():
+    for name, recordings in six.iteritems(classes_dict):
         classes.append({
             "name": name,
             "recordings": recordings,

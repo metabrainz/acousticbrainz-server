@@ -28,7 +28,7 @@ def get_user():
         'code': _fetch_data('code'),
         'grant_type': 'authorization_code',
         'redirect_uri': url_for('login.musicbrainz_post', _external=True)
-    }, decoder=json.loads)
+    }, decoder=lambda b: json.loads(b.decode("utf-8")))
     data = s.get('oauth2/userinfo').json()
     user = db.user.get_or_create(data.get('sub'))
     if user:

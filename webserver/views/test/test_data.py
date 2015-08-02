@@ -13,7 +13,7 @@ class DataViewsTestCase(ServerTestCase):
 
     def test_api(self):
         resp = self.client.get(url_for('data.api'))
-        self.assertEquals(resp.status_code, 302)  # Should redirect to data page
+        self.assertEqual(resp.status_code, 302)  # Should redirect to data page
 
     def test_data(self):
         resp = self.client.get(url_for('data.data'))
@@ -42,7 +42,8 @@ class DataViewsTestCase(ServerTestCase):
         # We don't have data for this recording, but it exists in MusicBrainz.
         resp = self.client.get(url_for('data.summary', mbid='770cc467-8dde-4d22-bc4c-a42f91e7515e'))
         self.assertEqual(resp.status_code, 404)
-        self.assertIn("We don't have any information about this recording yet.", resp.data)
+        self.assertIn("We don't have any information about this recording yet.",
+                      resp.data.decode("utf-8"))
 
 
 class FakeMusicBrainz(object):

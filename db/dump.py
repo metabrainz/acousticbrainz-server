@@ -11,7 +11,7 @@ from __future__ import print_function
 from collections import defaultdict
 from datetime import datetime
 from db import create_cursor, commit
-import webserver
+import db
 import subprocess
 import tempfile
 import tarfile
@@ -99,7 +99,7 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
             # Adding metadata
             schema_seq_path = os.path.join(temp_dir, "SCHEMA_SEQUENCE")
             with open(schema_seq_path, "w") as f:
-                f.write(str(webserver.__version__))
+                f.write(str(db.__version__))
             tar.add(schema_seq_path,
                     arcname=os.path.join(archive_name, "SCHEMA_SEQUENCE"))
             timestamp_path = os.path.join(temp_dir, "TIMESTAMP")
@@ -194,10 +194,10 @@ def import_db_dump(archive_path):
                 if file_name == "SCHEMA_SEQUENCE":
                     # Verifying schema version
                     schema_seq = int(tar.extractfile(member).read().strip())
-                    if schema_seq != webserver.__version__:
+                    if schema_seq != db.__version__:
                         raise Exception("Incorrect schema version! Expected: %d, got: %d."
                                         "Please, get the latest version of the dump."
-                                        % (webserver.__version__, schema_seq))
+                                        % (db.__version__, schema_seq))
                     else:
                         print("Schema version verified.")
 

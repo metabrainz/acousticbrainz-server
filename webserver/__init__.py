@@ -2,9 +2,6 @@ from flask import Flask
 import sys
 import os
 
-# This value must be incremented after schema changes on replicated tables!
-__version__ = 2
-
 
 def create_app():
     app = Flask(__name__)
@@ -35,6 +32,7 @@ def create_app():
 
     # MusicBrainz
     import musicbrainzngs
+    from db import __version__
     musicbrainzngs.set_useragent(app.config['MUSICBRAINZ_USERAGENT'], __version__)
     if app.config['MUSICBRAINZ_HOSTNAME']:
         musicbrainzngs.set_hostname(app.config['MUSICBRAINZ_HOSTNAME'])

@@ -6,6 +6,10 @@ psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 import logging
 
+
+# This value must be incremented after schema changes on replicated tables!
+__version__ = 2
+
 # Be careful when importing `_connection` before init_connection function is
 # called! In general helper functions like `create_cursor` or `commit` should
 # be used. Feel free to add new ones if some functionality is missing.

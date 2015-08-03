@@ -38,7 +38,8 @@
       <a href="{{ url_for('user.profile', musicbrainz_id=author.musicbrainz_id) }}">
         {{ author.musicbrainz_id }}
       </a>
-      <br/><strong>Created:</strong> {{ dataset['created'] }}
+      <br/><strong>Creation time:</strong>
+      {{ dataset['created']|datetime }}
     </p>
 
     <ul class="nav nav-tabs">

@@ -37,7 +37,7 @@
       {% for dataset in datasets %}
         <tr>
           <td><a href="{{ url_for('datasets.view', id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
-          <td>{{ dataset['created'] }}</td>
+          <td>{{ dataset['created']|datetime }}</td>
           <td>
             {% if current_user.is_authenticated() and current_user == user %}
               <a class="btn btn-primary btn-xs"

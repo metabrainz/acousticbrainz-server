@@ -45,25 +45,31 @@ def evaluate_dataset(eval_job):
     try:
         dataset = db.dataset.get(eval_job["dataset_id"])
 
+        print("Generating filelist.yaml and copying low-level data for evaluation...")
         filelist_path = os.path.join(temp_dir, "filelist.yaml")
         filelist = dump_lowlevel_data(extract_recordings(dataset), os.path.join(temp_dir, "data"))
         with open(filelist_path, "w") as f:
             yaml.dump(filelist, f)
 
+        print("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(temp_dir, "groundtruth.yaml")
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth(dataset), f)
 
+        print("Training model...")
         results = gaia_wrapper.train_model(
             groundtruth_file=groundtruth_path,
             filelist_file=filelist_path,
             project_dir=temp_dir,
         )
+        print("Saving results...")
         db.dataset_eval.set_job_result(eval_job["id"], json.dumps(results))
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
+        print("Evaluation job %s has been completed." % eval_job["id"])
 
     # TODO(roman): Also need to catch exceptions from Gaia.
     except db.exceptions.DatabaseException as e:
+        print("Evaluation job %s has failed!" % eval_job["id"])
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_FAILED)
         # TODO(roman): Maybe log this exception? Would also be nice to provide
         # an error message to the user.

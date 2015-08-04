@@ -32,8 +32,8 @@ def create_app():
 
     # MusicBrainz
     import musicbrainzngs
-    from db import __version__
-    musicbrainzngs.set_useragent(app.config['MUSICBRAINZ_USERAGENT'], __version__)
+    from db import SCHEMA_VERSION
+    musicbrainzngs.set_useragent(app.config['MUSICBRAINZ_USERAGENT'], SCHEMA_VERSION)
     if app.config['MUSICBRAINZ_HOSTNAME']:
         musicbrainzngs.set_hostname(app.config['MUSICBRAINZ_HOSTNAME'])
 

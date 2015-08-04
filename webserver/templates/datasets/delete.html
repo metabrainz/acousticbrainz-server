@@ -3,17 +3,17 @@
 {% block title %}Delete dataset "{{ dataset['name'] }}" - AcousticBrainz{% endblock %}
 
 {% block content %}
-  <h2 class="page-title">Datasets</h2>
-  <h3>{{ dataset['name'] }}</h3>
+  <h2 class="page-title">Dataset "{{ dataset['name'] }}"</h2>
   <hr />
   <form method="POST" role="form">
     <div class="form-group">
-      <span class="lead">Are you sure you want to delete dataset "{{ dataset['name'] }}"?</span>
+      <span class="lead">Are you sure you want to delete this dataset?</span>
       <br /><span class="text-warning">There is no way to undo this action!</span>
     </div>
     <div class="form-group">
       <button type="submit" class="btn btn-danger">Delete dataset</button>
-      <a href="{{ url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}" class="btn btn-default">Cancel</a>
+      <a href="{{ request.referrer or url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}"
+         class="btn btn-default">Cancel</a>
     </div>
   </form>
 {% endblock %}

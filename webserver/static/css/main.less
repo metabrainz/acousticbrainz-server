@@ -13,10 +13,19 @@ body {
 .table {
   > thead > tr > th { border-bottom-width: 1px; }
 }
+.table-nonfluid {
+   width: auto !important;
+}
 
 .nav {
   > li {
     > a { color: @blue; }
+  }
+}
+
+.btn {
+  .glyphicon {
+    margin-right: 4px;
   }
 }
 
@@ -139,6 +148,36 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
     &:hover, &:focus {
       color: @remove-color;
       .opacity(1);
+    }
+  }
+}
+
+#dataset-header {
+  #control-buttons {
+    @media (min-width: @grid-float-breakpoint) {
+      margin-top: 26px;
+      .text-right;
+    }
+    @media (max-width: @grid-float-breakpoint) {
+      margin-bottom: 10px;
+    }
+  }
+  #dataset-info {
+    margin-bottom: 22px;
+  }
+}
+
+#evaluation-results {
+  #status {
+    margin-top: 10px;
+  }
+  table {
+    .table-nonfluid;
+  }
+  table#results {
+    td {
+      text-align: right;
+      padding: 5px;
     }
   }
 }

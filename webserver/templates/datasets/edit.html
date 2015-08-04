@@ -6,11 +6,12 @@
   {% else %}{# edit mode #}
     Edit dataset "{{ dataset_name }}"
   {% endif %}
-   - AcousticBrainz
- {% endblock %}
+  - AcousticBrainz
+{% endblock %}
 
 {% block content %}
   <h2 class="page-title">Datasets</h2>
+  <hr />
   <div id="dataset-editor" data-mode="{{ mode }}"
       {{ 'data-edit-id='+dataset_id if dataset_id }}></div>
 {% endblock %}

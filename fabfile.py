@@ -49,7 +49,7 @@ def test(coverage=True):
     """
     if coverage:
         local("nosetests --exe --with-coverage --cover-erase --cover-html "
-              "--cover-package=data,webserver,hl_extractor")
+              "--cover-package=db,webserver,hl_extractor,dataset_eval")
         print(yellow("Coverage report can be found in cover/index.html file.", bold=True))
     else:
         local("nosetests --exe")

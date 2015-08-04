@@ -31,4 +31,11 @@ ALTER TABLE dataset_class_member
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 
+ALTER TABLE dataset_eval_jobs
+  ADD CONSTRAINT dataset_eval_jobs_fk_dataset
+  FOREIGN KEY (dataset_id)
+  REFERENCES dataset (id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE;
+
 COMMIT;

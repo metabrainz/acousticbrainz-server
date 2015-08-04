@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset "{{ dataset['name'] }}" by {{ author.musicbrainz_id }} - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <div id="evaluation-results">
+
+    {% from 'datasets/macros.html' import print_header %}
+    {{ print_header(dataset, author, current_user, 'evaluation') }}
+
+    {% if job['status'] == 'pending' %}
+      <div id="status" class="alert alert-info">
+        This dataset has not been evaluated yet.
+      </div>
+
+    {% elif job['status'] == 'running' %}
+      <div id="status" class="alert alert-info">
+        This dataset is being evaluated right now. Results should be available soon.
+      </div>
+
+    {% elif job['status'] == 'failed' %}
+      <div id="status" class="alert alert-danger">
+        Evaluation of this dataset has failed!
+      </div>
+
+    {% elif job['status'] == 'done' %}
+      <div id="status" class="alert alert-info">
+        Evaluation of this dataset has been completed on {{ job['updated'] }}.
+        You can find results below.
+      </div>
+
+      <h3>Results</h3>
+
+      <p><strong>Accuracy:</strong> {{ job['result']['accuracy'] }}%</p>
+
+      <table class="table table-bordered">
+        <tbody>
+        <tr><th class="active">Predicted (%)</th></tr>
+        <tr>
+          <td>
+
+            <table id="results" class="table table-bordered table-condensed"
+                   style="margin-bottom: 0;">
+              <tbody>
+              <tr>
+                <th>{# Class names #}</th>
+                {% for class in job['result']['table']['classes'] %}
+                  <th class="active">{{ class }}</th>
+                {% endfor %}
+                <th>{# Class names again #}</th>
+                <th class="active">Proportion</th>
+              </tr>
+              {% for row in job['result']['table']['rows'] %}
+                {% set outer_index = loop.index0 %}
+                <tr>
+                  <th class="active">{{ job['result']['table']['classes'][outer_index] }}</th>
+                  {% for predicted in row['predicted'] %}
+                    {% if loop.index0 == outer_index %}
+                      <td {{ 'class=success' if predicted['percentage'] > 0 }}>
+                        {% else %}
+                      <td {{ 'class=danger' if predicted['percentage'] >= 10 }}>
+                    {% endif %}
+                    {{ '%0.2f' % predicted['percentage'] }}
+                    </td>
+                  {% endfor %}
+                  <th class="active">{{ job['result']['table']['classes'][outer_index] }}</th>
+                  <td>{{ '%0.2f' % row['proportion'] }}%</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+
+          </td>
+          <th class="active">Actual (%)</th>
+        </tr>
+        </tbody>
+      </table>
+    {% endif %}
+
+  </div>
+{% endblock %}

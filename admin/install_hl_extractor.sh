@@ -17,7 +17,7 @@ apt-get -y install build-essential libyaml-dev libfftw3-dev libavcodec-dev \
 # See https://github.com/MTG/gaia
 git clone https://github.com/MTG/gaia.git /tmp/gaia
 cd /tmp/gaia
-./waf configure --download
+./waf configure --download --with-python-bindings
 ./waf
 ./waf install
 

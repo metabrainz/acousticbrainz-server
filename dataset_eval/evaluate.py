@@ -15,6 +15,7 @@ import db.exceptions
 from db.utils import create_path
 import unicodedata
 import tempfile
+import logging
 import shutil
 import time
 import json
@@ -25,15 +26,15 @@ SLEEP_DURATION = 30  # number of seconds to wait between runs
 
 
 def main():
-    print("Starting dataset evaluator...")
+    logging.info("Starting dataset evaluator...")
     while True:
         db.init_db_connection(config.PG_CONNECT)
         pending_job = db.dataset_eval.get_next_pending_job()
         if pending_job:
-            print("Processing job %s..." % pending_job["id"])
+            logging.info("Processing job %s..." % pending_job["id"])
             evaluate_dataset(pending_job)
         else:
-            print("No pending datasets. Sleeping %s seconds." % SLEEP_DURATION)
+            logging.info("No pending datasets. Sleeping %s seconds." % SLEEP_DURATION)
             db.close_connection()
             time.sleep(SLEEP_DURATION)
 
@@ -45,35 +46,35 @@ def evaluate_dataset(eval_job):
     try:
         dataset = db.dataset.get(eval_job["dataset_id"])
 
-        print("Generating filelist.yaml and copying low-level data for evaluation...")
+        logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
         filelist_path = os.path.join(temp_dir, "filelist.yaml")
         filelist = dump_lowlevel_data(extract_recordings(dataset), os.path.join(temp_dir, "data"))
         with open(filelist_path, "w") as f:
             yaml.dump(filelist, f)
 
-        print("Generating groundtruth.yaml...")
+        logging.info("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(temp_dir, "groundtruth.yaml")
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth(dataset), f)
 
-        print("Training model...")
+        logging.info("Training model...")
         results = gaia_wrapper.train_model(
             groundtruth_file=groundtruth_path,
             filelist_file=filelist_path,
             project_dir=temp_dir,
         )
-        print("Saving results...")
+        logging.info("Saving results...")
         db.dataset_eval.set_job_result(eval_job["id"], json.dumps(results))
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
-        print("Evaluation job %s has been completed." % eval_job["id"])
+        logging.info("Evaluation job %s has been completed." % eval_job["id"])
 
     # TODO(roman): Also need to catch exceptions from Gaia.
     except db.exceptions.DatabaseException as e:
-        print("Evaluation job %s has failed!" % eval_job["id"])
+        logging.info("Evaluation job %s has failed!" % eval_job["id"])
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_FAILED)
         # TODO(roman): Maybe log this exception? Would also be nice to provide
         # an error message to the user.
-        print(e)
+        logging.info(e)
 
     finally:
         shutil.rmtree(temp_dir)  # Cleanup

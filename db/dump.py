@@ -14,6 +14,7 @@ from db import create_cursor, commit
 import db
 import subprocess
 import tempfile
+import logging
 import tarfile
 import shutil
 import errno
@@ -148,32 +149,32 @@ def _copy_tables(location, start_time=None, end_time=None):
 
         # lowlevel
         with open(os.path.join(location, "lowlevel"), "w") as f:
-            print(" - Copying table lowlevel...")
+            logging.info(" - Copying table lowlevel...")
             cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
                            (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
 
         # highlevel
         with open(os.path.join(location, "highlevel"), "w") as f:
-            print(" - Copying table highlevel...")
+            logging.info(" - Copying table highlevel...")
             cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
                            (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
 
         # highlevel_json
         with open(os.path.join(location, "highlevel_json"), "w") as f:
-            print(" - Copying table highlevel_json...")
+            logging.info(" - Copying table highlevel_json...")
             query = "SELECT %s FROM highlevel_json WHERE id IN (SELECT data FROM highlevel %s)" \
                     % (", ".join(_TABLES["highlevel_json"]), generate_where("submitted"))
             cursor.copy_to(f, "(%s)" % query)
 
         # statistics
         with open(os.path.join(location, "statistics"), "w") as f:
-            print(" - Copying table statistics...")
+            logging.info(" - Copying table statistics...")
             cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
                            (", ".join(_TABLES["statistics"]), generate_where("collected")))
 
         # incremental_dumps
         with open(os.path.join(location, "incremental_dumps"), "w") as f:
-            print(" - Copying table incremental_dumps...")
+            logging.info(" - Copying table incremental_dumps...")
             cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
                            (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
 
@@ -199,11 +200,11 @@ def import_db_dump(archive_path):
                                         "Please, get the latest version of the dump."
                                         % (db.SCHEMA_VERSION, schema_seq))
                     else:
-                        print("Schema version verified.")
+                        logging.info("Schema version verified.")
 
                 else:
                     if file_name in table_names:
-                        print(" - Importing data into %s table..." % file_name)
+                        logging.info(" - Importing data into %s table..." % file_name)
                         cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
                                          columns=_TABLES[file_name])
 
@@ -302,7 +303,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
         shutil.rmtree(temp_dir)  # Cleanup
 
-        print("Dumped %s recordings." % dumped_count)
+        logging.info("Dumped %s recordings." % dumped_count)
 
     return archive_path
 
@@ -400,7 +401,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
         shutil.rmtree(temp_dir)  # Cleanup
 
-        print("Dumped %s recordings." % dumped_count)
+        logging.info("Dumped %s recordings." % dumped_count)
 
     return archive_path
 
@@ -463,7 +464,7 @@ def _create_new_inc_dump_record():
         cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
         commit()
         row = cursor.fetchone()
-    print("Created new incremental dump record (ID: %s)." % row[0])
+    logging.info("Created new incremental dump record (ID: %s)." % row[0])
     return row
 
 

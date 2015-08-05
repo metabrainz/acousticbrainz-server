@@ -153,12 +153,13 @@ def _get_recording_info(mbid, metadata):
         info['artist_id'] = good_metadata['artist-credit'][0]['artist']['id']
         info['artist'] = good_metadata['artist-credit-phrase']
         if good_metadata['release-list']:
-            info['release_id'] = good_metadata['release-list'][0]['id']
-            info['release'] = good_metadata['release-list'][0]['title']
-            info['track_id'] = good_metadata['release-list'][0]['medium-list'][0]['track-list'][0]['id']
+            release = good_metadata['release-list'][0]
+            info['release_id'] = release['id']
+            info['release'] = release['title']
+            info['track_id'] = release['medium-list'][0]['track-list'][0]['id']
             info['track_number'] = \
-                '%s / %s' % (good_metadata['release-list'][0]['medium-list'][0]['track-list'][0]['number'],
-                             good_metadata['release-list'][0]['medium-list'][0]['track-count'])
+                '%s / %s' % (release['medium-list'][0]['track-list'][0]['number'],
+                             release['medium-list'][0]['track-count'])
 
         if 'length' in good_metadata:
             info['length'] = time.strftime("%M:%S", time.gmtime(float(good_metadata['length']) / 1000))

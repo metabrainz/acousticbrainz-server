@@ -93,7 +93,7 @@ def summary(mbid):
     except db.exceptions.NoDataFoundException:
         summary_data = {}
 
-    if "highlevel" in summary_data:
+    if "highlevel" in summary_data and summary_data["highlevel"]:
         genres, moods, other = _interpret_high_level(summary_data["highlevel"])
         summary_data["highlevel"] = {
             "genres": genres,

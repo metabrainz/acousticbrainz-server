@@ -30,20 +30,25 @@ def view(id):
 
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluation")
-def view_latest_job(dataset_id):
+def eval_info(dataset_id):
     ds = get_dataset(dataset_id)
-    jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
-    if not jobs:
-        raise NotFound("Can't find any evaluation jobs for the specified dataset.")
-    latest_job = jobs[-1]
-    if latest_job["result"]:
-        latest_job["result"]["table"] = prepare_table_from_cm(latest_job["result"]["confusion_matrix"])
     return render_template(
-        "datasets/eval-job.html",
+        "datasets/eval-info.html",
         dataset=ds,
         author=db.user.get(ds["author"]),
-        job=latest_job,
     )
+
+
+@datasets_bp.route("/<uuid:dataset_id>/evaluation/json")
+def eval_jobs(dataset_id):
+    # Getting dataset to check if it exists and current user is allowed to view it.
+    ds = get_dataset(dataset_id)
+    jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
+    # TODO(roman): Remove unused data ("confusion_matrix", "dataset_id").
+    for job in jobs:
+        if "result" in job and job["result"]:
+            job["result"]["table"] = prepare_table_from_cm(job["result"]["confusion_matrix"])
+    return jsonify(jobs=jobs)
 
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluate")

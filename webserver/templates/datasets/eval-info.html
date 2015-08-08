@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset "{{ dataset['name'] }}" by {{ author.musicbrainz_id }} - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <div id="evaluation-results">
+    {% from 'datasets/macros.html' import print_header %}
+    {{ print_header(dataset, author, current_user, 'evaluation') }}
+    <div id="eval-viewer-container" data-dataset-id="{{ dataset['id'] }}"></div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/lib/react.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/lib/JSXTransformer.js') }}"></script>
+  <script type="text/jsx" src="{{ url_for('static', filename='js/eval-jobs-viewer.js') }}"></script>
+{% endblock %}

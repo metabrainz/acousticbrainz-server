@@ -167,10 +167,11 @@ def _get_recording_info(mbid, metadata):
         info['length'] = metadata['audio_properties']['length_formatted']
         info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]
         info['artist'] = metadata['tags']['artist'][0]
-        info['release_id'] = metadata['tags']['musicbrainz_albumid'][0]
+        info['release_id'] = metadata['tags']['musicbrainz_albumid'][0] \
+            if 'musicbrainz_albumid' in metadata['tags'] else None
         info['release'] = metadata['tags']['album'][0]
-        info['track_id'] = metadata['tags']['musicbrainz_releasetrackid'][0] if \
-            'musicbrainz_releasetrackid' in metadata['tags'] else None
+        info['track_id'] = metadata['tags']['musicbrainz_releasetrackid'][0] \
+            if 'musicbrainz_releasetrackid' in metadata['tags'] else None
 
         if 'tracktotal' in metadata['tags']:
             info['track_number'] = '%s / %s' % (metadata['tags']['tracknumber'][0],

@@ -65,7 +65,7 @@ def evaluate(dataset_id):
             flash.error("Can't add dataset into evaluation queue because it's incomplete.")
         except db.dataset_eval.JobExistsException:
             flash.warn("Evaluation job for this dataset has been already created.")
-    return redirect(url_for(".view", id=dataset_id))
+    return redirect(url_for(".eval_info", dataset_id=dataset_id))
 
 
 @datasets_bp.route("/<uuid:id>/json")

@@ -234,15 +234,13 @@ var JobDetails = React.createClass({
                 break;
         }
         var header = <div>
+            <h3>Job {this.props.id}</h3>
             <p>
                 <a href='#' onClick={this.props.onReturn}>
                     <strong>&larr; Back to job list</strong>
                 </a>
             </p>
-            <p>
-                <strong>Job ID:</strong> <span className="id">{this.props.id}</span>
-                <br />Created on {this.props.created}
-            </p>
+            <p><strong>Creation time:</strong> {this.props.created}</p>
             {status}
         </div>;
         if (this.props.status === JOB_STATUS_DONE) {

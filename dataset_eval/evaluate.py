@@ -89,7 +89,7 @@ def create_groundtruth(dataset):
     }
     for cls in dataset["classes"]:
         for recording_mbid in cls["recordings"]:
-            groundtruth["groundTruth"][recording_mbid] = cls["name"]
+            groundtruth["groundTruth"][recording_mbid] = cls["name"].encode("UTF-8")
     return groundtruth
 
 

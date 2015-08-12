@@ -71,8 +71,11 @@ def evaluate_dataset(eval_job):
     # TODO(roman): Also need to catch exceptions from Gaia.
     except db.exceptions.DatabaseException as e:
         logging.info("Evaluation job %s has failed!" % eval_job["id"])
-        db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_FAILED,
-                                       status_msg=str(e))
+        db.dataset_eval.set_job_status(
+            job_id=eval_job["id"],
+            status=db.dataset_eval.STATUS_FAILED,
+            status_msg=str(e),
+        )
         logging.info(e)
 
     finally:

@@ -73,8 +73,6 @@ def evaluate_dataset(eval_job):
         logging.info("Evaluation job %s has failed!" % eval_job["id"])
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_FAILED,
                                        status_msg=str(e))
-        # TODO(roman): Maybe log this exception? Would also be nice to provide
-        # an error message to the user.
         logging.info(e)
 
     finally:

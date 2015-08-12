@@ -114,6 +114,16 @@ def set_job_result(job_id, result):
 
 
 def set_job_status(job_id, status, status_msg=None):
+    """Set status for existing job.
+
+    Args:
+        job_id: ID of the job that needs a status update.
+        status: One of statuses: STATUS_PENDING, STATUS_RUNNING, STATUS_DONE,
+            or STATUS_FAILED.
+        status_msg: Optional status message that can be used to provide
+            additional information about status that is being set. For example,
+            error message if it's STATUS_FAILED.
+    """
     if status not in [STATUS_PENDING,
                       STATUS_RUNNING,
                       STATUS_DONE,

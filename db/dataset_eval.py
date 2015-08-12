@@ -3,7 +3,6 @@ import db.exceptions
 import db.dataset
 import db.data
 import jsonschema
-import json
 
 # Job statuses are defined in `eval_job_status` type. See schema definition.
 STATUS_PENDING = "pending"

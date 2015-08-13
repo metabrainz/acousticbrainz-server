@@ -131,6 +131,8 @@ def lowlevel_data_to_yaml(data):
         del data["metadata"]["tags"]
     if "sample_rate" in data["metadata"]["audio_properties"]:
         del data["metadata"]["audio_properties"]["sample_rate"]
+    if 'lossless' in data['metadata']['audio_properties']:
+        del data['metadata']['audio_properties']['lossless']
 
     return yaml.dump(data)
 

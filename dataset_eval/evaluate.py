@@ -12,7 +12,7 @@ import db.data
 import db.dataset
 import db.dataset_eval
 import db.exceptions
-from db.utils import create_path
+import utils.path
 import unicodedata
 import tempfile
 import logging
@@ -105,7 +105,7 @@ def dump_lowlevel_data(recordings, location):
     Returns:
         Filelist.
     """
-    create_path(location)
+    utils.path.create_path(location)
     filelist = {}
     for recording in recordings:
         filelist[recording] = os.path.join(location, "%s.yaml" % recording)

@@ -165,14 +165,13 @@ def _get_recording_info(mbid, metadata):
             info['length'] = time.strftime("%M:%S", time.gmtime(float(good_metadata['length']) / 1000))
 
     elif metadata:
-        info['title'] = metadata['tags']['title'][0]
         info['length'] = metadata['audio_properties']['length_formatted']
-        info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]
-        info['artist'] = metadata['tags']['artist'][0]
-        info['release_id'] = metadata['tags']['musicbrainz_albumid'][0]
-        info['release'] = metadata['tags']['album'][0]
-        info['track_id'] = metadata['tags']['musicbrainz_releasetrackid'][0] if \
-            'musicbrainz_releasetrackid' in metadata['tags'] else None
+        info['title'] = metadata['tags'].get('title', [None])[0]
+        info['artist_id'] = metadata['tags'].get('musicbrainz_artistid', [None])[0]
+        info['artist'] = metadata['tags'].get('artist', [None])[0]
+        info['release_id'] = metadata['tags'].get('musicbrainz_albumid', [None])[0]
+        info['release'] = metadata['tags'].get('album', [None])[0]
+        info['track_id'] = metadata['tags'].get('musicbrainz_releasetrackid', [None])[0]
 
         if 'tracktotal' in metadata['tags']:
             info['track_number'] = '%s / %s' % (metadata['tags']['tracknumber'][0],

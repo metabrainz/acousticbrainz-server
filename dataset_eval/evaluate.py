@@ -23,6 +23,7 @@ import os
 import re
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
+HISTORY_STORAGE_DIR = os.path.join(config.FILE_STORAGE_DIR, "history")
 
 
 def main():
@@ -64,7 +65,13 @@ def evaluate_dataset(eval_job):
             project_dir=temp_dir,
         )
         logging.info("Saving results...")
-        db.dataset_eval.set_job_result(eval_job["id"], json.dumps(results))
+        save_history_file(results["history_path"], eval_job["id"])
+        db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
+            "parameters": results["parameters"],
+            "accuracy": results["accuracy"],
+            "confusion_matrix": results["confusion_matrix"],
+            "history_path": results["history_path"],
+        }))
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
         logging.info("Evaluation job %s has been completed." % eval_job["id"])
 
@@ -135,6 +142,14 @@ def extract_recordings(dataset):
         for recording_mbid in cls["recordings"]:
             recordings.add(recording_mbid)
     return recordings
+
+
+def save_history_file(history_file_path, job_id):
+    directory = os.path.join(HISTORY_STORAGE_DIR, job_id[0:1], job_id[0:2])
+    utils.path.create_path(directory)
+    destination = os.path.join(directory, job_id)
+    shutil.copyfile(history_file_path, destination)
+    return destination
 
 
 def _slugify(string):

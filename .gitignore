@@ -40,5 +40,6 @@ hl_extractor/profile.conf.in
 # Other stuff
 /static/download
 export
+/files
 ve
 *.swp

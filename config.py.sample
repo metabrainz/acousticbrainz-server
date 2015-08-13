@@ -53,3 +53,5 @@ MEMCACHED_NAMESPACE = "AB"
 
 # Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
 COMPILE_LESS = True
+
+FILE_STORAGE_DIR = "./files"

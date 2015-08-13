@@ -3,7 +3,6 @@ import db.exceptions
 import db.dataset
 import db.data
 import jsonschema
-import json
 
 # Job statuses are defined in `eval_job_status` type. See schema definition.
 STATUS_PENDING = "pending"
@@ -60,7 +59,7 @@ def validate_dataset(dataset):
 def get_next_pending_job():
     with create_cursor() as cursor:
         cursor.execute(
-            "SELECT id, dataset_id, status, result, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE status = %s "
             "ORDER BY created ASC "
@@ -73,7 +72,7 @@ def get_next_pending_job():
 def get_job(job_id):
     with create_cursor() as cursor:
         cursor.execute(
-            "SELECT id, dataset_id, status, result, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE id = %s",
             (job_id,)
@@ -93,7 +92,7 @@ def get_jobs_for_dataset(dataset_id):
     """
     with create_cursor() as cursor:
         cursor.execute(
-            "SELECT id, dataset_id, status, result, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE dataset_id = %s "
             "ORDER BY created ASC",
@@ -113,7 +112,17 @@ def set_job_result(job_id, result):
     commit()
 
 
-def set_job_status(job_id, status):
+def set_job_status(job_id, status, status_msg=None):
+    """Set status for existing job.
+
+    Args:
+        job_id: ID of the job that needs a status update.
+        status: One of statuses: STATUS_PENDING, STATUS_RUNNING, STATUS_DONE,
+            or STATUS_FAILED.
+        status_msg: Optional status message that can be used to provide
+            additional information about status that is being set. For example,
+            error message if it's STATUS_FAILED.
+    """
     if status not in [STATUS_PENDING,
                       STATUS_RUNNING,
                       STATUS_DONE,
@@ -122,9 +131,9 @@ def set_job_status(job_id, status):
     with create_cursor() as cursor:
         cursor.execute(
             "UPDATE dataset_eval_jobs "
-            "SET (status, updated) = (%s, current_timestamp) "
+            "SET (status, status_msg, updated) = (%s, %s, current_timestamp) "
             "WHERE id = %s",
-            (status, job_id)
+            (status, status_msg, job_id)
         )
     commit()
 

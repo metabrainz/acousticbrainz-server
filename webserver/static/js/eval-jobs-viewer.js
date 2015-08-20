@@ -105,6 +105,7 @@ var EvaluationJobsViewer = React.createClass({
                         created={active_job.created}
                         updated={active_job.updated}
                         status={active_job.status}
+                        statusMsg={active_job.status_msg}
                         result={active_job.result}
                         onReturn={this.handleReturn} />
                 );
@@ -205,6 +206,7 @@ var JobDetails = React.createClass({
         created: React.PropTypes.string.isRequired,
         updated: React.PropTypes.string.isRequired,
         status: React.PropTypes.string.isRequired,
+        statusMsg: React.PropTypes.string,
         result: React.PropTypes.object,
         onReturn: React.PropTypes.func.isRequired
     },
@@ -222,8 +224,16 @@ var JobDetails = React.createClass({
                 </div>;
                 break;
             case JOB_STATUS_FAILED:
+                var errorMsg = "";
+                if (this.props.statusMsg) {
+                    errorMsg = <p>
+                        Error details:<br />
+                        {this.props.statusMsg}
+                    </p>
+                }
                 status = <div className="alert alert-danger">
-                    This evaluation job has failed!
+                    <strong>This evaluation job has failed!</strong>
+                    {errorMsg}
                 </div>;
                 break;
             case JOB_STATUS_DONE:

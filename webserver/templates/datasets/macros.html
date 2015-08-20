@@ -47,7 +47,7 @@
         <a href="{{ url_for('datasets.view', id=dataset['id']) }}">View</a>
       </li>
       <li {{ 'class=active' if active_tab=='evaluation' }}>
-        <a href="{{ url_for('datasets.view_latest_job', dataset_id=dataset['id']) }}">Evaluation</a>
+        <a href="{{ url_for('datasets.eval_info', dataset_id=dataset['id']) }}">Evaluation</a>
       </li>
     </ul>
   </div>

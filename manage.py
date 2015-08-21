@@ -6,6 +6,7 @@ from webserver import create_app
 import subprocess
 import os
 import click
+import config
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -19,6 +20,7 @@ cli = click.Group()
               help="Turns debugging mode on or off. If specified, overrides "
                    "'DEBUG' value in the config file.")
 def runserver(host, port, debug):
+    db.init_db_connection(config.PG_CONNECT)
     create_app().run(host=host, port=port, debug=debug)
 
 
@@ -123,6 +125,7 @@ def init_test_db(force=False):
 @click.argument("archive")
 def import_data(archive):
     """Imports data dump into the database."""
+    db.init_db_connection(config.PG_CONNECT)
     print('Importing data...')
     db.dump.import_db_dump(archive)
 
@@ -131,6 +134,4 @@ cli.add_command(db.dump_manage.cli, name="dump")
 
 
 if __name__ == '__main__':
-    import config
-    db.init_db_connection(config.PG_CONNECT)
     cli()

@@ -21,9 +21,10 @@ fi
 apt-get update
 apt-get -y upgrade
 
-cd /vagrant
-./admin/install_database.sh /vagrant
-./admin/install_web_server.sh /vagrant
+cd acousticbrainz-server
+bash ./admin/install_database.sh
+bash ./admin/install_web_server.sh
+
 if [ $AB_DO_HL -eq 1 ]; then
-    ./admin/install_hl_extractor.sh /vagrant
+    ./admin/install_hl_extractor.sh /home/vagrant/acousticbrainz-server
 fi

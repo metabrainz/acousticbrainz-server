@@ -18,7 +18,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.cpus = NCPUS.to_i
   end
 
-  # Don't use the default name
+  # Use a custom vm name
   config.vm.define :acousticbrainz do |t|
   end
 
@@ -29,6 +29,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   bootstrap_args.push(MIRROR)
 
   config.vm.provision :shell, path: "admin/bootstrap.sh", args: bootstrap_args
+  config.vm.provision :shell, path: "admin/setup_app.sh", args: "/home/vagrant/acousticbrainz-server", privileged: false
+
+  config.vm.synced_folder ".", "/home/vagrant/acousticbrainz-server"
 
   # Web server forwarding:
   config.vm.network "forwarded_port", guest: 8080, host: 8080

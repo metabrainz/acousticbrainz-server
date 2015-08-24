@@ -25,8 +25,8 @@ def runserver(host, port, debug):
 
 
 @cli.command()
-@click.option("--archive", help="Path to data dump that needs to be imported.")
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
+@click.argument("archive", type=click.Path(exists=True), required=False)
 def init_db(archive, force):
     """Initializes database and imports data if needed.
 
@@ -42,21 +42,21 @@ def init_db(archive, force):
     found at http://www.postgresql.org/docs/current/static/populate.html.
     """
     if force:
-        exit_code = subprocess.call('sudo -u postgres psql < ' +
+        exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
                                     os.path.join(ADMIN_SQL_DIR, 'drop_db.sql'),
                                     shell=True)
         if exit_code != 0:
             raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
 
     print('Creating user and a database...')
-    exit_code = subprocess.call('sudo -u postgres psql < ' +
+    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
                                 os.path.join(ADMIN_SQL_DIR, 'create_db.sql'),
                                 shell=True)
     if exit_code != 0:
         raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
 
     print('Creating database extensions...')
-    exit_code = subprocess.call('sudo -u postgres psql -d acousticbrainz < ' +
+    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' -d acousticbrainz < ' +
                                 os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'),
                                 shell=True)
     if exit_code != 0:
@@ -70,7 +70,11 @@ def init_db(archive, force):
     print('Creating tables...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
 
-    import_data(archive) if archive else print('Skipping data importing.')
+    if archive:
+        print('Importing data...')
+        db.dump.import_db_dump(archive)
+    else:
+        print('Skipping data importing.')
 
     print('Creating primary and foreign keys...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
@@ -91,20 +95,20 @@ def init_test_db(force=False):
     `PG_CONNECT_TEST` variable must be defined in the config file.
     """
     if force:
-        exit_code = subprocess.call('sudo -u postgres psql < ' +
+        exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
                                     os.path.join(ADMIN_SQL_DIR, 'drop_test_db.sql'),
                                     shell=True)
         if exit_code != 0:
             raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
 
     print('Creating database and user for testing...')
-    exit_code = subprocess.call('sudo -u postgres psql < ' +
+    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
                                 os.path.join(ADMIN_SQL_DIR, 'create_test_db.sql'),
                                 shell=True)
     if exit_code != 0:
         raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
 
-    exit_code = subprocess.call('sudo -u postgres psql -d ab_test < ' +
+    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' -d ab_test < ' +
                                 os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'),
                                 shell=True)
     if exit_code != 0:
@@ -122,7 +126,7 @@ def init_test_db(force=False):
 
 
 @cli.command()
-@click.argument("archive")
+@click.argument("archive", type=click.Path(exists=True))
 def import_data(archive):
     """Imports data dump into the database."""
     db.init_db_connection(config.PG_CONNECT)

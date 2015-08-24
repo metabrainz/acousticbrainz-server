@@ -21,22 +21,39 @@ Vagrant for your OS. Then copy two config files:
 After that you can spin up the VM and start working with it:
 
     $ vagrant up
-    $ vagrant ssh
-    $ sudo su && cd /vagrant
+
+There are some environment variables that you can set to affect the
+provisioning of the virtual machine.
+
+ * `AB_NCPUS`: Number of CPUs to put in the VM (default 1, 2 makes
+               compilation faster)
+ * `AB_MEM`:   Amount of memory (default 1024mb)
+ * `AB_MIRROR`: ubuntu mirror (default archive.ubuntu.com)
+ * `AB_NOHL`: If set, don't compile the highlevel calculation tools
+              (not needed for regular server development)
 
 You can start the web server (will be available at http://127.0.0.1:8080/):
 
-    # python server.py
+    $ vagrant ssh
+    $ cd acousticbrainz-server
+    $ python server.py
 
 or high-level data extractor:
 
-    # cd /hl_extractor
-    # python hl_calc.py
+    $ cd acousticbraiz-server/hl_extractor
+    $ python hl_calc.py
 
 or dataset evaluator:
 
-    # cd /dataset_eval
-    # python evaluate.py
+    $ cd acousticbraiz-server/dataset_eval
+    $ python evaluate.py
+
+There are some shortcuts defined using fabric to perform commonly used
+commands:
+
+ * `fab vpsql`: Load a psql session. Requires a local psql client
+ * `fab vssh`: Connect to the VM more efficiently, saving the settings
+               so that you don't need to run vagrant each time you ssh.
 
 ### The Usual Way
 
@@ -52,16 +69,16 @@ Latest database dump is available at http://acousticbrainz.org/download. You
 need to download full database dump from this page and use it during database
 initialization:
 
-    $ python manage.py init_db -a <path_to_the_archive>
+    $ python manage.py init_db path_to_the_archive
 
 you can also easily remove existing database before initialization using
 `--force` option:
 
-    $ python manage.py init_db -a <path_to_the_archive> --force
+    $ python manage.py init_db --force path_to_the_archive
 
 or import archive after database is created:
 
-    $ python manage.py import_data -a <path_to_the_archive>
+    $ python manage.py import_data path_to_the_archive
 
 *You can also import dumps that you created yourself. This process is described
 below (see `dump full_db` command).*

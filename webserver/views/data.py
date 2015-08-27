@@ -160,9 +160,9 @@ def _get_recording_info(mbid, metadata):
             info['track_number'] = \
                 '%s / %s' % (release['medium-list'][0]['track-list'][0]['number'],
                              release['medium-list'][0]['track-count'])
-
         if 'length' in good_metadata:
             info['length'] = time.strftime("%M:%S", time.gmtime(float(good_metadata['length']) / 1000))
+        return info
 
     elif metadata:
         info['title'] = metadata['tags']['title'][0]
@@ -173,14 +173,15 @@ def _get_recording_info(mbid, metadata):
         info['release'] = metadata['tags']['album'][0]
         info['track_id'] = metadata['tags']['musicbrainz_releasetrackid'][0] if \
             'musicbrainz_releasetrackid' in metadata['tags'] else None
-
         if 'tracktotal' in metadata['tags']:
             info['track_number'] = '%s / %s' % (metadata['tags']['tracknumber'][0],
                                                 metadata['tags']['tracktotal'][0])
         else:
             info['track_number'] = metadata['tags']['tracknumber'][0]
+        return info
 
-    return info
+    else:
+        return None
 
 
 def _interpret_high_level(hl):

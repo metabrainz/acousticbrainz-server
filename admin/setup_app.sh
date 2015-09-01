@@ -11,4 +11,3 @@ source ../venv-acousticbrainz/bin/activate
 pip install -r requirements.txt
 python manage.py init_db
 python manage.py init_test_db
-

@@ -7,11 +7,11 @@ import config
 import os
 
 def vpsql():
-    """ Connect to the acousticbrainz database running on vagrant """
+    """Connect to the acousticbrainz database running on vagrant."""
     local("psql -h localhost -p 15432 -U postgres acousticbrainz")
 
 def vssh():
-    """ SSH to a running vagrant host """
+    """SSH to a running vagrant host."""
     curdir = os.path.dirname(os.path.abspath(__file__))
     configfile = os.path.join(curdir, '.vagrant', 'ssh_config')
     if not os.path.exists(configfile):

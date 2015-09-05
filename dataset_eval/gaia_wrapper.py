@@ -83,7 +83,7 @@ def select_best_model(project_dir):
 
     return {
         "parameters": best_params,
-        "accuracy": best_accuracy,
+        "accuracy": round(best_accuracy, 2),
         "confusion_matrix": simplified_cm,
         "history_path": history_file_path,
     }

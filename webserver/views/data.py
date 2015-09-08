@@ -181,7 +181,7 @@ def _get_recording_info(mbid, metadata):
         return info
 
     else:
-        return None
+        return {}
 
 
 def _interpret_high_level(hl):

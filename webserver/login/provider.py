@@ -32,11 +32,7 @@ def get_user():
     data = s.get('oauth2/userinfo').json()
     user = db.user.get_or_create(data.get('sub'))
     if user:
-        return User(
-            id=user['id'],
-            created=user['created'],
-            musicbrainz_id=user['musicbrainz_id'],
-        )
+        return User.from_dbrow(user)
     else:
         return None
 

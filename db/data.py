@@ -118,29 +118,28 @@ def submit_low_level_data(mbid, data):
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
 
-    with db.create_cursor() as cursor:
+    with db.get_connection() as connection:
         # Checking to see if we already have this data
-        cursor.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
+        connection.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
         # if we don't have this data already, add it
         sha_values = [v[0] for v in cursor.fetchall()]
 
         if data_sha256 not in sha_values:
             logging.info("Saved %s" % mbid)
-            cursor.execute(
+            connection.execute(
                 "INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
                 "VALUES (%s, %s, %s, %s, %s)",
                 (mbid, build_sha1, data_sha256, is_lossless_submit, data_json)
             )
-            db.commit()
 
         logging.info("Already have %s" % data_sha256)
 
 
 def load_low_level(mbid, offset=0):
     """Load low-level data for a given MBID."""
-    with db.create_cursor() as cursor:
-        cursor.execute(
+    with db.get_connection() as connection:
+        result = connection.execute(
             "SELECT data::text "
             "FROM lowlevel "
             "WHERE mbid = %s "
@@ -148,17 +147,17 @@ def load_low_level(mbid, offset=0):
             "OFFSET %s",
             (str(mbid), offset)
         )
-        if not cursor.rowcount:
+        if not result.rowcount:
             raise db.exceptions.NoDataFoundException
 
-        row = cursor.fetchone()
+        row = result.fetchone()
         return row[0]
 
 
 def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
-    with db.create_cursor() as cursor:
-        cursor.execute(
+    with db.get_connection() as connection:
+        result = connection.execute(
             "SELECT hlj.data::text "
             "FROM highlevel hl "
             "JOIN highlevel_json hlj "
@@ -168,19 +167,19 @@ def load_high_level(mbid, offset=0):
             "OFFSET %s",
             (str(mbid), offset)
         )
-        if not cursor.rowcount:
+        if not result.rowcount:
             raise db.exceptions.NoDataFoundException
-        return cursor.fetchone()[0]
+        return result.fetchone()[0]
 
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
-    with db.create_cursor() as cursor:
-        cursor.execute(
+    with db.get_connection() as connection:
+        result = connection.execute(
             "SELECT count(*) FROM lowlevel WHERE mbid = %s",
             (str(mbid),)
         )
-        return cursor.fetchone()[0]
+        return result.fetchone()[0]
 
 
 def get_summary_data(mbid, offset=0):
@@ -196,19 +195,19 @@ def get_summary_data(mbid, offset=0):
     """
     summary = {}
     mbid = str(mbid)
-    with db.create_cursor() as cursor:
-        cursor.execute(
-            "SELECT id, data "
-            "FROM lowlevel "
-            "WHERE mbid = %s "
-            "ORDER BY submitted "
-            "OFFSET %s",
-            (mbid, offset)
+    with db.get_connection() as connection:
+        result = connection.execute(
+            """SELECT id, data
+                 FROM lowlevel
+                WHERE mbid = :mbid
+             ORDER BY submitted
+               OFFSET :offset""",
+            {"mbid": mbid, "offset": offset}
         )
-        if not cursor.rowcount:
+        if not result.rowcount:
             raise db.exceptions.NoDataFoundException("Can't find low-level data for this recording.")
 
-        ll_row_id, lowlevel = cursor.fetchone()
+        ll_row_id, lowlevel = result.fetchone()
         if 'artist' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
         if 'release' not in lowlevel['metadata']['tags']:
@@ -221,15 +220,16 @@ def get_summary_data(mbid, offset=0):
 
         summary['lowlevel'] = lowlevel
 
-        cursor.execute(
-            "SELECT highlevel_json.data "
-            "FROM highlevel, highlevel_json "
-            "WHERE highlevel.id = %s "
-            "      AND highlevel.data = highlevel_json.id "
-            "      AND highlevel.mbid = %s",
+        result = connection.execute(
+            """SELECT highlevel_json.data
+                 FROM highlevel
+                    , highlevel_json
+                WHERE highlevel.id = :ll_row_id
+                  AND highlevel.data = highlevel_json.id
+                  AND highlevel.mbid = :mbid""",
             (ll_row_id, mbid)
         )
-        if cursor.rowcount:
-            summary['highlevel'] = cursor.fetchone()[0]
+        if result.rowcount:
+            summary['highlevel'] = result.fetchone()[0]
 
         return summary

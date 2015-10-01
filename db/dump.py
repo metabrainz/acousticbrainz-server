@@ -10,7 +10,6 @@ include information from the previous dumps).
 from __future__ import print_function
 from collections import defaultdict
 from datetime import datetime
-from db import create_cursor, commit
 import utils.path
 import db
 import subprocess
@@ -186,7 +185,7 @@ def import_db_dump(archive_path):
 
     table_names = _TABLES.keys()
 
-    with create_cursor() as cursor:
+    with db.get_raw_connection().cursor() as cursor:
 
         with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
             for member in tar:
@@ -208,7 +207,6 @@ def import_db_dump(archive_path):
                         cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
                                          columns=_TABLES[file_name])
 
-    commit()
     pxz.stdout.close()
 
 
@@ -238,7 +236,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
 
-        with create_cursor() as cursor:
+        with db.get_raw_connection().cursor() as cursor:
 
             mbid_occurences = defaultdict(int)
 
@@ -265,7 +263,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 where = ""
             cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
 
-            with create_cursor() as cursor_inner:
+            with db.get_raw_connection().cursor() as cursor:
                 temp_dir = tempfile.mkdtemp()
 
                 dumped_count = 0

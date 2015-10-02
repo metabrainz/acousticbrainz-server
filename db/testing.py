@@ -16,7 +16,7 @@ TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test
 class DatabaseTestCase(unittest.TestCase):
 
     def setUp(self):
-        db.init_db_engine(config.PG_CONNECT_TEST)
+        db.init_db_engine(config.SQLALCHEMY_TEST_URI)
         self.reset_db()
 
     def tearDown(self):
@@ -35,7 +35,7 @@ class DatabaseTestCase(unittest.TestCase):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
 
     def drop_tables(self):
-        with db.get_connection() as connection:
+        with db._engine.connect() as connection:
             # TODO(roman): See if there's a better way to drop all tables.
             connection.execute('DROP TABLE IF EXISTS highlevel_json       CASCADE;')
             connection.execute('DROP TABLE IF EXISTS highlevel            CASCADE;')
@@ -49,7 +49,7 @@ class DatabaseTestCase(unittest.TestCase):
             connection.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
 
     def drop_types(self):
-        with db.get_connection() as connection:
+        with db._engine.connect() as connection:
             connection.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
 
     def load_low_level_data(self, mbid):

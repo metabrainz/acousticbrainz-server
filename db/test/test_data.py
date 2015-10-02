@@ -1,5 +1,5 @@
 from db.testing import DatabaseTestCase, TEST_DATA_PATH
-from db import data
+import db.data
 import os.path
 import json
 
@@ -13,8 +13,8 @@ class DataTestCase(DatabaseTestCase):
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
 
     def test_submit_low_level_data(self):
-        data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
-        self.assertIsNotNone(data.load_low_level(self.test_mbid))
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
+        self.assertIsNotNone(db.data.load_low_level(self.test_mbid))
 
     def test_has_key(self):
         dictionary = {
@@ -27,12 +27,12 @@ class DataTestCase(DatabaseTestCase):
             'test_2': 'Testing!',
         }
 
-        self.assertTrue(data._has_key(dictionary, ['test_1', 'inner_test']))
-        self.assertTrue(data._has_key(dictionary, ['test_1', 'inner_test', 'secret_test_2']))
-        self.assertTrue(data._has_key(dictionary, ['test_2']))
+        self.assertTrue(db.data._has_key(dictionary, ['test_1', 'inner_test']))
+        self.assertTrue(db.data._has_key(dictionary, ['test_1', 'inner_test', 'secret_test_2']))
+        self.assertTrue(db.data._has_key(dictionary, ['test_2']))
 
-        self.assertFalse(data._has_key(dictionary, ['test_3']))
-        self.assertFalse(data._has_key(dictionary, ['test_1', 'inner_test', 'secret_test_3']))
+        self.assertFalse(db.data._has_key(dictionary, ['test_3']))
+        self.assertFalse(db.data._has_key(dictionary, ['test_1', 'inner_test', 'secret_test_3']))
 
     def test_sanity_check_data(self):
         d = {
@@ -58,9 +58,9 @@ class DataTestCase(DatabaseTestCase):
             "rhythm": None,
             "tonal": None,
         }
-        self.assertIsNone(data.sanity_check_data(d))
+        self.assertIsNone(db.data.sanity_check_data(d))
         del d['metadata']['tags']['file_name']
-        self.assertEquals(data.sanity_check_data(d), ['metadata', 'tags', 'file_name'])
+        self.assertEquals(db.data.sanity_check_data(d), ['metadata', 'tags', 'file_name'])
 
     def test_clean_metadata(self):
         d = {
@@ -72,6 +72,6 @@ class DataTestCase(DatabaseTestCase):
                 },
             },
         }
-        data.clean_metadata(d)
+        db.data.clean_metadata(d)
         self.assertFalse('unknown_tag' in d['metadata']['tags'])
         self.assertTrue('file_name' in d['metadata']['tags'])

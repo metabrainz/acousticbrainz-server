@@ -118,12 +118,12 @@ def submit_low_level_data(mbid, data):
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
 
-    with db.get_connection() as connection:
+    with db._engine.connect() as connection:
         # Checking to see if we already have this data
-        connection.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
+        result = connection.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
         # if we don't have this data already, add it
-        sha_values = [v[0] for v in cursor.fetchall()]
+        sha_values = [v[0] for v in result.fetchall()]
 
         if data_sha256 not in sha_values:
             logging.info("Saved %s" % mbid)
@@ -138,13 +138,13 @@ def submit_low_level_data(mbid, data):
 
 def load_low_level(mbid, offset=0):
     """Load low-level data for a given MBID."""
-    with db.get_connection() as connection:
+    with db._engine.connect() as connection:
         result = connection.execute(
-            "SELECT data::text "
-            "FROM lowlevel "
-            "WHERE mbid = %s "
-            "ORDER BY submitted "
-            "OFFSET %s",
+            """SELECT data::text
+            FROM lowlevel
+            WHERE mbid = %s
+            ORDER BY submitted
+            OFFSET %s""",
             (str(mbid), offset)
         )
         if not result.rowcount:
@@ -156,7 +156,7 @@ def load_low_level(mbid, offset=0):
 
 def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
-    with db.get_connection() as connection:
+    with db._engine.connect() as connection:
         result = connection.execute(
             "SELECT hlj.data::text "
             "FROM highlevel hl "
@@ -174,7 +174,7 @@ def load_high_level(mbid, offset=0):
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
-    with db.get_connection() as connection:
+    with db._engine.connect() as connection:
         result = connection.execute(
             "SELECT count(*) FROM lowlevel WHERE mbid = %s",
             (str(mbid),)
@@ -195,7 +195,7 @@ def get_summary_data(mbid, offset=0):
     """
     summary = {}
     mbid = str(mbid)
-    with db.get_connection() as connection:
+    with db._engine.connect() as connection:
         result = connection.execute(
             """SELECT id, data
                  FROM lowlevel

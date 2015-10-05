@@ -4,6 +4,7 @@ from db.data import load_low_level, load_high_level, submit_low_level_data, coun
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
 from werkzeug.exceptions import BadRequest, NotFound
+import webserver.exceptions
 import json
 
 api_bp = Blueprint('api', __name__)
@@ -29,7 +30,7 @@ def get_low_level(mbid):
     offset = request.args.get("n")
     if offset:
         if not offset.isdigit():
-            raise BadRequest("Offset must be an integer value!")
+            raise webserver.exceptions.InvalidAPIUsage("Offset must be an integer value", status_code=BadRequest.code)
         else:
             offset = int(offset)
     else:
@@ -37,7 +38,13 @@ def get_low_level(mbid):
     try:
         return Response(load_low_level(mbid, offset), content_type='application/json')
     except NoDataFoundException:
-        raise NotFound
+        raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
+
+@api_bp.route("/<string:notanmbid>/low-level", methods=["GET"])
+@crossdomain()
+def get_low_level_404(notanmbid):
+    """Specific low-level view for non-mbid url parts to return a json error message"""
+    raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
 
 
 @api_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
@@ -47,7 +54,7 @@ def get_high_level(mbid):
     offset = request.args.get("n")
     if offset:
         if not offset.isdigit():
-            raise BadRequest("Offset must be an integer value!")
+            raise webserver.exceptions.InvalidAPIUsage("Offset must be an integer value", status_code=BadRequest.code)
         else:
             offset = int(offset)
     else:
@@ -55,7 +62,13 @@ def get_high_level(mbid):
     try:
         return Response(load_high_level(mbid, offset), content_type='application/json')
     except NoDataFoundException:
-        raise NotFound
+        raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
+
+@api_bp.route("/<string:notanmbid>/high-level", methods=["GET"])
+@crossdomain()
+def get_high_level_404(notanmbid):
+    """Specific low-level view for non-mbid url parts to return a json error message"""
+    raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
 
 
 @api_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
@@ -65,10 +78,10 @@ def submit_low_level(mbid):
     try:
         data = json.loads(raw_data.decode("utf-8"))
     except ValueError as e:
-        raise BadRequest("Cannot parse JSON document: %s" % e)
+        raise webserver.exceptions.InvalidAPIUsage("Cannot parse JSON document: %s" % e, status_code=BadRequest.code)
 
     try:
         submit_low_level_data(mbid, data)
     except BadDataException as e:
-        raise BadRequest(e)
-    return ""
+        raise webserver.exceptions.InvalidAPIUsage("%s" % e, status_code=BadRequest.code)
+    return jsonify({"status": "ok"})

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
@@ -46,7 +46,7 @@ def view_low_level(mbid):
         return render_template(
             "data/json-display.html",
             mbid=mbid,
-            data=json.dumps(json.loads(db.data.load_low_level(mbid, offset)),
+            data=json.dumps(db.data.load_low_level(mbid, offset),
                             indent=4, sort_keys=True),
             title="Low-level JSON for %s" % mbid,
         )

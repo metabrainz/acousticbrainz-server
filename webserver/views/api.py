@@ -35,7 +35,7 @@ def get_low_level(mbid):
     else:
         offset = 0
     try:
-        return Response(load_low_level(mbid, offset), content_type='application/json')
+        return jsonify(load_low_level(mbid, offset))
     except NoDataFoundException:
         raise NotFound
 

@@ -27,6 +27,7 @@ SANITY_CHECK_KEYS = [
     ['tonal'],
 ]
 
+# TODO: Util methods should not be in the database package
 
 def _has_key(dictionary, key):
     """Checks if muti-level dictionary contains in item referenced by a
@@ -84,10 +85,10 @@ def submit_low_level_data(mbid, data):
 
     try:
         # If the user submitted a trackid key, rewrite to recording_id
-        if "musicbrainz_trackid" in data['metadata']['tags']:
-            val = data['metadata']['tags']["musicbrainz_trackid"]
-            del data['metadata']['tags']["musicbrainz_trackid"]
-            data['metadata']['tags']["musicbrainz_recordingid"] = val
+        if 'musicbrainz_trackid' in data['metadata']['tags']:
+            val = data['metadata']['tags']['musicbrainz_trackid']
+            del data['metadata']['tags']['musicbrainz_trackid']
+            data['metadata']['tags']['musicbrainz_recordingid'] = val
 
         if data['metadata']['audio_properties']['lossless']:
             data['metadata']['audio_properties']['lossless'] = True
@@ -105,7 +106,7 @@ def submit_low_level_data(mbid, data):
         )
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
-    if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
+    if data['metadata']['tags']['musicbrainz_recordingid'][0].lower() != mbid.lower():
         raise db.exceptions.BadDataException(
             "The musicbrainz_trackid/musicbrainz_recordingid in "
             "the submitted data does not match the MBID that is "
@@ -113,12 +114,16 @@ def submit_low_level_data(mbid, data):
         )
 
     # The data looks good, lets see about saving it
+    write_low_level(mbid, data)
+
+
+def write_low_level(mbid, data):
+
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     build_sha1 = data['metadata']['version']['essentia_build_sha']
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
-
-    with db._engine.connect() as connection:
+    with db.engine.connect() as connection:
         # Checking to see if we already have this data
         result = connection.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
@@ -132,19 +137,37 @@ def submit_low_level_data(mbid, data):
                 "VALUES (%s, %s, %s, %s, %s)",
                 (mbid, build_sha1, data_sha256, is_lossless_submit, data_json)
             )
+        else:
+            logging.info("Already have %s" % data_sha256)
 
-        logging.info("Already have %s" % data_sha256)
+def write_high_level(mbid, ll_id, data, build_sha1):
+    norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    sha = sha256(norm_data).hexdigest()
+
+    with db.engine.connect() as connection:
+        result = connection.execute("""INSERT INTO highlevel_json (data, data_sha256)
+                                            VALUES (%s, %s)
+                                         RETURNING id""", (norm_data, sha))
+        id = result.fetchone()[0]
+        connection.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
+                                   VALUES (%s, %s, %s, %s, now())""",
+                           (ll_id, mbid, build_sha1, id))
 
 
 def load_low_level(mbid, offset=0):
-    """Load low-level data for a given MBID."""
-    with db._engine.connect() as connection:
+    """Load lowlevel data with the given mbid as a dictionary.
+    If no offset is given, return the first. If an offset is
+    given (from 0), return the relevent item.
+
+    Raises db.exceptions.NoDataFoundException if the mbid doesn't
+    exist or if the offset is too high."""
+    with db.engine.connect() as connection:
         result = connection.execute(
-            """SELECT data::text
-            FROM lowlevel
-            WHERE mbid = %s
-            ORDER BY submitted
-            OFFSET %s""",
+            """SELECT data
+                 FROM lowlevel
+                WHERE mbid = %s
+             ORDER BY submitted
+               OFFSET %s""",
             (str(mbid), offset)
         )
         if not result.rowcount:
@@ -156,7 +179,7 @@ def load_low_level(mbid, offset=0):
 
 def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
-    with db._engine.connect() as connection:
+    with db.engine.connect() as connection:
         result = connection.execute(
             "SELECT hlj.data::text "
             "FROM highlevel hl "
@@ -174,7 +197,7 @@ def load_high_level(mbid, offset=0):
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
-    with db._engine.connect() as connection:
+    with db.engine.connect() as connection:
         result = connection.execute(
             "SELECT count(*) FROM lowlevel WHERE mbid = %s",
             (str(mbid),)
@@ -195,7 +218,7 @@ def get_summary_data(mbid, offset=0):
     """
     summary = {}
     mbid = str(mbid)
-    with db._engine.connect() as connection:
+    with db.engine.connect() as connection:
         result = connection.execute(
             """SELECT id, data
                  FROM lowlevel

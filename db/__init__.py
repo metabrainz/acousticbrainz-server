@@ -5,20 +5,14 @@ from sqlalchemy.pool import NullPool
 SCHEMA_VERSION = 2
 
 
-_engine = None
+engine = None
 
 def init_db_engine(connect_str):
-    global _engine
-    _engine = create_engine(connect_str, poolclass=NullPool)
-
-def get_connection():
-    return _engine.connect()
-
-def get_connection():
-    return _engine.raw_connection()
+    global engine
+    engine = create_engine(connect_str, poolclass=NullPool, strategy='threadlocal')
 
 def run_sql_script(sql_file_path):
     with open(sql_file_path) as sql:
-        connection = _engine.connect()
+        connection = engine.connect()
         connection.execute(sql.read())
         connection.close()

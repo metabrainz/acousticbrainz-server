@@ -52,10 +52,14 @@ class DatabaseTestCase(unittest.TestCase):
         with db._engine.connect() as connection:
             connection.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
 
+    def data_filename(self, mbid):
+        """ Get the expected filename of a test datafile given its mbid """
+        return os.path.join(TEST_DATA_PATH, mbid + '.json')
+
     def load_low_level_data(self, mbid):
         """Loads low-level data from JSON file in `test_data` directory into
         the database.
         """
-        with open(os.path.join(TEST_DATA_PATH, mbid + '.json')) as json_file:
+        with open(self.data_filename(mbid)) as json_file:
             db.data.submit_low_level_data(mbid, json.loads(json_file.read()))
 

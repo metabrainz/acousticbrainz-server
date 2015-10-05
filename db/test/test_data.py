@@ -74,23 +74,6 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, one)
         self.assertEqual(one, db.data.load_low_level(self.test_mbid))
 
-    def _get_ll_id_from_mbid(self, mbid):
-        with db.engine.connect() as connection:
-            result = connection.execute("select id from lowlevel where mbid = %s", (mbid, ))
-            return result.fetchone()[0]
-
-    def test_write_load_high_level(self):
-        """Writing and loading a dict returns the same data"""
-        ll = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        hl = {"highlevel": "data"}
-
-        build_sha = "test"
-        db.data.write_low_level(self.test_mbid, ll)
-        ll_id = self._get_ll_id_from_mbid(self.test_mbid)
-        db.data.write_high_level(self.test_mbid, ll_id, hl, build_sha)
-
-        self.assertEqual(hl, db.data.load_high_level(self.test_mbid))
-
 
     def test_load_low_level_offset(self):
         """If two items with the same mbid are added, you can select between them with offset"""
@@ -115,17 +98,89 @@ class DataDBTestCase(DatabaseTestCase):
             db.data.load_low_level(self.test_mbid, 1)
 
 
+    def _get_ll_id_from_mbid(self, mbid):
+        with db.engine.connect() as connection:
+            ret = []
+            result = connection.execute("select id from lowlevel where mbid = %s", (mbid, ))
+            for row in result:
+                ret.append(row[0])
+            return ret
+
+
+    def test_write_load_high_level(self):
+        """Writing and loading a dict returns the same data"""
+        ll = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        hl = {"highlevel": "data"}
+
+        build_sha = "test"
+        db.data.write_low_level(self.test_mbid, ll)
+        ll_id = self._get_ll_id_from_mbid(self.test_mbid)[0]
+        db.data.write_high_level(self.test_mbid, ll_id, hl, build_sha)
+
+        self.assertEqual(hl, db.data.load_high_level(self.test_mbid))
+
+
     def test_load_high_level_offset(self):
-
-        # If hl are added in a different order to ll, offset should return ll order
-
         # If there are two lowlevel items, but only one highlevel, we should raise NoDataFound
-        pass
+        second_data = copy.deepcopy(self.test_lowlevel_data)
+        second_data["metadata"]["tags"]["album"] = ["Another album"]
+
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
+        db.data.write_low_level(self.test_mbid, second_data)
+        ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
+
+        build_sha = "sha"
+        hl1 = {"highlevel": "one"}
+        hl2 = {"highlevel": "two"}
+        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+        # First highlevel item
+        self.assertEqual(hl1, db.data.load_high_level(self.test_mbid))
+        self.assertEqual(hl1, db.data.load_high_level(self.test_mbid, offset=0))
+
+        # second has a ll, but no hl => exception
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.data.load_high_level(self.test_mbid, offset=1)
+
+        # after adding the hl, no error
+        db.data.write_high_level(self.test_mbid, ll_id2, hl2, build_sha)
+        self.assertEqual(hl2, db.data.load_high_level(self.test_mbid, offset=1))
+
+
+    def test_load_high_level_offset_reverse(self):
+        # If hl are added in a different order to ll, offset should return ll order
+        second_data = copy.deepcopy(self.test_lowlevel_data)
+        second_data["metadata"]["tags"]["album"] = ["Another album"]
+
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
+        db.data.write_low_level(self.test_mbid, second_data)
+        ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
+
+        build_sha = "sha"
+        hl1 = {"highlevel": "one"}
+        hl2 = {"highlevel": "two"}
+        db.data.write_high_level(self.test_mbid, ll_id2, hl2, build_sha)
+        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+
+        self.assertEqual(hl1, db.data.load_high_level(self.test_mbid))
+        self.assertEqual(hl2, db.data.load_high_level(self.test_mbid, offset=1))
 
 
     def test_load_high_level_none(self):
         """If no data is loaded, or offset is too high, an exception is raised"""
-        pass
+
+        # no data
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.data.load_high_level(self.test_mbid, offset=0)
+
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
+        ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
+
+        build_sha = "sha"
+        hl1 = {"highlevel": "one"}
+        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.data.load_high_level(self.test_mbid, offset=1)
 
 
     def test_count_lowlevel(self):

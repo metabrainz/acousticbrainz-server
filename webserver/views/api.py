@@ -53,7 +53,7 @@ def get_high_level(mbid):
     else:
         offset = 0
     try:
-        return Response(load_high_level(mbid, offset), content_type='application/json')
+        return jsonify(load_high_level(mbid, offset))
     except NoDataFoundException:
         raise NotFound
 

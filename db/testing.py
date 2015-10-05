@@ -35,7 +35,7 @@ class DatabaseTestCase(unittest.TestCase):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
 
     def drop_tables(self):
-        with db._engine.connect() as connection:
+        with db.engine.connect() as connection:
             # TODO(roman): See if there's a better way to drop all tables.
             connection.execute('DROP TABLE IF EXISTS highlevel_json       CASCADE;')
             connection.execute('DROP TABLE IF EXISTS highlevel            CASCADE;')
@@ -49,7 +49,7 @@ class DatabaseTestCase(unittest.TestCase):
             connection.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
 
     def drop_types(self):
-        with db._engine.connect() as connection:
+        with db.engine.connect() as connection:
             connection.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
 
     def data_filename(self, mbid):

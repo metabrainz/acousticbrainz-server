@@ -181,13 +181,15 @@ def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT hlj.data::text "
-            "FROM highlevel hl "
-            "JOIN highlevel_json hlj "
-            "ON hl.data = hlj.id "
-            "WHERE mbid = %s "
-            "ORDER BY submitted "
-            "OFFSET %s",
+            """SELECT hlj.data
+                 FROM highlevel hl
+                 JOIN highlevel_json hlj
+                   ON hl.data = hlj.id
+                 JOIN lowlevel ll
+                   ON ll.id = hl.id
+                WHERE ll.mbid = %s
+             ORDER BY ll.submitted
+               OFFSET %s""",
             (str(mbid), offset)
         )
         if not result.rowcount:
@@ -219,18 +221,8 @@ def get_summary_data(mbid, offset=0):
     summary = {}
     mbid = str(mbid)
     with db.engine.connect() as connection:
-        result = connection.execute(
-            """SELECT id, data
-                 FROM lowlevel
-                WHERE mbid = :mbid
-             ORDER BY submitted
-               OFFSET :offset""",
-            {"mbid": mbid, "offset": offset}
-        )
-        if not result.rowcount:
-            raise db.exceptions.NoDataFoundException("Can't find low-level data for this recording.")
+        lowlevel = load_low_level(mbid, offset)
 
-        ll_row_id, lowlevel = result.fetchone()
         if 'artist' not in lowlevel['metadata']['tags']:
             lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
         if 'release' not in lowlevel['metadata']['tags']:
@@ -243,16 +235,10 @@ def get_summary_data(mbid, offset=0):
 
         summary['lowlevel'] = lowlevel
 
-        result = connection.execute(
-            """SELECT highlevel_json.data
-                 FROM highlevel
-                    , highlevel_json
-                WHERE highlevel.id = :ll_row_id
-                  AND highlevel.data = highlevel_json.id
-                  AND highlevel.mbid = :mbid""",
-            (ll_row_id, mbid)
-        )
-        if result.rowcount:
-            summary['highlevel'] = result.fetchone()[0]
+        try:
+            highlevel = load_high_level(mbid, offset)
+            summary['highlevel'] = highlevel
+        except db.exceptions.NoDataFoundException:
+            pass
 
         return summary

@@ -69,7 +69,7 @@ def view_high_level(mbid):
         return render_template(
             "data/json-display.html",
             mbid=mbid,
-            data=json.dumps(json.loads(db.data.load_high_level(mbid, offset)),
+            data=json.dumps(db.data.load_high_level(mbid, offset),
                             indent=4, sort_keys=True),
             title="High-level JSON for %s" % mbid,
         )

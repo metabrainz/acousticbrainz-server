@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from flask import Blueprint, request, Response, jsonify
-from db.data import load_low_level, load_high_level, submit_low_level_data, count_lowlevel
+from db.data import submit_low_level_data, count_lowlevel
+import db.data
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
 from werkzeug.exceptions import BadRequest, NotFound
 import webserver.exceptions
 import json
+import uuid
 
 api_bp = Blueprint('api', __name__)
 
@@ -18,57 +20,56 @@ def count(mbid):
         'count': count_lowlevel(mbid),
     })
 
+def _validate_data_arguments(mbid, offset):
+    """Validate the mbid and offset. If the mbid is not a valid uuid, raise 404.
+    If the offset is None, return 0, otherwise interpret it as a number. If it is
+    not a number, raise 400."""
+    try:
+        uuid.UUID(mbid)
+    except ValueError:
+        # an invalid uuid is 404
+        raise webserver.exceptions.APINotFound("Not found")
 
-@api_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
+    if offset:
+        try:
+            offset = int(offset)
+        except ValueError:
+            raise webserver.exceptions.APIBadRequest("Offset must be an integer value")
+    else:
+        offset = 0
+
+    return mbid, offset
+
+@api_bp.route("/<string:mbid>/low-level", methods=["GET"])
 @crossdomain()
 def get_low_level(mbid):
-    """Endpoint for fetching low-level information to AcousticBrainz.
+    """Endpoint for fetching low-level data.
 
-    Offset can be specified if you need to get another dataset in case there
-    are duplicates.
+    If there is more than one document with the same mbid, you can specify
+    an offset as a query parameter in the form of ?n=x, where x is an integer
+    starting from 0
     """
-    offset = request.args.get("n")
-    if offset:
-        if not offset.isdigit():
-            raise webserver.exceptions.InvalidAPIUsage("Offset must be an integer value", status_code=BadRequest.code)
-        else:
-            offset = int(offset)
-    else:
-        offset = 0
+    mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
     try:
-        return Response(load_low_level(mbid, offset), content_type='application/json')
+        return Response(db.data.load_low_level(mbid, offset), content_type='application/json')
     except NoDataFoundException:
-        raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
+        raise webserver.exceptions.APINotFound("Not found")
 
-@api_bp.route("/<string:notanmbid>/low-level", methods=["GET"])
+
+@api_bp.route("/<string:mbid>/high-level", methods=["GET"])
 @crossdomain()
-def get_low_level_404(notanmbid):
-    """Specific low-level view for non-mbid url parts to return a json error message"""
-    raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
+def get_high_leve(mbid):
+    """Endpoint for fetching high-level data.
 
-
-@api_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
-@crossdomain()
-def get_high_level(mbid):
-    """Endpoint for fetching high-level information to AcousticBrainz."""
-    offset = request.args.get("n")
-    if offset:
-        if not offset.isdigit():
-            raise webserver.exceptions.InvalidAPIUsage("Offset must be an integer value", status_code=BadRequest.code)
-        else:
-            offset = int(offset)
-    else:
-        offset = 0
+    If there is more than one document with the same mbid, you can specify
+    an offset as a query parameter in the form of ?n=x, where x is an integer
+    starting from 0
+    """
+    mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
     try:
-        return Response(load_high_level(mbid, offset), content_type='application/json')
+        return Response(db.data.load_high_level(mbid, offset), content_type='application/json')
     except NoDataFoundException:
-        raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
-
-@api_bp.route("/<string:notanmbid>/high-level", methods=["GET"])
-@crossdomain()
-def get_high_level_404(notanmbid):
-    """Specific low-level view for non-mbid url parts to return a json error message"""
-    raise webserver.exceptions.InvalidAPIUsage("Not found", status_code=NotFound.code)
+        raise webserver.exceptions.APINotFound("Not found")
 
 
 @api_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
@@ -78,10 +79,10 @@ def submit_low_level(mbid):
     try:
         data = json.loads(raw_data.decode("utf-8"))
     except ValueError as e:
-        raise webserver.exceptions.InvalidAPIUsage("Cannot parse JSON document: %s" % e, status_code=BadRequest.code)
+        raise webserver.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
     try:
         submit_low_level_data(mbid, data)
     except BadDataException as e:
-        raise webserver.exceptions.InvalidAPIUsage("%s" % e, status_code=BadRequest.code)
-    return jsonify({"status": "ok"})
+        raise webserver.exceptions.APIBadRequest("%s" % e)
+    return jsonify({"message": "ok"})

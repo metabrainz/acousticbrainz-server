@@ -1,4 +1,4 @@
-from db import create_cursor, commit
+import db
 import db.exceptions
 import db.dataset
 import db.data
@@ -21,12 +21,12 @@ def evaluate_dataset(dataset_id):
     Returns:
         ID of the newly created evaluation job.
     """
-    with create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        result = connection.execute(
             "SELECT count(*) FROM dataset_eval_jobs WHERE dataset_id = %s AND status IN %s",
             (dataset_id, (STATUS_PENDING, STATUS_RUNNING))
         )
-        if cursor.fetchone()[0] > 0:
+        if result.fetchone()[0] > 0:
             raise JobExistsException
     validate_dataset(db.dataset.get(dataset_id))
     return _create_job(dataset_id)
@@ -57,8 +57,8 @@ def validate_dataset(dataset):
 
 
 def get_next_pending_job():
-    with create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        result = connection.execute(
             "SELECT id, dataset_id, status, status_msg, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE status = %s "
@@ -66,18 +66,20 @@ def get_next_pending_job():
             "LIMIT 1",
             (STATUS_PENDING,)
         )
-        return dict(cursor.fetchone()) if cursor.rowcount > 0 else None
+        row = result.fetchone()
+        return dict(row) if row else None
 
 
 def get_job(job_id):
-    with create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        result = connection.execute(
             "SELECT id, dataset_id, status, status_msg, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE id = %s",
             (job_id,)
         )
-        return dict(cursor.fetchone()) if cursor.rowcount > 0 else None
+        row = result.fetchone()
+        return dict(row) if row else None
 
 
 def get_jobs_for_dataset(dataset_id):
@@ -90,26 +92,25 @@ def get_jobs_for_dataset(dataset_id):
         List of evaluation jobs (dicts) for the dataset. Ordered by creation
         time (oldest job first)
     """
-    with create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        result = connection.execute(
             "SELECT id, dataset_id, status, status_msg, result, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE dataset_id = %s "
             "ORDER BY created ASC",
             (dataset_id,)
         )
-        return [dict(j) for j in cursor.fetchall()]
+        return [dict(j) for j in result.fetchall()]
 
 
 def set_job_result(job_id, result):
-    with create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        result = connection.execute(
             "UPDATE dataset_eval_jobs "
             "SET (result, updated) = (%s, current_timestamp) "
             "WHERE id = %s",
             (result, job_id)
         )
-    commit()
 
 
 def set_job_status(job_id, status, status_msg=None):
@@ -128,25 +129,23 @@ def set_job_status(job_id, status, status_msg=None):
                       STATUS_DONE,
                       STATUS_FAILED]:
         raise IncorrectJobStatusException
-    with create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        connection.execute(
             "UPDATE dataset_eval_jobs "
             "SET (status, status_msg, updated) = (%s, %s, current_timestamp) "
             "WHERE id = %s",
             (status, status_msg, job_id)
         )
-    commit()
 
 
 def _create_job(dataset_id):
-    with create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        result = connection.execute(
             "INSERT INTO dataset_eval_jobs (id, dataset_id, status) "
             "VALUES (uuid_generate_v4(), %s, %s) RETURNING id",
             (dataset_id, STATUS_PENDING)
         )
-        job_id = cursor.fetchone()[0]
-    commit()
+        job_id = result.fetchone()[0]
     return job_id
 
 

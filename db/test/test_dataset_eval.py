@@ -77,3 +77,20 @@ class DatasetEvalTestCase(DatabaseTestCase):
         )
         job = dataset_eval.get_job(job_id)
         self.assertEqual(job["status"], dataset_eval.STATUS_FAILED)
+
+    def test_get_next_pending_job(self):
+        job1_id = dataset_eval._create_job(self.test_dataset_id)
+        job1 = dataset_eval.get_job(job1_id)
+
+        job2_id = dataset_eval._create_job(self.test_dataset_id)
+        job2 = dataset_eval.get_job(job2_id)
+
+        next_pending = dataset_eval.get_next_pending_job()
+        self.assertEqual(job1, next_pending)
+        dataset_eval.set_job_status(
+            job_id=job1_id,
+            status=dataset_eval.STATUS_FAILED,
+        )
+        next_pending = dataset_eval.get_next_pending_job()
+        self.assertEqual(job2, next_pending)
+

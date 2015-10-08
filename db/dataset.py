@@ -72,7 +72,7 @@ def create_from_dict(dictionary, author_id):
     """
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         if "description" not in dictionary:
             dictionary["description"] = None
 
@@ -100,7 +100,7 @@ def update(dataset_id, dictionary, author_id):
     # TODO(roman): Make author_id argument optional (keep old author if None).
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         if "description" not in dictionary:
             dictionary["description"] = None
 
@@ -132,7 +132,7 @@ def get(id):
         Dictionary with dataset details if it has been found, None
         otherwise.
     """
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         result = connection.execute(
             "SELECT id, name, description, author, created, public "
             "FROM dataset "
@@ -148,7 +148,7 @@ def get(id):
 
 
 def _get_classes(dataset_id):
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         result = connection.execute(
             "SELECT id, name, description "
             "FROM dataset_class "
@@ -165,7 +165,7 @@ def _get_classes(dataset_id):
 
 
 def _get_recordings_in_class(class_id):
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         result = connection.execute("SELECT mbid FROM dataset_class_member WHERE class = %s",
                        (class_id,))
         recordings = []
@@ -180,7 +180,7 @@ def get_by_user_id(user_id, public_only=True):
     Returns:
         List of dictionaries with dataset details.
     """
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         where = "WHERE author = %s"
         if public_only:
             where += " AND public = TRUE"
@@ -195,5 +195,5 @@ def get_by_user_id(user_id, public_only=True):
 
 def delete(id):
     """Delete dataset with a specified ID."""
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         connection.execute("DELETE FROM dataset WHERE id = %s", (str(id),))

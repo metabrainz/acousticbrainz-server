@@ -20,7 +20,7 @@ cli = click.Group()
               help="Turns debugging mode on or off. If specified, overrides "
                    "'DEBUG' value in the config file.")
 def runserver(host, port, debug):
-    db.init_db_connection(config.PG_CONNECT)
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
     create_app().run(host=host, port=port, debug=debug)
 
 

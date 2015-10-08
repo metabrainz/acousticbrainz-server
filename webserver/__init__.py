@@ -16,8 +16,8 @@ def create_app():
     init_loggers(app)
 
     # Database connection
-    from db import init_db_connection
-    init_db_connection(app.config['PG_CONNECT'])
+    from db import init_db_engine
+    init_db_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
     # Memcached
     if 'MEMCACHED_SERVERS' in app.config:

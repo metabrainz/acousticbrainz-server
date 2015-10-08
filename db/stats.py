@@ -12,7 +12,7 @@ LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 def get_last_submitted_recordings():
     last_submitted_data = db.cache.get('last-submitted-data')
     if not last_submitted_data:
-        with db.get_connection() as connection:
+        with db.engine.connect() as connection:
             result = connection.execute("""SELECT mbid,
                                      data->'metadata'->'tags'->'artist'->>0,
                                      data->'metadata'->'tags'->'title'->>0
@@ -39,7 +39,7 @@ def get_stats():
     if sorted(stats_keys) != sorted(stats.keys()) or last_collected is None:
         stats_parameters = dict([(a, 0) for a in stats_keys])
 
-        with db.get_connection() as connection:
+        with db.engine.connect() as connection:
             result = connection.execute("SELECT now() as now, collected FROM statistics ORDER BY collected DESC LIMIT 1")
             update_db = False
             if result.rowcount > 0:
@@ -76,7 +76,7 @@ def get_stats():
 
 
 def get_statistics_data():
-    with db.get_connection() as connection:
+    with db.engine.connect() as connection:
         result = connection.execute(
             "SELECT name, array_agg(collected ORDER BY collected ASC) AS times,"
             "       array_agg(value ORDER BY collected ASC) AS values "

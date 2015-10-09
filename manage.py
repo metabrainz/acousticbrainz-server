@@ -24,6 +24,15 @@ def runserver(host, port, debug):
     create_app().run(host=host, port=port, debug=debug)
 
 
+def _run_psql(script, database=None):
+    script = os.path.join(ADMIN_SQL_DIR, script)
+    command = ['psql', '-U', config.PG_SUPER_USER, '-f', script]
+    if database:
+        command.extend(['-d', database])
+    exit_code = subprocess.call(command)
+
+    return exit_code
+
 @cli.command()
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
 @click.argument("archive", type=click.Path(exists=True), required=False)
@@ -42,23 +51,17 @@ def init_db(archive, force):
     found at http://www.postgresql.org/docs/current/static/populate.html.
     """
     if force:
-        exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
-                                    os.path.join(ADMIN_SQL_DIR, 'drop_db.sql'),
-                                    shell=True)
+        exit_code = _run_psql('drop_db.sql')
         if exit_code != 0:
             raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
 
     print('Creating user and a database...')
-    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
-                                os.path.join(ADMIN_SQL_DIR, 'create_db.sql'),
-                                shell=True)
+    exit_code = _run_psql('create_db.sql')
     if exit_code != 0:
         raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
 
     print('Creating database extensions...')
-    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' -d acousticbrainz < ' +
-                                os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'),
-                                shell=True)
+    exit_code = _run_psql('create_extensions.sql', 'acousticbrainz')
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
@@ -95,22 +98,16 @@ def init_test_db(force=False):
     `PG_CONNECT_TEST` variable must be defined in the config file.
     """
     if force:
-        exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
-                                    os.path.join(ADMIN_SQL_DIR, 'drop_test_db.sql'),
-                                    shell=True)
+        exit_code = _run_psql('drop_test_db.sql')
         if exit_code != 0:
             raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
 
     print('Creating database and user for testing...')
-    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' < ' +
-                                os.path.join(ADMIN_SQL_DIR, 'create_test_db.sql'),
-                                shell=True)
+    exit_code = _run_psql('create_test_db.sql')
     if exit_code != 0:
         raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
 
-    exit_code = subprocess.call('psql -U ' + config.PG_SUPER_USER + ' -d ab_test < ' +
-                                os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'),
-                                shell=True)
+    exit_code = _run_psql('create_extensions.sql', 'ab_test')
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 

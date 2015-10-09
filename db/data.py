@@ -206,6 +206,18 @@ def count_lowlevel(mbid):
         )
         return result.fetchone()[0]
 
+def get_unprocessed_highlevel_documents():
+    """Fetch up to 100 low-level documents which have no associated high level data."""
+    with db.engine.connect() as connection:
+        result = connection.execute("""SELECT ll.mbid, ll.data::text, ll.id
+                         FROM lowlevel AS ll
+                    LEFT JOIN highlevel AS hl
+                           ON ll.id = hl.id
+                        WHERE hl.mbid IS NULL
+                        LIMIT 100""")
+        docs = result.fetchall()
+        return docs
+
 
 def get_summary_data(mbid, offset=0):
     """Fetches the low-level and high-level features from for the specified MBID.

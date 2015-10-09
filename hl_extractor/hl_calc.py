@@ -11,6 +11,7 @@ import json
 import yaml
 import os
 from setproctitle import setproctitle
+import db.data
 
 # Configuration
 import sys
@@ -88,20 +89,6 @@ class HighLevel(Thread):
         self.hl_data = self._calculate()
 
 
-def get_documents(conn):
-    """Fetch a number of low-level documents to process from the DB."""
-    cur = conn.cursor()
-    cur.execute("""SELECT ll.mbid, ll.data::text, ll.id
-                     FROM lowlevel AS ll
-                LEFT JOIN highlevel AS hl
-                       ON ll.id = hl.id
-                    WHERE hl.mbid IS NULL
-                    LIMIT 100""")
-    docs = cur.fetchall()
-    cur.close()
-    return docs
-
-
 def create_profile(in_file, out_file, sha1):
     """Prepare a profile file for use with essentia. Sanity check to make sure
     important values are present.
@@ -153,7 +140,6 @@ def main(num_threads):
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
 
-    conn = None
     num_processed = 0
 
     pool = {}
@@ -162,9 +148,7 @@ def main(num_threads):
         # Check to see if we need more database rows
         if len(docs) == 0:
             # Fetch more rows from the DB
-            if not conn:
-                conn = psycopg2.connect(config.PG_CONNECT)
-            docs = get_documents(conn)
+            docs = db.data.get_unprocessed_highlevel_documents()
 
             # We will fetch some rows that are already in progress. Remove those.
             in_progress = pool.keys()
@@ -191,8 +175,7 @@ def main(num_threads):
                     sys.stdout.flush()
                 num_processed = 0
                 # Let's be nice and not keep any connections to the DB open while we nap
-                conn.close()
-                conn = None
+                # TODO: Close connections when we're sleeping
                 sleep(SLEEP_DURATION)
 
             for mbid in pool.keys():
@@ -204,7 +187,6 @@ def main(num_threads):
                     pool[mbid].join()
                     del pool[mbid]
 
-                    # Calculate the sha for the data
                     try:
                         jdata = json.loads(hl_data)
                     except ValueError:
@@ -213,22 +195,10 @@ def main(num_threads):
                         sys.stdout.flush()
                         jdata = {}
 
-                    norm_data = json.dumps(jdata, sort_keys=True, separators=(',', ':'))
-                    sha = sha256(norm_data).hexdigest()
+                    db.data.write_high_level(mbid, ll_id, jdata, build_sha1)
 
                     print("done  %s" % mbid)
                     sys.stdout.flush()
-                    if not conn:
-                        conn = psycopg2.connect(config.PG_CONNECT)
-
-                    cur = conn.cursor()
-                    cur.execute("""INSERT INTO highlevel_json (data, data_sha256)
-                                        VALUES (%s, %s)
-                                     RETURNING id""", (norm_data, sha))
-                    id = cur.fetchone()[0]
-                    cur.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
-                                        VALUES (%s, %s, %s, %s, now())""", (ll_id, mbid, build_sha1, id))
-                    conn.commit()
                     num_processed += 1
 
             if len(pool) == num_threads:

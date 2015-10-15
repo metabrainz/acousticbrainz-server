@@ -462,11 +462,11 @@ var RecordingAddForm = React.createClass({
         var mbid = this.refs.mbid.getDOMNode().value;
         var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mbid);
         var isNotDuplicate = this.props.recordings.indexOf(mbid) == -1;
-        this.setState({validInput: (isValidUUID && isNotDuplicate) || mbid.length == 0});
+        this.setState({validInput: isValidUUID && isNotDuplicate});
         // TODO: Show informative error messages if input is invalid.
     },
     getInitialState: function () {
-        return {validInput: true};
+        return {validInput: false};
     },
     render: function () {
         return (

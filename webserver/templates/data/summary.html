@@ -60,20 +60,26 @@
         </tr>
       {% endmacro %}
 
+      {% if data.highlevel.other %}
       <table class="table table-bordered">
         <thead><th style="width: 30%;">Voice, timbre, gender, etc.</th><th style="width: 25%;">value</th><th>probability</th></thead>
         {% for row in data.highlevel.other %}{{ print_row(row) }}{% endfor %}
       </table>
+      {% endif %}
 
+      {% if data.highlevel.moods %}
       <table class="table table-bordered">
         <thead><th style="width: 30%;">Moods</th><th style="width: 25%;">value</th><th>probability</th></thead>
         {% for row in data.highlevel.moods %}{{ print_row(row) }}{% endfor %}
       </table>
+      {% endif %}
 
+      {% if data.highlevel.genres %}
       <table class="table table-bordered">
         <thead><th style="width: 30%;">Genres</th><th style="width: 25%;">value</th><th>probability</th></thead>
         {% for row in data.highlevel.genres %}{{ print_row(row) }}{% endfor %}
       </table>
+      {% endif %}
 
     {% else %}
       <div class="alert alert-warning">

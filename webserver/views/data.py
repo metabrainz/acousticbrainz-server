@@ -95,11 +95,12 @@ def summary(mbid):
 
     if summary_data.get("highlevel"):
         genres, moods, other = _interpret_high_level(summary_data["highlevel"])
-        summary_data["highlevel"] = {
-            "genres": genres,
-            "moods": moods,
-            "other": other,
-        }
+        if genres or moods or other:
+            summary_data["highlevel"] = {
+                "genres": genres,
+                "moods": moods,
+                "other": other,
+            }
 
     recording_info = _get_recording_info(mbid, summary_data["lowlevel"]["metadata"]
                                          if summary_data else None)
@@ -193,27 +194,63 @@ def _interpret_high_level(hl):
             return text, "unsure", "%.3f" % data['probability']
 
     genres = []
-    genres.append(interpret("Tzanetakis' method", hl['highlevel']['genre_tzanetakis']))
-    genres.append(interpret("Electronic classification", hl['highlevel']['genre_electronic']))
-    genres.append(interpret("Dortmund method", hl['highlevel']['genre_dortmund']))
-    genres.append(interpret("Rosamerica method", hl['highlevel']['genre_rosamerica']))
+    tzan = hl['highlevel'].get('genre_tzanetakis')
+    if tzan:
+        genres.append(interpret("Tzanetakis model", tzan))
+    elec = hl['highlevel'].get('genre_electronic')
+    if elec:
+        genres.append(interpret("Electronic classification", elec))
+    dort = hl['highlevel'].get('genre_dortmund')
+    if dort:
+        genres.append(interpret("Dortmund model", dort))
+    ros = hl['highlevel'].get('genre_rosamerica')
+    if ros:
+        genres.append(interpret("Rosamerica model", ros))
 
     moods = []
-    moods.append(interpret("Electronic", hl['highlevel']['mood_electronic']))
-    moods.append(interpret("Party", hl['highlevel']['mood_party']))
-    moods.append(interpret("Aggressive", hl['highlevel']['mood_aggressive']))
-    moods.append(interpret("Acoustic", hl['highlevel']['mood_acoustic']))
-    moods.append(interpret("Happy", hl['highlevel']['mood_happy']))
-    moods.append(interpret("Sad", hl['highlevel']['mood_sad']))
-    moods.append(interpret("Relaxed", hl['highlevel']['mood_relaxed']))
-    moods.append(interpret("Mirex method", hl['highlevel']['moods_mirex']))
+    elec = hl['highlevel'].get('mood_electronic')
+    if elec:
+        moods.append(interpret("Electronic", elec))
+    party = hl['highlevel'].get('mood_party')
+    if party:
+        moods.append(interpret("Party", party))
+    aggressive = hl['highlevel'].get('mood_aggressive')
+    if aggressive:
+        moods.append(interpret("Aggressive", aggressive))
+    acoustic = hl['highlevel'].get('mood_acoustic')
+    if acoustic:
+        moods.append(interpret("Acoustic", acoustic))
+    happy = hl['highlevel'].get('mood_happy')
+    if happy:
+        moods.append(interpret("Happy", happy))
+    sad = hl['highlevel'].get('mood_sad')
+    if sad:
+        moods.append(interpret("Sad", sad))
+    relaxed = hl['highlevel'].get('mood_relaxed')
+    if relaxed:
+        moods.append(interpret("Relaxed", relaxed))
+    mirex = hl['highlevel'].get('mood_mirex')
+    if mirex:
+        moods.append(interpret("Mirex method", mirex))
 
     other = []
-    other.append(interpret("Voice", hl['highlevel']['voice_instrumental']))
-    other.append(interpret("Gender", hl['highlevel']['gender']))
-    other.append(interpret("Danceability", hl['highlevel']['danceability']))
-    other.append(interpret("Tonal", hl['highlevel']['tonal_atonal']))
-    other.append(interpret("Timbre", hl['highlevel']['timbre']))
-    other.append(interpret("ISMIR04 Rhythm", hl['highlevel']['ismir04_rhythm']))
+    voice = hl['highlevel'].get('voice_instrumental')
+    if voice:
+        other.append(interpret("Voice", voice))
+    gender = hl['highlevel'].get('gender')
+    if gender:
+        other.append(interpret("Gender", gender))
+    dance = hl['highlevel'].get('danceability')
+    if dance:
+        other.append(interpret("Danceability", dance))
+    tonal = hl['highlevel'].get('tonal_atonal')
+    if tonal:
+        other.append(interpret("Tonal", tonal))
+    timbre = hl['highlevel'].get('timbre')
+    if timbre:
+        other.append(interpret("Timbre", timbre))
+    rhythm = hl['highlevel'].get('ismir04_rhythm')
+    if rhythm:
+        other.append(interpret("ISMIR04 Rhythm", rhythm))
 
     return genres, moods, other

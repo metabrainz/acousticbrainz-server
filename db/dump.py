@@ -18,6 +18,7 @@ import logging
 import tarfile
 import shutil
 import os
+from sqlalchemy import text
 
 DUMP_CHUNK_SIZE = 1000
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -144,7 +145,9 @@ def _copy_tables(location, start_time=None, end_time=None):
         else:
             return ""
 
-    with create_cursor() as cursor:
+    connection = db.engine.raw_connection()
+    try:
+        cursor = connection.cursor()
 
         # lowlevel
         with open(os.path.join(location, "lowlevel"), "w") as f:
@@ -176,6 +179,8 @@ def _copy_tables(location, start_time=None, end_time=None):
             logging.info(" - Copying table incremental_dumps...")
             cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
                            (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
+    finally:
+        connection.close()
 
 
 def import_db_dump(archive_path):
@@ -185,7 +190,9 @@ def import_db_dump(archive_path):
 
     table_names = _TABLES.keys()
 
-    with db.get_raw_connection().cursor() as cursor:
+    connection = db.engine.raw_connection()
+    try:
+        cursor = connection.cursor()
 
         with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
             for member in tar:
@@ -206,6 +213,9 @@ def import_db_dump(archive_path):
                         logging.info(" - Importing data into %s table..." % file_name)
                         cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
                                          columns=_TABLES[file_name])
+        connection.commit()
+    finally:
+        connection.close()
 
     pxz.stdout.close()
 
@@ -236,7 +246,9 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
 
-        with db.get_raw_connection().cursor() as cursor:
+        connection = db.engine.raw_connection()
+        try:
+            cursor = connection.cursor()
 
             mbid_occurences = defaultdict(int)
 
@@ -263,37 +275,40 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 where = ""
             cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
 
-            with db.get_raw_connection().cursor() as cursor:
-                temp_dir = tempfile.mkdtemp()
+            cursor_inner = connection.cursor()
 
-                dumped_count = 0
+            temp_dir = tempfile.mkdtemp()
 
+            dumped_count = 0
+
+            while True:
+                id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
+                if not id_list:
+                    break
+                id_list = tuple([i[0] for i in id_list])
+
+                cursor_inner.execute("""SELECT mbid::text, data::text
+                                        FROM lowlevel
+                                        WHERE id IN %s
+                                        ORDER BY mbid""", (id_list,))
                 while True:
-                    id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
-                    if not id_list:
+                    row = cursor_inner.fetchone()
+                    if not row:
                         break
-                    id_list = tuple([i[0] for i in id_list])
+                    mbid, json = row
 
-                    cursor_inner.execute("""SELECT mbid, data::text
-                                            FROM lowlevel
-                                            WHERE id IN %s
-                                            ORDER BY mbid""", (id_list,))
-                    while True:
-                        row = cursor_inner.fetchone()
-                        if not row:
-                            break
-                        mbid, json = row
+                    json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
+                    dump_tempfile = os.path.join(temp_dir, json_filename)
+                    with open(dump_tempfile, "w") as f:
+                        f.write(json)
+                    tar.add(dump_tempfile, arcname=os.path.join(
+                        archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
+                    os.unlink(dump_tempfile)
 
-                        json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
-                        dump_tempfile = os.path.join(temp_dir, json_filename)
-                        with open(dump_tempfile, "w") as f:
-                            f.write(json)
-                        tar.add(dump_tempfile, arcname=os.path.join(
-                            archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
-                        os.unlink(dump_tempfile)
-
-                        mbid_occurences[mbid] += 1
-                        dumped_count += 1
+                    mbid_occurences[mbid] += 1
+                    dumped_count += 1
+        finally:
+            connection.close()
 
         # Copying legal text
         tar.add(DUMP_LICENSE_FILE_PATH,
@@ -332,18 +347,18 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
 
-        with create_cursor() as cursor:
+        with db.engine.connect() as connection:
             mbid_occurences = defaultdict(int)
 
             # Need to count how many duplicate MBIDs are there before start_time
             if start_time:
-                cursor.execute("""
+                result = connection.execute("""
                     SELECT mbid, count(id)
                     FROM highlevel
                     WHERE submitted <= %s
                     GROUP BY mbid
                     """, (start_time,))
-                counts = cursor.fetchall()
+                counts = result.fetchall()
                 for mbid, count in counts:
                     mbid_occurences[mbid] = count
 
@@ -356,28 +371,29 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                     where = "AND %s%s" % (start_cond, end_cond)
             else:
                 where = ""
-            cursor.execute("""SELECT hl.id
+            result = connection.execute("""SELECT hl.id
                               FROM highlevel hl, highlevel_json hlj
                               WHERE hl.data = hlj.id %s
                               ORDER BY mbid""" % where)
 
-            with create_cursor() as cursor_inner:
+            with db.engine.connect() as connection_inner:
                 temp_dir = tempfile.mkdtemp()
 
                 dumped_count = 0
 
                 while True:
-                    id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
+                    id_list = result.fetchmany(size=DUMP_CHUNK_SIZE)
                     if not id_list:
                         break
                     id_list = tuple([i[0] for i in id_list])
 
-                    cursor_inner.execute("""SELECT mbid, hlj.data::text
-                                            FROM highlevel hl, highlevel_json hlj
-                                            WHERE hl.data = hlj.id AND hl.id IN %s
-                                            ORDER BY mbid""", (id_list, ))
+                    q = text("""SELECT mbid::text, hlj.data::text
+                           FROM highlevel hl, highlevel_json hlj
+                           WHERE hl.data = hlj.id AND hl.id IN :ids
+                           ORDER BY mbid""")
+                    result_inner = connection_inner.execute(q, {"ids": id_list})
                     while True:
-                        row = cursor_inner.fetchone()
+                        row = result_inner.fetchone()
                         if not row:
                             break
                         mbid, json = row
@@ -411,9 +427,9 @@ def list_incremental_dumps():
         List of (id, created) pairs ordered by dump identifier, or None if
         there are no incremental dumps yet.
     """
-    with create_cursor() as cursor:
-        cursor.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
-        return cursor.fetchall()
+    with db.engine.connect() as connection:
+        result = connection.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
+        return result.fetchall()
 
 
 def prepare_incremental_dump(dump_id=None):
@@ -448,31 +464,30 @@ def _any_new_data(from_time):
         True if there is new data in one of tables that support incremental
         dumps, False if there is no new data there.
     """
-    with create_cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM lowlevel WHERE submitted > %s", (from_time,))
-        lowlevel_count = cursor.fetchone()[0]
-        cursor.execute("SELECT count(*) FROM highlevel WHERE submitted > %s", (from_time,))
-        highlevel_count = cursor.fetchone()[0]
+    with db.engine.connect() as connection:
+        result = connection.execute("SELECT count(*) FROM lowlevel WHERE submitted > %s", (from_time,))
+        lowlevel_count = result.fetchone()[0]
+        result = connection.execute("SELECT count(*) FROM highlevel WHERE submitted > %s", (from_time,))
+        highlevel_count = result.fetchone()[0]
     return lowlevel_count > 0 or highlevel_count > 0
 
 
 def _create_new_inc_dump_record():
     """Creates new record for incremental dump and returns its ID and creation time."""
-    with create_cursor() as cursor:
-        cursor.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
-        commit()
-        row = cursor.fetchone()
+    with db.engine.connect() as connection:
+        result = connection.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
+        row = result.fetchone()
     logging.info("Created new incremental dump record (ID: %s)." % row[0])
     return row
 
 
 def _get_incremental_dump_timestamp(dump_id=None):
-    with create_cursor() as cursor:
+    with db.engine.connect() as connection:
         if dump_id:
-            cursor.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
+            result = connection.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
         else:
-            cursor.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
-        row = cursor.fetchone()
+            result = connection.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
+        row = result.fetchone()
     return row[0] if row else None
 
 

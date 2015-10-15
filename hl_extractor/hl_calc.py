@@ -4,18 +4,19 @@ from hashlib import sha256, sha1
 from threading import Thread
 from time import sleep
 import subprocess
-import psycopg2
 import tempfile
 import argparse
 import json
 import yaml
 import os
 from setproctitle import setproctitle
-import db.data
 
 # Configuration
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+
+import db.data
+import db
 import config
 
 DEFAULT_NUM_THREADS = 1
@@ -139,6 +140,7 @@ def main(num_threads):
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
 
     num_processed = 0
 

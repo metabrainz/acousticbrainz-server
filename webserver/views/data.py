@@ -110,7 +110,7 @@ def summary(mbid):
             metadata=recording_info,
             tomahawk_url=_get_tomahawk_url(recording_info),
             submission_count=submission_count,
-            position=offset + 1,
+            position=offset,
             previous=offset - 1 if offset > 0 else None,
             next=offset + 1 if offset < submission_count - 1 else None,
             offset=offset,

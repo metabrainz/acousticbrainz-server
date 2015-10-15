@@ -1,7 +1,13 @@
-from flask import render_template
-
+from flask import render_template, jsonify
+import webserver.exceptions
 
 def init_error_handlers(app):
+
+    @app.errorhandler(webserver.exceptions.APIError)
+    def api_error(error):
+        response = jsonify(error.to_dict())
+        response.status_code = error.status_code
+        return response
 
     @app.errorhandler(400)
     def bad_request(error):

@@ -7,7 +7,6 @@ import os
 import db
 import db.exceptions
 
-
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
 
@@ -123,7 +122,7 @@ def write_low_level(mbid, data):
     build_sha1 = data['metadata']['version']['essentia_build_sha']
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         # Checking to see if we already have this data
         result = connection.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
@@ -144,7 +143,7 @@ def write_high_level(mbid, ll_id, data, build_sha1):
     norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
     sha = sha256(norm_data).hexdigest()
 
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         result = connection.execute("""INSERT INTO highlevel_json (data, data_sha256)
                                             VALUES (%s, %s)
                                          RETURNING id""", (norm_data, sha))
@@ -232,25 +231,25 @@ def get_summary_data(mbid, offset=0):
     """
     summary = {}
     mbid = str(mbid)
-    with db.engine.connect() as connection:
-        lowlevel = load_low_level(mbid, offset)
 
-        if 'artist' not in lowlevel['metadata']['tags']:
-            lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
-        if 'release' not in lowlevel['metadata']['tags']:
-            lowlevel['metadata']['tags']['release'] = ["[unknown]"]
-        if 'title' not in lowlevel['metadata']['tags']:
-            lowlevel['metadata']['tags']['title'] = ["[unknown]"]
+    lowlevel = load_low_level(mbid, offset)
 
-        lowlevel['metadata']['audio_properties']['length_formatted'] = \
-            time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
+    if 'artist' not in lowlevel['metadata']['tags']:
+        lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
+    if 'release' not in lowlevel['metadata']['tags']:
+        lowlevel['metadata']['tags']['release'] = ["[unknown]"]
+    if 'title' not in lowlevel['metadata']['tags']:
+        lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
-        summary['lowlevel'] = lowlevel
+    lowlevel['metadata']['audio_properties']['length_formatted'] = \
+        time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
 
-        try:
-            highlevel = load_high_level(mbid, offset)
-            summary['highlevel'] = highlevel
-        except db.exceptions.NoDataFoundException:
-            pass
+    summary['lowlevel'] = lowlevel
 
-        return summary
+    try:
+        highlevel = load_high_level(mbid, offset)
+        summary['highlevel'] = highlevel
+    except db.exceptions.NoDataFoundException:
+        pass
+
+    return summary

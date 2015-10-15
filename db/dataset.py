@@ -72,7 +72,7 @@ def create_from_dict(dictionary, author_id):
     """
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         if "description" not in dictionary:
             dictionary["description"] = None
 
@@ -100,7 +100,7 @@ def update(dataset_id, dictionary, author_id):
     # TODO(roman): Make author_id argument optional (keep old author if None).
     jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
 
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         if "description" not in dictionary:
             dictionary["description"] = None
 
@@ -195,5 +195,5 @@ def get_by_user_id(user_id, public_only=True):
 
 def delete(id):
     """Delete dataset with a specified ID."""
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         connection.execute("DELETE FROM dataset WHERE id = %s", (str(id),))

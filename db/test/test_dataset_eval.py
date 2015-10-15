@@ -1,5 +1,6 @@
 from db.testing import DatabaseTestCase
 from db import dataset, user, dataset_eval
+import db
 import json
 
 
@@ -35,15 +36,16 @@ class DatasetEvalTestCase(DatabaseTestCase):
             "public": True,
         }
         self.test_dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        self.conn = db.engine.connect()
 
     def test_create_job(self):
-        job_id = dataset_eval._create_job(self.test_dataset_id)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
         job = dataset_eval.get_job(job_id)
         self.assertIsNotNone(job)
         self.assertEqual(job["status"], dataset_eval.STATUS_PENDING)
 
     def test_get_job(self):
-        job_id = dataset_eval._create_job(self.test_dataset_id)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
         job = dataset_eval.get_job(job_id)
         self.assertIsNotNone(job)
         self.assertEqual(type(job), dict)
@@ -51,7 +53,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
         self.assertIsNone(dataset_eval.get_job("f47ac10b-58cc-4372-a567-0e02b2c3d479"))
 
     def test_set_job_result(self):
-        job_id = dataset_eval._create_job(self.test_dataset_id)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
 
         result = {
             u"accuracy": 1,
@@ -67,7 +69,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
         self.assertEqual(job["result"], result)
 
     def test_set_job_status(self):
-        job_id = dataset_eval._create_job(self.test_dataset_id)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
         job = dataset_eval.get_job(job_id)
         self.assertEqual(job["status"], dataset_eval.STATUS_PENDING)
 
@@ -79,10 +81,10 @@ class DatasetEvalTestCase(DatabaseTestCase):
         self.assertEqual(job["status"], dataset_eval.STATUS_FAILED)
 
     def test_get_next_pending_job(self):
-        job1_id = dataset_eval._create_job(self.test_dataset_id)
+        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
         job1 = dataset_eval.get_job(job1_id)
 
-        job2_id = dataset_eval._create_job(self.test_dataset_id)
+        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
         job2 = dataset_eval.get_job(job2_id)
 
         next_pending = dataset_eval.get_next_pending_job()

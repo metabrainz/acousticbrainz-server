@@ -21,15 +21,15 @@ def evaluate_dataset(dataset_id):
     Returns:
         ID of the newly created evaluation job.
     """
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         result = connection.execute(
             "SELECT count(*) FROM dataset_eval_jobs WHERE dataset_id = %s AND status IN %s",
             (dataset_id, (STATUS_PENDING, STATUS_RUNNING))
         )
         if result.fetchone()[0] > 0:
             raise JobExistsException
-    validate_dataset(db.dataset.get(dataset_id))
-    return _create_job(dataset_id)
+        validate_dataset(db.dataset.get(dataset_id))
+        return _create_job(connection, dataset_id)
 
 
 def validate_dataset(dataset):
@@ -104,7 +104,7 @@ def get_jobs_for_dataset(dataset_id):
 
 
 def set_job_result(job_id, result):
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         result = connection.execute(
             "UPDATE dataset_eval_jobs "
             "SET (result, updated) = (%s, current_timestamp) "
@@ -129,7 +129,7 @@ def set_job_status(job_id, status, status_msg=None):
                       STATUS_DONE,
                       STATUS_FAILED]:
         raise IncorrectJobStatusException
-    with db.engine.connect() as connection:
+    with db.engine.begin() as connection:
         connection.execute(
             "UPDATE dataset_eval_jobs "
             "SET (status, status_msg, updated) = (%s, %s, current_timestamp) "
@@ -138,14 +138,13 @@ def set_job_status(job_id, status, status_msg=None):
         )
 
 
-def _create_job(dataset_id):
-    with db.engine.connect() as connection:
-        result = connection.execute(
-            "INSERT INTO dataset_eval_jobs (id, dataset_id, status) "
-            "VALUES (uuid_generate_v4(), %s, %s) RETURNING id",
-            (dataset_id, STATUS_PENDING)
-        )
-        job_id = result.fetchone()[0]
+def _create_job(connection, dataset_id):
+    result = connection.execute(
+        "INSERT INTO dataset_eval_jobs (id, dataset_id, status) "
+        "VALUES (uuid_generate_v4(), %s, %s) RETURNING id",
+        (dataset_id, STATUS_PENDING)
+    )
+    job_id = result.fetchone()[0]
     return job_id
 
 

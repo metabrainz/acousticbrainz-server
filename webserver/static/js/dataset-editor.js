@@ -462,16 +462,18 @@ var RecordingAddForm = React.createClass({
         var mbid = this.refs.mbid.getDOMNode().value;
         var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mbid);
         var isNotDuplicate = this.props.recordings.indexOf(mbid) == -1;
-        this.setState({validInput: isValidUUID && isNotDuplicate});
+        this.setState({validInput: isValidUUID && isNotDuplicate,
+                       length: mbid.length});
         // TODO: Show informative error messages if input is invalid.
     },
     getInitialState: function () {
-        return {validInput: false};
+        return {validInput: false,
+                length: 0};
     },
     render: function () {
         return (
             <form className="recording-add clearfix form-inline form-group-sm" onSubmit={this.handleSubmit}>
-                <div className={this.state.validInput ? 'input-group' : 'input-group has-error'}>
+                <div className={this.state.validInput || this.state.length == 0 ? 'input-group' : 'input-group has-error'}>
                     <input type="text" className="form-control input-sm" placeholder="MusicBrainz ID"
                            ref="mbid" onChange={this.handleChange} />
                     <span className="input-group-btn">

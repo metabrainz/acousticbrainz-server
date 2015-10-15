@@ -7,7 +7,6 @@ import os
 import db
 import db.exceptions
 
-
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
 
@@ -27,6 +26,7 @@ SANITY_CHECK_KEYS = [
     ['tonal'],
 ]
 
+# TODO: Util methods should not be in the database package
 
 def _has_key(dictionary, key):
     """Checks if muti-level dictionary contains in item referenced by a
@@ -63,11 +63,11 @@ def sanity_check_data(data):
 
 def clean_metadata(data):
     """Check that tags are in our whitelist. If not, throw them away."""
-    clean_tags = copy.deepcopy(data["metadata"]["tags"])
+    cleaned_tags = copy.deepcopy(data["metadata"]["tags"])
     for tag in data["metadata"]["tags"].keys():
         if tag.lower() not in _whitelist_tags:
-            del clean_tags[tag]
-    data["metadata"]["tags"] = clean_tags
+            del cleaned_tags[tag]
+    data["metadata"]["tags"] = cleaned_tags
     return data
 
 
@@ -84,10 +84,10 @@ def submit_low_level_data(mbid, data):
 
     try:
         # If the user submitted a trackid key, rewrite to recording_id
-        if "musicbrainz_trackid" in data['metadata']['tags']:
-            val = data['metadata']['tags']["musicbrainz_trackid"]
-            del data['metadata']['tags']["musicbrainz_trackid"]
-            data['metadata']['tags']["musicbrainz_recordingid"] = val
+        if 'musicbrainz_trackid' in data['metadata']['tags']:
+            val = data['metadata']['tags']['musicbrainz_trackid']
+            del data['metadata']['tags']['musicbrainz_trackid']
+            data['metadata']['tags']['musicbrainz_recordingid'] = val
 
         if data['metadata']['audio_properties']['lossless']:
             data['metadata']['audio_properties']['lossless'] = True
@@ -105,7 +105,7 @@ def submit_low_level_data(mbid, data):
         )
 
     # Ensure the MBID form the URL matches the recording_id from the POST data
-    if data['metadata']['tags']["musicbrainz_recordingid"][0].lower() != mbid.lower():
+    if data['metadata']['tags']['musicbrainz_recordingid'][0].lower() != mbid.lower():
         raise db.exceptions.BadDataException(
             "The musicbrainz_trackid/musicbrainz_recordingid in "
             "the submitted data does not match the MBID that is "
@@ -113,74 +113,109 @@ def submit_low_level_data(mbid, data):
         )
 
     # The data looks good, lets see about saving it
+    write_low_level(mbid, data)
+
+
+def write_low_level(mbid, data):
+
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     build_sha1 = data['metadata']['version']['essentia_build_sha']
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
-
-    with db.create_cursor() as cursor:
+    with db.engine.begin() as connection:
         # Checking to see if we already have this data
-        cursor.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
+        result = connection.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
 
         # if we don't have this data already, add it
-        sha_values = [v[0] for v in cursor.fetchall()]
+        sha_values = [v[0] for v in result.fetchall()]
 
         if data_sha256 not in sha_values:
             logging.info("Saved %s" % mbid)
-            cursor.execute(
+            connection.execute(
                 "INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
                 "VALUES (%s, %s, %s, %s, %s)",
                 (mbid, build_sha1, data_sha256, is_lossless_submit, data_json)
             )
-            db.commit()
+        else:
+            logging.info("Already have %s" % data_sha256)
 
-        logging.info("Already have %s" % data_sha256)
+def write_high_level(mbid, ll_id, data, build_sha1):
+    norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    sha = sha256(norm_data).hexdigest()
+
+    with db.engine.begin() as connection:
+        result = connection.execute("""INSERT INTO highlevel_json (data, data_sha256)
+                                            VALUES (%s, %s)
+                                         RETURNING id""", (norm_data, sha))
+        id = result.fetchone()[0]
+        connection.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
+                                   VALUES (%s, %s, %s, %s, now())""",
+                           (ll_id, mbid, build_sha1, id))
 
 
 def load_low_level(mbid, offset=0):
-    """Load low-level data for a given MBID."""
-    with db.create_cursor() as cursor:
-        cursor.execute(
-            "SELECT data::text "
-            "FROM lowlevel "
-            "WHERE mbid = %s "
-            "ORDER BY submitted "
-            "OFFSET %s",
+    """Load lowlevel data with the given mbid as a dictionary.
+    If no offset is given, return the first. If an offset is
+    given (from 0), return the relevent item.
+
+    Raises db.exceptions.NoDataFoundException if the mbid doesn't
+    exist or if the offset is too high."""
+    with db.engine.connect() as connection:
+        result = connection.execute(
+            """SELECT data
+                 FROM lowlevel
+                WHERE mbid = %s
+             ORDER BY submitted
+               OFFSET %s""",
             (str(mbid), offset)
         )
-        if not cursor.rowcount:
+        if not result.rowcount:
             raise db.exceptions.NoDataFoundException
 
-        row = cursor.fetchone()
+        row = result.fetchone()
         return row[0]
 
 
 def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
-    with db.create_cursor() as cursor:
-        cursor.execute(
-            "SELECT hlj.data::text "
-            "FROM highlevel hl "
-            "JOIN highlevel_json hlj "
-            "ON hl.data = hlj.id "
-            "WHERE mbid = %s "
-            "ORDER BY submitted "
-            "OFFSET %s",
+    with db.engine.connect() as connection:
+        result = connection.execute(
+            """SELECT hlj.data
+                 FROM highlevel hl
+                 JOIN highlevel_json hlj
+                   ON hl.data = hlj.id
+                 JOIN lowlevel ll
+                   ON ll.id = hl.id
+                WHERE ll.mbid = %s
+             ORDER BY ll.submitted
+               OFFSET %s""",
             (str(mbid), offset)
         )
-        if not cursor.rowcount:
+        if not result.rowcount:
             raise db.exceptions.NoDataFoundException
-        return cursor.fetchone()[0]
+        return result.fetchone()[0]
 
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
-    with db.create_cursor() as cursor:
-        cursor.execute(
+    with db.engine.connect() as connection:
+        result = connection.execute(
             "SELECT count(*) FROM lowlevel WHERE mbid = %s",
             (str(mbid),)
         )
-        return cursor.fetchone()[0]
+        return result.fetchone()[0]
+
+def get_unprocessed_highlevel_documents():
+    """Fetch up to 100 low-level documents which have no associated high level data."""
+    with db.engine.connect() as connection:
+        result = connection.execute("""SELECT ll.mbid, ll.data::text, ll.id
+                         FROM lowlevel AS ll
+                    LEFT JOIN highlevel AS hl
+                           ON ll.id = hl.id
+                        WHERE hl.mbid IS NULL
+                        LIMIT 100""")
+        docs = result.fetchall()
+        return docs
 
 
 def get_summary_data(mbid, offset=0):
@@ -196,40 +231,25 @@ def get_summary_data(mbid, offset=0):
     """
     summary = {}
     mbid = str(mbid)
-    with db.create_cursor() as cursor:
-        cursor.execute(
-            "SELECT id, data "
-            "FROM lowlevel "
-            "WHERE mbid = %s "
-            "ORDER BY submitted "
-            "OFFSET %s",
-            (mbid, offset)
-        )
-        if not cursor.rowcount:
-            raise db.exceptions.NoDataFoundException("Can't find low-level data for this recording.")
 
-        ll_row_id, lowlevel = cursor.fetchone()
-        if 'artist' not in lowlevel['metadata']['tags']:
-            lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
-        if 'release' not in lowlevel['metadata']['tags']:
-            lowlevel['metadata']['tags']['release'] = ["[unknown]"]
-        if 'title' not in lowlevel['metadata']['tags']:
-            lowlevel['metadata']['tags']['title'] = ["[unknown]"]
+    lowlevel = load_low_level(mbid, offset)
 
-        lowlevel['metadata']['audio_properties']['length_formatted'] = \
-            time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
+    if 'artist' not in lowlevel['metadata']['tags']:
+        lowlevel['metadata']['tags']['artist'] = ["[unknown]"]
+    if 'release' not in lowlevel['metadata']['tags']:
+        lowlevel['metadata']['tags']['release'] = ["[unknown]"]
+    if 'title' not in lowlevel['metadata']['tags']:
+        lowlevel['metadata']['tags']['title'] = ["[unknown]"]
 
-        summary['lowlevel'] = lowlevel
+    lowlevel['metadata']['audio_properties']['length_formatted'] = \
+        time.strftime("%M:%S", time.gmtime(lowlevel['metadata']['audio_properties']['length']))
 
-        cursor.execute(
-            "SELECT highlevel_json.data "
-            "FROM highlevel, highlevel_json "
-            "WHERE highlevel.id = %s "
-            "      AND highlevel.data = highlevel_json.id "
-            "      AND highlevel.mbid = %s",
-            (ll_row_id, mbid)
-        )
-        if cursor.rowcount:
-            summary['highlevel'] = cursor.fetchone()[0]
+    summary['lowlevel'] = lowlevel
 
-        return summary
+    try:
+        highlevel = load_high_level(mbid, offset)
+        summary['highlevel'] = highlevel
+    except db.exceptions.NoDataFoundException:
+        pass
+
+    return summary

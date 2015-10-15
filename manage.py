@@ -20,7 +20,6 @@ cli = click.Group()
               help="Turns debugging mode on or off. If specified, overrides "
                    "'DEBUG' value in the config file.")
 def runserver(host, port, debug):
-    db.init_db_connection(config.PG_CONNECT)
     create_app().run(host=host, port=port, debug=debug)
 
 
@@ -65,7 +64,7 @@ def init_db(archive, force):
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
-    db.init_db_connection(config.PG_CONNECT)
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
 
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
@@ -95,7 +94,7 @@ def init_test_db(force=False):
     """Same as `init_db` command, but creates a database that will be used to
     run tests and doesn't import data (no need to do that).
 
-    `PG_CONNECT_TEST` variable must be defined in the config file.
+    `SQLALCHEMY_TEST_URI` must be defined in the config file.
     """
     if force:
         exit_code = _run_psql('drop_test_db.sql')
@@ -111,7 +110,7 @@ def init_test_db(force=False):
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
-    db.init_db_connection(config.PG_CONNECT_TEST)
+    db.init_db_engine(config.SQLALCHEMY_TEST_URI)
 
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))

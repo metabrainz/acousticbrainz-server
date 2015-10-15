@@ -29,14 +29,13 @@ HISTORY_STORAGE_DIR = os.path.join(config.FILE_STORAGE_DIR, "history")
 def main():
     logging.info("Starting dataset evaluator...")
     while True:
-        db.init_db_connection(config.PG_CONNECT)
+        db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
         pending_job = db.dataset_eval.get_next_pending_job()
         if pending_job:
             logging.info("Processing job %s..." % pending_job["id"])
             evaluate_dataset(pending_job)
         else:
             logging.info("No pending datasets. Sleeping %s seconds." % SLEEP_DURATION)
-            db.close_connection()
             time.sleep(SLEEP_DURATION)
 
 

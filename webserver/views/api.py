@@ -51,14 +51,14 @@ def get_low_level(mbid):
     """
     mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
     try:
-        return Response(db.data.load_low_level(mbid, offset), content_type='application/json')
+        return jsonify(db.data.load_low_level(mbid, offset))
     except NoDataFoundException:
         raise webserver.exceptions.APINotFound("Not found")
 
 
 @api_bp.route("/<string:mbid>/high-level", methods=["GET"])
 @crossdomain()
-def get_high_leve(mbid):
+def get_high_level(mbid):
     """Endpoint for fetching high-level data.
 
     If there is more than one document with the same mbid, you can specify
@@ -67,7 +67,7 @@ def get_high_leve(mbid):
     """
     mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
     try:
-        return Response(db.data.load_high_level(mbid, offset), content_type='application/json')
+        return jsonify(db.data.load_high_level(mbid, offset))
     except NoDataFoundException:
         raise webserver.exceptions.APINotFound("Not found")
 

@@ -64,7 +64,7 @@ def init_db(archive, force):
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI_94)
 
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))

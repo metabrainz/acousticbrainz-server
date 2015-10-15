@@ -5,23 +5,42 @@ CREATE TABLE lowlevel (
   mbid        UUID NOT NULL,
   build_sha1  TEXT NOT NULL,
   lossless    BOOLEAN                  DEFAULT 'n',
-  data        JSON NOT NULL,
-  submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  data_sha256 TEXT NOT NULL
+  submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE lowlevel_json (
+  id          INTEGER, -- FK to lowlevel.id
+  data        JSONB    NOT NULL,
+  data_sha256 CHAR(64) NOT NULL
 );
 
 CREATE TABLE highlevel (
   id         INTEGER, -- FK to lowlevel.id
   mbid       UUID    NOT NULL,
   build_sha1 TEXT    NOT NULL,
-  data       INTEGER NOT NULL, -- FK to highlevel_json.data
   submitted  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE highlevel_json (
-  id          SERIAL,
-  data        JSON     NOT NULL,
+CREATE TABLE highlevel_meta (
+  id          INTEGER, -- FK to highlevel.id
+  data        JSONB    NOT NULL,
   data_sha256 CHAR(64) NOT NULL
+);
+
+CREATE TABLE highlevel_model (
+  id          SERIAL,
+  highlevel   INTEGER, -- FK to highlevel.id
+  data        JSONB    NOT NULL,
+  data_sha256 CHAR(64) NOT NULL,
+  model       INTEGER -- FK to model.id
+);
+
+CREATE TABLE model (
+  id          SERIAL,
+  model       TEXT,
+  version     CHAR(128),
+  date        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  include     BOOLEAN
 );
 
 CREATE TABLE statistics (
@@ -70,7 +89,7 @@ CREATE TABLE dataset_eval_jobs (
   status_msg VARCHAR,
   created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  result     JSON
+  result     JSONB
 );
 
 COMMIT;

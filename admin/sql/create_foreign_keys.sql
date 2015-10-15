@@ -1,14 +1,30 @@
 BEGIN;
 
+ALTER TABLE lowlevel_json
+  ADD CONSTRAINT lowlevel_json_fk_lowlevel
+  FOREIGN KEY (id)
+  REFERENCES lowlevel (id);
+
 ALTER TABLE highlevel
   ADD CONSTRAINT highlevel_fk_lowlevel
   FOREIGN KEY (id)
   REFERENCES lowlevel (id);
 
-ALTER TABLE highlevel
-  ADD CONSTRAINT highlevel_fk_highlevel_json
-  FOREIGN KEY (data)
-  REFERENCES highlevel_json (id);
+ALTER TABLE highlevel_meta
+  ADD CONSTRAINT highlevel_meta_fk_highlevel
+  FOREIGN KEY (id)
+  REFERENCES highlevel (id);
+
+ALTER TABLE highlevel_model
+  ADD CONSTRAINT highlevel_model_fk_highlevel
+  FOREIGN KEY (highlevel)
+  REFERENCES highlevel (id);
+
+ALTER TABLE highlevel_model
+  ADD CONSTRAINT highlevel_model_fk_model
+  FOREIGN KEY (model)
+  REFERENCES model (id);
+
 
 ALTER TABLE dataset
   ADD CONSTRAINT dataset_fk_user

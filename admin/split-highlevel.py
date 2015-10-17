@@ -36,18 +36,39 @@ def rewrite_lowlevel():
         id_list = tuple([ i[0] for i in id_list ])
 
         conn2 = db.engine.connect()
-        res2 = conn2.execute(text(
-            """SELECT id, mbid, submitted, build_sha1, lossless, data_sha256, data::text
-               FROM lowlevel WHERE id IN :ids ORDER BY id"""),
-            {"ids": id_list})
         count = 0
+
+        q = text(
+            """SELECT ll.id AS id
+                    , ll.mbid AS mbid
+                    , ll.submitted AS ll_submitted
+                    , ll.build_sha1 AS ll_build_sha1
+                    , ll.lossless AS ll_lossless
+                    , ll.data_sha256 AS ll_data_sha256
+                    , ll.data::text AS ll_data
+
+                    , hl.build_sha1 AS hl_build_sha1
+                    , hl.submitted AS hl_submitted
+                    , hlj.data AS hlj_data
+                 FROM lowlevel ll
+                 JOIN highlevel hl
+                   ON ll.id = hl.id
+                 JOIN highlevel_json hlj
+                   ON hl.data = hlj.id
+                WHERE ll.id IN :ids
+             ORDER BY ll.id
+            """)
+
+        res2 = conn2.execute(q, {"ids": id_list})
         while True:
             row = res2.fetchone()
             if not row:
                 break
             row = dict(row)
             print "converting", row["id"]
-            db.data_migrate.migrate_low_level(row)
+            with db.engine94.begin() as connection:
+                db.data_migrate.migrate_low_level(connection, row)
+                db.data_migrate.migrate_high_level(connection, row)
 
 
 if __name__ == "__main__":

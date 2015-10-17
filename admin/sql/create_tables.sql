@@ -36,11 +36,12 @@ CREATE TABLE highlevel_model (
 );
 
 CREATE TABLE model (
-  id          SERIAL,
-  model       TEXT,
-  version     CHAR(128),
-  date        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  include     BOOLEAN
+  id            SERIAL,
+  model         TEXT NOT NULL,
+  model_version TEXT NOT NULL,
+  build_sha1    TEXT NOT NULL,
+  date          TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  include       BOOLEAN
 );
 
 CREATE TABLE statistics (

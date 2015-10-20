@@ -93,6 +93,11 @@ def migrate_high_level(connection, hl_row):
     connection.execute(hl_query, {"id": highlevel_id, "mbid": mbid,
         "build_sha1": build_sha1, "submitted": submitted})
 
+    # If the hl runner failed to run, we put {}
+    # in the database
+    if not hl_json:
+        return
+
     json_meta = hl_json["metadata"]
     json_high = hl_json["highlevel"]
 

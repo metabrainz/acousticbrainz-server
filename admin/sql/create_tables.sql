@@ -11,7 +11,8 @@ CREATE TABLE lowlevel (
 CREATE TABLE lowlevel_json (
   id          INTEGER, -- FK to lowlevel.id
   data        JSONB    NOT NULL,
-  data_sha256 CHAR(64) NOT NULL
+  data_sha256 CHAR(64) NOT NULL,
+  version     INTEGER  NOT NULL-- FK to version.id
 );
 
 CREATE TABLE highlevel (
@@ -32,16 +33,22 @@ CREATE TABLE highlevel_model (
   highlevel   INTEGER, -- FK to highlevel.id
   data        JSONB    NOT NULL,
   data_sha256 CHAR(64) NOT NULL,
-  model       INTEGER -- FK to model.id
+  model       INTEGER  NOT NULL, -- FK to model.id
+  version     INTEGER  NOT NULL-- FK to version.id
+);
+
+CREATE TABLE version (
+  id          SERIAL,
+  data        JSONB    NOT NULL,
+  data_sha256 CHAR(64) NOT NULL
 );
 
 CREATE TABLE model (
   id            SERIAL,
-  model         TEXT NOT NULL,
-  model_version TEXT NOT NULL,
-  build_sha1    TEXT NOT NULL,
+  model         TEXT         NOT NULL,
+  model_version TEXT         NOT NULL,
   date          TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  include       BOOLEAN
+  status        model_status NOT NULL    DEFAULT 'hidden'
 );
 
 CREATE TABLE statistics (

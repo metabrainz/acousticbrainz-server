@@ -5,6 +5,7 @@
 # migrate to postgres9.4 jsonb as well!
 
 from sqlalchemy import text
+import time
 
 import os
 import sys
@@ -18,25 +19,23 @@ import db
 import db.data
 import db.data_migrate
 
-DUMP_CHUNK_SIZE = 1000
-MIGRATE_STATUS = 0
+DUMP_CHUNK_SIZE = 2
 
-def write_migrate_status():
+def write_migrate_status(thestatus):
     with open("migrate-status", "w") as status:
-        status.write("%d" % (MIGRATE_STATUS, ))
+        status.write("%d" % (thestatus,))
 
 def read_migrate_status():
-    global MIGRATE_STATUS
     if os.path.exists("migrate-status"):
-        status = open("migrate-status").read()
-        MIGRATE_STATUS = int(status)
-        status.close()
+        with open("migrate-status") as fp:
+            status = fp.read()
+            thestatus = int(status)
     else:
-        MIGRATE_STATUS = 0
+        thestatus = 0
+    return thestatus
 
-def migrate_rows(oldengine, newengine, rowids):
+def migrate_rows(oldengine, newconn, id_list):
     conn2 = oldengine.connect()
-    count = 0
 
     q = text(
         """SELECT ll.id AS id
@@ -66,14 +65,13 @@ def migrate_rows(oldengine, newengine, rowids):
             break
         row = dict(row)
         print "converting", row["id"]
-        with db.engine.begin() as connection:
-            db.data_migrate.migrate_low_level(connection, row)
-            db.data_migrate.migrate_high_level(connection, row)
+        db.data_migrate.migrate_low_level(newconn, row)
+        db.data_migrate.migrate_high_level(newconn, row)
 
-    MIGRATE_STATUS = max(id_list)
-    write_migrate_status()
+    status = max(id_list)
+    write_migrate_status(status)
     # Update cursor
-    db.engine.execute("""SELECT setval('lowlevel_id_seq', %s)""", (MIGRATE_STATUS, ))
+    db.engine.execute("""SELECT setval('lowlevel_id_seq', %s)""", (status, ))
 
 
 def rewrite_lowlevel():
@@ -86,6 +84,7 @@ def rewrite_lowlevel():
     res1 = connection.execute(
         """SELECT id FROM lowlevel ll WHERE id > %s ORDER BY id""", (status, ))
     total = 0
+    print "rowcount", res1.rowcount
     while True:
         id_list = res1.fetchmany(size = DUMP_CHUNK_SIZE)
         if not id_list:
@@ -94,19 +93,25 @@ def rewrite_lowlevel():
         id_list = tuple([ i[0] for i in id_list ])
 
         # make new transaction
+        newconn = db.engine.connect()
+        newtrans = newconn.begin()
         try:
-            migrate_rows(oldengine, db.engine, id_list)
-            # commit
+            migrate_rows(oldengine, newconn, id_list)
+            newtrans.commit()
         except: # Database error
-            # rollback
+            newtrans.rollback()
+            raise
             for i in id_list:
-                # new transaction
+                newtrans = newconn.begin()
                 try:
                     migrate_rows(oldengine, dbengine, (i, ))
-                    # commit
+                    newtrans.commit()
                 except: # Database error
+                    newtrans.rollback()
                     # rollback, ignore just this one
                     pass
+        print "done", DUMP_CHUNK_SIZE, "sleeping"
+        #time.sleep(5)
 
 
 

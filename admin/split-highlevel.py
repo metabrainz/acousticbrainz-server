@@ -5,7 +5,9 @@
 # migrate to postgres9.4 jsonb as well!
 
 from sqlalchemy import text
+import sqlalchemy.exc
 import time
+import logging
 
 import os
 import sys
@@ -19,7 +21,10 @@ import db
 import db.data
 import db.data_migrate
 
-DUMP_CHUNK_SIZE = 2
+fmt = '%(asctime)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=fmt)
+
+DUMP_CHUNK_SIZE = 1000
 
 def write_migrate_status(thestatus):
     with open("migrate-status", "w") as status:
@@ -64,7 +69,6 @@ def migrate_rows(oldengine, newconn, id_list):
         if not row:
             break
         row = dict(row)
-        print "converting", row["id"]
         db.data_migrate.migrate_low_level(newconn, row)
         db.data_migrate.migrate_high_level(newconn, row)
 
@@ -84,7 +88,6 @@ def rewrite_lowlevel():
     res1 = connection.execute(
         """SELECT id FROM lowlevel ll WHERE id > %s ORDER BY id""", (status, ))
     total = 0
-    print "rowcount", res1.rowcount
     while True:
         id_list = res1.fetchmany(size = DUMP_CHUNK_SIZE)
         if not id_list:
@@ -98,21 +101,22 @@ def rewrite_lowlevel():
         try:
             migrate_rows(oldengine, newconn, id_list)
             newtrans.commit()
-        except: # Database error
+        except sqlalchemy.exc.DataError: # Database error
             newtrans.rollback()
-            raise
+            # If there was an error, split the rows into one transaction per item
+            # and find the error, and just ignore it
+            # print "*** Error inserting rows, doing them one at a time"
             for i in id_list:
                 newtrans = newconn.begin()
                 try:
-                    migrate_rows(oldengine, dbengine, (i, ))
+                    migrate_rows(oldengine, newconn, (i, ))
                     newtrans.commit()
-                except: # Database error
+                except sqlalchemy.exc.DataError: # Database error
+                    print "  *** Exception processing row %s, skipping" % i
                     newtrans.rollback()
                     # rollback, ignore just this one
                     pass
-        print "done", DUMP_CHUNK_SIZE, "sleeping"
-        #time.sleep(5)
-
+        logging.info("processed %s, now at %s" % (DUMP_CHUNK_SIZE, max(id_list)))
 
 
 if __name__ == "__main__":

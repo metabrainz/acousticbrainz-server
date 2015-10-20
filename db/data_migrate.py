@@ -30,11 +30,6 @@ def migrate_low_level(connection, old_ll_row):
      - Some lowlevel rows may have bad data in them. We believe there
        are <20 of these items, so we're just going to delete them
     """
-    # TODO: Update id sequence at the end
-    # TODO: failure case for writing a bad row
-
-    print old_ll_row.keys()
-
     id = old_ll_row["id"]
     mbid = old_ll_row["mbid"]
     build_sha1 = old_ll_row["ll_build_sha1"]

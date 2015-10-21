@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Setting up the application
 if [ $# -eq 1 ]
   then

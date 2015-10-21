@@ -6,7 +6,7 @@ SECRET_KEY = "CHANGE_ME"
 # DATABASES
 
 # Primary database
-SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@/acousticbrainz"
+SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@/acousticbrainz94"
 
 # This connection string will be used for testing
 SQLALCHEMY_TEST_URI = "postgresql://ab_test@/ab_test"

@@ -1,7 +1,13 @@
 #!/bin/sh
 
 # Setting up PostgreSQL
-PG_VERSION=9.3
+
+echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" >> /etc/apt/sources.list.d/pgdg.list
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+  sudo apt-key add -
+sudo apt-get update
+
+PG_VERSION=9.4
 
 apt-get -y install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION" "postgresql-server-dev-$PG_VERSION"
 PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"

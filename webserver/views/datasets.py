@@ -222,8 +222,8 @@ def get_dataset(dataset_id):
     """
     ds = db.dataset.get(dataset_id)
     if ds:
-        if ds["public"] or (current_user.is_authenticated()
-                            and ds["author"] == current_user.id):
+        if ds["public"] or (current_user.is_authenticated and
+                            ds["author"] == current_user.id):
             return ds
     raise NotFound("Can't find this dataset.")
 

@@ -21,6 +21,7 @@ class User(UserMixin):
             musicbrainz_id=user['musicbrainz_id'],
         )
 
+
 @login_manager.user_loader
 def load_user(user_id):
     user = db.user.get(user_id)
@@ -33,7 +34,7 @@ def load_user(user_id):
 def login_forbidden(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if current_user.is_anonymous() is False:
+        if current_user.is_anonymous is False:
             return redirect(url_for('index.index'))
         return f(*args, **kwargs)
 

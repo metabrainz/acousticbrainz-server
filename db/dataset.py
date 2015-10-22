@@ -134,7 +134,7 @@ def get(id):
     """
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, name, description, author, created, public "
+            "SELECT id::text, name, description, author, created, public "
             "FROM dataset "
             "WHERE id = %s",
             (str(id),)
@@ -150,7 +150,7 @@ def get(id):
 def _get_classes(dataset_id):
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, name, description "
+            "SELECT id::text, name, description "
             "FROM dataset_class "
             "WHERE dataset = %s",
             (dataset_id,)
@@ -166,7 +166,7 @@ def _get_classes(dataset_id):
 
 def _get_recordings_in_class(class_id):
     with db.engine.connect() as connection:
-        result = connection.execute("SELECT mbid FROM dataset_class_member WHERE class = %s",
+        result = connection.execute("SELECT mbid::text FROM dataset_class_member WHERE class = %s",
                        (class_id,))
         recordings = []
         for row in result:

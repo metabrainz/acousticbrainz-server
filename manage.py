@@ -60,7 +60,7 @@ def init_db(archive, force):
         raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
 
     print('Creating database extensions...')
-    exit_code = _run_psql('create_extensions.sql')
+    exit_code = _run_psql('create_extensions.sql', 'acousticbrainz94')
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 

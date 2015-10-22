@@ -13,11 +13,13 @@ def get_last_submitted_recordings():
     last_submitted_data = db.cache.get('last-submitted-data')
     if not last_submitted_data:
         with db.engine.connect() as connection:
-            result = connection.execute("""SELECT mbid,
-                                     data->'metadata'->'tags'->'artist'->>0,
-                                     data->'metadata'->'tags'->'title'->>0
-                                FROM lowlevel
-                            ORDER BY id DESC
+            result = connection.execute("""SELECT ll.mbid,
+                                     llj.data->'metadata'->'tags'->'artist'->>0,
+                                     llj.data->'metadata'->'tags'->'title'->>0
+                                FROM lowlevel ll
+                                JOIN lowlevel_json llj
+                                  ON ll.id = llj.id
+                            ORDER BY ll.id DESC
                                LIMIT 5
                               OFFSET 10""")
             last_submitted_data = result.fetchall()

@@ -74,6 +74,7 @@ def migrate_rows(oldengine, newconn, id_list):
 
     status = max(id_list)
     write_migrate_status(status)
+    conn2.close()
     # Update cursor
     db.engine.execute("""SELECT setval('lowlevel_id_seq', %s)""", (status, ))
 
@@ -88,6 +89,7 @@ def rewrite_lowlevel():
     res1 = connection.execute(
         """SELECT id FROM lowlevel ll WHERE id > %s ORDER BY id""", (status, ))
     total = 0
+    newconn = db.engine.connect()
     while True:
         id_list = res1.fetchmany(size = DUMP_CHUNK_SIZE)
         if not id_list:
@@ -96,7 +98,6 @@ def rewrite_lowlevel():
         id_list = tuple([ i[0] for i in id_list ])
 
         # make new transaction
-        newconn = db.engine.connect()
         newtrans = newconn.begin()
         try:
             migrate_rows(oldengine, newconn, id_list)

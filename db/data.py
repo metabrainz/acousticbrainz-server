@@ -166,12 +166,24 @@ def write_low_level(mbid, data):
         else:
             logging.info("Already have %s" % data_sha256)
 
+def add_model(model_name, model_version):
+    with db.engine.begin() as connection:
+        query = text(
+            """INSERT INTO model (model, model_version)
+                    VALUES (:model_name, :model_version)
+                 RETURNING id"""
+        )
+        result = connection.execute(query,
+            {"model_name": model_name,
+             "model_version": model_version})
+        return result.fetchone()[0]
 
-def _get_model_id(name):
+
+def _get_model_id(model_name):
     with db.engine.begin() as connection:
         query = text(
             """SELECT id FROM model WHERE model = :model_name""")
-        result = connection.execute(query, {"model_name": name})
+        result = connection.execute(query, {"model_name": model_name})
         row = result.fetchone()
         if row:
             return row[0]
@@ -189,8 +201,9 @@ def write_high_level(mbid, ll_id, data, build_sha1):
                     VALUES (:id, :mbid, :build_sha1)""")
         connection.execute(hl_query, {"id": ll_id, "mbid": mbid, "build_sha1": build_sha1})
 
-        # If the hl runner failed to run, we put {}
-        # in the database
+        # If the hl runner failed to run, its output is {}
+        # Just add a row to `highlevel` so we know it has
+        # been processed
         if not data:
             return
 
@@ -252,21 +265,40 @@ def load_low_level(mbid, offset=0):
 def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
     with db.engine.connect() as connection:
+        # Metadata
         result = connection.execute(
-            """SELECT hlj.data
-                 FROM highlevel hl
-                 JOIN highlevel_json hlj
-                   ON hl.data = hlj.id
+            """SELECT hlm.id
+                    , hlm.data
+                 FROM highlevel_meta hlm
                  JOIN lowlevel ll
-                   ON ll.id = hl.id
+                   ON ll.id = hlm.id
                 WHERE ll.mbid = %s
              ORDER BY ll.submitted
                OFFSET %s""",
             (str(mbid), offset)
         )
-        if not result.rowcount:
+        metarow = result.fetchone()
+        if metarow is None:
             raise db.exceptions.NoDataFoundException
-        return result.fetchone()[0]
+
+        hlid = metarow[0]
+        metadata = metarow[1]
+
+        # model data
+        query = text(
+            """select m.model
+                    , hlmo.data
+                 FROM highlevel_model hlmo
+                 JOIN model m
+                   ON m.id = hlmo.model
+                WHERE hlmo.highlevel = :hlid
+            """)
+        result = connection.execute(query, {"hlid": hlid})
+        highlevel = {}
+        for row in result.fetchall():
+            highlevel[row[0]] = row[1]
+
+        return {"metadata": metadata, "highlevel": highlevel}
 
 
 def count_lowlevel(mbid):

@@ -91,13 +91,15 @@ CREATE TABLE dataset_class_member (
 );
 
 CREATE TABLE dataset_eval_jobs (
-  id         UUID,
-  dataset_id UUID                     NOT NULL,
-  status     eval_job_status          NOT NULL DEFAULT 'pending',
-  status_msg VARCHAR,
-  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  result     JSONB
+  id          UUID,
+  dataset_id  UUID                     NOT NULL,
+  status      eval_job_status          NOT NULL DEFAULT 'pending',
+  status_msg  VARCHAR,
+  filter_type eval_filter_type,
+  normalize   BOOLEAN                  NOT NULL,
+  created     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  result      JSONB
 );
 
 COMMIT;

@@ -86,7 +86,7 @@ def validate_dataset(dataset):
 def get_next_pending_job():
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, filter_type, normalize, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE status = %s "
             "ORDER BY created ASC "
@@ -100,7 +100,7 @@ def get_next_pending_job():
 def get_job(job_id):
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, filter_type, normalize, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE id = %s",
             (job_id,)
@@ -121,7 +121,7 @@ def get_jobs_for_dataset(dataset_id):
     """
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, filter_type, normalize, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE dataset_id = %s "
             "ORDER BY created ASC",

@@ -1,10 +1,9 @@
 from __future__ import absolute_import
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, jsonify
 from db.data import submit_low_level_data, count_lowlevel
 import db.data
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
-from werkzeug.exceptions import BadRequest, NotFound
 import webserver.exceptions
 import json
 import uuid

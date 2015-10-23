@@ -118,8 +118,6 @@ def migrate_high_level(connection, hl_row):
         # than 50 million sql queries to get 18 known values
         model_id = _get_model_id(name)
 
-        version_id = insert_version(connection, hl_version)
-
         item_q = text(
             """INSERT INTO highlevel_model (highlevel, data, data_sha256, model, version)
                     VALUES (:highlevel, :data, :data_sha256, :model, :version)""")

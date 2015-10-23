@@ -105,7 +105,7 @@ def get_jobs_for_dataset(dataset_id):
 
 def set_job_result(job_id, result):
     with db.engine.begin() as connection:
-        result = connection.execute(
+        connection.execute(
             "UPDATE dataset_eval_jobs "
             "SET (result, updated) = (%s, current_timestamp) "
             "WHERE id = %s",

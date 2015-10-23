@@ -10,26 +10,53 @@ STATUS_RUNNING = "running"
 STATUS_DONE = "done"
 STATUS_FAILED = "failed"
 
+# Filter types are defined in `eval_filter_type` type. See schema definition.
+FILTER_ARTIST = "artist"
 
-def evaluate_dataset(dataset_id):
+
+def evaluate_dataset(dataset_id, normalize, filter_type=None):
     """Add dataset into evaluation queue.
 
     Args:
         dataset_id: ID of the dataset that needs to be added into the list of
             jobs.
+        normalize: Dataset will be "randomly" normalized if set to True.
+            Normalization is reducing each class to have the same number of
+            recordings.
+        filter_type: Optional filtering that will be applied to the dataset.
+            See FILTER_* variables in this module for a list of existing
+            filters.
 
     Returns:
         ID of the newly created evaluation job.
     """
     with db.engine.begin() as connection:
-        result = connection.execute(
-            "SELECT count(*) FROM dataset_eval_jobs WHERE dataset_id = %s AND status IN %s",
-            (dataset_id, (STATUS_PENDING, STATUS_RUNNING))
-        )
-        if result.fetchone()[0] > 0:
+        if _job_exists(connection, dataset_id):
             raise JobExistsException
         validate_dataset(db.dataset.get(dataset_id))
-        return _create_job(connection, dataset_id)
+        return _create_job(connection, dataset_id, normalize, filter_type)
+
+
+def job_exists(dataset_id):
+    """Checks if there's already a pending or running job for this dataset in a
+    queue.
+
+    Args:
+        dataset_id: ID of the dataset which needs to be checked.
+
+    Returns:
+        True if there's a pending or running job, False otherwise.
+    """
+    with db.engine.begin() as connection:
+        return _job_exists(connection, dataset_id)
+
+
+def _job_exists(connection, dataset_id):
+    result = connection.execute(
+        "SELECT count(*) FROM dataset_eval_jobs WHERE dataset_id = %s AND status IN %s",
+        (dataset_id, (STATUS_PENDING, STATUS_RUNNING))
+    )
+    return result.fetchone()[0] > 0
 
 
 def validate_dataset(dataset):
@@ -138,11 +165,12 @@ def set_job_status(job_id, status, status_msg=None):
         )
 
 
-def _create_job(connection, dataset_id):
+def _create_job(connection, dataset_id, normalize, filter_type=None):
     result = connection.execute(
-        "INSERT INTO dataset_eval_jobs (id, dataset_id, status) "
-        "VALUES (uuid_generate_v4(), %s, %s) RETURNING id",
-        (dataset_id, STATUS_PENDING)
+        "INSERT INTO dataset_eval_jobs (id, dataset_id, status, normalize, filter_type) "
+        "VALUES (uuid_generate_v4(), %s, %s, %s, %s) "
+        "RETURNING id",
+        (dataset_id, STATUS_PENDING, normalize, filter_type)
     )
     job_id = result.fetchone()[0]
     return job_id

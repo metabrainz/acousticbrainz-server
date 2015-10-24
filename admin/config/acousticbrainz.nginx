@@ -3,6 +3,7 @@ server {
      server_name acousticbrainz.org;
      access_log  /var/log/nginx/acousticbrainz-combined.log combined;
      error_log   /var/log/nginx/acousticbrainz-error.log notice;
+     client_max_body_size 100M;
 
      location /static {
           root /home/acousticbrainz/acousticbrainz-server/webserver;

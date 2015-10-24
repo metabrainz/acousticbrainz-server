@@ -16,6 +16,7 @@ import db.cache
 import config
 
 db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+db.cache.init(config.MEMCACHED_SERVERS)
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -26,6 +27,9 @@ def split_groundtruth(dataset):
     # the artists of each recording and make a training
     # set with only 1 recording of each artist and
     # a testing set with everything else
+
+    # argument: a dataset from db.dataset.get
+    # returns 2 dicts, trainset, testset of {recording: class}
     datadict = dataset_to_dict(dataset)
     
     recordingtoartists = {}
@@ -50,7 +54,20 @@ def split_groundtruth(dataset):
     trainset = {}
     testset = {}
     for r in random.shuffle(recordings):
-        pass
+        cls = datadict[r]
+        a = recordingtoartist[r]
+        if a in artistinclass[cls]:
+            testset[r] = cls
+        else:
+   	    trainset[r] = cls
+	    artistinclass[cls].add(a)
+
+    #TODO If the test set doesn't have enough samples, take from
+    # test (how many? 20%?)
+    # TODO: if requested, chop the size of the classes to be the same
+    # TODO: if one class is too small (1000?) we will make all of them
+    # small, consider removing this class
+    return trainset, testset
 
 def recording_to_artist(mbid):
     q = text(

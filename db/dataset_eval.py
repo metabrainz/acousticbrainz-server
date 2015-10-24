@@ -2,7 +2,10 @@ import db
 import db.exceptions
 import db.dataset
 import db.data
+import json
 import jsonschema
+import sqlalchemy
+
 
 # Job statuses are defined in `eval_job_status` type. See schema definition.
 STATUS_PENDING = "pending"
@@ -86,7 +89,7 @@ def validate_dataset(dataset):
 def get_next_pending_job():
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, filter_type, normalize, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, options, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE status = %s "
             "ORDER BY created ASC "
@@ -100,7 +103,7 @@ def get_next_pending_job():
 def get_job(job_id):
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, filter_type, normalize, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, options, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE id = %s",
             (job_id,)
@@ -121,7 +124,7 @@ def get_jobs_for_dataset(dataset_id):
     """
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, filter_type, normalize, created, updated "
+            "SELECT id, dataset_id, status, status_msg, result, options, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE dataset_id = %s "
             "ORDER BY created ASC",
@@ -165,13 +168,49 @@ def set_job_status(job_id, status, status_msg=None):
         )
 
 
+def get_dataset_snapshot(id):
+    with db.engine.connect() as connection:
+        result = connection.execute(
+            "SELECT id, data "
+            "FROM dataset_snapshot "
+            "WHERE id = %s",
+            (id,)
+        )
+        row = result.fetchone()
+        return dict(row) if row else None
+
+
+def add_dataset_snapshot(data):
+    with db.engine.connect() as connection:
+        result = connection.execute(
+            "INSERT INTO dataset_snapshot (data) "
+            "VALUES (%s) "
+            "RETURNING id",
+            (data,)
+        )
+        snapshot_id = result.fetchone()[0]
+        return snapshot_id
+
+
 def _create_job(connection, dataset_id, normalize, filter_type=None):
-    result = connection.execute(
-        "INSERT INTO dataset_eval_jobs (id, dataset_id, status, normalize, filter_type) "
-        "VALUES (uuid_generate_v4(), %s, %s, %s, %s) "
-        "RETURNING id",
-        (dataset_id, STATUS_PENDING, normalize, filter_type)
-    )
+    if not isinstance(normalize, bool):
+        raise ValueError("Argument 'normalize' must be a boolean.")
+    if filter_type is not None:
+        if filter_type not in [FILTER_ARTIST]:
+            raise ValueError("Incorrect 'filter_type'. See module documentation.")
+    query = sqlalchemy.text("""
+                INSERT INTO dataset_eval_jobs (id, dataset_id, status, options)
+                     VALUES (uuid_generate_v4(), :dataset_id, :status, :options)
+                  RETURNING id
+            """)
+    result = connection.execute(query, {
+        "dataset_id": dataset_id,
+        "status": STATUS_PENDING,
+        "options": json.dumps({
+            "normalize": normalize,
+            "filter_type": filter_type,
+        }),
+    })
     job_id = result.fetchone()[0]
     return job_id
 

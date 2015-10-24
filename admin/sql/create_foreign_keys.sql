@@ -64,4 +64,18 @@ ALTER TABLE dataset_eval_jobs
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 
+ALTER TABLE dataset_eval_jobs
+  ADD CONSTRAINT dataset_eval_jobs_fk_training_snapshot
+  FOREIGN KEY (training_snapshot)
+  REFERENCES dataset_snapshot (id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE;
+
+ALTER TABLE dataset_eval_jobs
+  ADD CONSTRAINT dataset_eval_jobs_fk_testing_snapshot
+  FOREIGN KEY (testing_snapshot)
+  REFERENCES dataset_snapshot (id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE;
+
 COMMIT;

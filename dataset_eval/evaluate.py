@@ -98,8 +98,11 @@ def create_groundtruth_dict(name, datadict):
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
         "className": _slugify(unicode(name)),
-        "groundTruth": datadict,
+        "groundTruth": {},
     }
+    for r, cls in datadict.items():
+        groundtruth["groundTruth"][r] = cls.encode("UTF-8")
+
     return groundtruth
 
 def create_groundtruth(dataset):

@@ -91,13 +91,21 @@ CREATE TABLE dataset_class_member (
 );
 
 CREATE TABLE dataset_eval_jobs (
-  id         UUID,
-  dataset_id UUID                     NOT NULL,
-  status     eval_job_status          NOT NULL DEFAULT 'pending',
-  status_msg VARCHAR,
-  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  result     JSONB
+  id                UUID,
+  dataset_id        UUID                     NOT NULL,
+  status            eval_job_status          NOT NULL DEFAULT 'pending',
+  status_msg        VARCHAR,
+  options           JSONB,
+  training_snapshot INT                      NOT NULL, -- FK to dataset_snapshot
+  testing_snapshot  INT                      NOT NULL, -- FK to dataset_snapshot
+  created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  result            JSONB
+);
+
+CREATE TABLE dataset_snapshot (
+  id   SERIAL,
+  data JSONB NOT NULL
 );
 
 COMMIT;

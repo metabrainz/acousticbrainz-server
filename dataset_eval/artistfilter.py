@@ -68,7 +68,6 @@ def filter(dataset_id, options):
     if options["filter_type"] == "artist":
         print ("Filtering by artist")
         train, test = split_groundtruth(datadict)
-        print (train, test)
     else:
         train = datadict
         test = {}
@@ -76,7 +75,6 @@ def filter(dataset_id, options):
         print("Normalising")
         train, remaining = normalise_datadict(train, 450)
         test.update(remaining)
-        print (train, test)
 
     return train, test
 

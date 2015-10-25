@@ -74,7 +74,7 @@ def filter(dataset_id, options):
         test = {}
     if options["normalize"]:
         print("Normalising")
-        train, remaining = normalise_datadict(train, 1)
+        train, remaining = normalise_datadict(train, 450)
         test.update(remaining)
         print (train, test)
 

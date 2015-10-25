@@ -8,8 +8,8 @@ CREATE TABLE dataset_eval_jobs (
   status            eval_job_status          NOT NULL DEFAULT 'pending',
   status_msg        VARCHAR,
   options           JSONB,
-  training_snapshot INT                      NOT NULL, -- FK to dataset_snapshot
-  testing_snapshot  INT                      NOT NULL, -- FK to dataset_snapshot
+  training_snapshot INT,                     -- FK to dataset_snapshot
+  testing_snapshot  INT,                     -- FK to dataset_snapshot
   created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   result            JSONB

@@ -166,14 +166,20 @@ def _get_recording_info(mbid, metadata):
         return info
 
     elif metadata:
-        info['title'] = metadata['tags']['title'][0]
+
+        def get_first_item(dict, key):
+            if key in dict and dict[key]:
+                return dict[key][0]
+            else:
+                return None
+
         info['length'] = metadata['audio_properties']['length_formatted']
-        info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]
-        info['artist'] = metadata['tags']['artist'][0]
-        info['release_id'] = metadata['tags']['musicbrainz_albumid'][0]
-        info['release'] = metadata['tags']['album'][0]
-        info['track_id'] = metadata['tags']['musicbrainz_releasetrackid'][0] if \
-            'musicbrainz_releasetrackid' in metadata['tags'] else None
+        info['title'] = get_first_item(metadata['tags'], 'title')
+        info['artist_id'] = get_first_item(metadata['tags'], 'musicbrainz_artistid')
+        info['artist'] = get_first_item(metadata['tags'], 'artist')
+        info['release_id'] = get_first_item(metadata['tags'], 'musicbrainz_albumid')
+        info['release'] = get_first_item(metadata['tags'], 'album')
+        info['track_id'] = get_first_item(metadata['tags'], 'musicbrainz_releasetrackid')
         if 'tracktotal' in metadata['tags']:
             info['track_number'] = '%s / %s' % (metadata['tags']['tracknumber'][0],
                                                 metadata['tags']['tracktotal'][0])

@@ -11,13 +11,13 @@ import collections
 import json
 
 import db
+import db.dataset
 import db.cache
 import config
 
-db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
-db.cache.init(config.MEMCACHED_SERVERS)
+#db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
 
-rtoajson = json.load(open("../../recordingtoartistmap.json"))
+rtoajson = json.load(open("recordingtoartistmap.json"))
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -32,15 +32,25 @@ def print_datadict_summary(datadict):
         print "%s\t\t%s" % (cls, count)
 
 def normalise_datadict(datadict, cut_to):
+    """Take a dictionary of groundtruth and cut all classes to
+    `cut_to` items. If a class has fewer items, discard it.
+    Return newdatadict, removed where `removed` is a dictionary
+    of items in datadict that haven't been added to newdatadict"""
+
     dataset = collections.defaultdict(list)
     for r, cls in datadict.items():
         dataset[cls].append(r)
     newdataset = {}
+    remaining = {}
     for cls, items in dataset.items():
         if len(items) > cut_to:
-            for i in random.sample(items, cut_to):
+            sample = random.sample(items, cut_to)
+            for i in sample:
                 newdataset[i] = cls
-    return newdataset
+            rest = list(set(items)-set(sample))
+            for i in rest:
+                remaining[i] = cls
+    return newdataset, remaining
 
 def recordings_to_artists(recordings):
     recordingtoartist = {}
@@ -52,14 +62,31 @@ def recordings_to_artists(recordings):
                 recordingtoartist[r] = a
     return recordingtoartist
 
-def split_groundtruth(dataset):
+def filter(dataset_id, options):
+    dataset = db.dataset.get(dataset_id)
+    datadict = dataset_to_dict(dataset)
+    if options["filter_type"] == "artist":
+        print ("Filtering by artist")
+        train, test = split_groundtruth(datadict)
+        print (train, test)
+    else:
+        train = datadict
+        test = {}
+    if options["normalize"]:
+        print("Normalising")
+        train, remaining = normalise_datadict(train, 1)
+        test.update(remaining)
+        print (train, test)
+
+    return train, test
+
+def split_groundtruth(datadict):
     # the artists of each recording and make a training
     # set with only 1 recording of each artist and
     # a testing set with everything else
 
     # argument: a dataset from db.dataset.get
     # returns 2 dicts, trainset, testset of {recording: class}
-    datadict = dataset_to_dict(dataset)
     recordings = datadict.keys()
     recordingtoartist = recordings_to_artists(recordings)
 

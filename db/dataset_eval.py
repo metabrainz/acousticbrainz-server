@@ -5,6 +5,7 @@ import db.data
 import json
 import jsonschema
 import sqlalchemy
+from sqlalchemy import text
 
 
 # Job statuses are defined in `eval_job_status` type. See schema definition.
@@ -89,7 +90,7 @@ def validate_dataset(dataset):
 def get_next_pending_job():
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, options, created, updated "
+            "SELECT id::text, dataset_id::text, status, status_msg, result, options, created, updated "
             "FROM dataset_eval_jobs "
             "WHERE status = %s "
             "ORDER BY created ASC "
@@ -142,6 +143,24 @@ def set_job_result(job_id, result):
             (result, job_id)
         )
 
+def add_datasets_to_job(job_id, training, testing):
+    """Add a training and testing set to a job
+
+    Args:
+        job_id: ID of the job to add the datasets to
+        training: Dictionary of the training set for the job
+        testing : Dictionary of the test set
+    """
+    with db.engine.begin() as connection:
+        training_id = add_dataset_snapshot(connection, training)
+        testing_id = add_dataset_snapshot(connection, testing)
+        query = text(
+            """UPDATE dataset_eval_jobs
+                  SET (training_snapshot, testing_snapshot) = (:training_id, :testing_id)
+                WHERE id = :job_id""")
+        connection.execute(query, {"training_id": training_id,
+                                   "testing_id": testing_id,
+                                   "job_id": job_id})
 
 def set_job_status(job_id, status, status_msg=None):
     """Set status for existing job.
@@ -180,16 +199,14 @@ def get_dataset_snapshot(id):
         return dict(row) if row else None
 
 
-def add_dataset_snapshot(data):
-    with db.engine.connect() as connection:
-        result = connection.execute(
-            "INSERT INTO dataset_snapshot (data) "
-            "VALUES (%s) "
-            "RETURNING id",
-            (data,)
-        )
-        snapshot_id = result.fetchone()[0]
-        return snapshot_id
+def add_dataset_snapshot(connection, data):
+    query = text(
+        """INSERT INTO dataset_snapshot (data)
+        VALUES (:data)
+        RETURNING id""")
+    result = connection.execute(query, {"data": json.dumps(data)})
+    snapshot_id = result.fetchone()[0]
+    return snapshot_id
 
 
 def _create_job(connection, dataset_id, normalize, filter_type=None):

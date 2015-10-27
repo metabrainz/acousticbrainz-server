@@ -139,7 +139,7 @@ def get_build_sha1(binary):
 def load_includes_from_eval(jobid):
     job = db.dataset_eval.get_job(jobid)
     test = db.dataset_eval.get_dataset_snapshot(job["testing_snapshot"])
-    return test.keys()
+    return test["data"].keys()
 
 def get_model_from_eval(jobid):
     job = db.dataset_eval.get_job(jobid)
@@ -161,15 +161,8 @@ def main(num_threads, profile, dataset_job_id):
     create_profile(profile, PROFILE_CONF, build_sha1)
     db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
 
-    print ("job id", dataset_job_id)
     model_id = get_model_from_eval(dataset_job_id)
     includes = load_includes_from_eval(dataset_job_id)
-
-    print ("model id", model_id)
-    print ("includes", len(includes))
-    print ("profile")
-    print (open(PROFILE_CONF).read())
-    sys.exit(1)
 
     num_processed = 0
 

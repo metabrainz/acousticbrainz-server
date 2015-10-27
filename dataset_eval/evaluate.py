@@ -99,6 +99,8 @@ def create_groundtruth_dict(name, datadict):
         "groundTruth": {},
     }
     for r, cls in datadict.items():
+        if isinstance(r, unicode):
+            r = r.encode("UTF-8")
         groundtruth["groundTruth"][r] = cls.encode("UTF-8")
 
     return groundtruth

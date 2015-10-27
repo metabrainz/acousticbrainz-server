@@ -249,6 +249,15 @@ def write_high_level_item(connection, model_name, model_version, ll_id, version_
             "version": version_id})
 
 def write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta):
+    check_query = text(
+        """SELECT id
+             FROM highlevel
+            WHERE id = :id""")
+    result = connection.execute(check_query, {"id": ll_id})
+    if result.rowcount:
+        # If this already exists, we don't need to add it
+        # (new model for existing highlevel)
+        return
     hl_query = text(
         """INSERT INTO highlevel (id, mbid, build_sha1)
                 VALUES (:id, :mbid, :build_sha1)""")

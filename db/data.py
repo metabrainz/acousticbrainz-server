@@ -203,6 +203,18 @@ def set_model_status(model_name, model_version, model_status):
              "model_version": model_version,
              "model_status": model_status})
 
+def get_model(model_name, model_version):
+    with db.engine.begin() as connection:
+        query = text(
+            """SELECT *
+                 FROM model
+                WHERE model = :model_name
+                  AND model_version = :model_version""")
+        result = connection.execute(query,
+                    {"model_name": model_name,
+                     "model_version": model_version})
+        return result.fetchone()
+
 def _get_model_id(model_name, version):
     with db.engine.begin() as connection:
         query = text(
@@ -260,7 +272,7 @@ def write_high_level(mbid, ll_id, data, build_sha1):
         json_meta = data["metadata"]
         json_high = data["highlevel"]
 
-        write_highlevel_meta(connection, ll_id, mbid, build_sha1, json_meta)
+        write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta)
 
         hl_version = json_meta["version"]["highlevel"]
         version_id = insert_version(connection, hl_version)

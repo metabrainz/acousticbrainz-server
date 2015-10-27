@@ -112,12 +112,13 @@ class DataDBTestCase(DatabaseTestCase):
         ll = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
         hl = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
               "metadata": {"meta": "here",
-                           "version": {"highlevel": {"hlversion": "123"}}
+                           "version": {"highlevel": {"hlversion": "123",
+                                                     "models_essentia_git_sha": "v1"}}
                           }
                }
 
-        db.data.add_model("model1", "1.0")
-        db.data.add_model("model2", "1.0")
+        db.data.add_model("model1", "1.0", "show")
+        db.data.add_model("model2", "1.0", "show")
 
         build_sha = "test"
         db.data.write_low_level(self.test_mbid, ll)
@@ -136,18 +137,20 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, second_data)
         ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
 
-        db.data.add_model("model1", "1.0")
-        db.data.add_model("model2", "1.0")
+        db.data.add_model("model1", "1.0", "show")
+        db.data.add_model("model2", "1.0", "show")
 
         build_sha = "sha"
         hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
                "metadata": {"meta": "here",
-                           "version": {"highlevel": {"hlversion": "123"}}
+                           "version": {"highlevel": {"hlversion": "123",
+                                                     "models_essentia_git_sha": "v1"}}
                           }
                }
         hl2 = {"highlevel": {"model1": {"1": "2"}, "model2": {"3": "3"}},
                "metadata": {"meta": "for hl2",
-                           "version": {"highlevel": {"hlversion": "123"}}
+                           "version": {"highlevel": {"hlversion": "123",
+                                                     "models_essentia_git_sha": "v1"}}
                           }
                }
         db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
@@ -173,18 +176,20 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, second_data)
         ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
 
-        db.data.add_model("model1", "1.0")
-        db.data.add_model("model2", "1.0")
+        db.data.add_model("model1", "1.0", "show")
+        db.data.add_model("model2", "1.0", "show")
 
         build_sha = "sha"
         hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
                "metadata": {"meta": "here",
-                           "version": {"highlevel": {"hlversion": "123"}}
+                           "version": {"highlevel": {"hlversion": "123",
+                                                     "models_essentia_git_sha": "v1"}}
                           }
                }
         hl2 = {"highlevel": {"model1": {"1": "2"}, "model2": {"3": "3"}},
                "metadata": {"meta": "for hl2",
-                           "version": {"highlevel": {"hlversion": "123"}}
+                           "version": {"highlevel": {"hlversion": "123",
+                                                     "models_essentia_git_sha": "v1"}}
                           }
                }
         db.data.write_high_level(self.test_mbid, ll_id2, hl2, build_sha)
@@ -204,13 +209,14 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
         ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
 
-        db.data.add_model("model1", "1.0")
-        db.data.add_model("model2", "1.0")
+        db.data.add_model("model1", "1.0", "show")
+        db.data.add_model("model2", "1.0", "show")
 
         build_sha = "sha"
         hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
                "metadata": {"meta": "here",
-                           "version": {"highlevel": {"hlversion": "123"}}
+                           "version": {"highlevel": {"hlversion": "123",
+                                                     "models_essentia_git_sha": "v1"}}
                           }
                }
         db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
@@ -233,10 +239,10 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(2, db.data.count_lowlevel(self.test_mbid))
 
     def test_add_get_model(self):
-        self.assertIsNone(db.data._get_model_id("modelname"))
+        self.assertIsNone(db.data._get_model_id("modelname", "v1"))
 
-        modelid = db.data.add_model("modelname", "1.0")
-        get_id = db.data._get_model_id("modelname")
+        modelid = db.data.add_model("modelname", "v1")
+        get_id = db.data._get_model_id("modelname", "v1")
         self.assertEqual(modelid, get_id)
 
 

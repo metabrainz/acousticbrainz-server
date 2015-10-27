@@ -103,12 +103,21 @@ def get_next_pending_job():
 
 def get_job(job_id):
     with db.engine.connect() as connection:
-        result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, options, created, updated "
-            "FROM dataset_eval_jobs "
-            "WHERE id = %s",
-            (job_id,)
-        )
+        query = text(
+            """SELECT id
+                    , dataset_id
+                    , status
+                    , status_msg
+                    , result
+                    , options
+                    , training_snapshot
+                    , testing_snapshot
+                    , created
+                    , updated
+                 FROM dataset_eval_jobs
+                WHERE id = :id""")
+        result = connection.execute(query, {"id": job_id})
+
         row = result.fetchone()
         return dict(row) if row else None
 

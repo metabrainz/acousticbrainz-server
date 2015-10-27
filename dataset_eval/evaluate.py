@@ -14,14 +14,12 @@ import db.dataset
 import db.dataset_eval
 import db.exceptions
 import utils.path
-import unicodedata
 import tempfile
 import logging
 import shutil
 import time
 import json
 import os
-import re
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 HISTORY_STORAGE_DIR = os.path.join(config.FILE_STORAGE_DIR, "history")
@@ -97,7 +95,7 @@ def create_groundtruth_dict(name, datadict):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": _slugify(unicode(name)),
+        "className": db.dataset._slugify(unicode(name)),
         "groundTruth": {},
     }
     for r, cls in datadict.items():
@@ -109,7 +107,7 @@ def create_groundtruth(dataset):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": _slugify(unicode(dataset["name"])),
+        "className": db.dataset._slugify(unicode(dataset["name"])),
         "groundTruth": {},
     }
     for cls in dataset["classes"]:
@@ -168,16 +166,6 @@ def save_history_file(history_file_path, job_id):
     destination = os.path.join(directory, job_id)
     shutil.copyfile(history_file_path, destination)
     return destination
-
-
-def _slugify(string):
-    """Converts unicode string to lowercase, removes alphanumerics and
-    underscores, and converts spaces to hyphens. Also strips leading and
-    trailing whitespace.
-    """
-    string = unicodedata.normalize('NFKD', string).encode('ascii', 'ignore').decode('ascii')
-    string = re.sub('[^\w\s-]', '', string).strip().lower()
-    return re.sub('[-\s]+', '-', string)
 
 
 if __name__ == "__main__":

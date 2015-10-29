@@ -14,5 +14,5 @@
 
 Create ticket in [the bug tracker](http://tickets.musicbrainz.org/browse/AB). Try to provide a good description.
 
-If you want to discuss something, go to [#musicbrainz-devel](irc://irc.freenode.net/musicbrainz-devel)
+If you want to discuss something, go to the [#metabrainz](irc://irc.freenode.net/metabrainz)
 IRC channel on irc.freenode.net. More info is available at https://wiki.musicbrainz.org/Communication.

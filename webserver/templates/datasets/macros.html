@@ -1,5 +1,5 @@
 {% macro print_header(dataset, author, current_user, active_tab) %}
-  {% set is_author = current_user.is_authenticated() and current_user.id == author['id'] %}
+  {% set is_author = current_user.is_authenticated and current_user.id == author['id'] %}
   <div id="dataset-header">
 
     <div class="row">

@@ -9,7 +9,7 @@ index_bp = Blueprint('index', __name__)
 def index():
     stats, last_collected = get_stats()
     return render_template("index/index.html", stats=stats, last_collected=last_collected,
-                           last_submitted_data=get_last_submitted_recordings())
+                           last_submissions=get_last_submitted_recordings())
 
 
 @index_bp.route("/download")

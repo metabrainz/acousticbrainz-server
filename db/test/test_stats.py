@@ -16,23 +16,30 @@ class StatsTestCase(DatabaseTestCase):
         dbget.return_value = None
         mbids = []
         for i in range(20):
-            m = uuid.uuid4()
-            mbids.append(m)
-            data = {"metadata":
-                        {"tags": {"musicbrainz_recordingid": str(m), "artist": ["artist-%s"%i], "title": ["title-%s"%i]},
-                         "audio_properties": {"lossless": True},
-                         "version": {"essentia_build_sha": "sha"}}
-                    }
-            db.data.write_low_level(m, data)
+            rand_mbid = uuid.uuid4()
+            mbids.append(rand_mbid)
+            data = {
+                "metadata": {
+                    "tags": {
+                        "musicbrainz_recordingid": str(rand_mbid),
+                        "artist": ["artist-%s" % i],
+                        "title": ["title-%s" % i],
+                    },
+                    "audio_properties": {"lossless": True},
+                    "version": {"essentia_build_sha": "sha"},
+                },
+            }
+            db.data.write_low_level(rand_mbid, data)
         last = db.stats.get_last_submitted_recordings()
-        dbget.assert_called_with("last-submitted-data")
+        dbget.assert_called_with("last-submitted-recordings")
 
-        expected = [(mbids[9], "artist-9", "title-9"),
-                    (mbids[8], "artist-8", "title-8"),
-                    (mbids[7], "artist-7", "title-7"),
-                    (mbids[6], "artist-6", "title-6"),
-                    (mbids[5], "artist-5", "title-5")
-                    ]
+        expected = [
+            {"mbid": mbids[9], "artist": "artist-9", "title": "title-9"},
+            {"mbid": mbids[8], "artist": "artist-8", "title": "title-8"},
+            {"mbid": mbids[7], "artist": "artist-7", "title": "title-7"},
+            {"mbid": mbids[6], "artist": "artist-6", "title": "title-6"},
+            {"mbid": mbids[5], "artist": "artist-5", "title": "title-5"},
+        ]
         self.assertEqual(expected, last)
 
     # @mock.patch("db.cache.get")

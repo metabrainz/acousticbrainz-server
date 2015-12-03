@@ -10,23 +10,30 @@ LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 
 def get_last_submitted_recordings():
-    last_submitted_data = db.cache.get('last-submitted-data')
-    if not last_submitted_data:
+    cache_key = "last-submitted-recordings"
+    last_submissions = db.cache.get(cache_key)
+    if not last_submissions:
         with db.engine.connect() as connection:
-            result = connection.execute("""SELECT mbid,
-                                     data->'metadata'->'tags'->'artist'->>0,
-                                     data->'metadata'->'tags'->'title'->>0
-                                FROM lowlevel
-                            ORDER BY id DESC
-                               LIMIT 5
-                              OFFSET 10""")
-            last_submitted_data = result.fetchall()
-        last_submitted_data = [
-            (r[0], r[1], r[2]) for r in last_submitted_data if r[1] and r[2]
+            result = connection.execute("""
+                SELECT mbid,
+                       data->'metadata'->'tags'->'artist'->>0,
+                       data->'metadata'->'tags'->'title'->>0
+                  FROM lowlevel
+              ORDER BY id DESC
+                 LIMIT 5
+                OFFSET 10
+            """)
+            last_submissions = result.fetchall()
+        last_submissions = [
+            {
+                "mbid": r[0],
+                "artist": r[1],
+                "title": r[2],
+            } for r in last_submissions if r[1] and r[2]
         ]
-        db.cache.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
+        db.cache.set(cache_key, last_submissions, time=LAST_MBIDS_CACHE_TIMEOUT)
 
-    return last_submitted_data
+    return last_submissions
 
 
 def get_stats():

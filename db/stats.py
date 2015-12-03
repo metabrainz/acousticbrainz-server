@@ -10,10 +10,19 @@ LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 
 def get_last_submitted_recordings():
+    """Get list of last submitted recordings.
+
+    Returns:
+        List of dictionaries with basic info about last submitted recordings:
+        mbid (MusicBrainz ID), artist (name), and title.
+    """
     cache_key = "last-submitted-recordings"
     last_submissions = db.cache.get(cache_key)
     if not last_submissions:
         with db.engine.connect() as connection:
+            # We are getting results with of offset of 10 rows because we'd
+            # prefer to show recordings for which we already calculated
+            # high-level data. This might not be the best way to do that.
             result = connection.execute("""
                 SELECT mbid,
                        data->'metadata'->'tags'->'artist'->>0,

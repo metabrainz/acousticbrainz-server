@@ -90,22 +90,14 @@ def get_stats():
     # Checking if one of values is missing or if we hit the stats recording time.
     if sorted(stats_names) != sorted(stats.keys()) or last_collected is None:
 
-        stats = dict([(name, 0) for name in stats_names])
-
         with db.engine.connect() as connection:
-            # FIXME(roman): Ideally all these stats should be calculated in one
-            # query which would also get current time, for better accuracy.
-            stats[LOWLEVEL_LOSSLESS], stats[LOWLEVEL_LOSSY] = \
-                _count_all_submissions(connection)
-            stats[LOWLEVEL_LOSSLESS_UNIQUE], stats[LOWLEVEL_LOSSY_UNIQUE] = \
-                _count_unique_submissions(connection)
+            stats = _count_submissions(connection)
+            last_collected = _current_db_time(connection)
 
             # Recordings stats in the database, if necessary
             if _is_update_time(connection):
                 for name, value in six.iteritems(stats):
-                    _record_value(connection, name, value)
-
-            last_collected = _current_db_time(connection)
+                    _record_value(connection, last_collected, name, value)
 
         # TODO: Port this to new implementation:
         db.cache._mc.set_multi(stats, key_prefix=cache_key_prefix, time=STATS_CACHE_TIMEOUT)
@@ -119,7 +111,7 @@ def get_statistics_data():
         LOWLEVEL_LOSSY: "Lossy (all)",
         LOWLEVEL_LOSSY_UNIQUE: "Lossy (unique)",
         LOWLEVEL_LOSSLESS: "Lossless (all)",
-        LOWLEVEL_LOSSLESS_UNIQUE: "Lossless (unique)"
+        LOWLEVEL_LOSSLESS_UNIQUE: "Lossless (unique)",
     }
 
     total_all = {"name": "Total (all)", "data": {}}
@@ -186,71 +178,49 @@ def _is_update_time(connection):
     return last_check_result.rowcount == 0 or now - last_collected > datetime.timedelta(minutes=59)
 
 
-def _record_value(connection, name, value):
+def _record_value(connection, timestamp, name, value):
     """Records a value with a given name and current timestamp."""
     connection.execute("""
         INSERT INTO statistics (collected, name, value)
-             VALUES (now(), %s, %s)
+             VALUES (%s, %s, %s)
           RETURNING collected
-    """, (name, value))
+    """, (timestamp, name, value))
 
 
-def _count_all_submissions(connection):
-    """Count total number of low-level submissions in the database.
-
-    Args:
-        connection: Database connection.
-
-    Returns:
-        Tuple with two values: first is number of lossless submissions, second
-        is number of lossy submissions.
-    """
+def _count_submissions(connection):
+    """Count number of low-level submissions in the database."""
+    # Both total submissions and unique (based on MBIDs)
     result = connection.execute("""
-        SELECT lossless, count(*)
+        SELECT 'all' as type, lossless, count(*)
           FROM lowlevel
       GROUP BY lossless
-    """)
-    # Should return two rows (one with lossy count, another with lossless)
-    lossless_count = 0
-    lossy_count = 0
-    for is_lossless, count in result.fetchall():
-        if is_lossless:
-            lossless_count = count
-        else:
-            lossy_count = count
-    return lossless_count, lossy_count
-
-
-def _count_unique_submissions(connection):
-    """Count number of unique low-level submissions in the database.
-
-    Unique means that they correspond to different recordings.
-
-    Args:
-        connection: Database connection.
-
-    Returns:
-        Tuple with two values: first is number of unique lossless submissions,
-        second is number of unique lossy submissions.
-    """
-    result = connection.execute("""
-        SELECT lossless, count(*)
+         UNION
+        SELECT 'unique' as type, lossless, count(*)
           FROM (
-                  SELECT DISTINCT ON (mbid) mbid, lossless
-                    FROM lowlevel
-                ORDER BY mbid, lossless DESC
+                SELECT DISTINCT ON (mbid) mbid, lossless
+                  FROM lowlevel
+              ORDER BY mbid, lossless DESC
                ) q
       GROUP BY lossless
     """)
-    # Should return two rows (one with lossy count, another with lossless)
-    lossless_count = 0
-    lossy_count = 0
-    for is_lossless, count in result.fetchall():
-        if is_lossless:
-            lossless_count = count
-        else:
-            lossy_count = count
-    return lossless_count, lossy_count
+    counts = {
+        LOWLEVEL_LOSSY: 0,
+        LOWLEVEL_LOSSY_UNIQUE: 0,
+        LOWLEVEL_LOSSLESS: 0,
+        LOWLEVEL_LOSSLESS_UNIQUE: 0,
+    }
+    for count_type, is_lossless, count in result.fetchall():
+        if count_type == "all":
+            if is_lossless:
+                counts[LOWLEVEL_LOSSLESS] = count
+            else:
+                counts[LOWLEVEL_LOSSY] = count
+        else:  # unique
+            if is_lossless:
+                counts[LOWLEVEL_LOSSLESS_UNIQUE] = count
+            else:
+                counts[LOWLEVEL_LOSSY_UNIQUE] = count
+    return counts
 
 
 def _current_db_time(connection):

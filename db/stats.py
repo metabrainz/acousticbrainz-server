@@ -116,5 +116,5 @@ def get_statistics_data():
 
 
 def _make_timestamp(dt):
-    dt = dt.replace(second=0, microsecond=0)
+    dt = dt.replace(microsecond=0)
     return time.mktime(dt.utctimetuple())*1000

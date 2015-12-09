@@ -88,17 +88,19 @@ def validate_dataset(dataset):
 
 
 def get_next_pending_job():
+    # TODO: This should return the same data as `get_job`, so
+    #       we run 2 queries, however it would be more efficient
+    #       to do it in 1 query
     with db.engine.connect() as connection:
-        result = connection.execute(
-            "SELECT id::text, dataset_id::text, status, status_msg, result, options, created, updated "
-            "FROM dataset_eval_jobs "
-            "WHERE status = %s "
-            "ORDER BY created ASC "
-            "LIMIT 1",
-            (STATUS_PENDING,)
-        )
+        query = text(
+            """SELECT id::text
+                 FROM dataset_eval_jobs
+                WHERE status = :status
+             ORDER BY created ASC
+                LIMIT 1""")
+        result = connection.execute(query, {"status": STATUS_PENDING})
         row = result.fetchone()
-        return dict(row) if row else None
+        return get_job(row[0]) if row else None
 
 
 def get_job(job_id):

@@ -341,16 +341,23 @@ def load_high_level(mbid, offset=0):
         query = text(
             """select m.model
                     , hlmo.data
+                    , version.data as version
                  FROM highlevel_model hlmo
                  JOIN model m
                    ON m.id = hlmo.model
+                 JOIN version
+                   ON version.id = hlmo.version
                 WHERE hlmo.highlevel = :hlid
                   AND m.status = 'show'
             """)
         result = connection.execute(query, {"hlid": hlid})
         highlevel = {}
         for row in result.fetchall():
-            highlevel[row[0]] = row[1]
+            model = row[0]
+            data = row[1]
+            version = row[2]
+            data["version"] = version
+            highlevel[model] = data
 
         return {"metadata": metadata, "highlevel": highlevel}
 

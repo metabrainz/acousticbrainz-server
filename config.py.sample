@@ -14,6 +14,8 @@ SQLALCHEMY_TEST_URI = "postgresql://ab_test@/ab_test"
 # The name of a postgres user who has superuser privileges. Your local user should
 # be able to connect to the database with this user.
 PG_SUPER_USER = "postgres"
+# The port that postgres is running on
+PG_PORT = 5432
 
 # MUSICBRAINZ
 

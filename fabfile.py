@@ -6,9 +6,11 @@ import config
 
 import os
 
+
 def vpsql():
     """Connect to the acousticbrainz database running on vagrant."""
     local("psql -h localhost -p 15432 -U postgres acousticbrainz")
+
 
 def vssh():
     """SSH to a running vagrant host."""
@@ -18,6 +20,7 @@ def vssh():
         local('vagrant ssh-config acousticbrainz > .vagrant/ssh_config')
 
     local("ssh -F .vagrant/ssh_config -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/ab_vagrant_control' -o 'ControlPersist 4h' acousticbrainz")
+
 
 def git_pull():
     local("git pull origin")
@@ -29,14 +32,9 @@ def install_requirements():
     print(green("Installed requirements.", bold=True))
 
 
-def compile_styling():
-    """Compile main.less into main.css.
-    This command requires Less (CSS pre-processor). More information about it can be
-    found at http://lesscss.org/.
-    """
-    style_path = "webserver/static/css/"
-    local("lessc --clean-css %smain.less > %smain.css" % (style_path, style_path))
-    print(green("Style sheets have been compiled successfully.", bold=True))
+def build_static():
+    local("./node_modules/.bin/gulp")
+    print(green("Static files have been built successfully.", bold=True))
 
 
 def clear_memcached():
@@ -51,7 +49,7 @@ def clear_memcached():
 def deploy():
     git_pull()
     install_requirements()
-    compile_styling()
+    build_static()
     clear_memcached()
 
 

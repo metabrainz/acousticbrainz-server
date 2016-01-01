@@ -56,7 +56,7 @@ def create_app():
     from webserver import utils
     app.jinja_env.filters['date'] = utils.reformat_date
     app.jinja_env.filters['datetime'] = utils.reformat_datetime
-    app.jinja_env.filters['make_static_path'] = static_manager.get_file_path
+    app.context_processor(lambda: dict(get_static_path=static_manager.get_static_path))
 
     # Blueprints
     from webserver.views.index import index_bp

@@ -13,7 +13,7 @@ def read_manifest():
             manifest_content = json.load(manifest_file)
 
 
-def get_file_path(resource_name):
+def get_static_path(resource_name):
     if resource_name not in manifest_content:
         return "/static/%s" % resource_name
     return "/static/build/%s" % manifest_content[resource_name]

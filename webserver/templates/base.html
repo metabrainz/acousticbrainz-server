@@ -9,13 +9,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link rel="icon" sizes="16x16" href="{{ 'images/favicon-16.png'|make_static_path }}" type="image/png" />
-    <link rel="icon" sizes="32x32" href="{{ 'images/favicon-32.png'|make_static_path }}" type="image/png" />
-    <link rel="icon" sizes="64x64" href="{{ 'images/favicon-64.png'|make_static_path }}" type="image/png" />
-    <link rel="icon" sizes="128x128" href="{{ 'images/favicon-128.png'|make_static_path }}" type="image/png" />
-    <link rel="icon" sizes="256x256" href="{{ 'images/favicon-256.png'|make_static_path }}" type="image/png" />
+    <link rel="icon" sizes="16x16" href="{{ get_static_path('images/favicon-16.png') }}" type="image/png" />
+    <link rel="icon" sizes="32x32" href="{{ get_static_path('images/favicon-32.png') }}" type="image/png" />
+    <link rel="icon" sizes="64x64" href="{{ get_static_path('images/favicon-64.png') }}" type="image/png" />
+    <link rel="icon" sizes="128x128" href="{{ get_static_path('images/favicon-128.png') }}" type="image/png" />
+    <link rel="icon" sizes="256x256" href="{{ get_static_path('images/favicon-256.png') }}" type="image/png" />
 
-    <link href="{{ 'main.css'|make_static_path }}" rel="stylesheet" media="screen" />
+    <link href="{{ get_static_path('main.css') }}" rel="stylesheet" media="screen" />
   {%- endblock -%}
 </head>
 
@@ -47,15 +47,15 @@
           <li><a href="http://tickets.musicbrainz.org/browse/AB">Bug Tracker</a></li>
         </ul>
         <ul class="list-inline pull-right">
-          <li><a href="http://mtg.upf.edu" title="UPF"><img src="{{ 'images/mtg_upf.png'|make_static_path }}" /></a></li>
-          <li><a href="https://musicbrainz.org" title="MusicBrainz"><img src="{{ 'images/musicbrainz.svg'|make_static_path }}" /></a></li>
+          <li><a href="http://mtg.upf.edu" title="UPF"><img src="{{ get_static_path('images/mtg_upf.png') }}" /></a></li>
+          <li><a href="https://musicbrainz.org" title="MusicBrainz"><img src="{{ get_static_path('images/musicbrainz.svg') }}" /></a></li>
         </ul>
       </div>
     {%- endblock -%}
   </div>
 
   {%- block scripts -%}
-    <script src="{{ 'common.js'|make_static_path }}"></script>
+    <script src="{{ get_static_path('common.js') }}"></script>
   {%- endblock -%}
 </body>
 </html>

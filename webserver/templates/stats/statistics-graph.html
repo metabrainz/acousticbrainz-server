@@ -10,7 +10,7 @@
 
 {%- block scripts -%}
   {{ super() }}
-  <script src="{{ 'stats.js'|make_static_path }}"></script>
+  <script src="{{ get_static_path('stats.js') }}"></script>
   <script>
     $(function () {
       $.getJSON('{{ url_for('stats.data') }}', function (data) {

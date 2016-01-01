@@ -18,5 +18,5 @@
 
 {%- block scripts -%}
   {{ super() }}
-  <script src="{{ 'datasets.js'|make_static_path }}"></script>
+  <script src="{{ get_static_path('datasets.js') }}"></script>
 {%- endblock -%}

@@ -3758,6 +3758,6 @@
 
 {%- block scripts -%}
   {{ super() }}
-  <script src="{{ 'lib/highlight.pack.js'|make_static_path }}"></script>
+  <script src="{{ get_static_path('lib/highlight.pack.js') }}"></script>
   <script>hljs.initHighlightingOnLoad();</script>
 {%- endblock -%}

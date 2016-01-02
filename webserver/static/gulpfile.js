@@ -72,7 +72,7 @@ function runYarb(resourceName, callback) {
   }
 
   var bundle = transformBundle(yarb(path.resolve(SCRIPTS_DIR, resourceName), {
-    debug: devMode // disable sourcemaps
+    debug: devMode // Enable sourcemaps if in development mode
   }));
 
   if (callback) {

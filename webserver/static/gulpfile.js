@@ -110,4 +110,14 @@ function buildScripts() {
 gulp.task('styles', buildStyles);
 gulp.task('scripts', buildScripts);
 
+gulp.task('clean', function () {
+  var fileRegex = /^([a-z\-]+)-[a-f0-9]+\.(js|css)$/;
+
+  fs.readdirSync(BUILD_DIR).forEach(function (file) {
+    if (fileRegex.test(file) && revManifest[file.replace(fileRegex, '$1.$2')] !== file) {
+      fs.unlinkSync(path.resolve(BUILD_DIR, file));
+    }
+  });
+});
+
 gulp.task('default', ['styles', 'scripts']);

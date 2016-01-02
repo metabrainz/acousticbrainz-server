@@ -34,7 +34,6 @@ def install_requirements():
 
 def build_static():
     local("./node_modules/.bin/gulp")
-    print(green("Static files have been built successfully.", bold=True))
 
 
 def clear_memcached():

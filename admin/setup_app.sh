@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Setting up the application
 if [ $# -eq 1 ]

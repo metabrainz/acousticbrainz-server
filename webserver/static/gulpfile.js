@@ -10,6 +10,8 @@ var through2 = require('through2');
 var Q = require('q');
 var yarb = require('yarb');
 
+var devMode = String(process.env.NODE_ENV) !== 'production';
+
 const CACHED_BUNDLES = new Map();
 const STATIC_DIR = path.resolve(__dirname, '../static');
 const BUILD_DIR = path.resolve(STATIC_DIR, 'build');
@@ -70,7 +72,7 @@ function runYarb(resourceName, callback) {
   }
 
   var bundle = transformBundle(yarb(path.resolve(SCRIPTS_DIR, resourceName), {
-    debug: false // disable sourcemaps
+    debug: devMode // disable sourcemaps
   }));
 
   if (callback) {
@@ -90,8 +92,6 @@ function writeScript(b, resourceName) {
 }
 
 function buildScripts() {
-  process.env.NODE_ENV = String(process.env.DEVELOPMENT_SERVER) === '1' ? 'development' : 'production';
-
   var commonBundle = runYarb('common.js');
 
   var datasetsBundle = runYarb('datasets.js', function (b) {

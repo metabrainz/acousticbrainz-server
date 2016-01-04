@@ -10,6 +10,7 @@ Prerequisites
 
 * [Python](https://www.python.org/) 2.7.x
 * [PostgreSQL](http://www.postgresql.org/) >=9.2 (needs the JSON data type)
+* [Node.js](http://memcached.org/)
 * [memcached](http://memcached.org/)
 * [pxz](http://manpages.ubuntu.com/manpages/trusty/man1/pxz.1.html) for
 exporting and importing the data
@@ -55,6 +56,24 @@ After you tweak configuration file, database needs to be created:
 *Optional:* You might want to create a database that will be used by tests:
 
     $ python manage.py init_test_db
+    
+### Node.js dependencies
+
+Node.js dependencies are managed using `npm`. To install these dependencies run
+the following command:
+
+    $ npm install
+    
+### Building static files
+
+We use Gulp as our JavaScript/CSS build system. It should be installed with
+node.js dependencies. Calling `gulp` on its own will build everything necessary
+to access the server in a web browser:
+
+    ./node_modules/.bin/gulp
+    
+*Keep in mind that you'll need to rebuild static files after you modify
+JavaScript or CSS.*
 
 ### Starting the server
 

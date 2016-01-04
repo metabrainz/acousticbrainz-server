@@ -169,7 +169,7 @@ def _get_classes(dataset_id):
 
 def _get_recordings_in_class(class_id):
     with db.engine.connect() as connection:
-        result = connection.execute("SELECT mbid FROM dataset_class_member WHERE class = %s",
+        result = connection.execute("SELECT mbid::text FROM dataset_class_member WHERE class = %s",
                        (class_id,))
         recordings = []
         for row in result:

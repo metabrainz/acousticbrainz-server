@@ -33,6 +33,9 @@ function writeResource(stream) {
   var deferred = Q.defer();
 
   stream
+    .on('error', function (error) {
+      deferred.reject(error);
+    })
     .pipe(streamify(rev()))
     .pipe(gulp.dest(BUILD_DIR))
     .pipe(rev.manifest())
@@ -57,7 +60,9 @@ function buildStyles() {
         new (require('less-plugin-clean-css'))({compatibility: 'ie8'})
       ]
     }))
-  ).done(writeManifest);
+  )
+      .done(writeManifest)
+      .fail(function (err) { throw err });
 }
 
 function transformBundle(bundle) {

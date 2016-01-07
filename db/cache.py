@@ -104,11 +104,15 @@ def get_multi(keys, namespace=None):
         keys: Array of keys that need to be retrieved.
 
     Returns:
-        A dictionary of key/value pairs that were available. If key_prefix was
-        provided, the keys in the returned dictionary will not have it present.
+        A dictionary of key/value pairs that were available.
     """
     if _mc is None: return {}
-    return _mc.get_multi(_prep_list(keys, namespace), _glob_namespace)
+    res = _mc.get_multi(_prep_list(keys, namespace), _glob_namespace)
+    for k in keys:
+        prep = _prep_key(k, namespace)
+        if prep in res:
+            res[k] = res.pop(prep)
+    return res
 
 
 def delete_multi(keys, namespace=None):
@@ -188,6 +192,4 @@ def _prep_list(l, namespace=None):
 
 def _prep_dict(dictionary, namespace=None):
     """Wrapper for _prep_key function that works with dictionaries."""
-    for key in dictionary.keys():
-        dictionary[_prep_key(key, namespace)] = dictionary.pop(key)
-    return dictionary
+    return {_prep_key(key, namespace): value for key, value in dictionary.items()}

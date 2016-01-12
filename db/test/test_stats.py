@@ -1,8 +1,12 @@
 from db.testing import DatabaseTestCase
+import db
 import db.stats
 import db.data
 import uuid
 import mock
+import datetime
+import pytz
+from sqlalchemy import text
 
 
 class StatsTestCase(DatabaseTestCase):
@@ -42,12 +46,45 @@ class StatsTestCase(DatabaseTestCase):
         ]
         self.assertEqual(expected, last)
 
-    # @mock.patch("db.cache.get")
-    # @mock.patch("db.cache.set")
-    # def test_get_last_submitted_recordings_cached(self, dbget, dbset):
-    #     pass
+    def test_get_earliest_submission_date(self):
+        # If nothing is in the database, the date should be None
+        earliest_date = db.stats.get_earliest_submission_date()
+        self.assertIsNone(earliest_date)
 
-    # @mock.patch("db.cache.get")
-    # @mock.patch("db.cache.set")
-    # def test_get_last_submitted_recordings_bad_data(self, dbget, dbset):
-    #    pass
+        # otherwise, the first submitted date
+        date1 = datetime.datetime(2016, 01, 07, 10, 20, 39, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 01, 07, 12, 30, 20, tzinfo=pytz.utc)
+        add_empty_lowlevel(uuid.uuid4(), True, date1)
+        add_empty_lowlevel(uuid.uuid4(), True, date2)
+
+        earliest_date = db.stats.get_earliest_submission_date()
+        self.assertEqual(earliest_date, date1)
+
+    def test_get_next_hour(self):
+        date1 = datetime.datetime(2016, 01, 07, 10, 20, 39, tzinfo=pytz.utc)
+        next_hour = db.stats.get_next_hour(date1)
+        expected = datetime.datetime(2016, 01, 07, 11, 0, 0, tzinfo=pytz.utc)
+        self.assertEqual(next_hour, expected)
+
+        date2 = datetime.datetime(2016, 01, 07, 13, 0, 0, tzinfo=pytz.utc)
+        next_hour = db.stats.get_next_hour(date2)
+        expected = datetime.datetime(2016, 01, 07, 14, 0, 0, tzinfo=pytz.utc)
+        self.assertEqual(next_hour, expected)
+
+
+def add_empty_lowlevel(mbid, lossless, date):
+    build_sha1 = "sha1"
+    # must be unique
+    data_sha256 = "sha256" + str(mbid) + str(date)
+    data_json = "{}"
+    with db.engine.connect() as connection:
+        q = text("""INSERT INTO lowlevel
+            (mbid, build_sha1, data_sha256, lossless, data, submitted)
+            VALUES (:mbid, :build_sha1, :data_sha256,
+                    :lossless, :data, :submitted)""")
+        connection.execute(q,
+            {"mbid": mbid, "build_sha1": build_sha1,
+                "data_sha256": data_sha256, "lossless": lossless,
+                "data": data_json, "submitted": date}
+        )
+

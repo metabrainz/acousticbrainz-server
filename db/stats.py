@@ -10,6 +10,8 @@ import datetime
 import time
 import six
 
+from sqlalchemy import text
+
 STATS_CACHE_TIMEOUT = 60 * 10  # 10 minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
@@ -17,6 +19,8 @@ LOWLEVEL_LOSSY = "lowlevel-lossy"
 LOWLEVEL_LOSSY_UNIQUE = "lowlevel-lossy-unique"
 LOWLEVEL_LOSSLESS = "lowlevel-lossless"
 LOWLEVEL_LOSSLESS_UNIQUE = "lowlevel-lossless-unique"
+LOWLEVEL_TOTAL = "lowlevel-total"
+LOWLEVEL_TOTAL_UNIQUE = "lowlevel-total-unique"
 
 
 def get_last_submitted_recordings():
@@ -54,6 +58,65 @@ def get_last_submitted_recordings():
 
     return last_submissions
 
+def get_earliest_submission_date():
+    """Get the earliest date that something was submitted to AB."""
+    q = text("""SELECT submitted
+                  FROM lowlevel
+              ORDER BY submitted ASC
+                 LIMIT 1""")
+    with db.engine.connect() as connection:
+        cur = connection.execute(q)
+        row = cur.fetchone()
+        if row:
+            return row[0]
+
+def get_most_recent_stats_date():
+    q = text("""SELECT collected
+                  FROM statistics
+              ORDER BY collected DESC
+                 LIMIT 1""")
+    with db.engine.connect() as connection:
+        cur = connection.execute(q)
+        row = cur.fetchone()
+        if row:
+            return row[0]
+
+def get_next_hour(date):
+    """Round up a date to the nearest hour:00:00.
+    Arguments:
+      date: a datetime
+    """
+    delta = datetime.timedelta(hours=1)
+    date = date + delta
+    date = date.replace(minute=0, second=0, microsecond=0)
+    return date
+
+def compute_stats(to_date):
+    # Compute stats up to the given date
+
+    stats_date = get_most_recent_stats_date()
+    if not stats_date:
+        # If there have been no statistics, we start from the
+        # earliest date in the lowlevel table
+        stats_date = get_earliest_submission_date()
+        if not stats_date:
+            # If there are no lowlevel submissions, we stop
+            return
+
+    next_date = get_next_hour(stats_date)
+    with db.engine.connect() as connection:
+        while next_date < to_date:
+            stats = _count_submissions_to_date(connection, next_date)
+            write_stats(connection, next_date, stats)
+            next_date = get_next_hour(next_date)
+
+def write_stats(connection, date, stats):
+    for name, value in six.iteritems(stats):
+        """Records a value with a given name and current timestamp."""
+        q = text("""
+            INSERT INTO statistics (collected, name, value)
+                 VALUES (:collected, :name, :value)""")
+        connection.execute(q, {"collected": date, "name": name, "value": value})
 
 def get_stats():
     """Get submission statistics based on low-level data.
@@ -75,6 +138,8 @@ def get_stats():
         LOWLEVEL_LOSSLESS,
         LOWLEVEL_LOSSY_UNIQUE,
         LOWLEVEL_LOSSLESS_UNIQUE,
+        LOWLEVEL_TOTAL,
+        LOWLEVEL_TOTAL_UNIQUE,
     ]
     cache_key_prefix = "ac-num-"
     # TODO: Port this to new implementation (don't use protected parts):
@@ -91,13 +156,8 @@ def get_stats():
     if sorted(stats_names) != sorted(stats.keys()) or last_collected is None:
 
         with db.engine.connect() as connection:
-            stats = _count_submissions(connection)
+            stats = _get_latest_stats(connection)
             last_collected = _current_db_time(connection)
-
-            # Recordings stats in the database, if necessary
-            if _is_update_time(connection):
-                for name, value in six.iteritems(stats):
-                    _record_value(connection, last_collected, name, value)
 
         # TODO: Port this to new implementation:
         db.cache._mc.set_multi(stats, key_prefix=cache_key_prefix, time=STATS_CACHE_TIMEOUT)
@@ -112,10 +172,9 @@ def get_statistics_data():
         LOWLEVEL_LOSSY_UNIQUE: "Lossy (unique)",
         LOWLEVEL_LOSSLESS: "Lossless (all)",
         LOWLEVEL_LOSSLESS_UNIQUE: "Lossless (unique)",
+        LOWLEVEL_TOTAL: "Total (all)",
+        LOWLEVEL_TOTAL_UNIQUE: "Total (unique)",
     }
-
-    total_all = {"name": "Total (all)", "data": {}}
-    total_unique = {"name": "Total (unique)", "data": {}}
 
     stats = []
 
@@ -136,78 +195,35 @@ def get_statistics_data():
                 "data": [[p[0], p[1]] for p in pairs]
             })
 
-            if name in [LOWLEVEL_LOSSY, LOWLEVEL_LOSSLESS]:
-                total_dict_ref = total_all
-            elif name in [LOWLEVEL_LOSSY_UNIQUE, LOWLEVEL_LOSSLESS_UNIQUE]:
-                total_dict_ref = total_unique
-            else:
-                raise db.exceptions.DatabaseException("Unexpected name in stats.")
-            for timestamp, value in pairs:
-                if timestamp in total_dict_ref["data"]:
-                    total_dict_ref["data"][timestamp] = total_dict_ref["data"][timestamp] + value
-                else:
-                    total_dict_ref["data"][timestamp] = value
-
-    total_all['data'] = [[k, total_all['data'][k]] for k in sorted(total_all['data'].keys())]
-    total_unique['data'] = [[k, total_unique['data'][k]] for k in sorted(total_unique['data'].keys())]
-
-    stats.extend([total_all, total_unique])
-
     return stats
 
 
-def _is_update_time(connection):
-    """Checks if it's time to record statistics in the database.
-
-    Minimum time between records is one hour.
-
-    Args:
-        connection: Database connection.
-
-    Returns:
-        True if it's time to write new stats, False otherwise.
-    """
-    last_check_result = connection.execute("""
-        SELECT now() as now, collected
-          FROM statistics
-      ORDER BY collected DESC
-         LIMIT 1
-    """)
-    if last_check_result.rowcount > 0:
-        now, last_collected = last_check_result.fetchone()
-    return last_check_result.rowcount == 0 or now - last_collected > datetime.timedelta(minutes=59)
-
-
-def _record_value(connection, timestamp, name, value):
-    """Records a value with a given name and current timestamp."""
-    connection.execute("""
-        INSERT INTO statistics (collected, name, value)
-             VALUES (%s, %s, %s)
-          RETURNING collected
-    """, (timestamp, name, value))
-
-
-def _count_submissions(connection):
+def _count_submissions_to_date(connection, to_date):
     """Count number of low-level submissions in the database."""
     # Both total submissions and unique (based on MBIDs)
-    result = connection.execute("""
+    query = text("""
         SELECT 'all' as type, lossless, count(*)
           FROM lowlevel
+         WHERE submitted < :submitted
       GROUP BY lossless
          UNION
         SELECT 'unique' as type, lossless, count(*)
           FROM (
                 SELECT DISTINCT ON (mbid) mbid, lossless
                   FROM lowlevel
+                 WHERE submitted < :submitted
               ORDER BY mbid, lossless DESC
                ) q
       GROUP BY lossless
     """)
+    result = connection.execute(query, {"submitted": to_date})
     counts = {
         LOWLEVEL_LOSSY: 0,
         LOWLEVEL_LOSSY_UNIQUE: 0,
         LOWLEVEL_LOSSLESS: 0,
         LOWLEVEL_LOSSLESS_UNIQUE: 0,
+        LOWLEVEL_TOTAL: 0,
+        LOWLEVEL_TOTAL_UNIQUE: 0,
     }
     for count_type, is_lossless, count in result.fetchall():
         if count_type == "all":
@@ -220,12 +236,9 @@ def _count_submissions(connection):
                 counts[LOWLEVEL_LOSSLESS_UNIQUE] = count
             else:
                 counts[LOWLEVEL_LOSSY_UNIQUE] = count
+    counts[LOWLEVEL_TOTAL] = counts[LOWLEVEL_LOSSY] + counts[LOWLEVEL_LOSSLESS]
+    counts[LOWLEVEL_TOTAL_UNIQUE] = counts[LOWLEVEL_LOSSY_UNIQUE] + counts[LOWLEVEL_LOSSLESS_UNIQUE]
     return counts
-
-
-def _current_db_time(connection):
-    return connection.execute("SELECT now()").fetchone()[0]
-
 
 def _make_timestamp(dt):
     return (time.mktime(dt.utctimetuple()) * 1000) + (dt.microsecond / 1000)

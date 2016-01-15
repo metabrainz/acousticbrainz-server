@@ -228,4 +228,5 @@ def _current_db_time(connection):
 
 
 def _make_timestamp(dt):
-    return (time.mktime(dt.utctimetuple()) * 1000) + (dt.microsecond / 1000)
+    dt = dt.replace(microsecond=0)
+    return time.mktime(dt.utctimetuple())*1000

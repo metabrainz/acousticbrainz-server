@@ -3757,7 +3757,7 @@
 {%- endblock -%}
 
 {%- block scripts -%}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/lib/highlight.pack.js') }}"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+  {{ super() }}
+  <script src="{{ get_static_path('lib/highlight.pack.js') }}"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
 {%- endblock -%}

@@ -37,6 +37,9 @@ hl_extractor/svm_models
 hl_extractor/profile.conf
 hl_extractor/profile.conf.in
 
+# Node.js
+/node_modules
+
 # Other stuff
 /static/download
 export

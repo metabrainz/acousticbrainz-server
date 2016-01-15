@@ -21,6 +21,7 @@ Vagrant for your OS. Then copy two config files:
 After that you can spin up the VM and start working with it:
 
     $ vagrant up
+    $ vagrant ssh
 
 There are some environment variables that you can set to affect the
 provisioning of the virtual machine.
@@ -32,9 +33,16 @@ provisioning of the virtual machine.
  * `AB_NOHL`: If set, don't compile the highlevel calculation tools
               (not needed for regular server development)
 
+Before starting the server you will need to build static files:
+
+    $ cd acousticbrainz-server
+    $ fab build_static
+
+*Keep in mind that you'll need to rebuild static files after you modify
+JavaScript or CSS.*
+
 You can start the web server (will be available at http://127.0.0.1:8080/):
 
-    $ vagrant ssh
     $ cd acousticbrainz-server
     $ python server.py
 

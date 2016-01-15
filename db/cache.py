@@ -65,9 +65,8 @@ def get(key, namespace=None):
         Stored value or None if it's not found.
     """
     if _mc is None: return
-    key = _prep_key(key, namespace)
-    result = _mc.get_multi([key], _glob_namespace)
-    return result[key] if key in result else None
+    result = get_multi([key], namespace)
+    return result.get(key)
 
 
 def delete(key, namespace=None):
@@ -104,11 +103,16 @@ def get_multi(keys, namespace=None):
         keys: Array of keys that need to be retrieved.
 
     Returns:
-        A dictionary of key/value pairs that were available. If key_prefix was
-        provided, the keys in the returned dictionary will not have it present.
+        A dictionary of key/value pairs that were available.
     """
     if _mc is None: return {}
-    return _mc.get_multi(_prep_list(keys, namespace), _glob_namespace)
+    res = _mc.get_multi(_prep_list(keys, namespace), _glob_namespace)
+    for k in keys:
+        namespace_and_version = _get_namespace_version(namespace)
+        prep = _prep_key(k, namespace_and_version)
+        if prep in res:
+            res[k] = res.pop(prep)
+    return res
 
 
 def delete_multi(keys, namespace=None):
@@ -161,19 +165,20 @@ def flush_all():
 
 def _get_namespace_version(namespace):
     if _mc is None: return
+    if namespace is None: return
     version_key = _glob_namespace + namespace
     version = _mc.get(version_key)
     if version is None:  # namespace isn't initialized
         version = 1
         _mc.set(version_key, version)  # initializing the namespace
-    return version
+    return "%s:%s" % (namespace, version)
 
 
-def _prep_key(key, namespace=None):
+def _prep_key(key, namespace_and_version=None):
     """Prepares a key for use with memcached."""
     if _mc is None: return
-    if namespace:
-        key = "%s:%s:%s" % (namespace, _get_namespace_version(namespace), key)
+    if namespace_and_version:
+        key = "%s:%s" % (namespace_and_version, key)
     if not isinstance(key, six.string_types):
         key = str(key)
     key = six.b(hashlib.sha1(six.b(key)).hexdigest())
@@ -183,11 +188,11 @@ def _prep_key(key, namespace=None):
 
 def _prep_list(l, namespace=None):
     """Wrapper for _prep_key function that works with lists."""
-    return [_prep_key(k, namespace) for k in l]
+    namespace_and_version = _get_namespace_version(namespace)
+    return [_prep_key(k, namespace_and_version) for k in l]
 
 
 def _prep_dict(dictionary, namespace=None):
     """Wrapper for _prep_key function that works with dictionaries."""
-    for key in dictionary.keys():
-        dictionary[_prep_key(key, namespace)] = dictionary.pop(key)
-    return dictionary
+    namespace_and_version = _get_namespace_version(namespace)
+    return {_prep_key(key, namespace_and_version): value for key, value in dictionary.items()}

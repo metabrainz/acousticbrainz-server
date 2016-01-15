@@ -1,0 +1,1 @@
+require("highcharts/lib/highstock");

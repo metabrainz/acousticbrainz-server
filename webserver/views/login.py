@@ -39,4 +39,7 @@ def musicbrainz_post():
 def logout():
     logout_user()
     session.clear()
+    next = request.args.get('next')
+    if next:
+        return redirect(next)
     return redirect(url_for('index.index'))

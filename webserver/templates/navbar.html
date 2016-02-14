@@ -29,7 +29,7 @@
       {% if not error %}
         <ul class="nav navbar-nav navbar-right">
           {% if not current_user or current_user.is_anonymous %}
-            <li><a href="{{ url_for('login.index') }}">Sign in</a></li>
+            <li><a href="{{ url_for('login.index', next=request.path) }}">Sign in</a></li>
           {% else %}
             <li class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#">
@@ -37,7 +37,7 @@
               </a>
               <ul class="dropdown-menu" role="menu">
                 <li><a href="{{ url_for('user.profile', musicbrainz_id=current_user.musicbrainz_id) }}">Your profile</a></li>
-                <li><a href="{{ url_for('login.logout') }}">Sign out</a></li>
+                <li><a href="{{ url_for('login.logout', next=request.path) }}">Sign out</a></li>
               </ul>
             </li>
           {% endif %}

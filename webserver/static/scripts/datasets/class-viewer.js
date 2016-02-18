@@ -245,7 +245,7 @@ var Recording = React.createClass({
         switch (this.state.status) {
             case RECORDING_STATUS_LOADED:
                 details = (
-                    <a href={"/" + this.props.mbid}>
+                    <a href={"/" + this.props.mbid} target="_blank">
                         {this.state.details.title} - {this.state.details.artist}
                     </a>
                 );

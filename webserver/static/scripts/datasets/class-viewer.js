@@ -244,7 +244,11 @@ var Recording = React.createClass({
         var rowClassName = "";
         switch (this.state.status) {
             case RECORDING_STATUS_LOADED:
-                details = this.state.details.title + " - " + this.state.details.artist;
+                details = (
+                    <a href={"/" + this.props.mbid} target="_blank">
+                        {this.state.details.title} - {this.state.details.artist}
+                    </a>
+                );
                 rowClassName = "";
                 break;
             case RECORDING_STATUS_ERROR:

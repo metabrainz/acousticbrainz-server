@@ -15,12 +15,25 @@ from sqlalchemy import text
 STATS_CACHE_TIMEOUT = 60 * 10  # 10 minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
+STATS_MEMCACHE_KEY = "recent-stats"
+STATS_MEMCACHE_LAST_UPDATE_KEY = "recent-stats-last-updated"
+STATS_MEMCACHE_NAMESPACE = "statistics"
+
 LOWLEVEL_LOSSY = "lowlevel-lossy"
 LOWLEVEL_LOSSY_UNIQUE = "lowlevel-lossy-unique"
 LOWLEVEL_LOSSLESS = "lowlevel-lossless"
 LOWLEVEL_LOSSLESS_UNIQUE = "lowlevel-lossless-unique"
 LOWLEVEL_TOTAL = "lowlevel-total"
 LOWLEVEL_TOTAL_UNIQUE = "lowlevel-total-unique"
+
+stats_key_map = {
+    LOWLEVEL_LOSSY: "Lossy (all)",
+    LOWLEVEL_LOSSY_UNIQUE: "Lossy (unique)",
+    LOWLEVEL_LOSSLESS: "Lossless (all)",
+    LOWLEVEL_LOSSLESS_UNIQUE: "Lossless (unique)",
+    LOWLEVEL_TOTAL: "Total (all)",
+    LOWLEVEL_TOTAL_UNIQUE: "Total (unique)",
+}
 
 
 def get_last_submitted_recordings():
@@ -58,144 +71,127 @@ def get_last_submitted_recordings():
 
     return last_submissions
 
-def get_earliest_submission_date():
-    """Get the earliest date that something was submitted to AB."""
-    q = text("""SELECT submitted
-                  FROM lowlevel
-              ORDER BY submitted ASC
-                 LIMIT 1""")
-    with db.engine.connect() as connection:
-        cur = connection.execute(q)
-        row = cur.fetchone()
-        if row:
-            return row[0]
-
-def get_most_recent_stats_date():
-    q = text("""SELECT collected
-                  FROM statistics
-              ORDER BY collected DESC
-                 LIMIT 1""")
-    with db.engine.connect() as connection:
-        cur = connection.execute(q)
-        row = cur.fetchone()
-        if row:
-            return row[0]
-
-def get_next_hour(date):
-    """Round up a date to the nearest hour:00:00.
-    Arguments:
-      date: a datetime
-    """
-    delta = datetime.timedelta(hours=1)
-    date = date + delta
-    date = date.replace(minute=0, second=0, microsecond=0)
-    return date
 
 def compute_stats(to_date):
     # Compute stats up to the given date
 
-    stats_date = get_most_recent_stats_date()
-    if not stats_date:
-        # If there have been no statistics, we start from the
-        # earliest date in the lowlevel table
-        stats_date = get_earliest_submission_date()
-        if not stats_date:
-            # If there are no lowlevel submissions, we stop
-            return
-
-    next_date = get_next_hour(stats_date)
     with db.engine.connect() as connection:
+        stats_date = _get_most_recent_stats_date(connection)
+        if not stats_date:
+            # If there have been no statistics, we start from the
+            # earliest date in the lowlevel table
+            stats_date = _get_earliest_submission_date(connection)
+            if not stats_date:
+                # If there are no lowlevel submissions, we stop
+                return
+
+        next_date = _get_next_hour(stats_date)
+
         while next_date < to_date:
             stats = _count_submissions_to_date(connection, next_date)
-            write_stats(connection, next_date, stats)
-            next_date = get_next_hour(next_date)
+            _write_stats(connection, next_date, stats)
+            next_date = _get_next_hour(next_date)
 
-def write_stats(connection, date, stats):
+
+def _write_stats(connection, date, stats):
+    """Records a value with a given name and current timestamp."""
     for name, value in six.iteritems(stats):
-        """Records a value with a given name and current timestamp."""
         q = text("""
             INSERT INTO statistics (collected, name, value)
                  VALUES (:collected, :name, :value)""")
         connection.execute(q, {"collected": date, "name": name, "value": value})
 
-def get_stats():
-    """Get submission statistics based on low-level data.
 
-    In addition, all stats are recorded in the database when this function is
-    called if an hour has passed since last record.
+def add_stats_to_cache():
+    """Compute the most recent statistics and add them to memcache"""
+    now = datetime.datetime.now()
+    with db.engine.connect() as connection:
+        stats = _count_submissions_to_date(connection, now)
+        db.cache.set(STATS_MEMCACHE_KEY, stats,
+                     time=STATS_CACHE_TIMEOUT, namespace=STATS_MEMCACHE_NAMESPACE)
+        db.cache.set(STATS_MEMCACHE_LAST_UPDATE_KEY, now,
+                     time=STATS_CACHE_TIMEOUT, namespace=STATS_MEMCACHE_NAMESPACE)
 
-    Returns:
-        Dictionary with values for each metric:
-        - lowlevel-lossy: total number of lossy submissions
-        - lowlevel-lossless: total number of lossless submissions
-        - lowlevel-lossy-unique: number of unique lossy submissions
-        - lowlevel-lossless-unique: number of unique lossless submissions
-    """
 
-    # Names are also used as cache keys with prefix defined below.
-    stats_names = [
-        LOWLEVEL_LOSSY,
-        LOWLEVEL_LOSSLESS,
-        LOWLEVEL_LOSSY_UNIQUE,
-        LOWLEVEL_LOSSLESS_UNIQUE,
-        LOWLEVEL_TOTAL,
-        LOWLEVEL_TOTAL_UNIQUE,
-    ]
-    cache_key_prefix = "ac-num-"
-    # TODO: Port this to new implementation (don't use protected parts):
-    stats = db.cache._mc.get_multi(stats_names, key_prefix=cache_key_prefix)
-
-    # Last collected value is used as an indication if we need to recalculate
-    # all the values. It's stored in cache for MIN_RECORD_INTERVAL seconds (see
-    # definition above).
-    last_collected_cache_key = "last-collected"
-    last_collected = db.cache.get(last_collected_cache_key)
-
-    # All stats need to be recalculated together!
-    # Checking if one of values is missing or if we hit the stats recording time.
-    if sorted(stats_names) != sorted(stats.keys()) or last_collected is None:
-
-        with db.engine.connect() as connection:
-            stats = _get_latest_stats(connection)
-            last_collected = _current_db_time(connection)
-
-        # TODO: Port this to new implementation:
-        db.cache._mc.set_multi(stats, key_prefix=cache_key_prefix, time=STATS_CACHE_TIMEOUT)
-        db.cache.set(last_collected_cache_key, last_collected, time=STATS_CACHE_TIMEOUT)
-
+def get_stats_summary():
+    last_collected, stats = get_stats_from_cache()
+    if not stats:
+        recent_database = load_statistics_data(1)
+        if recent_database:
+            stats = recent_database[0]["stats"]
+            last_collected = recent_database[0]["collected"]
+        else:
+            stats = {k: 0 for k in stats_key_map.keys()}
     return stats, last_collected
 
 
-def get_statistics_data():
-    stats_key_map = {
-        LOWLEVEL_LOSSY: "Lossy (all)",
-        LOWLEVEL_LOSSY_UNIQUE: "Lossy (unique)",
-        LOWLEVEL_LOSSLESS: "Lossless (all)",
-        LOWLEVEL_LOSSLESS_UNIQUE: "Lossless (unique)",
-        LOWLEVEL_TOTAL: "Total (all)",
-        LOWLEVEL_TOTAL_UNIQUE: "Total (unique)",
-    }
+def get_stats_from_cache():
+    """Get submission statistics from memcache"""
+    stats = db.cache.get(STATS_MEMCACHE_KEY, namespace=STATS_MEMCACHE_NAMESPACE)
+    last_collected = db.cache.get(STATS_MEMCACHE_LAST_UPDATE_KEY,
+                                  namespace=STATS_MEMCACHE_NAMESPACE)
 
-    stats = []
+    return last_collected, stats
 
-    with db.engine.connect() as connection:
-        stats_result = connection.execute("""
-            SELECT name,
-                   array_agg(collected ORDER BY collected ASC) AS times,
-                   array_agg(value ORDER BY collected ASC) AS values
-              FROM statistics
-          GROUP BY name
-        """)
-        for name, times, values in stats_result:
-            # <time, value> pairs
-            pairs = zip([_make_timestamp(t) for t in times], values)
 
-            stats.append({
-                "name": stats_key_map.get(name, name),
-                "data": [[p[0], p[1]] for p in pairs]
-            })
+def format_statistics(data):
+    """
+    :param data: data from load_statistics_data
+    :return: statistics formatted for
+    """
+
+    counts = {}
+    for k in stats_key_map.keys():
+        counts[k] = []
+
+    for row in data:
+        collected = row["collected"]
+        stats = row["stats"]
+
+        ts = _make_timestamp(collected)
+        for k, v in counts.items():
+            counts[k].append([ts, stats[k]])
+
+    stats = [{"name": stats_key_map.get(key, key), "data": data} for key, data in counts.items()]
 
     return stats
+
+
+def load_statistics_data(limit=None):
+    # Posgres doesn't let you create a json dictionary using values
+    # from one column as keys and another column as values. Instead we
+    # create an array of {"name": name, "value": value} objects and change
+    # it in python
+    args = {}
+    # TODO: use sqlalchemy select().limit()?
+    qtext = """
+            SELECT collected
+                 , json_agg(row_to_json(
+                    (SELECT r FROM (SELECT name, value) r) )) AS stats
+              FROM statistics
+          GROUP BY collected
+          ORDER BY collected DESC
+          """
+    if limit:
+        args["limit"] = int(limit)
+        qtext += " LIMIT :limit"
+    query = text(qtext)
+    with db.engine.connect() as connection:
+        stats_result = connection.execute(query, args)
+        ret = []
+        for line in stats_result:
+            row = {"collected": line["collected"], "stats": {}}
+            for stat in line["stats"]:
+                row["stats"][stat["name"]] = stat["value"]
+            ret.append(row)
+
+    # We order by DESC in order to use the `limit` parameter, but
+    # we actually need the stats in increasing order.
+    return list(reversed(ret))
+
+
+def get_statistics_history():
+    return format_statistics(load_statistics_data())
 
 
 def _count_submissions_to_date(connection, to_date):
@@ -240,6 +236,41 @@ def _count_submissions_to_date(connection, to_date):
     counts[LOWLEVEL_TOTAL_UNIQUE] = counts[LOWLEVEL_LOSSY_UNIQUE] + counts[LOWLEVEL_LOSSLESS_UNIQUE]
     return counts
 
+
 def _make_timestamp(dt):
     dt = dt.replace(microsecond=0)
-    return time.mktime(dt.utctimetuple())*1000
+    return int(time.mktime(dt.utctimetuple())*1000)
+
+
+def _get_earliest_submission_date(connection):
+    """Get the earliest date that something was submitted to AB."""
+    q = text("""SELECT submitted
+                  FROM lowlevel
+              ORDER BY submitted ASC
+                 LIMIT 1""")
+    cur = connection.execute(q)
+    row = cur.fetchone()
+    if row:
+        return row[0]
+
+
+def _get_most_recent_stats_date(connection):
+    q = text("""SELECT collected
+                  FROM statistics
+              ORDER BY collected DESC
+                 LIMIT 1""")
+    cur = connection.execute(q)
+    row = cur.fetchone()
+    if row:
+        return row[0]
+
+
+def _get_next_hour(date):
+    """Round up a date to the nearest hour:00:00.
+    Arguments:
+      date: a datetime
+    """
+    delta = datetime.timedelta(hours=1)
+    date = date + delta
+    date = date.replace(minute=0, second=0, microsecond=0)
+    return date

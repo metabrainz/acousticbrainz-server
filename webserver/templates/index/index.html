@@ -67,19 +67,19 @@
               <th>Unique</th>
               <td>{{ "{:,}".format(stats['lowlevel-lossy-unique']) }}</td>
               <td>{{ "{:,}".format(stats['lowlevel-lossless-unique']) }}</td>
-              <td><strong>{{ "{:,}".format(stats['lowlevel-lossy-unique'] + stats['lowlevel-lossless-unique']) }}</strong></td>
+              <td><strong>{{ "{:,}".format(stats['lowlevel-total-unique']) }}</strong></td>
             </tr>
             <tr>
               <th>All</th>
               <td>{{ "{:,}".format(stats['lowlevel-lossy']) }}</td>
               <td>{{ "{:,}".format(stats['lowlevel-lossless']) }}</td>
-              <td><strong>{{ "{:,}".format(stats['lowlevel-lossy'] + stats['lowlevel-lossless']) }}</strong></td>
+              <td><strong>{{ "{:,}".format(stats['lowlevel-total']) }}</strong></td>
             </tr>
             </tbody>
           </table>
           <p style="text-align: center">
             <small>updated every 10 minutes</small><br />
-            <small>last updated: {{ last_collected.strftime("%Y-%m-%d %H:%M") }}</small><br />
+            <small>last updated: {% if last_collected %}{{ last_collected.strftime("%Y-%m-%d %H:%M") }}{% else %}never{% endif %}</small><br />
             <small><a href="{{ url_for('stats.graph') }}">more on the detailed statistics page</a></small>
           </p>
         </div>

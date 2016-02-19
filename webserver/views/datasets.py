@@ -15,6 +15,9 @@ import db.user
 import jsonschema
 import csv
 import six
+import config
+import db
+import db.dataset_eval
 
 datasets_bp = Blueprint("datasets", __name__)
 
@@ -144,7 +147,11 @@ def edit(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
-
+    jobs = db.dataset_eval.get_jobs_for_dataset(str(dataset_id))
+    for job in jobs:
+        if(job["status"]=="running" or job["status"]=="pending"):
+            flash.warn("There is a pending job for this dataset")
+            break
     if request.method == "POST":
         dataset_dict = request.get_json()
         if not dataset_dict:

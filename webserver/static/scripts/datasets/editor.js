@@ -1,4 +1,3 @@
-/** @jsx React.DOM */
 /*
  This is a dataset editor. It works in two modes:
  - create (creates new dataset from scratch)
@@ -12,6 +11,7 @@
  attribute references existing dataset by its ID. When Dataset component is
  mounted, it pull existing dataset for editing from the server.
  */
+var React = require('react');
 
 var CONTAINER_ELEMENT_ID = "dataset-editor";
 var container = document.getElementById(CONTAINER_ELEMENT_ID);
@@ -560,7 +560,11 @@ var Recording = React.createClass({
         var rowClassName = "";
         switch (this.state.status) {
             case RECORDING_STATUS_LOADED:
-                details = this.state.details.title + " - " + this.state.details.artist;
+                details = (
+                    <a href={"/" + this.props.mbid} target="_blank">
+                        {this.state.details.title} - {this.state.details.artist}
+                    </a>
+                );
                 rowClassName = "";
                 break;
             case RECORDING_STATUS_ERROR:
@@ -587,4 +591,4 @@ var Recording = React.createClass({
 });
 
 
-React.render(<Dataset />, container);
+if (container) React.render(<Dataset />, container);

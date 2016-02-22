@@ -1,4 +1,3 @@
-/** @jsx React.DOM */
 /*
  This is a viewer for classes in existing datasets.
 
@@ -6,6 +5,7 @@
  to be specified on container element. When Dataset component is mounted, it
  fetches existing dataset from the server.
  */
+var React = require('react');
 
 var CONTAINER_ELEMENT_ID = "dataset-class-viewer";
 var container = document.getElementById(CONTAINER_ELEMENT_ID);
@@ -244,7 +244,11 @@ var Recording = React.createClass({
         var rowClassName = "";
         switch (this.state.status) {
             case RECORDING_STATUS_LOADED:
-                details = this.state.details.title + " - " + this.state.details.artist;
+                details = (
+                    <a href={"/" + this.props.mbid} target="_blank">
+                        {this.state.details.title} - {this.state.details.artist}
+                    </a>
+                );
                 rowClassName = "";
                 break;
             case RECORDING_STATUS_ERROR:
@@ -266,5 +270,4 @@ var Recording = React.createClass({
     }
 });
 
-
-React.render(<Dataset />, container);
+if (container) React.render(<Dataset />, container);

@@ -3,6 +3,7 @@ server {
      server_name acousticbrainz.org;
      access_log  /var/log/nginx/acousticbrainz-combined.log combined;
      error_log   /var/log/nginx/acousticbrainz-error.log notice;
+     client_max_body_size 100M;
 
      location /static {
           root /home/acousticbrainz/acousticbrainz-server/webserver;
@@ -21,6 +22,7 @@ server {
      location @ab {
           include uwsgi_params;
           uwsgi_pass unix:/tmp/acousticbrainz.uwsgi.sock;
+          uwsgi_read_timeout 200s;
           gzip on;
           gzip_http_version 1.0;
           gzip_comp_level 6;

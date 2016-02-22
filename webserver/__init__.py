@@ -47,11 +47,16 @@ def create_app():
     from webserver.errors import init_error_handlers
     init_error_handlers(app)
 
+    # Static files
+    import static_manager
+    static_manager.read_manifest()
+
     # Template utilities
     app.jinja_env.add_extension('jinja2.ext.do')
     from webserver import utils
     app.jinja_env.filters['date'] = utils.reformat_date
     app.jinja_env.filters['datetime'] = utils.reformat_datetime
+    app.context_processor(lambda: dict(get_static_path=static_manager.get_static_path))
 
     # Blueprints
     from webserver.views.index import index_bp

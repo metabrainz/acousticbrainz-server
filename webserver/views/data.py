@@ -166,19 +166,25 @@ def _get_recording_info(mbid, metadata):
         return info
 
     elif metadata:
-        info['title'] = metadata['tags']['title'][0]
+
+        def get_tag(name):
+            if name in metadata['tags'] and metadata['tags'][name]:
+                return metadata['tags'][name][0]
+            else:
+                return ''
+
         info['length'] = metadata['audio_properties']['length_formatted']
-        info['artist_id'] = metadata['tags']['musicbrainz_artistid'][0]
-        info['artist'] = metadata['tags']['artist'][0]
-        info['release_id'] = metadata['tags']['musicbrainz_albumid'][0]
-        info['release'] = metadata['tags']['album'][0]
-        info['track_id'] = metadata['tags']['musicbrainz_releasetrackid'][0] if \
-            'musicbrainz_releasetrackid' in metadata['tags'] else None
+        info['title'] = get_tag('title')
+        info['artist_id'] = get_tag('musicbrainz_artistid')
+        info['artist'] = get_tag('artist')
+        info['release_id'] = get_tag('musicbrainz_albumid')
+        info['release'] = get_tag('album')
+        info['track_id'] = get_tag('musicbrainz_releasetrackid')
         if 'tracktotal' in metadata['tags']:
-            info['track_number'] = '%s / %s' % (metadata['tags']['tracknumber'][0],
-                                                metadata['tags']['tracktotal'][0])
+            info['track_number'] = '%s / %s' % (get_tag('tracknumber'),
+                                                get_tag('tracktotal'))
         else:
-            info['track_number'] = metadata['tags']['tracknumber'][0]
+            info['track_number'] = get_tag('tracknumber')
         return info
 
     else:

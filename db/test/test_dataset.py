@@ -45,6 +45,20 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(len(ds["classes"][0]["recordings"]), 2)
         self.assertEqual(len(ds["classes"][1]["recordings"]), 3)
 
+    def test_create_from_dict_duplicates(self):
+        bad_dict = copy.deepcopy(self.test_data)
+        bad_dict["classes"][0]["recordings"] = [
+            "0dad432b-16cc-4bf0-8961-fd31d124b01b",
+            "19e698e7-71df-48a9-930e-d4b1a2026c82",
+            "19e698e7-71df-48a9-930e-d4b1a2026c82",
+        ]
+        id = dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
+
+        ds = dataset.get(id)
+        self.assertEqual(len(ds["classes"][0]["recordings"]), 2)
+        self.assertIn("19e698e7-71df-48a9-930e-d4b1a2026c82", ds["classes"][0]["recordings"])
+
+
     def test_create_from_dict_malformed(self):
         bad_dict = copy.deepcopy(self.test_data)
 

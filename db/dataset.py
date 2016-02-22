@@ -99,6 +99,9 @@ def create_from_dict(dictionary, author_id):
                            (cls["name"], cls["description"], dataset_id))
             cls_id = result.fetchone()[0]
 
+            # Removing duplicate recordings
+            cls["recordings"] = list(set(cls["recordings"]))
+
             for recording_mbid in cls["recordings"]:
                 connection.execute("INSERT INTO dataset_class_member (class, mbid) VALUES (%s, %s)",
                                (cls_id, recording_mbid))

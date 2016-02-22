@@ -54,7 +54,4 @@ MEMCACHED_NAMESPACE = "AB"
 #SMTP_PORT = 25
 #MAIL_FROM_DOMAIN = "acousticbrainz.org"
 
-# Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
-COMPILE_LESS = True
-
 FILE_STORAGE_DIR = "./files"

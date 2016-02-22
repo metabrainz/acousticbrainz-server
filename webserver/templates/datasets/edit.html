@@ -18,7 +18,5 @@
 
 {%- block scripts -%}
   {{ super() }}
-  <script src="{{ url_for('static', filename='js/lib/react.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/lib/JSXTransformer.js') }}"></script>
-  <script type="text/jsx" src="{{ url_for('static', filename='js/dataset-editor.js') }}"></script>
+  <script src="{{ get_static_path('datasets.js') }}"></script>
 {%- endblock -%}

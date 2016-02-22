@@ -27,26 +27,52 @@ DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)
 # Importing of old dumps will fail if you change
 # definition of columns below.
 _TABLES = {
+    "version": (
+        "id",
+        "data",
+        "data_sha256",
+        "type",
+        "created",
+    ),
     "lowlevel": (
         "id",
         "mbid",
         "build_sha1",
         "lossless",
-        "data",
         "submitted",
+    ),
+    "lowlevel_json": (
+        "id",
+        "data",
         "data_sha256",
+        "version",
+    ),
+    "model": (
+        "id",
+        "model",
+        "model_version",
+        "date",
+        "status",
     ),
     "highlevel": (
         "id",
         "mbid",
         "build_sha1",
-        "data",
         "submitted",
     ),
-    "highlevel_json": (
+    "highlevel_meta": (
         "id",
         "data",
         "data_sha256",
+    ),
+    "highlevel_model": (
+        "id",
+        "highlevel",
+        "data",
+        "data_sha256",
+        "model",
+        "version",
+        "created",
     ),
     "statistics": (
         "name",
@@ -149,11 +175,32 @@ def _copy_tables(location, start_time=None, end_time=None):
     try:
         cursor = connection.cursor()
 
+        # version
+        with open(os.path.join(location, "version"), "w") as f:
+            logging.info(" - Copying table version...")
+            cursor.copy_to(f, "(SELECT %s FROM version %s)" %
+                           (", ".join(_TABLES["version"]), generate_where("created")))
+
         # lowlevel
         with open(os.path.join(location, "lowlevel"), "w") as f:
             logging.info(" - Copying table lowlevel...")
             cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
                            (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
+
+        # lowlevel_json
+        with open(os.path.join(location, "lowlevel_json"), "w") as f:
+            logging.info(" - Copying table lowlevel_json...")
+            query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
+                    % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
+            cursor.copy_to(f, "(%s)" % query)
+
+        # model
+        with open(os.path.join(location, "model"), "w") as f:
+            logging.info(" - Copying table model...")
+            query = "SELECT %s FROM model %s" \
+                    % (", ".join(_TABLES["model"]), generate_where("date"))
+            cursor.copy_to(f, "(%s)" % query)
+
 
         # highlevel
         with open(os.path.join(location, "highlevel"), "w") as f:
@@ -161,11 +208,18 @@ def _copy_tables(location, start_time=None, end_time=None):
             cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
                            (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
 
-        # highlevel_json
-        with open(os.path.join(location, "highlevel_json"), "w") as f:
-            logging.info(" - Copying table highlevel_json...")
-            query = "SELECT %s FROM highlevel_json WHERE id IN (SELECT data FROM highlevel %s)" \
-                    % (", ".join(_TABLES["highlevel_json"]), generate_where("submitted"))
+        # highlevel_meta
+        with open(os.path.join(location, "highlevel_meta"), "w") as f:
+            logging.info(" - Copying table highlevel_meta...")
+            query = "SELECT %s FROM highlevel_meta WHERE id IN (SELECT id FROM highlevel %s)" \
+                    % (", ".join(_TABLES["highlevel_meta"]), generate_where("submitted"))
+            cursor.copy_to(f, "(%s)" % query)
+
+        # highlevel_model
+        with open(os.path.join(location, "highlevel_model"), "w") as f:
+            logging.info(" - Copying table highlevel_model...")
+            query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
+                    % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
             cursor.copy_to(f, "(%s)" % query)
 
         # statistics
@@ -287,10 +341,17 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     break
                 id_list = tuple([i[0] for i in id_list])
 
-                cursor_inner.execute("""SELECT mbid::text, data::text
-                                        FROM lowlevel
-                                        WHERE id IN %s
-                                        ORDER BY mbid""", (id_list,))
+                query = text("""
+                   SELECT mbid::text
+                        , llj.data::text
+                     FROM lowlevel ll
+                     JOIN lowlevel_json llj
+                       ON ll.id = llj.id
+                    WHERE ll.id IN :id_list
+                """)
+
+                cursor_inner.execute(query, {"id_list": id_list})
+
                 while True:
                     row = cursor_inner.fetchone()
                     if not row:

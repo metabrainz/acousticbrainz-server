@@ -57,6 +57,7 @@ class DatabaseTestCase(unittest.TestCase):
         with db.engine.connect() as connection:
             connection.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
             connection.execute('DROP TYPE IF EXISTS model_status CASCADE;')
+            connection.execute('DROP TYPE IF EXISTS version_type CASCADE;')
 
     def data_filename(self, mbid):
         """ Get the expected filename of a test datafile given its mbid """

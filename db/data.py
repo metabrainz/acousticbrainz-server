@@ -32,6 +32,9 @@ STATUS_HIDDEN = 'hidden'
 STATUS_EVALUATION = 'evaluation'
 STATUS_SHOW = 'show'
 
+VERSION_TYPE_LOWLEVEL = 'lowlevel'
+VERSION_TYPE_HIGHLEVEL = 'highlevel'
+
 MODEL_STATUSES = [STATUS_HIDDEN, STATUS_EVALUATION, STATUS_SHOW]
 
 # TODO: Util methods should not be in the database package
@@ -123,22 +126,25 @@ def submit_low_level_data(mbid, data):
     # The data looks good, lets see about saving it
     write_low_level(mbid, data)
 
-def insert_version(connection, data):
+def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id
     norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
     sha = sha256(norm_data).hexdigest()
-    result = connection.execute(
-        """SELECT id from version where data_sha256=%s""", (sha, )
-    )
+    query = text("""
+            SELECT id
+              FROM version
+             WHERE data_sha256=:data_sha256
+               AND type=:version_type""")
+    result = connection.execute(query, {"data_sha256": sha, "version_type": version_type})
     row = result.fetchone()
     if row:
         return row[0]
 
     result = connection.execute(
-        text("""INSERT INTO version (data, data_sha256)
-        VALUES (:data, :sha)
+        text("""INSERT INTO version (data, data_sha256, type)
+        VALUES (:data, :sha, :version_type)
         RETURNING id"""),
-        {"data":norm_data, "sha":sha}
+        {"data": norm_data, "sha": sha, "version_type": version_type}
     )
     row = result.fetchone()
     return row[0]
@@ -163,7 +169,7 @@ def write_low_level(mbid, data):
             """)
             result = connection.execute(query, {"mbid": mbid, "build_sha1": build_sha1, "lossless": is_lossless_submit})
             ll_id = result.fetchone()[0]
-            version_id = insert_version(connection, version)
+            version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
             query = text("""
               INSERT INTO lowlevel_json (id, data, data_sha256, version)
                    VALUES (:id, :data, :data_sha256, :version)
@@ -272,7 +278,6 @@ def write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta):
 
 
 def write_high_level(mbid, ll_id, data, build_sha1):
-
     # If the hl runner failed to run, its output is {}
     if not data:
         return
@@ -284,7 +289,7 @@ def write_high_level(mbid, ll_id, data, build_sha1):
         write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta)
 
         hl_version = json_meta["version"]["highlevel"]
-        version_id = insert_version(connection, hl_version)
+        version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
         model_version = hl_version["models_essentia_git_sha"]
 
         for model_name, data in json_high.items():

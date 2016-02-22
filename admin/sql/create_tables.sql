@@ -34,13 +34,16 @@ CREATE TABLE highlevel_model (
   data        JSONB    NOT NULL,
   data_sha256 CHAR(64) NOT NULL,
   model       INTEGER  NOT NULL, -- FK to model.id
-  version     INTEGER  NOT NULL-- FK to version.id
+  version     INTEGER  NOT NULL, -- FK to version.id
+  created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE version (
   id          SERIAL,
   data        JSONB    NOT NULL,
-  data_sha256 CHAR(64) NOT NULL
+  data_sha256 CHAR(64) NOT NULL,
+  type        version_type NOT NULL,
+  created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE model (

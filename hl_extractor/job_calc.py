@@ -48,7 +48,7 @@ class HighLevel(Thread):
         try:
             f = tempfile.NamedTemporaryFile(delete=False)
             name = f.name
-            f.write(self.ll_data)
+            f.write(self.ll_data.encode("utf-8"))
             f.close()
         except IOError:
             print("IO Error while writing temp file")
@@ -187,7 +187,7 @@ def main(num_threads, profile, dataset_job_id):
             mbid, doc, id = docs.pop()
             th = HighLevel(mbid, doc, id)
             th.start()
-            print("start %s" % mbid)
+            print("start %s" % id)
             sys.stdout.flush()
             pool[id] = th
 
@@ -221,7 +221,7 @@ def main(num_threads, profile, dataset_job_id):
 
                     db.data.write_high_level(mbid, ll_id, jdata, build_sha1)
 
-                    print("done  %s" % mbid)
+                    print("done  %s" % id)
                     sys.stdout.flush()
                     num_processed += 1
 

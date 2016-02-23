@@ -7,7 +7,7 @@ import db
 import db.cache
 import db.exceptions
 import datetime
-import time
+import calendar
 import six
 
 from sqlalchemy import text
@@ -238,8 +238,9 @@ def _count_submissions_to_date(connection, to_date):
 
 
 def _make_timestamp(dt):
+    """ Return the number of miliseconds since the epoch, in UTC """
     dt = dt.replace(microsecond=0)
-    return int(time.mktime(dt.utctimetuple())*1000)
+    return calendar.timegm(dt.utctimetuple())*1000
 
 
 def _get_earliest_submission_date(connection):

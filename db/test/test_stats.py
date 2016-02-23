@@ -171,12 +171,12 @@ class StatsDatabaseTestCase(DatabaseTestCase):
 
         formatted = db.stats.format_statistics(data)
         expected_formatted = [
-            {'data': [[1452380400000, 15], [1452466800000, 20]], 'name': 'Lossless (all)'},
-            {'data': [[1452380400000, 10], [1452466800000, 10]], 'name': 'Lossless (unique)'},
-            {'data': [[1452380400000, 10], [1452466800000, 15]], 'name': 'Lossy (all)'},
-            {'data': [[1452380400000, 6], [1452466800000, 10]], 'name': 'Lossy (unique)'},
-            {'data': [[1452380400000, 25], [1452466800000, 35]], 'name': 'Total (all)'},
-            {'data': [[1452380400000, 16], [1452466800000, 20]], 'name': 'Total (unique)'}]
+            {'data': [[1452384000000, 15], [1452470400000, 20]], 'name': 'Lossless (all)'},
+            {'data': [[1452384000000, 10], [1452470400000, 10]], 'name': 'Lossless (unique)'},
+            {'data': [[1452384000000, 10], [1452470400000, 15]], 'name': 'Lossy (all)'},
+            {'data': [[1452384000000, 6], [1452470400000, 10]], 'name': 'Lossy (unique)'},
+            {'data': [[1452384000000, 25], [1452470400000, 35]], 'name': 'Total (all)'},
+            {'data': [[1452384000000, 16], [1452470400000, 20]], 'name': 'Total (unique)'}]
         self.assertEqual(sorted(expected_formatted), sorted(formatted))
 
     def test_get_statistics_data_limit(self):

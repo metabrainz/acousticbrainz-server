@@ -1,6 +1,8 @@
 from __future__ import print_function
 import db
+import db.cache
 import db.dump
+import db.stats
 import db.dump_manage
 from webserver import create_app
 import subprocess
@@ -125,12 +127,27 @@ def init_test_db(force=False):
 @click.argument("archive", type=click.Path(exists=True))
 def import_data(archive):
     """Imports data dump into the database."""
-    db.init_db_connection(config.PG_CONNECT)
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
     print('Importing data...')
     db.dump.import_db_dump(archive)
 
 
 cli.add_command(db.dump_manage.cli, name="dump")
+
+
+@cli.command()
+def compute_stats():
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    import datetime
+    import pytz
+    db.stats.compute_stats(datetime.datetime.now(pytz.utc))
+
+
+@cli.command()
+def cache_stats():
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    db.cache.init(config.MEMCACHED_SERVERS)
+    db.stats.add_stats_to_cache()
 
 
 if __name__ == '__main__':

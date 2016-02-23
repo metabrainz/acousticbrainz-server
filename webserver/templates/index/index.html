@@ -79,7 +79,10 @@
           </table>
           <p style="text-align: center">
             <small>updated every 10 minutes</small><br />
-            <small>last updated: {% if last_collected %}{{ last_collected.strftime("%Y-%m-%d %H:%M") }}{% else %}never{% endif %}</small><br />
+            <small>last updated: {% if last_collected %}
+                <span id="last_collected" data-timestamp="{{last_collected_timestamp}}">
+                    {{ last_collected.strftime("%Y-%m-%d %H:%M %Z") }}</span>
+                {% else %}never{% endif %}</small><br />
             <small><a href="{{ url_for('stats.graph') }}">more on the detailed statistics page</a></small>
           </p>
         </div>
@@ -91,4 +94,9 @@
       </div>
     </div>
   </div>
+{%- endblock -%}
+
+{%- block scripts -%}
+  {{ super() }}
+  <script src="{{ get_static_path('homepage.js') }}"></script>
 {%- endblock -%}

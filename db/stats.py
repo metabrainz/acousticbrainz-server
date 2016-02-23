@@ -7,6 +7,7 @@ import db
 import db.cache
 import db.exceptions
 import datetime
+import pytz
 import calendar
 import six
 
@@ -104,7 +105,7 @@ def _write_stats(connection, date, stats):
 
 def add_stats_to_cache():
     """Compute the most recent statistics and add them to memcache"""
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(pytz.utc)
     with db.engine.connect() as connection:
         stats = _count_submissions_to_date(connection, now)
         db.cache.set(STATS_MEMCACHE_KEY, stats,
@@ -114,7 +115,7 @@ def add_stats_to_cache():
 
 
 def get_stats_summary():
-    last_collected, stats = get_stats_from_cache()
+    last_collected, stats = _get_stats_from_cache()
     if not stats:
         recent_database = load_statistics_data(1)
         if recent_database:
@@ -125,7 +126,7 @@ def get_stats_summary():
     return stats, last_collected
 
 
-def get_stats_from_cache():
+def _get_stats_from_cache():
     """Get submission statistics from memcache"""
     stats = db.cache.get(STATS_MEMCACHE_KEY, namespace=STATS_MEMCACHE_NAMESPACE)
     last_collected = db.cache.get(STATS_MEMCACHE_LAST_UPDATE_KEY,

@@ -55,14 +55,62 @@ class StatsTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, last)
 
-    def test_get_stats_summary(self):
-        pass
+    @mock.patch("db.stats._get_stats_from_cache")
+    @mock.patch("db.stats.load_statistics_data")
+    def test_get_stats_summary(self, load_stats, from_cache):
+        # No cache and no database, return blank
+        from_cache.return_value = (None, None)
+        load_stats.return_value = []
 
-    def test_get_stats_from_cache(self):
-        pass
+        stats, last_collected = db.stats.get_stats_summary()
+        self.assertIsNone(last_collected)
+        expected = {"lowlevel-lossy": 0, "lowlevel-lossy-unique": 0, "lowlevel-lossless": 0,
+                "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
+        self.assertEquals(expected, stats)
 
-    def test_add_stats_to_cache(self):
-        pass
+        # No cache and yes database, return db
+        from_cache.return_value = (None, None)
+        load_stats.return_value = [{"collected": "date", "stats": "stats"}]
+
+        stats, last_collected = db.stats.get_stats_summary()
+        self.assertEquals("date", last_collected)
+        self.assertEquals("stats", stats)
+
+        # if cache, return cache
+        from_cache.return_value = ("cachedate", "cachestats")
+        load_stats.return_value = [{"collected": "date", "stats": "stats"}]
+
+        stats, last_collected = db.stats.get_stats_summary()
+        self.assertEquals("cachedate", last_collected)
+        self.assertEquals("cachestats", stats)
+
+    @mock.patch("db.cache.get")
+    def test_get_stats_from_cache(self, cacheget):
+
+        db.stats._get_stats_from_cache()
+        getcalls = [mock.call("recent-stats", namespace="statistics"), mock.call("recent-stats-last-updated", namespace="statistics")]
+        cacheget.assert_has_calls(getcalls)
+
+    @mock.patch("db.engine.connect")
+    @mock.patch("db.stats._count_submissions_to_date")
+    @mock.patch("db.stats.datetime")
+    @mock.patch("db.cache.set")
+    def test_add_stats_to_cache(self, cacheset, dt, count, connect):
+        datetimenow = datetime.datetime(2015, 12, 22, 14, 00, 00, tzinfo=pytz.utc)
+        dt.datetime.now.return_value = datetimenow
+        connection = "CONNECTION"
+        connect.return_value.__enter__ = mock.Mock(return_value=connection)
+        connect.return_value.__exit__ = mock.Mock(return_value=True)
+        stats = {"stats": "here"}
+        count.return_value = stats
+
+        db.stats.add_stats_to_cache()
+
+        count.assert_called_once_with(connection, datetimenow)
+        connect.assert_called_once_with()
+        dt.datetime.now.assert_called_once_with()
+        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=600, namespace="statistics"), mock.call("recent-stats-last-updated", datetimenow, time=600, namespace="statistics")]
+        cacheset.assert_has_calls(setcalls)
 
     def test_compute_stats(self):
         pass

@@ -9,7 +9,9 @@ index_bp = Blueprint('index', __name__)
 @index_bp.route("/")
 def index():
     stats, last_collected = get_stats_summary()
-    last_collected_timestamp = db.stats._make_timestamp(last_collected)
+    last_collected_timestamp = 0
+    if last_collected:
+        last_collected_timestamp = db.stats._make_timestamp(last_collected)
     return render_template("index/index.html", stats=stats, last_collected=last_collected,
                            last_submissions=get_last_submitted_recordings(),
                            last_collected_timestamp=last_collected_timestamp)

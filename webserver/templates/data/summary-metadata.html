@@ -42,8 +42,8 @@
   </div>
 
   <div class="col-md-4 text-center">
-    {% if tomahawk_url %}
-      <iframe src="{{ tomahawk_url }}" width="200" scrolling="no" height="200" frameborder="0" allowtransparency="true"></iframe>
+    {% if youtube_query %}
+    <iframe width="560" height="315" src="http://www.youtube.com/embed?listType=search&amp;list={{youtube_query}}" frameborder="0" allowfullscreen></iframe>
     {% endif %}
   </div>
 </div>

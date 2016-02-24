@@ -109,7 +109,7 @@ def summary(mbid):
         return render_template(
             "data/summary.html",
             metadata=recording_info,
-            tomahawk_url=_get_tomahawk_url(recording_info),
+            youtube_query=_get_youtube_query(recording_info),
             submission_count=submission_count,
             position=offset + 1,
             previous=offset - 1 if offset > 0 else None,
@@ -119,20 +119,20 @@ def summary(mbid):
         )
     elif recording_info:
         return render_template("data/summary-missing.html", metadata=recording_info,
-                               tomahawk_url=_get_tomahawk_url(recording_info)), 404
+                               youtube_query=_get_youtube_query(recording_info)), 404
     else:  # Recording doesn't exist in MusicBrainz
         raise NotFound("MusicBrainz does not have data for this track.")
 
+def _get_youtube_query(metadata):
+    """Generates a query string to search youtube for this song
 
-def _get_tomahawk_url(metadata):
-    """Generates URL for iframe with Tomahawk embedded player.
-
-    See http://toma.hk/tools/embeds.php for more info.
+    See https://developers.google.com/youtube/player_parameters#Manual_IFrame_Embeds
+    for more info.
     """
     if not ('artist' in metadata and 'title' in metadata):
         return None
     else:
-        return "http://toma.hk/embed.php?artist={artist}&title={title}".format(
+        return "{artist}+{title}".format(
             artist=quote_plus(metadata['artist'].encode("UTF-8")),
             title=quote_plus(metadata['title'].encode("UTF-8")),
         )

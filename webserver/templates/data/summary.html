@@ -28,12 +28,17 @@
     <table class="table table-striped table-bordered">
       <thead><tr><th style="width: 30%;">Tonal &amp; Rhythm</th><th>value</th></tr></thead>
       <tr>
-        <td><a href="http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html">key</a></td>
-        <td>{{ data.lowlevel.tonal.key_key }}</td>
+        <td><a href="http://essentia.upf.edu/documentation/reference/streaming_Key.html">key</a></td>
+        <td>
+            {{ data.lowlevel.tonal.key_key }} {{ data.lowlevel.tonal.key_scale }}
+            {% if data.lowlevel.tonal.key_strength %}
+                ({{ data.lowlevel.tonal.key_strength|round(2)*100 }}%)
+            {% endif %}
+        </td>
       </tr>
       <tr>
-        <td><a href="http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html">scale</a></td>
-        <td>{{ data.lowlevel.tonal.chords_scale }}</td>
+        <td><a href="http://essentia.upf.edu/documentation/reference/streaming_ChordsDescriptors.html">chords key</a></td>
+        <td>{{ data.lowlevel.tonal.chords_key }} {{ data.lowlevel.tonal.chords_scale }}</td>
       </tr>
       <tr>
         <td><a href="http://essentia.upf.edu/documentation/reference/streaming_Danceability.html">danceability</a></td>

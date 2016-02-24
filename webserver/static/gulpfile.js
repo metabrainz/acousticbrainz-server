@@ -61,8 +61,7 @@ function buildStyles() {
       ]
     }))
   )
-      .done(writeManifest)
-      .fail(function (err) { throw err });
+      .done(writeManifest);
 }
 
 function transformBundle(bundle) {

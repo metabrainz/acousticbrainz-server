@@ -20,7 +20,8 @@ cli = click.Group()
               help="Turns debugging mode on or off. If specified, overrides "
                    "'DEBUG' value in the config file.")
 def runserver(host, port, debug):
-    create_app().run(host=host, port=port, debug=debug)
+    create_app().run(host=host, port=port, debug=debug,
+                     extra_files=config.RELOAD_ON_FILES)
 
 
 def _run_psql(script, database=None):

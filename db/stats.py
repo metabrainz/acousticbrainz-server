@@ -74,7 +74,17 @@ def get_last_submitted_recordings():
 
 
 def compute_stats(to_date):
-    # Compute stats up to the given date
+    """Compute hourly stats to a given date and write them to
+    the database.
+
+    Take the date of most recent statistics, or if no statistics
+    are added, the earliest date of a submission, and compute and write
+    for every hour from that date to `to_date` the number of items
+    in the database.
+
+    Args:
+        to_date: the date to compute statistics up to
+    """
 
     with db.engine.connect() as connection:
         stats_date = _get_most_recent_stats_date(connection)
@@ -115,6 +125,11 @@ def add_stats_to_cache():
 
 
 def get_stats_summary():
+    """Load a summary of statistics to show on the homepage.
+
+    If no statistics exist in the cache, use the most recently
+    computed statistics from the database
+    """
     last_collected, stats = _get_stats_from_cache()
     if not stats:
         recent_database = load_statistics_data(1)
@@ -135,10 +150,11 @@ def _get_stats_from_cache():
     return last_collected, stats
 
 
-def format_statistics(data):
-    """
-    :param data: data from load_statistics_data
-    :return: statistics formatted for
+def format_statistics_for_highcharts(data):
+    """Format statistics data to load with highcharts
+
+    Args:
+        data: data from load_statistics_data
     """
 
     counts = {}
@@ -159,7 +175,7 @@ def format_statistics(data):
 
 
 def load_statistics_data(limit=None):
-    # Posgres doesn't let you create a json dictionary using values
+    # Postgres doesn't let you create a json dictionary using values
     # from one column as keys and another column as values. Instead we
     # create an array of {"name": name, "value": value} objects and change
     # it in python
@@ -192,11 +208,12 @@ def load_statistics_data(limit=None):
 
 
 def get_statistics_history():
-    return format_statistics(load_statistics_data())
+    return format_statistics_for_highcharts(load_statistics_data())
 
 
 def _count_submissions_to_date(connection, to_date):
-    """Count number of low-level submissions in the database."""
+    """Count number of low-level submissions in the database
+    before a given date."""
     # Both total submissions and unique (based on MBIDs)
     query = text("""
         SELECT 'all' as type, lossless, count(*)

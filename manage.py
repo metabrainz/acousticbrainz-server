@@ -137,6 +137,7 @@ cli.add_command(db.dump_manage.cli, name="dump")
 
 @cli.command()
 def compute_stats():
+    """Compute any outstanding hourly stats and add to the database."""
     db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
     import datetime
     import pytz
@@ -145,6 +146,7 @@ def compute_stats():
 
 @cli.command()
 def cache_stats():
+    """Compute recent stats and add to memcache."""
     db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
     db.cache.init(config.MEMCACHED_SERVERS)
     db.stats.add_stats_to_cache()

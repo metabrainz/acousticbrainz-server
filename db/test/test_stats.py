@@ -201,7 +201,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
-    def test_format_statistics(self):
+    def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""
 
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
@@ -217,7 +217,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
             {"collected": date2, "stats": stats2}
         ]
 
-        formatted = db.stats.format_statistics(data)
+        formatted = db.stats.format_statistics_for_highcharts(data)
         expected_formatted = [
             {'data': [[1452384000000, 15], [1452470400000, 20]], 'name': 'Lossless (all)'},
             {'data': [[1452384000000, 10], [1452470400000, 10]], 'name': 'Lossless (unique)'},

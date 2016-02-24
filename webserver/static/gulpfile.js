@@ -104,11 +104,13 @@ function buildScripts() {
   });
 
   var statsBundle = runYarb('stats.js');
+  var homepageBundle = runYarb('homepage.js');
 
   return Q.all([
     writeScript(commonBundle, 'common.js'),
     writeScript(datasetsBundle, 'datasets.js'),
     writeScript(statsBundle, 'stats.js'),
+    writeScript(homepageBundle, 'homepage.js'),
   ]).then(writeManifest);
 }
 

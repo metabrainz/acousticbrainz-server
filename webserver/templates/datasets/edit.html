@@ -11,6 +11,10 @@
 
 {% block content %}
   <h2 class="page-title">Datasets</h2>
+  <h6>{% if pending == "1" %} 
+        This dataset is in the evalutation queue 
+      {% endif %}
+  </h6>
   <hr />
   <div id="dataset-editor" data-mode="{{ mode }}"
       {{ 'data-edit-id='+dataset_id if dataset_id }}></div>

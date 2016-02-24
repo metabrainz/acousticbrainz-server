@@ -145,12 +145,13 @@ def _parse_dataset_csv(file):
 @login_required
 def edit(dataset_id):
     ds = get_dataset(dataset_id)
+    pending = "0"
     if ds["author"] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
     jobs = db.dataset_eval.get_jobs_for_dataset(str(dataset_id))
     for job in jobs:
-        if(job["status"]=="running" or job["status"]=="pending"):
-            flash.warn("There is a pending job for this dataset")
+        if(job["status"] in ("running","pending")):
+            pending = "1"            
             break
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -179,6 +180,7 @@ def edit(dataset_id):
             mode="edit",
             dataset_id=str(dataset_id),
             dataset_name=ds["name"],
+            pending=pending
         )
 
 

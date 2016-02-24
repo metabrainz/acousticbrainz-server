@@ -152,7 +152,7 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
 def _copy_tables(location, start_time=None, end_time=None):
     """Copies all tables into separate files within a specified location (directory).
 
-    ou can also define time frame that will be used during data selection.
+    You can also define time frame that will be used during data selection.
     Files in a specified directory will only contain rows that have timestamps
     within specified time frame. We assume that each table contains some sort
     of timestamp that can be used as a reference.

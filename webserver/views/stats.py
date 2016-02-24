@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, Response, render_template
-from db.stats import get_statistics_data
+from db.stats import get_statistics_history
 from operator import itemgetter
 import json
 
@@ -14,5 +14,5 @@ def graph():
 
 @stats_bp.route("/statistics-data")
 def data():
-    return Response(json.dumps(sorted(get_statistics_data(), key=itemgetter('name'), reverse=True)),
+    return Response(json.dumps(sorted(get_statistics_history(), key=itemgetter('name'), reverse=True)),
                     content_type='application/json; charset=utf-8')

@@ -88,7 +88,7 @@ class DataDBTestCase(DatabaseTestCase):
 
 
     def test_load_low_level_none(self):
-        """If no data is loaded, or offset is too high, an exception is raised"""
+        """If no lowlevel data is loaded, or offset is too high, an exception is raised"""
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.data.load_low_level(self.test_mbid)
 
@@ -215,7 +215,7 @@ class DataDBTestCase(DatabaseTestCase):
 
 
     def test_load_high_level_none(self):
-        """If no data is loaded, or offset is too high, an exception is raised"""
+        """If no highlevel data is loaded, or offset is too high, an exception is raised"""
 
         # no data
         with self.assertRaises(db.exceptions.NoDataFoundException):

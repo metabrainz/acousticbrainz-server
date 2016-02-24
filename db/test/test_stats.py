@@ -108,7 +108,7 @@ class StatsTestCase(unittest.TestCase):
 
         count.assert_called_once_with(connection, datetimenow)
         connect.assert_called_once_with()
-        dt.datetime.now.assert_called_once_with()
+        dt.datetime.now.assert_called_once_with(pytz.utc)
         setcalls = [mock.call("recent-stats", {"stats": "here"}, time=600, namespace="statistics"), mock.call("recent-stats-last-updated", datetimenow, time=600, namespace="statistics")]
         cacheset.assert_has_calls(setcalls)
 

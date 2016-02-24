@@ -1,4 +1,6 @@
 DEBUG = False  # set to False in production mode
+# Additional files to watch to restart the development server
+RELOAD_ON_FILES = ["webserver/static/build/rev-manifest.json"]
 
 SECRET_KEY = "CHANGE_ME"
 

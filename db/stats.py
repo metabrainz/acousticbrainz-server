@@ -214,23 +214,7 @@ def get_statistics_history():
 def _count_submissions_to_date(connection, to_date):
     """Count number of low-level submissions in the database
     before a given date."""
-    # Both total submissions and unique (based on MBIDs)
-    query = text("""
-        SELECT 'all' as type, lossless, count(*)
-          FROM lowlevel
-         WHERE submitted < :submitted
-      GROUP BY lossless
-         UNION
-        SELECT 'unique' as type, lossless, count(*)
-          FROM (
-                SELECT DISTINCT ON (mbid) mbid, lossless
-                  FROM lowlevel
-                 WHERE submitted < :submitted
-              ORDER BY mbid, lossless DESC
-               ) q
-      GROUP BY lossless
-    """)
-    result = connection.execute(query, {"submitted": to_date})
+
     counts = {
         LOWLEVEL_LOSSY: 0,
         LOWLEVEL_LOSSY_UNIQUE: 0,
@@ -239,19 +223,49 @@ def _count_submissions_to_date(connection, to_date):
         LOWLEVEL_TOTAL: 0,
         LOWLEVEL_TOTAL_UNIQUE: 0,
     }
-    for count_type, is_lossless, count in result.fetchall():
-        if count_type == "all":
-            if is_lossless:
-                counts[LOWLEVEL_LOSSLESS] = count
-            else:
-                counts[LOWLEVEL_LOSSY] = count
-        else:  # unique
-            if is_lossless:
-                counts[LOWLEVEL_LOSSLESS_UNIQUE] = count
-            else:
-                counts[LOWLEVEL_LOSSY_UNIQUE] = count
+
+    # All submissions, split by lossless/lossy
+    query = text("""
+        SELECT lossless
+             , count(*)
+          FROM lowlevel
+         WHERE submitted < :submitted
+      GROUP BY lossless
+      """)
+    result = connection.execute(query, {"submitted": to_date})
+    for is_lossless, count in result.fetchall():
+        if is_lossless:
+            counts[LOWLEVEL_LOSSLESS] = count
+        else:
+            counts[LOWLEVEL_LOSSY] = count
+
+    # Unique submissions, split by lossless, lossy
+    query = text("""
+        SELECT lossless
+             , count(distinct(mbid))
+          FROM lowlevel
+         WHERE submitted < :submitted
+      GROUP BY lossless
+    """)
+    result = connection.execute(query, {"submitted": to_date})
+    for is_lossless, count in result.fetchall():
+        if is_lossless:
+            counts[LOWLEVEL_LOSSLESS_UNIQUE] = count
+        else:
+            counts[LOWLEVEL_LOSSY_UNIQUE] = count
+
+    # total number of unique submissions
+    query = text("""
+        SELECT count(distinct(mbid))
+          FROM lowlevel
+         WHERE submitted < :submitted
+    """)
+    result = connection.execute(query, {"submitted": to_date})
+    row = result.fetchone()
+    counts[LOWLEVEL_TOTAL_UNIQUE] = row[0]
+
+    # total of all submissions can be computed by summing lossless and lossy
     counts[LOWLEVEL_TOTAL] = counts[LOWLEVEL_LOSSY] + counts[LOWLEVEL_LOSSLESS]
-    counts[LOWLEVEL_TOTAL_UNIQUE] = counts[LOWLEVEL_LOSSY_UNIQUE] + counts[LOWLEVEL_LOSSLESS_UNIQUE]
     return counts
 
 

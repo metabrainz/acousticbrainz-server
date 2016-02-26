@@ -106,7 +106,7 @@ def get_next_pending_job():
 def get_job(job_id):
     with db.engine.connect() as connection:
         query = text(
-            """SELECT id
+            """SELECT id::text
                     , dataset_id
                     , status
                     , status_msg

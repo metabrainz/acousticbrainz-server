@@ -16,6 +16,12 @@ import six
 datasets_bp = Blueprint("datasets", __name__)
 
 
+@datasets_bp.route("/")
+def list_datasets():
+    datasets = db.dataset.get_public_datasets()
+    return render_template("datasets/list.html", datasets=datasets)
+
+
 @datasets_bp.route("/<uuid:id>")
 def view(id):
     ds = get_dataset(id)

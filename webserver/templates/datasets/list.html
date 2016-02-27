@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Public datasets{% endblock %}
+
+{% block content %}
+    <h3>Public datasets</h3>
+    <table class="table">
+        <tr>
+            <th>author</th>
+            <th>dataset</th>
+            <th>created</th>
+            <th>evaluation status</th>
+        </tr>
+        {% for ds in datasets %}
+        <tr>
+            <td>{{ ds["author_name"] }}</td>
+            <td>
+                <a href="{{ url_for('datasets.view', id=ds['id']) }}">
+                    {{ ds["name"] }}
+                </a>
+            </td>
+            <td>{{ ds["created"] }}</td>
+            <td></td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -11,6 +11,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
 
         self.test_user_mb_name = "tester"
         self.test_user_id = user.create(self.test_user_mb_name)
+        self.test_uuid = "123e4567-e89b-12d3-a456-426655440000"
         self.test_data = {
             "name": "Test",
             "description": "",
@@ -96,3 +97,11 @@ class DatasetEvalTestCase(DatabaseTestCase):
         next_pending = dataset_eval.get_next_pending_job()
         self.assertEqual(job2, next_pending)
 
+    def test_delete_job(self):
+        self.assertRaises(dataset_eval.JobNotFoundException, dataset_eval.delete_job,
+                          job_id=self.test_uuid)
+
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
+        self.assertIsNotNone(dataset_eval.get_job(job_id))
+        dataset_eval.delete_job(job_id)
+        self.assertIsNone(dataset_eval.get_job(job_id))

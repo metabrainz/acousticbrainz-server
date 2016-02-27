@@ -145,7 +145,10 @@ def delete_job(job_id):
               FROM dataset_eval_jobs
              WHERE id = %s
         """, (job_id,))
-        status = result.fetchone()["status"]
+        row = result.fetchone()
+        if not row:
+            raise JobNotFoundException("Can't find evaluation job with a specified ID.")
+        status = row["status"]
         if status != STATUS_PENDING:
             raise db.exceptions.DatabaseException("Cannot delete this evaluation job because it's not in the queue."
                                                   " Current status: %s." % status)
@@ -166,6 +169,9 @@ def _create_job(connection, dataset_id):
 
 
 class IncorrectJobStatusException(db.exceptions.DatabaseException):
+    pass
+
+class JobNotFoundException(db.exceptions.DatabaseException):
     pass
 
 class JobExistsException(db.exceptions.DatabaseException):

@@ -196,13 +196,14 @@ var DatasetDetails = React.createClass({
     render: function () {
         return (
             <div className="dataset-details">
-                <h3>
+                <h2 className="page-title">
+                    Dataset&nbsp;
                     <input type="text"
                            placeholder="Name" required="required"
                            value={this.props.name} ref="name"
                            size={this.props.name.length}
                            onChange={this.handleDetailsUpdate} />
-                </h3>
+                </h2>
                 <textarea ref="description"
                           placeholder="Description (optional)"
                           value={this.props.description}

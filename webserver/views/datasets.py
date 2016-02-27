@@ -9,6 +9,7 @@ from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from webserver.external import musicbrainz
 from webserver import flash
 from collections import defaultdict
+import db.exceptions
 import db.dataset
 import db.dataset_eval
 import db.user
@@ -39,6 +40,33 @@ def eval_info(dataset_id):
     )
 
 
+@datasets_bp.route("/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
+def eval_job(dataset_id, job_id):
+    # Getting dataset to check if it exists and current user is allowed to view it.
+    ds = get_dataset(dataset_id)
+    job = db.dataset_eval.get_job(job_id)
+    if not job or job["dataset_id"] != ds["id"]:
+        return jsonify({
+            "success": False,
+            "error": "Can't find evaluation job with a specified ID for this dataset.",
+        }), 404
+
+    if request.method == "DELETE":
+        if not current_user.is_authenticated or ds["author"] != current_user.id:
+            return jsonify({
+                "success": False,
+                "error": "You are not allowed to delete this evaluation job.",
+            }), 401  # Unauthorized
+        try:
+            db.dataset_eval.delete_job(job_id)
+        except db.exceptions.DatabaseException as e:
+            return jsonify({
+                "success": False,
+                "error": str(e),
+            }), 400  # Bad Request
+        return jsonify({"success": True})
+
+
 @datasets_bp.route("/<uuid:dataset_id>/evaluation/json")
 def eval_jobs(dataset_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
@@ -48,7 +76,12 @@ def eval_jobs(dataset_id):
     for job in jobs:
         if "result" in job and job["result"]:
             job["result"]["table"] = prepare_table_from_cm(job["result"]["confusion_matrix"])
-    return jsonify(jobs=jobs)
+    return jsonify({
+        "jobs": jobs,
+        "dataset": {
+            "author": db.user.get(ds["author"]),
+        }
+    })
 
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluate")

@@ -138,6 +138,23 @@ def set_job_status(job_id, status, status_msg=None):
         )
 
 
+def delete_job(job_id):
+    with db.engine.begin() as connection:
+        result = connection.execute("""
+            SELECT status
+              FROM dataset_eval_jobs
+             WHERE id = %s
+        """, (job_id,))
+        status = result.fetchone()["status"]
+        if status != STATUS_PENDING:
+            raise db.exceptions.DatabaseException("Cannot delete this evaluation job because it's not in the queue."
+                                                  " Current status: %s." % status)
+        connection.execute(
+            "DELETE FROM dataset_eval_jobs WHERE id = %s",
+            (job_id,)
+        )
+
+
 def _create_job(connection, dataset_id):
     result = connection.execute(
         "INSERT INTO dataset_eval_jobs (id, dataset_id, status) "

@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from webserver.testing import ServerTestCase
-from db import dataset, user
+from db import dataset, dataset_eval, user
+from db.testing import TEST_DATA_PATH
 from flask import url_for
+import os.path
 import json
 
 
@@ -14,12 +16,36 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.test_user_id = user.create(self.test_user_mb_name)
 
         self.test_uuid = "123e4567-e89b-12d3-a456-426655440000"
+        self.test_mbid_1 = "e8afe383-1478-497e-90b1-7885c7f37f6e"
+        self.test_mbid_2 = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
+
         self.test_data = {
             "name": "Test",
             "description": "",
-            "classes": [],
+            "classes": [
+                {
+                    "name": "Class #1",
+                    "description": "This is a description of class #1!",
+                    "recordings": [
+                        self.test_mbid_1,
+                        self.test_mbid_2,
+                    ]
+                },
+                {
+                    "name": "Class #2",
+                    "description": "",
+                    "recordings": [
+                        self.test_mbid_1,
+                        self.test_mbid_2,
+                    ]
+                },
+            ],
             "public": True,
         }
+
+        # Loading the actual data because it is required to evaluate the dataset
+        self.load_low_level_data(self.test_mbid_1)
+        self.load_low_level_data(self.test_mbid_2)
 
     def test_view(self):
         resp = self.client.get(url_for("datasets.view", id=self.test_uuid))
@@ -36,6 +62,31 @@ class DatasetsViewsTestCase(ServerTestCase):
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         resp = self.client.get(url_for("datasets.view_json", id=dataset_id))
         self.assert200(resp)
+
+        dataset_eval.evaluate_dataset(dataset_id)
+
+        self.temporary_login(self.test_user_id)
+
+    def test_eval_job_delete(self):
+        resp = self.client.delete("/datasets/%s/%s" % (self.test_uuid, self.test_uuid))
+        self.assert404(resp)
+
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+
+        resp = self.client.delete("/datasets/%s/%s" % (dataset_id, self.test_uuid))
+        self.assert404(resp)
+
+        job_id = dataset_eval.evaluate_dataset(dataset_id)
+
+        resp = self.client.delete("/datasets/%s/%s" % (dataset_id, job_id))
+        self.assert401(resp)
+
+        # As an author
+        self.temporary_login(self.test_user_id)
+        resp = self.client.delete("/datasets/%s/%s" % (dataset_id, job_id))
+        self.assert200(resp)
+
+        self.assertIsNone(dataset_eval.get_job(job_id))
 
     def test_create(self):
         resp = self.client.get(url_for("datasets.create"))

@@ -110,7 +110,7 @@ var EvaluationJobsViewer = React.createClass({
             type: "DELETE",
             url: "/datasets/" + container.dataset.datasetId + "/" + jobID,
             success: function (data, textStatus, jqXHR) {
-                alert("Evaluation job " + jobID + " has been removed from the queue.")
+                console.log("Evaluation job " + jobID + " has been removed from the queue.")
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 console.error("Error occurred during job deletion:", jqXHR.responseJSON);
@@ -183,10 +183,10 @@ var JobList = React.createClass({
                 <table className="table table-hover job-list">
                     <thead>
                     <tr>
-                        <th>Job ID</th>
-                        <th>Status</th>
-                        <th>Creation time</th>
-                        <th></th>
+                        <th className="id">Job ID</th>
+                        <th className="status">Status</th>
+                        <th className="created">Creation time</th>
+                        <th className="controls"></th>
                     </tr>
                     </thead>
                     <tbody>{items}</tbody>
@@ -216,11 +216,8 @@ var JobRow = React.createClass({
         event.preventDefault();
         this.props.onViewDetails(this.props.index);
     },
-    handleDelete: function (event) {
-        event.preventDefault();
-        if (confirm("Are you sure you want to delete evaluation job " + this.props.id + "?")) {
-            this.props.onDelete(this.props.id, this.props.index);
-        }
+    handleDelete: function () {
+        this.props.onDelete(this.props.id, this.props.index);
     },
     render: function () {
         var status = "";
@@ -241,19 +238,54 @@ var JobRow = React.createClass({
         let controls = "";
         if (this.props.showDelete) {
             if (this.props.status === JOB_STATUS_PENDING) {
-                controls = <a href="#" className="btn btn-danger btn-xs"
-                              title="Delete this evaluation job"
-                              onClick={this.handleDelete}>Delete</a>;
+                controls = <JobDeleteButton onDelete={this.handleDelete} />;
             }
         }
         return (
             <tr className="job">
                 <td className="id"><a href="#" onClick={this.handleViewDetails}>{this.props.id}</a></td>
                 <td className="status">{status}</td>
-                <td className="created">{this.props.created}</td>
+                <td className="created"><span>{this.props.created}</span></td>
                 <td className="controls">{controls}</td>
             </tr>
         );
+    }
+});
+
+
+let JobDeleteButton = React.createClass({
+    propTypes: {
+        onDelete: React.PropTypes.func.isRequired
+    },
+    getInitialState: function () {
+        return {showConfirmation: false};
+    },
+    delete: function (event) {
+        event.preventDefault();
+        this.props.onDelete();
+    },
+    confirm: function (event) {
+        event.preventDefault();
+        this.setState({showConfirmation: true});
+    },
+    cancel: function (event) {
+        event.preventDefault();
+        this.setState({showConfirmation: false});
+    },
+    render: function () {
+        if (!this.state.showConfirmation) {
+            return <a href="#" className="btn btn-danger btn-xs"
+                      title="Delete this evaluation job"
+                      onClick={this.confirm}>Delete</a>;
+        } else {
+            return <div>
+                <em>Are you sure?&nbsp;&nbsp;</em>
+                <a href="#" className="btn btn-danger btn-xs"
+                   onClick={this.delete}>Delete</a>
+                <a href="#" className="btn btn-default btn-xs"
+                   onClick={this.cancel}>Cancel</a>
+            </div>;
+        }
     }
 });
 

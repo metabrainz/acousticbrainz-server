@@ -169,14 +169,15 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
 
 #eval-viewer-container {
   margin-top: 10px;
-  .job-list {
-    .job {
-      .id {
-        width: 1%;
-        white-space: nowrap;
-        font-family: monospace;
-      }
+  table.job-list {
+    .id {
+      width: 1%;
+      white-space: nowrap;
+      font-family: monospace;
     }
+    .status { width: 1%; }
+    .created { width: 300px; }
+    .controls { text-align: right; }
   }
   .job-details {
     .id {

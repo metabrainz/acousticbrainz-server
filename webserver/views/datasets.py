@@ -110,7 +110,7 @@ def import_csv():
             "name": form.name.data,
             "description": form.description.data,
             "classes": _parse_dataset_csv(request.files[form.file.name]),
-            "public": False,
+            "public": True,
         }
         try:
             dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)

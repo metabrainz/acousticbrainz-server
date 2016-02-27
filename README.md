@@ -44,7 +44,7 @@ JavaScript or CSS.*
 You can start the web server (will be available at http://127.0.0.1:8080/):
 
     $ cd acousticbrainz-server
-    $ python server.py
+    $ python manage.py runserver
 
 or high-level data extractor:
 

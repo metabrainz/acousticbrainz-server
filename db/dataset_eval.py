@@ -3,10 +3,9 @@ import db.exceptions
 import db.dataset
 import db.data
 import json
-import jsonschema
 import sqlalchemy
 from sqlalchemy import text
-
+from utils import dataset_validator
 
 # Job statuses are defined in `eval_job_status` type. See schema definition.
 STATUS_PENDING = "pending"
@@ -70,10 +69,7 @@ def validate_dataset(dataset):
 
     Raises IncompleteDatasetException if dataset is not ready for evaluation.
     """
-    try:
-        jsonschema.validate(dataset, db.dataset.JSON_SCHEMA_COMPLETE)
-    except jsonschema.ValidationError as e:
-        raise IncompleteDatasetException(e)
+    dataset_validator.validate(dataset, complete=True)
 
     rec_memo = {}
     for cls in dataset["classes"]:
@@ -83,7 +79,8 @@ def validate_dataset(dataset):
             if db.data.count_lowlevel(recording_mbid) > 0:
                 rec_memo[recording_mbid] = True
             else:
-                raise IncompleteDatasetException(
+                # TODO: Create a proper class for this exception:
+                raise Exception(
                     "Can't find low-level data for recording: %s" % recording_mbid)
 
 
@@ -271,7 +268,4 @@ class JobNotFoundException(db.exceptions.DatabaseException):
 
 class JobExistsException(db.exceptions.DatabaseException):
     """Should be raised when trying to add a job for dataset that already has one."""
-    pass
-
-class IncompleteDatasetException(db.exceptions.DatabaseException):
     pass

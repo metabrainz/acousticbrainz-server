@@ -58,7 +58,6 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(len(ds["classes"][0]["recordings"]), 2)
         self.assertIn("19e698e7-71df-48a9-930e-d4b1a2026c82", ds["classes"][0]["recordings"])
 
-
     def test_create_from_dict_malformed(self):
         bad_dict = copy.deepcopy(self.test_data)
 

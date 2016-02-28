@@ -1,67 +1,14 @@
 import db
+<<<<<<< HEAD
 import copy
 import jsonschema
 from db import exceptions
 import unicodedata
+=======
+>>>>>>> 3cc7570... Replace jsonschema with new validator.
 import re
-
-# JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
-# defines basic structure of a dataset. JSON_SCHEMA_COMPLETE adds additional
-# constraints required for further processing of a dataset. More information
-# about JSON schema is available at http://json-schema.org/.
-
-BASE_JSON_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-        },
-        "description": {"type": ["string", "null"]},
-        "public": {"type": "boolean"},
-        "classes": {
-            "type": "array",
-            "items": {
-                # CLASS
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 100
-                    },
-                    "description": {"type": ["string", "null"]},
-                    "recordings": {
-                        # CLASS_MEMBER
-                        "type": "array",
-                        "items": {
-                            # UUID (MusicBrainz ID)
-                            "type": "string",
-                            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
-                        },
-                    },
-                },
-                "required": [
-                    "name",
-                    "recordings",
-                ],
-            },
-        },
-    },
-    "required": [
-        "name",
-        "classes",
-        "public",
-    ],
-}
-
-JSON_SCHEMA_COMPLETE = copy.deepcopy(BASE_JSON_SCHEMA)
-# Must have at least two classes with at least one recording in each.
-JSON_SCHEMA_COMPLETE["properties"]["classes"]["minItems"] = 2
-JSON_SCHEMA_COMPLETE["properties"]["classes"]["items"]["properties"]["recordings"]["minItems"] = 2
-# Keep in mind that we still need to manually check if all recordings are in
-# AcousticBrainz database!
+import unicodedata
+from utils import dataset_validator
 
 
 def _slugify(string):
@@ -73,6 +20,7 @@ def _slugify(string):
     string = re.sub('[^\w\s-]', '', string).strip().lower()
     return re.sub('[-\s]+', '-', string)
 
+
 def create_from_dict(dictionary, author_id):
     """Creates a new dataset from a dictionary.
 
@@ -81,7 +29,7 @@ def create_from_dict(dictionary, author_id):
         will be None and second is an exception. If there are no errors, second
         value will be None.
     """
-    jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
+    dataset_validator.validate(dictionary)
 
     with db.engine.begin() as connection:
         if "description" not in dictionary:
@@ -112,7 +60,7 @@ def create_from_dict(dictionary, author_id):
 
 def update(dataset_id, dictionary, author_id):
     # TODO(roman): Make author_id argument optional (keep old author if None).
-    jsonschema.validate(dictionary, BASE_JSON_SCHEMA)
+    dataset_validator.validate(dictionary)
 
     with db.engine.begin() as connection:
         if "description" not in dictionary:

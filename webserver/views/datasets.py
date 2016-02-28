@@ -4,12 +4,12 @@ from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from webserver.external import musicbrainz
 from webserver import flash, forms
+from utils import dataset_validator
 from collections import defaultdict
 import db.exceptions
 import db.dataset
 import db.dataset_eval
 import db.user
-import jsonschema
 import csv
 import six
 
@@ -24,17 +24,17 @@ def view(id):
         dataset=ds,
         author=db.user.get(ds["author"]),
     )
-    
+
 
 @datasets_bp.route("/")
 def index():
     return render_template("datasets/index.html")
-    
-    
+
+
 @datasets_bp.route("/accuracy")
 def accuracy():
     return render_template("datasets/accuracy.html")
-    
+
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluation")
 def eval_info(dataset_id):
@@ -143,7 +143,7 @@ def create():
 
         try:
             dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
-        except jsonschema.ValidationError as e:
+        except dataset_validator.ValidationException as e:
             return jsonify(
                 success=False,
                 error=str(e),
@@ -171,7 +171,7 @@ def import_csv():
         }
         try:
             dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
-        except jsonschema.ValidationError as e:
+        except dataset_validator.ValidationException as e:
             raise BadRequest(str(e))
         flash.info("Dataset has been imported successfully.")
         return redirect(url_for(".view", id=dataset_id))
@@ -212,7 +212,7 @@ def edit(dataset_id):
 
         try:
             db.dataset.update(str(dataset_id), dataset_dict, current_user.id)
-        except jsonschema.ValidationError as e:
+        except dataset_validator.ValidationException as e:
             return jsonify(
                 success=False,
                 error=str(e),

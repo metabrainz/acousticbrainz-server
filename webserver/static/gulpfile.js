@@ -114,6 +114,36 @@ function buildScripts() {
 gulp.task('styles', buildStyles);
 gulp.task('scripts', buildScripts);
 
+gulp.task('watch', ['styles', 'scripts'], function () {
+  let watch = require('gulp-watch');
+
+  watch(path.resolve(STATIC_DIR, '**/*.less'), buildStyles);
+
+  function rebundle(b, resourceName, file) {
+    var rebuild = false;
+
+    switch (file.event) {
+      case 'add':
+        rebuild = true;
+        break;
+      case 'change':
+      case 'unlink':
+        rebuild = b.has(file.path);
+        break;
+    }
+
+    if (rebuild) {
+      writeScript(b, resourceName).done(writeManifest);
+    }
+  }
+
+  watch(path.resolve(SCRIPTS_DIR, '**/*.js'), function (file) {
+    _.each(CACHED_BUNDLES, function (bundle, resourceName) {
+      rebundle(bundle, resourceName, file);
+    });
+  });
+});
+
 gulp.task('clean', function () {
   var fileRegex = /^([a-z\-]+)-[a-f0-9]+\.(js|css)$/;
 

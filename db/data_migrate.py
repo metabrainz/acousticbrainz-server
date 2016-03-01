@@ -3,24 +3,37 @@ import json
 from hashlib import sha256
 from sqlalchemy import text
 
-def insert_version(connection, data):
+VERSION_TYPE_LOWLEVEL = 'lowlevel'
+VERSION_TYPE_HIGHLEVEL = 'highlevel'
+
+version_cache = {}
+
+def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id
     norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
     sha = sha256(norm_data).hexdigest()
-    result = connection.execute(
-        """SELECT id from version where data_sha256=%s""", (sha, )
-    )
+    if sha in version_cache:
+        return version_cache[sha]
+
+    query = text("""
+            SELECT id
+              FROM version
+             WHERE data_sha256=:data_sha256
+               AND type=:version_type""")
+    result = connection.execute(query, {"data_sha256": sha, "version_type": version_type})
     row = result.fetchone()
     if row:
+        version_cache[sha] = row[0]
         return row[0]
 
     result = connection.execute(
-        text("""INSERT INTO version (data, data_sha256)
-        VALUES (:data, :sha)
+        text("""INSERT INTO version (data, data_sha256, type)
+        VALUES (:data, :sha, :version_type)
         RETURNING id"""),
-        {"data":norm_data, "sha":sha}
+        {"data": norm_data, "sha": sha, "version_type": version_type}
     )
     row = result.fetchone()
+    version_cache[sha] = row[0]
     return row[0]
 
 
@@ -43,7 +56,7 @@ def migrate_low_level(connection, old_ll_row):
     if sha != data_sha256:
         raise Exception("Stored sha should be the same as computed sha, but isn't")
     ll_version = data["metadata"]["version"]
-    version_id = insert_version(connection, ll_version)
+    version_id = insert_version(connection, ll_version, VERSION_TYPE_LOWLEVEL)
 
     connection.execute(
         "INSERT INTO lowlevel (id, mbid, build_sha1, lossless)"
@@ -108,7 +121,7 @@ def migrate_high_level(connection, hl_row):
                 VALUES (:id, :data, :data_sha256)""")
     connection.execute(hl_meta, {"id": highlevel_id, "data": meta_norm_data, "data_sha256": sha})
     hl_version = json_meta["version"]["highlevel"]
-    version_id = insert_version(connection, hl_version)
+    version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
 
     for name, data in json_high.items():
         item_norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))

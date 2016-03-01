@@ -135,6 +135,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         # Same uuid should appear as 1 less unique
         add_empty_lowlevel(three_uuid, False, date3)
         add_empty_lowlevel(three_uuid, False, date4)
+        add_empty_lowlevel(three_uuid, True, date4)
         add_empty_lowlevel(two_uuid, True, date4)
 
         with db.engine.connect() as connection:
@@ -158,11 +159,11 @@ class StatsDatabaseTestCase(DatabaseTestCase):
                               'lowlevel-total-unique': 3}, ret)
 
             ret = db.stats._count_submissions_to_date(connection, five_submissions_date)
-            self.assertEqual({'lowlevel-lossless': 3,
-                              'lowlevel-lossless-unique': 2,
+            self.assertEqual({'lowlevel-lossless': 4,
+                              'lowlevel-lossless-unique': 3,
                               'lowlevel-lossy': 2,
                               'lowlevel-lossy-unique': 1,
-                              'lowlevel-total': 5,
+                              'lowlevel-total': 6,
                               'lowlevel-total-unique': 3}, ret)
 
     def test_get_most_recent_stats_date(self):
@@ -268,7 +269,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
 def add_empty_lowlevel(mbid, lossless, date):
     build_sha1 = "sha1"
     # sha256 field must be unique
-    data_sha256 = str(mbid) + str(date)
+    data_sha256 = str(lossless) + str(mbid) + str(date)
     data_sha256 = data_sha256[:64]
     data_json = "{}"
     with db.engine.connect() as connection:

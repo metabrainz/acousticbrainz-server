@@ -8,6 +8,7 @@ import db
 import db.exceptions
 
 from sqlalchemy import text
+import sqlalchemy.exc
 
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
@@ -124,7 +125,11 @@ def submit_low_level_data(mbid, data):
         )
 
     # The data looks good, lets see about saving it
-    write_low_level(mbid, data)
+    try:
+        write_low_level(mbid, data)
+    except sqlalchemy.exc.DataError as e:
+        raise db.exceptions.BadDataException(
+                "data is badly formed")
 
 def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id

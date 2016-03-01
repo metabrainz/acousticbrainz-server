@@ -2,6 +2,8 @@ BEGIN;
 
 CREATE INDEX mbid_ndx_lowlevel ON lowlevel (mbid);
 CREATE INDEX build_sha1_ndx_lowlevel ON lowlevel (build_sha1);
+CREATE INDEX submitted_ndx_lowlevel ON lowlevel (submitted);
+CREATE INDEX lossless_ndx_lowlevel ON lowlevel (lossless);
 
 CREATE UNIQUE INDEX data_sha256_ndx_lowlevel_json ON lowlevel_json (data_sha256);
 

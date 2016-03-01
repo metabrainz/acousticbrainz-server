@@ -48,6 +48,7 @@ def migrate_low_level(connection, old_ll_row):
     build_sha1 = old_ll_row["ll_build_sha1"]
     data_sha256 = old_ll_row["ll_data_sha256"]
     lossless = old_ll_row["ll_lossless"]
+    submitted = old_ll_row["ll_submitted"]
     data = old_ll_row["ll_data"]
 
     norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
@@ -59,9 +60,9 @@ def migrate_low_level(connection, old_ll_row):
     version_id = insert_version(connection, ll_version, VERSION_TYPE_LOWLEVEL)
 
     connection.execute(
-        "INSERT INTO lowlevel (id, mbid, build_sha1, lossless)"
-        "VALUES (%s, %s, %s, %s)",
-        (id, mbid, build_sha1, lossless)
+        "INSERT INTO lowlevel (id, mbid, build_sha1, lossless, submitted)"
+        "VALUES (%s, %s, %s, %s, %s)",
+        (id, mbid, build_sha1, lossless, submitted)
     )
 
     connection.execute(

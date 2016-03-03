@@ -11,6 +11,33 @@ MIN_RECORDINGS_IN_CLASS = 2
 
 
 def validate(dataset, complete=False):
+    """Validator for datasets.
+
+    Dataset must have the following structure:
+    {
+        - name (string)
+        - description (string, optional)
+        - classes (list of class dicts)
+            {
+                - name (string)
+                - description (string, optional)
+                - recordings (list of UUIDs)
+            }
+    }
+
+    Complete dataset must contain at least two classes with two recordings in
+    each class.
+
+    Args:
+        dataset: Dataset stored in a dictionary.
+        complete: Indicates if dataset is complete or not (see definition
+            above), which enables additional checking.
+
+    Raises:
+        ValidationException: A general exception for validation errors.
+        IncompleteDatasetException: Raised in cases when one of "completeness"
+            requirements is not satisfied.
+    """
     if not isinstance(dataset, dict):
         raise ValidationException("Dataset must be a dictionary.")
     _check_dict_structure(dataset, ["name", "description", "classes", "public"])

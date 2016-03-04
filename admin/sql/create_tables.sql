@@ -75,7 +75,8 @@ CREATE TABLE dataset (
   description TEXT,
   author      INT NOT NULL, -- FK to user
   public      BOOLEAN NOT NULL,
-  created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created     TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_edited TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE dataset_class (

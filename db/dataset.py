@@ -115,7 +115,7 @@ def update(dataset_id, dictionary, author_id):
             dictionary["description"] = None
 
         connection.execute("""UPDATE dataset
-                          SET (name, description, public, author) = (%s, %s, %s, %s)
+                          SET (name, description, public, author, last_edited) = (%s, %s, %s, %s,current_timestamp)
                           WHERE id = %s""",
                        (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
 
@@ -144,13 +144,14 @@ def get(id):
     """
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id::text, name, description, author, created, public "
+            "SELECT id::text, name, description, author, created, public ,last_edited "
             "FROM dataset "
             "WHERE id = %s",
             (str(id),)
         )
         if result.rowcount > 0:
             row = dict(result.fetchone())
+ 	    print row
             row["classes"] = _get_classes(row["id"])
             return row
         else:
@@ -201,7 +202,6 @@ def get_by_user_id(user_id, public_only=True):
         for row in result:
             datasets.append(dict(row))
         return datasets
-
 
 def delete(id):
     """Delete dataset with a specified ID."""

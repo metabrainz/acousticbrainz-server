@@ -41,8 +41,13 @@ def eval_jobs(dataset_id):
     ds = get_dataset(dataset_id)
     jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
     # TODO(roman): Remove unused data ("confusion_matrix", "dataset_id").
+    last_edited_time = ds["last_edited"]
     for job in jobs:
         if "result" in job and job["result"]:
+	    cmp_time = max(job["created"],last_edited_time)
+            job["valid"] = '0'
+	    if(cmp_time == job["created"]):
+		job["valid"] = '1'
             job["result"]["table"] = prepare_table_from_cm(job["result"]["confusion_matrix"])
     return jsonify(jobs=jobs)
 
@@ -183,7 +188,7 @@ def edit(dataset_id):
             "datasets/edit.html",
             mode="edit",
             dataset_id=str(dataset_id),
-            dataset_name=ds["name"],
+            dataset_name=ds["name"]
         )
 
 

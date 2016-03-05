@@ -261,8 +261,7 @@ var JobDetails = React.createClass({
                         The dataset has been changed since this job was run, so the results may be out of date.
                     </div>;
 		    break
-                }
-		
+                }		
                 break;
         }
         var header = <div>

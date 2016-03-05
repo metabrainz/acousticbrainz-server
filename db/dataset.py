@@ -151,6 +151,7 @@ def get(id):
         )
         if result.rowcount > 0:
             row = dict(result.fetchone())
+ 	    print row
             row["classes"] = _get_classes(row["id"])
             return row
         else:

@@ -185,7 +185,7 @@ def edit(dataset_id):
             "datasets/edit.html",
             mode="edit",
             dataset_id=str(dataset_id),
-            dataset_name=ds["name"],
+            dataset_name=ds["name"]
         )
 
 

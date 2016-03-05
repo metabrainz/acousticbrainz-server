@@ -101,7 +101,7 @@ def create_from_dict(dictionary, author_id):
 
             # Removing duplicate recordings
             cls["recordings"] = list(set(cls["recordings"]))
-
+     
             for recording_mbid in cls["recordings"]:
                 connection.execute("INSERT INTO dataset_class_member (class, mbid) VALUES (%s, %s)",
                                (cls_id, recording_mbid))
@@ -118,7 +118,7 @@ def update(dataset_id, dictionary, author_id):
             dictionary["description"] = None
 
         connection.execute("""UPDATE dataset
-                          SET (name, description, public, author) = (%s, %s, %s, %s)
+                          SET (name, description, public, author, last_edited) = (%s, %s, %s, %s, now())
                           WHERE id = %s""",
                        (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
 
@@ -147,7 +147,7 @@ def get(id):
     """
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id::text, name, description, author, created, public "
+            "SELECT id::text, name, description, author, created, public ,last_edited "
             "FROM dataset "
             "WHERE id = %s",
             (str(id),)
@@ -204,7 +204,6 @@ def get_by_user_id(user_id, public_only=True):
         for row in result:
             datasets.append(dict(row))
         return datasets
-
 
 def delete(id):
     """Delete dataset with a specified ID."""

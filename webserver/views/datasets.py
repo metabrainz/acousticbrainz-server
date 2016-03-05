@@ -41,8 +41,10 @@ def eval_jobs(dataset_id):
     ds = get_dataset(dataset_id)
     jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
     # TODO(roman): Remove unused data ("confusion_matrix", "dataset_id").
+    last_edited_time = ds["last_edited"]
     for job in jobs:
         if "result" in job and job["result"]:
+            job['outdated'] = last_edited_time > job["created"]
             job["result"]["table"] = prepare_table_from_cm(job["result"]["confusion_matrix"])
     return jsonify(jobs=jobs)
 
@@ -225,8 +227,8 @@ def get_dataset(dataset_id):
     """
     ds = db.dataset.get(dataset_id)
     if ds:
-        if ds["public"] or (current_user.is_authenticated
-                            and ds["author"] == current_user.id):
+        if ds["public"] or (current_user.is_authenticated and
+                            ds["author"] == current_user.id):
             return ds
     raise NotFound("Can't find this dataset.")
 

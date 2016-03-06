@@ -11,7 +11,7 @@ user_bp = Blueprint("user", __name__)
 @user_bp.route("/user/<musicbrainz_id>")
 def profile(musicbrainz_id):
     if current_user.is_authenticated and \
-       current_user.musicbrainz_id == musicbrainz_id:
+       current_user.musicbrainz_id.lower() == musicbrainz_id.lower():
         user = current_user
         datasets = db.dataset.get_by_user_id(user.id, public_only=False)
     else:

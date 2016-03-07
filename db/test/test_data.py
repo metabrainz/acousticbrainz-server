@@ -88,7 +88,7 @@ class DataDBTestCase(DatabaseTestCase):
 
 
     def test_load_low_level_none(self):
-        """If no data is loaded, or offset is too high, an exception is raised"""
+        """If no lowlevel data is loaded, or offset is too high, an exception is raised"""
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.data.load_low_level(self.test_mbid)
 
@@ -110,14 +110,26 @@ class DataDBTestCase(DatabaseTestCase):
     def test_write_load_high_level(self):
         """Writing and loading a dict returns the same data"""
         ll = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        hl = {"highlevel": "data"}
+        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
+        hl = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
+              "metadata": {"meta": "here",
+                           "version": {"highlevel": ver}
+                          }
+               }
+
+        db.data.add_model("model1", "v1", "show")
+        db.data.add_model("model2", "v1", "show")
 
         build_sha = "test"
         db.data.write_low_level(self.test_mbid, ll)
         ll_id = self._get_ll_id_from_mbid(self.test_mbid)[0]
         db.data.write_high_level(self.test_mbid, ll_id, hl, build_sha)
 
-        self.assertEqual(hl, db.data.load_high_level(self.test_mbid))
+        hl_expected = copy.deepcopy(hl)
+        for mname in ["model1", "model2"]:
+            hl_expected["highlevel"][mname]["version"] = ver
+
+        self.assertEqual(hl_expected, db.data.load_high_level(self.test_mbid))
 
 
     def test_load_high_level_offset(self):
@@ -129,13 +141,32 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, second_data)
         ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
 
+        db.data.add_model("model1", "v1", "show")
+        db.data.add_model("model2", "v1", "show")
+
         build_sha = "sha"
-        hl1 = {"highlevel": "one"}
-        hl2 = {"highlevel": "two"}
+        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
+        hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
+               "metadata": {"meta": "here",
+                           "version": {"highlevel": ver}
+                          }
+               }
+        hl2 = {"highlevel": {"model1": {"1": "2"}, "model2": {"3": "3"}},
+               "metadata": {"meta": "for hl2",
+                           "version": {"highlevel": ver}
+                          }
+               }
         db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+
+        hl1_expected = copy.deepcopy(hl1)
+        hl2_expected = copy.deepcopy(hl2)
+        for mname in ["model1", "model2"]:
+            hl1_expected["highlevel"][mname]["version"] = ver
+            hl2_expected["highlevel"][mname]["version"] = ver
+
         # First highlevel item
-        self.assertEqual(hl1, db.data.load_high_level(self.test_mbid))
-        self.assertEqual(hl1, db.data.load_high_level(self.test_mbid, offset=0))
+        self.assertEqual(hl1_expected, db.data.load_high_level(self.test_mbid))
+        self.assertEqual(hl1_expected, db.data.load_high_level(self.test_mbid, offset=0))
 
         # second has a ll, but no hl => exception
         with self.assertRaises(db.exceptions.NoDataFoundException):
@@ -143,7 +174,7 @@ class DataDBTestCase(DatabaseTestCase):
 
         # after adding the hl, no error
         db.data.write_high_level(self.test_mbid, ll_id2, hl2, build_sha)
-        self.assertEqual(hl2, db.data.load_high_level(self.test_mbid, offset=1))
+        self.assertEqual(hl2_expected, db.data.load_high_level(self.test_mbid, offset=1))
 
 
     def test_load_high_level_offset_reverse(self):
@@ -155,18 +186,36 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, second_data)
         ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
 
+        db.data.add_model("model1", "v1", "show")
+        db.data.add_model("model2", "v1", "show")
+
         build_sha = "sha"
-        hl1 = {"highlevel": "one"}
-        hl2 = {"highlevel": "two"}
+        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
+        hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
+               "metadata": {"meta": "here",
+                           "version": {"highlevel": ver}
+                          }
+               }
+        hl2 = {"highlevel": {"model1": {"1": "2"}, "model2": {"3": "3"}},
+               "metadata": {"meta": "for hl2",
+                           "version": {"highlevel": ver}
+                          }
+               }
         db.data.write_high_level(self.test_mbid, ll_id2, hl2, build_sha)
         db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
 
-        self.assertEqual(hl1, db.data.load_high_level(self.test_mbid))
-        self.assertEqual(hl2, db.data.load_high_level(self.test_mbid, offset=1))
+        hl1_expected = copy.deepcopy(hl1)
+        hl2_expected = copy.deepcopy(hl2)
+        for mname in ["model1", "model2"]:
+            hl1_expected["highlevel"][mname]["version"] = ver
+            hl2_expected["highlevel"][mname]["version"] = ver
+
+        self.assertEqual(hl1_expected, db.data.load_high_level(self.test_mbid))
+        self.assertEqual(hl2_expected, db.data.load_high_level(self.test_mbid, offset=1))
 
 
     def test_load_high_level_none(self):
-        """If no data is loaded, or offset is too high, an exception is raised"""
+        """If no highlevel data is loaded, or offset is too high, an exception is raised"""
 
         # no data
         with self.assertRaises(db.exceptions.NoDataFoundException):
@@ -175,8 +224,16 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
         ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
 
+        db.data.add_model("model1", "1.0", "show")
+        db.data.add_model("model2", "1.0", "show")
+
         build_sha = "sha"
-        hl1 = {"highlevel": "one"}
+        hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
+               "metadata": {"meta": "here",
+                           "version": {"highlevel": {"hlversion": "123",
+                                                     "models_essentia_git_sha": "v1"}}
+                          }
+               }
         db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
 
         with self.assertRaises(db.exceptions.NoDataFoundException):
@@ -195,6 +252,13 @@ class DataDBTestCase(DatabaseTestCase):
         second_data["metadata"]["tags"]["album"] = ["Another album"]
         db.data.submit_low_level_data(self.test_mbid, second_data)
         self.assertEqual(2, db.data.count_lowlevel(self.test_mbid))
+
+    def test_add_get_model(self):
+        self.assertIsNone(db.data._get_model_id("modelname", "v1"))
+
+        modelid = db.data.add_model("modelname", "v1")
+        get_id = db.data._get_model_id("modelname", "v1")
+        self.assertEqual(modelid, get_id)
 
 
     def test_get_summary_data(self):

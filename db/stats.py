@@ -1,120 +1,309 @@
+"""Module for working with statistics on data stored in AcousticBrainz.
+
+Values are stored in `statistics` table and are referenced by <name, timestamp>
+pair.
+"""
 import db
 import db.cache
+import db.exceptions
 import datetime
-import time
+import pytz
+import calendar
 import six
 
+from sqlalchemy import text
 
-STATS_CACHE_TIMEOUT = 60 * 10  # ten minutes
+STATS_CACHE_TIMEOUT = 60 * 10  # 10 minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
+
+STATS_MEMCACHE_KEY = "recent-stats"
+STATS_MEMCACHE_LAST_UPDATE_KEY = "recent-stats-last-updated"
+STATS_MEMCACHE_NAMESPACE = "statistics"
+
+LOWLEVEL_LOSSY = "lowlevel-lossy"
+LOWLEVEL_LOSSY_UNIQUE = "lowlevel-lossy-unique"
+LOWLEVEL_LOSSLESS = "lowlevel-lossless"
+LOWLEVEL_LOSSLESS_UNIQUE = "lowlevel-lossless-unique"
+LOWLEVEL_TOTAL = "lowlevel-total"
+LOWLEVEL_TOTAL_UNIQUE = "lowlevel-total-unique"
+
+stats_key_map = {
+    LOWLEVEL_LOSSY: "Lossy (all)",
+    LOWLEVEL_LOSSY_UNIQUE: "Lossy (unique)",
+    LOWLEVEL_LOSSLESS: "Lossless (all)",
+    LOWLEVEL_LOSSLESS_UNIQUE: "Lossless (unique)",
+    LOWLEVEL_TOTAL: "Total (all)",
+    LOWLEVEL_TOTAL_UNIQUE: "Total (unique)",
+}
 
 
 def get_last_submitted_recordings():
-    last_submitted_data = db.cache.get('last-submitted-data')
-    if not last_submitted_data:
+    """Get list of last submitted recordings.
+
+    Returns:
+        List of dictionaries with basic info about last submitted recordings:
+        mbid (MusicBrainz ID), artist (name), and title.
+    """
+    cache_key = "last-submitted-recordings"
+    last_submissions = db.cache.get(cache_key)
+    if not last_submissions:
         with db.engine.connect() as connection:
-            result = connection.execute("""SELECT mbid,
-                                     data->'metadata'->'tags'->'artist'->>0,
-                                     data->'metadata'->'tags'->'title'->>0
-                                FROM lowlevel
-                            ORDER BY id DESC
+            # We are getting results with of offset of 10 rows because we'd
+            # prefer to show recordings for which we already calculated
+            # high-level data. This might not be the best way to do that.
+            result = connection.execute("""SELECT ll.mbid,
+                                     llj.data->'metadata'->'tags'->'artist'->>0,
+                                     llj.data->'metadata'->'tags'->'title'->>0
+                                FROM lowlevel ll
+                                JOIN lowlevel_json llj
+                                  ON ll.id = llj.id
+                            ORDER BY ll.id DESC
                                LIMIT 5
                               OFFSET 10""")
-            last_submitted_data = result.fetchall()
-        last_submitted_data = [
-            (r[0], r[1], r[2]) for r in last_submitted_data if r[1] and r[2]
-        ]
-        db.cache.set('last-submitted-data', last_submitted_data, time=LAST_MBIDS_CACHE_TIMEOUT)
+            last_submissions = result.fetchall()
+            last_submissions = [
+                {
+                    "mbid": r[0],
+                    "artist": r[1],
+                    "title": r[2],
+                } for r in last_submissions if r[1] and r[2]
+            ]
+        db.cache.set(cache_key, last_submissions, time=LAST_MBIDS_CACHE_TIMEOUT)
 
-    return last_submitted_data
-
-
-def get_stats():
-    stats_keys = ["lowlevel-lossy", "lowlevel-lossy-unique", "lowlevel-lossless", "lowlevel-lossless-unique"]
-    # TODO: Port this to new implementation:
-    stats = db.cache._mc.get_multi(stats_keys, key_prefix="ac-num-")
-    last_collected = db.cache.get('last-collected')
-
-    # Recalculate everything together, always.
-    if sorted(stats_keys) != sorted(stats.keys()) or last_collected is None:
-        stats_parameters = dict([(a, 0) for a in stats_keys])
-
-        with db.engine.connect() as connection:
-            result = connection.execute("SELECT now() as now, collected FROM statistics ORDER BY collected DESC LIMIT 1")
-            update_db = False
-            if result.rowcount > 0:
-                (now, last_collected) = result.fetchone()
-            if result.rowcount == 0 or now - last_collected > datetime.timedelta(minutes=59):
-                update_db = True
-
-            result = connection.execute("SELECT lossless, count(*) FROM lowlevel GROUP BY lossless")
-            for row in result.fetchall():
-                if row[0]: stats_parameters['lowlevel-lossless'] = row[1]
-                if not row[0]: stats_parameters['lowlevel-lossy'] = row[1]
-
-            result = connection.execute("SELECT lossless, count(*) FROM (SELECT DISTINCT ON (mbid) mbid, lossless FROM lowlevel ORDER BY mbid, lossless DESC) q GROUP BY lossless;")
-            for row in result.fetchall():
-                if row[0]: stats_parameters['lowlevel-lossless-unique'] = row[1]
-                if not row[0]: stats_parameters['lowlevel-lossy-unique'] = row[1]
-
-            if update_db:
-                for key, value in six.iteritems(stats_parameters):
-                    connection.execute("INSERT INTO statistics (collected, name, value) VALUES (now(), %s, %s) RETURNING collected", (key, value))
-
-            result = connection.execute("SELECT now()")
-            last_collected = result.fetchone()[0]
-
-        value = stats_parameters
-
-        # TODO: Port this to new implementation:
-        db.cache._mc.set_multi(stats_parameters, key_prefix="ac-num-", time=STATS_CACHE_TIMEOUT)
-        db.cache.set('last-collected', last_collected, time=STATS_CACHE_TIMEOUT)
-    else:
-        value = stats
-
-    return value, last_collected
+    return last_submissions
 
 
-def get_statistics_data():
+def compute_stats(to_date):
+    """Compute hourly stats to a given date and write them to
+    the database.
+
+    Take the date of most recent statistics, or if no statistics
+    are added, the earliest date of a submission, and compute and write
+    for every hour from that date to `to_date` the number of items
+    in the database.
+
+    Args:
+        to_date: the date to compute statistics up to
+    """
+
     with db.engine.connect() as connection:
-        result = connection.execute(
-            "SELECT name, array_agg(collected ORDER BY collected ASC) AS times,"
-            "       array_agg(value ORDER BY collected ASC) AS values "
-            "FROM statistics "
-            "GROUP BY name"
-        )
-        stats_key_map = {
-            "lowlevel-lossy": "Lossy (all)",
-            "lowlevel-lossy-unique": "Lossy (unique)",
-            "lowlevel-lossless": "Lossless (all)",
-            "lowlevel-lossless-unique": "Lossless (unique)"
-        }
-        ret = []
-        total_unique = {"name": "Total (unique)", "data": {}}
-        total_all = {"name": "Total (all)", "data": {}}
-        for val in result:
-            pairs = zip([_make_timestamp(v) for v in val[1]], val[2])
-            ret.append({
-                "name": stats_key_map.get(val[0], val[0]),
-                "data": [[v[0], v[1]] for v in pairs]
-            })
-            second = {}
-            if val[0] in ["lowlevel-lossy", "lowlevel-lossless"]:
-                second = total_all
-            elif val[0] in ["lowlevel-lossy-unique", "lowlevel-lossless-unique"]:
-                second = total_unique
-            for pair in pairs:
-                if pair[0] in second['data']:
-                    second['data'][pair[0]] = second['data'][pair[0]] + pair[1]
-                else:
-                    second['data'][pair[0]] = pair[1]
+        stats_date = _get_most_recent_stats_date(connection)
+        if not stats_date:
+            # If there have been no statistics, we start from the
+            # earliest date in the lowlevel table
+            stats_date = _get_earliest_submission_date(connection)
+            if not stats_date:
+                # If there are no lowlevel submissions, we stop
+                return
 
-    total_unique['data'] = [[k, total_unique['data'][k]] for k in sorted(total_unique['data'].keys())]
-    total_all['data'] = [[k, total_all['data'][k]] for k in sorted(total_all['data'].keys())]
-    ret.extend([total_unique, total_all])
-    return ret
+        next_date = _get_next_hour(stats_date)
+
+        while next_date < to_date:
+            stats = _count_submissions_to_date(connection, next_date)
+            _write_stats(connection, next_date, stats)
+            next_date = _get_next_hour(next_date)
+
+
+def _write_stats(connection, date, stats):
+    """Records a value with a given name and current timestamp."""
+    for name, value in six.iteritems(stats):
+        q = text("""
+            INSERT INTO statistics (collected, name, value)
+                 VALUES (:collected, :name, :value)""")
+        connection.execute(q, {"collected": date, "name": name, "value": value})
+
+
+def add_stats_to_cache():
+    """Compute the most recent statistics and add them to memcache"""
+    now = datetime.datetime.now(pytz.utc)
+    with db.engine.connect() as connection:
+        stats = _count_submissions_to_date(connection, now)
+        db.cache.set(STATS_MEMCACHE_KEY, stats,
+                     time=STATS_CACHE_TIMEOUT, namespace=STATS_MEMCACHE_NAMESPACE)
+        db.cache.set(STATS_MEMCACHE_LAST_UPDATE_KEY, now,
+                     time=STATS_CACHE_TIMEOUT, namespace=STATS_MEMCACHE_NAMESPACE)
+
+
+def get_stats_summary():
+    """Load a summary of statistics to show on the homepage.
+
+    If no statistics exist in the cache, use the most recently
+    computed statistics from the database
+    """
+    last_collected, stats = _get_stats_from_cache()
+    if not stats:
+        recent_database = load_statistics_data(1)
+        if recent_database:
+            stats = recent_database[0]["stats"]
+            last_collected = recent_database[0]["collected"]
+        else:
+            stats = {k: 0 for k in stats_key_map.keys()}
+    return stats, last_collected
+
+
+def _get_stats_from_cache():
+    """Get submission statistics from memcache"""
+    stats = db.cache.get(STATS_MEMCACHE_KEY, namespace=STATS_MEMCACHE_NAMESPACE)
+    last_collected = db.cache.get(STATS_MEMCACHE_LAST_UPDATE_KEY,
+                                  namespace=STATS_MEMCACHE_NAMESPACE)
+
+    return last_collected, stats
+
+
+def format_statistics_for_highcharts(data):
+    """Format statistics data to load with highcharts
+
+    Args:
+        data: data from load_statistics_data
+    """
+
+    counts = {}
+    for k in stats_key_map.keys():
+        counts[k] = []
+
+    for row in data:
+        collected = row["collected"]
+        stats = row["stats"]
+
+        ts = _make_timestamp(collected)
+        for k, v in counts.items():
+            counts[k].append([ts, stats[k]])
+
+    stats = [{"name": stats_key_map.get(key, key), "data": data} for key, data in counts.items()]
+
+    return stats
+
+
+def load_statistics_data(limit=None):
+    # Postgres doesn't let you create a json dictionary using values
+    # from one column as keys and another column as values. Instead we
+    # create an array of {"name": name, "value": value} objects and change
+    # it in python
+    args = {}
+    # TODO: use sqlalchemy select().limit()?
+    qtext = """
+            SELECT collected
+                 , json_agg(row_to_json(
+                    (SELECT r FROM (SELECT name, value) r) )) AS stats
+              FROM statistics
+          GROUP BY collected
+          ORDER BY collected DESC
+          """
+    if limit:
+        args["limit"] = int(limit)
+        qtext += " LIMIT :limit"
+    query = text(qtext)
+    with db.engine.connect() as connection:
+        stats_result = connection.execute(query, args)
+        ret = []
+        for line in stats_result:
+            row = {"collected": line["collected"], "stats": {}}
+            for stat in line["stats"]:
+                row["stats"][stat["name"]] = stat["value"]
+            ret.append(row)
+
+    # We order by DESC in order to use the `limit` parameter, but
+    # we actually need the stats in increasing order.
+    return list(reversed(ret))
+
+
+def get_statistics_history():
+    return format_statistics_for_highcharts(load_statistics_data())
+
+
+def _count_submissions_to_date(connection, to_date):
+    """Count number of low-level submissions in the database
+    before a given date."""
+
+    counts = {
+        LOWLEVEL_LOSSY: 0,
+        LOWLEVEL_LOSSY_UNIQUE: 0,
+        LOWLEVEL_LOSSLESS: 0,
+        LOWLEVEL_LOSSLESS_UNIQUE: 0,
+        LOWLEVEL_TOTAL: 0,
+        LOWLEVEL_TOTAL_UNIQUE: 0,
+    }
+
+    # All submissions, split by lossless/lossy
+    query = text("""
+        SELECT lossless
+             , count(*)
+          FROM lowlevel
+         WHERE submitted < :submitted
+      GROUP BY lossless
+      """)
+    result = connection.execute(query, {"submitted": to_date})
+    for is_lossless, count in result.fetchall():
+        if is_lossless:
+            counts[LOWLEVEL_LOSSLESS] = count
+        else:
+            counts[LOWLEVEL_LOSSY] = count
+
+    # Unique submissions, split by lossless, lossy
+    query = text("""
+        SELECT lossless
+             , count(distinct(mbid))
+          FROM lowlevel
+         WHERE submitted < :submitted
+      GROUP BY lossless
+    """)
+    result = connection.execute(query, {"submitted": to_date})
+    for is_lossless, count in result.fetchall():
+        if is_lossless:
+            counts[LOWLEVEL_LOSSLESS_UNIQUE] = count
+        else:
+            counts[LOWLEVEL_LOSSY_UNIQUE] = count
+
+    # total number of unique submissions
+    query = text("""
+        SELECT count(distinct(mbid))
+          FROM lowlevel
+         WHERE submitted < :submitted
+    """)
+    result = connection.execute(query, {"submitted": to_date})
+    row = result.fetchone()
+    counts[LOWLEVEL_TOTAL_UNIQUE] = row[0]
+
+    # total of all submissions can be computed by summing lossless and lossy
+    counts[LOWLEVEL_TOTAL] = counts[LOWLEVEL_LOSSY] + counts[LOWLEVEL_LOSSLESS]
+    return counts
 
 
 def _make_timestamp(dt):
+    """ Return the number of miliseconds since the epoch, in UTC """
     dt = dt.replace(microsecond=0)
-    return time.mktime(dt.utctimetuple())*1000
+    return calendar.timegm(dt.utctimetuple())*1000
+
+
+def _get_earliest_submission_date(connection):
+    """Get the earliest date that something was submitted to AB."""
+    q = text("""SELECT submitted
+                  FROM lowlevel
+              ORDER BY submitted ASC
+                 LIMIT 1""")
+    cur = connection.execute(q)
+    row = cur.fetchone()
+    if row:
+        return row[0]
+
+
+def _get_most_recent_stats_date(connection):
+    q = text("""SELECT collected
+                  FROM statistics
+              ORDER BY collected DESC
+                 LIMIT 1""")
+    cur = connection.execute(q)
+    row = cur.fetchone()
+    if row:
+        return row[0]
+
+
+def _get_next_hour(date):
+    """Round up a date to the nearest hour:00:00.
+    Arguments:
+      date: a datetime
+    """
+    delta = datetime.timedelta(hours=1)
+    date = date + delta
+    date = date.replace(minute=0, second=0, microsecond=0)
+    return date

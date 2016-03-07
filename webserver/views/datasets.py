@@ -1,13 +1,9 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from flask_wtf import Form
-from flask_wtf.file import FileField, FileAllowed, FileRequired
-from wtforms import StringField, TextAreaField
-from wtforms.validators import DataRequired
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from webserver.external import musicbrainz
-from webserver import flash
+from webserver import flash, forms
 from collections import defaultdict
 import db.exceptions
 import db.dataset
@@ -84,21 +80,37 @@ def eval_jobs(dataset_id):
     })
 
 
-@datasets_bp.route("/<uuid:dataset_id>/evaluate")
+@datasets_bp.route("/<uuid:dataset_id>/evaluate", methods=('GET', 'POST'))
 def evaluate(dataset_id):
+    """Endpoint for submitting dataset for evaluation."""
     ds = get_dataset(dataset_id)
     if not ds["public"]:
         flash.warn("Can't add private datasets into evaluation queue.")
-    else:
+        return redirect(url_for(".eval_info", dataset_id=dataset_id))
+    if db.dataset_eval.job_exists(dataset_id):
+        flash.warn("Evaluation job for this dataset has been already created.")
+        return redirect(url_for(".eval_info", dataset_id=dataset_id))
+
+    form = forms.DatasetEvaluationForm()
+
+    if form.validate_on_submit():
         try:
-            db.dataset_eval.evaluate_dataset(ds["id"])
+            if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
+                form.filter_type.data = None
+            db.dataset_eval.evaluate_dataset(
+                dataset_id=ds["id"],
+                normalize=form.normalize.data,
+                filter_type=form.filter_type.data,
+            )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException:
             # TODO(roman): Show more informative error message.
-            flash.error("Can't add dataset into evaluation queue because it's incomplete.")
+            flash.error("Can't add this dataset into evaluation queue because it's incomplete.")
         except db.dataset_eval.JobExistsException:
             flash.warn("Evaluation job for this dataset has been already created.")
-    return redirect(url_for(".eval_info", dataset_id=dataset_id))
+        return redirect(url_for(".eval_info", dataset_id=dataset_id))
+
+    return render_template("datasets/evaluate.html", dataset=ds, form=form)
 
 
 @datasets_bp.route("/<uuid:id>/json")
@@ -137,7 +149,7 @@ def create():
 @datasets_bp.route("/import", methods=("GET", "POST"))
 @login_required
 def import_csv():
-    form = CSVImportForm()
+    form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
         dataset_dict = {
             "name": form.name.data,
@@ -234,15 +246,6 @@ def recording_info(mbid):
         })
     except musicbrainz.DataUnavailable as e:
         return jsonify(error=str(e)), 404
-
-
-class CSVImportForm(Form):
-    name = StringField("Name", validators=[DataRequired("Dataset name is required!")])
-    description = TextAreaField("Description")
-    file = FileField("CSV file", validators=[
-        FileRequired(),
-        FileAllowed(["csv"], "Dataset needs to be in CSV format!"),
-    ])
 
 
 def get_dataset(dataset_id):

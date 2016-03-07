@@ -21,6 +21,7 @@ class User(UserMixin):
             musicbrainz_id=user['musicbrainz_id'],
         )
 
+
 @login_manager.user_loader
 def load_user(user_id):
     user = db.user.get(user_id)

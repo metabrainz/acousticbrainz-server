@@ -1,7 +1,8 @@
 import db
 import copy
 import jsonschema
-
+import unicodedata
+import re
 
 # JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
 # defines basic structure of a dataset. JSON_SCHEMA_COMPLETE adds additional
@@ -61,6 +62,15 @@ JSON_SCHEMA_COMPLETE["properties"]["classes"]["items"]["properties"]["recordings
 # Keep in mind that we still need to manually check if all recordings are in
 # AcousticBrainz database!
 
+
+def _slugify(string):
+    """Converts unicode string to lowercase, removes alphanumerics and
+    underscores, and converts spaces to hyphens. Also strips leading and
+    trailing whitespace.
+    """
+    string = unicodedata.normalize('NFKD', string).encode('ascii', 'ignore').decode('ascii')
+    string = re.sub('[^\w\s-]', '', string).strip().lower()
+    return re.sub('[-\s]+', '-', string)
 
 def create_from_dict(dictionary, author_id):
     """Creates a new dataset from a dictionary.
@@ -137,7 +147,7 @@ def get(id):
     """
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, name, description, author, created, public "
+            "SELECT id::text, name, description, author, created, public "
             "FROM dataset "
             "WHERE id = %s",
             (str(id),)
@@ -153,7 +163,7 @@ def get(id):
 def _get_classes(dataset_id):
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id, name, description "
+            "SELECT id::text, name, description "
             "FROM dataset_class "
             "WHERE dataset = %s",
             (dataset_id,)

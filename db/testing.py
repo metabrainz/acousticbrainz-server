@@ -37,20 +37,27 @@ class DatabaseTestCase(unittest.TestCase):
     def drop_tables(self):
         with db.engine.connect() as connection:
             # TODO(roman): See if there's a better way to drop all tables.
-            connection.execute('DROP TABLE IF EXISTS highlevel_json       CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS highlevel_model      CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS highlevel_meta       CASCADE;')
             connection.execute('DROP TABLE IF EXISTS highlevel            CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS model                CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS lowlevel_json        CASCADE;')
             connection.execute('DROP TABLE IF EXISTS lowlevel             CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS version              CASCADE;')
             connection.execute('DROP TABLE IF EXISTS statistics           CASCADE;')
             connection.execute('DROP TABLE IF EXISTS incremental_dumps    CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_eval_jobs    CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_class_member CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_class        CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset              CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS dataset_snapshot     CASCADE;')
             connection.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
 
     def drop_types(self):
         with db.engine.connect() as connection:
             connection.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
+            connection.execute('DROP TYPE IF EXISTS model_status CASCADE;')
+            connection.execute('DROP TYPE IF EXISTS version_type CASCADE;')
 
     def data_filename(self, mbid):
         """ Get the expected filename of a test datafile given its mbid """

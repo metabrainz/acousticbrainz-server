@@ -7,6 +7,8 @@ import os
 import db
 import db.exceptions
 
+from sqlalchemy import text
+
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
 
@@ -25,6 +27,15 @@ SANITY_CHECK_KEYS = [
     ['rhythm'],
     ['tonal'],
 ]
+
+STATUS_HIDDEN = 'hidden'
+STATUS_EVALUATION = 'evaluation'
+STATUS_SHOW = 'show'
+
+VERSION_TYPE_LOWLEVEL = 'lowlevel'
+VERSION_TYPE_HIGHLEVEL = 'highlevel'
+
+MODEL_STATUSES = [STATUS_HIDDEN, STATUS_EVALUATION, STATUS_SHOW]
 
 # TODO: Util methods should not be in the database package
 
@@ -115,43 +126,174 @@ def submit_low_level_data(mbid, data):
     # The data looks good, lets see about saving it
     write_low_level(mbid, data)
 
+def insert_version(connection, data, version_type):
+    # TODO: Memoise sha -> id
+    norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    sha = sha256(norm_data).hexdigest()
+    query = text("""
+            SELECT id
+              FROM version
+             WHERE data_sha256=:data_sha256
+               AND type=:version_type""")
+    result = connection.execute(query, {"data_sha256": sha, "version_type": version_type})
+    row = result.fetchone()
+    if row:
+        return row[0]
+
+    result = connection.execute(
+        text("""INSERT INTO version (data, data_sha256, type)
+        VALUES (:data, :sha, :version_type)
+        RETURNING id"""),
+        {"data": norm_data, "sha": sha, "version_type": version_type}
+    )
+    row = result.fetchone()
+    return row[0]
 
 def write_low_level(mbid, data):
 
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
-    build_sha1 = data['metadata']['version']['essentia_build_sha']
+    version = data['metadata']['version']
+    build_sha1 = version['essentia_build_sha']
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
     with db.engine.begin() as connection:
         # Checking to see if we already have this data
-        result = connection.execute("SELECT data_sha256 FROM lowlevel WHERE mbid = %s", (mbid, ))
+        result = connection.execute("SELECT id FROM lowlevel_json WHERE data_sha256  = %s", (data_sha256, ))
 
-        # if we don't have this data already, add it
-        sha_values = [v[0] for v in result.fetchall()]
-
-        if data_sha256 not in sha_values:
+        if result.fetchone() is None:
             logging.info("Saved %s" % mbid)
-            connection.execute(
-                "INSERT INTO lowlevel (mbid, build_sha1, data_sha256, lossless, data)"
-                "VALUES (%s, %s, %s, %s, %s)",
-                (mbid, build_sha1, data_sha256, is_lossless_submit, data_json)
-            )
+            query = text("""
+                INSERT INTO lowlevel (mbid, build_sha1, lossless)
+                     VALUES (:mbid, :build_sha1, :lossless)
+                  RETURNING id
+            """)
+            result = connection.execute(query, {"mbid": mbid, "build_sha1": build_sha1, "lossless": is_lossless_submit})
+            ll_id = result.fetchone()[0]
+            version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
+            query = text("""
+              INSERT INTO lowlevel_json (id, data, data_sha256, version)
+                   VALUES (:id, :data, :data_sha256, :version)
+            """)
+            connection.execute(query, {"id": ll_id, "data": data_json, "data_sha256": data_sha256, "version": version_id})
         else:
             logging.info("Already have %s" % data_sha256)
 
+def add_model(model_name, model_version, model_status=STATUS_HIDDEN):
+    if model_status not in MODEL_STATUSES:
+        raise Exception("model_status must be one of %s" % ",".join(MODEL_STATUSES))
+    with db.engine.begin() as connection:
+        query = text(
+            """INSERT INTO model (model, model_version, status)
+                    VALUES (:model_name, :model_version, :model_status)
+                 RETURNING id"""
+        )
+        result = connection.execute(query,
+            {"model_name": model_name,
+             "model_version": model_version,
+             "model_status": model_status})
+        return result.fetchone()[0]
+
+
+def set_model_status(model_name, model_version, model_status):
+    if model_status not in MODEL_STATUSES:
+        raise Exception("model_status must be one of %s" % ",".join(MODEL_STATUSES))
+    with db.engine.begin() as connection:
+        query = text(
+            """UPDATE model
+                  SET status = :model_status
+                WHERE model_name = :model_name
+                  AND model_version = :model_version"""
+        )
+        connection.execute(query,
+            {"model_name": model_name,
+             "model_version": model_version,
+             "model_status": model_status})
+
+def get_model(model_name, model_version):
+    with db.engine.begin() as connection:
+        query = text(
+            """SELECT *
+                 FROM model
+                WHERE model = :model_name
+                  AND model_version = :model_version""")
+        result = connection.execute(query,
+                    {"model_name": model_name,
+                     "model_version": model_version})
+        return result.fetchone()
+
+def _get_model_id(model_name, version):
+    with db.engine.begin() as connection:
+        query = text(
+            """SELECT id
+                 FROM model
+                WHERE model = :model_name
+                  AND model_version = :model_version""")
+        result = connection.execute(query,
+                    {"model_name": model_name,
+                     "model_version": version})
+        row = result.fetchone()
+        if row:
+            return row[0]
+        else:
+            return None
+
+def write_high_level_item(connection, model_name, model_version, ll_id, version_id, data):
+    item_norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    item_sha = sha256(item_norm_data).hexdigest()
+
+    model_id = _get_model_id(model_name, model_version)
+    if model_id is None:
+        model_id = add_model(model_name, model_version)
+
+    item_q = text(
+        """INSERT INTO highlevel_model (highlevel, data, data_sha256, model, version)
+                VALUES (:highlevel, :data, :data_sha256, :model, :version)""")
+
+    connection.execute(item_q,
+        {"highlevel": ll_id, "data": item_norm_data,
+            "data_sha256": item_sha, "model": model_id,
+            "version": version_id})
+
+def write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta):
+    check_query = text(
+        """SELECT id
+             FROM highlevel
+            WHERE id = :id""")
+    result = connection.execute(check_query, {"id": ll_id})
+    if result.rowcount:
+        # If this already exists, we don't need to add it
+        # (new model for existing highlevel)
+        return
+    hl_query = text(
+        """INSERT INTO highlevel (id, mbid, build_sha1)
+                VALUES (:id, :mbid, :build_sha1)""")
+    connection.execute(hl_query, {"id": ll_id, "mbid": mbid, "build_sha1": build_sha1})
+
+    meta_norm_data = json.dumps(json_meta, sort_keys=True, separators=(',', ':'))
+    sha = sha256(meta_norm_data).hexdigest()
+    hl_meta = text(
+        """INSERT INTO highlevel_meta (id, data, data_sha256)
+                VALUES (:id, :data, :data_sha256)""")
+    connection.execute(hl_meta, {"id": ll_id, "data": meta_norm_data, "data_sha256": sha})
+
+
 def write_high_level(mbid, ll_id, data, build_sha1):
-    norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    sha = sha256(norm_data).hexdigest()
+    # If the hl runner failed to run, its output is {}
+    if not data:
+        return
 
     with db.engine.begin() as connection:
-        result = connection.execute("""INSERT INTO highlevel_json (data, data_sha256)
-                                            VALUES (%s, %s)
-                                         RETURNING id""", (norm_data, sha))
-        id = result.fetchone()[0]
-        connection.execute("""INSERT INTO highlevel (id, mbid, build_sha1, data, submitted)
-                                   VALUES (%s, %s, %s, %s, now())""",
-                           (ll_id, mbid, build_sha1, id))
+        json_meta = data["metadata"]
+        json_high = data["highlevel"]
 
+        write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta)
+
+        hl_version = json_meta["version"]["highlevel"]
+        version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
+        model_version = hl_version["models_essentia_git_sha"]
+
+        for model_name, data in json_high.items():
+            write_high_level_item(connection, model_name, model_version, ll_id, version_id, data)
 
 def load_low_level(mbid, offset=0):
     """Load lowlevel data with the given mbid as a dictionary.
@@ -162,10 +304,12 @@ def load_low_level(mbid, offset=0):
     exist or if the offset is too high."""
     with db.engine.connect() as connection:
         result = connection.execute(
-            """SELECT data
-                 FROM lowlevel
-                WHERE mbid = %s
-             ORDER BY submitted
+            """SELECT llj.data
+                 FROM lowlevel ll
+                 JOIN lowlevel_json llj
+                   ON ll.id = llj.id
+                WHERE ll.mbid = %s
+             ORDER BY ll.submitted
                OFFSET %s""",
             (str(mbid), offset)
         )
@@ -179,21 +323,48 @@ def load_low_level(mbid, offset=0):
 def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
     with db.engine.connect() as connection:
+        # Metadata
         result = connection.execute(
-            """SELECT hlj.data
-                 FROM highlevel hl
-                 JOIN highlevel_json hlj
-                   ON hl.data = hlj.id
+            """SELECT hlm.id
+                    , hlm.data
+                 FROM highlevel_meta hlm
                  JOIN lowlevel ll
-                   ON ll.id = hl.id
+                   ON ll.id = hlm.id
                 WHERE ll.mbid = %s
              ORDER BY ll.submitted
                OFFSET %s""",
             (str(mbid), offset)
         )
-        if not result.rowcount:
+        metarow = result.fetchone()
+        if metarow is None:
             raise db.exceptions.NoDataFoundException
-        return result.fetchone()[0]
+
+        hlid = metarow[0]
+        metadata = metarow[1]
+
+        # model data
+        query = text(
+            """select m.model
+                    , hlmo.data
+                    , version.data as version
+                 FROM highlevel_model hlmo
+                 JOIN model m
+                   ON m.id = hlmo.model
+                 JOIN version
+                   ON version.id = hlmo.version
+                WHERE hlmo.highlevel = :hlid
+                  AND m.status = 'show'
+            """)
+        result = connection.execute(query, {"hlid": hlid})
+        highlevel = {}
+        for row in result.fetchall():
+            model = row[0]
+            data = row[1]
+            version = row[2]
+            data["version"] = version
+            highlevel[model] = data
+
+        return {"metadata": metadata, "highlevel": highlevel}
 
 
 def count_lowlevel(mbid):
@@ -205,15 +376,51 @@ def count_lowlevel(mbid):
         )
         return result.fetchone()[0]
 
+def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
+    """Fetch up to 100 low-level documents which have no associated
+    high level data for the given module_id.
+    if `within` is set, only return mbids that are in this list"""
+
+    within_query = ""
+    if within:
+        within_query = "AND ll.mbid IN :within"
+    with db.engine.connect() as connection:
+        query = text(
+            """SELECT ll.mbid::text
+                    , llj.data::text
+                    , ll.id
+                 FROM lowlevel AS ll
+                 JOIN lowlevel_json AS llj
+                   ON llj.id = ll.id
+            LEFT JOIN (SELECT id, highlevel
+                         FROM highlevel_model
+                        WHERE model=:highlevel_model) AS hlm
+                   ON ll.id = hlm.highlevel
+                WHERE hlm.id IS NULL
+                      %s
+                LIMIT 100""" % within_query)
+        params = {"highlevel_model": highlevel_model}
+        if within:
+            params["within"] = tuple(within)
+        result = connection.execute(query, params)
+        docs = result.fetchall()
+        return docs
+
 def get_unprocessed_highlevel_documents():
     """Fetch up to 100 low-level documents which have no associated high level data."""
     with db.engine.connect() as connection:
-        result = connection.execute("""SELECT ll.mbid, ll.data::text, ll.id
-                         FROM lowlevel AS ll
-                    LEFT JOIN highlevel AS hl
-                           ON ll.id = hl.id
-                        WHERE hl.mbid IS NULL
-                        LIMIT 100""")
+        query = text(
+                """SELECT ll.mbid::text
+                    , llj.data::text
+                    , ll.id
+                 FROM lowlevel AS ll
+                 JOIN lowlevel_json AS llj
+                   ON llj.id = ll.id
+            LEFT JOIN highlevel AS hl
+                   ON ll.id = hl.id
+                WHERE hl.mbid IS NULL
+                LIMIT 100""")
+        result = connection.execute(query)
         docs = result.fetchall()
         return docs
 

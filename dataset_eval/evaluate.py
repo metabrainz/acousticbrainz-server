@@ -6,6 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 import config
 
 from dataset_eval import gaia_wrapper
+from dataset_eval import artistfilter
 import gaia2.fastyaml as yaml
 import db
 import db.data
@@ -13,14 +14,12 @@ import db.dataset
 import db.dataset_eval
 import db.exceptions
 import utils.path
-import unicodedata
 import tempfile
 import logging
 import shutil
 import time
 import json
 import os
-import re
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 HISTORY_STORAGE_DIR = os.path.join(config.FILE_STORAGE_DIR, "history")
@@ -41,21 +40,25 @@ def main():
 
 def evaluate_dataset(eval_job):
     db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_RUNNING)
+
     temp_dir = tempfile.mkdtemp()
 
     try:
         dataset = db.dataset.get(eval_job["dataset_id"])
 
+        train, test = artistfilter.filter(eval_job["dataset_id"], eval_job["options"])
+        db.dataset_eval.add_datasets_to_job(eval_job["id"], train, test)
+
         logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
         filelist_path = os.path.join(temp_dir, "filelist.yaml")
-        filelist = dump_lowlevel_data(extract_recordings(dataset), os.path.join(temp_dir, "data"))
+        filelist = dump_lowlevel_data(train.keys(), os.path.join(temp_dir, "data"))
         with open(filelist_path, "w") as f:
             yaml.dump(filelist, f)
 
         logging.info("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(temp_dir, "groundtruth.yaml")
         with open(groundtruth_path, "w") as f:
-            yaml.dump(create_groundtruth(dataset), f)
+            yaml.dump(create_groundtruth_dict(dataset["name"], train), f)
 
         logging.info("Training model...")
         results = gaia_wrapper.train_model(
@@ -88,11 +91,25 @@ def evaluate_dataset(eval_job):
         shutil.rmtree(temp_dir)  # Cleanup
 
 
+def create_groundtruth_dict(name, datadict):
+    groundtruth = {
+        "type": "unknown",  # TODO: See if that needs to be modified.
+        "version": 1.0,
+        "className": db.dataset._slugify(unicode(name)),
+        "groundTruth": {},
+    }
+    for r, cls in datadict.items():
+        if isinstance(r, unicode):
+            r = r.encode("UTF-8")
+        groundtruth["groundTruth"][r] = cls.encode("UTF-8")
+
+    return groundtruth
+
 def create_groundtruth(dataset):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": _slugify(unicode(dataset["name"])),
+        "className": db.dataset._slugify(unicode(dataset["name"])),
         "groundTruth": {},
     }
     for cls in dataset["classes"]:
@@ -116,7 +133,7 @@ def dump_lowlevel_data(recordings, location):
     for recording in recordings:
         filelist[recording] = os.path.join(location, "%s.yaml" % recording)
         with open(filelist[recording], "w") as f:
-            f.write(lowlevel_data_to_yaml(json.loads(db.data.load_low_level(recording))))
+            f.write(lowlevel_data_to_yaml(db.data.load_low_level(recording)))
     return filelist
 
 
@@ -151,16 +168,6 @@ def save_history_file(history_file_path, job_id):
     destination = os.path.join(directory, job_id)
     shutil.copyfile(history_file_path, destination)
     return destination
-
-
-def _slugify(string):
-    """Converts unicode string to lowercase, removes alphanumerics and
-    underscores, and converts spaces to hyphens. Also strips leading and
-    trailing whitespace.
-    """
-    string = unicodedata.normalize('NFKD', string).encode('ascii', 'ignore').decode('ascii')
-    string = re.sub('[^\w\s-]', '', string).strip().lower()
-    return re.sub('[-\s]+', '-', string)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
 # This value must be incremented after schema changes on replicated tables!
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 engine = None

@@ -1,10 +1,9 @@
 from __future__ import absolute_import
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, jsonify
 from db.data import submit_low_level_data, count_lowlevel
 import db.data
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
-from werkzeug.exceptions import BadRequest, NotFound
 import webserver.exceptions
 import json
 import uuid
@@ -20,25 +19,6 @@ def count(mbid):
         'count': count_lowlevel(mbid),
     })
 
-def _validate_data_arguments(mbid, offset):
-    """Validate the mbid and offset. If the mbid is not a valid uuid, raise 404.
-    If the offset is None, return 0, otherwise interpret it as a number. If it is
-    not a number, raise 400."""
-    try:
-        uuid.UUID(mbid)
-    except ValueError:
-        # an invalid uuid is 404
-        raise webserver.exceptions.APINotFound("Not found")
-
-    if offset:
-        try:
-            offset = int(offset)
-        except ValueError:
-            raise webserver.exceptions.APIBadRequest("Offset must be an integer value")
-    else:
-        offset = 0
-
-    return mbid, offset
 
 @api_bp.route("/<string:mbid>/low-level", methods=["GET"])
 @crossdomain()
@@ -86,3 +66,24 @@ def submit_low_level(mbid):
     except BadDataException as e:
         raise webserver.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
+
+
+def _validate_data_arguments(mbid, offset):
+    """Validate the mbid and offset. If the mbid is not a valid uuid, raise 404.
+    If the offset is None, return 0, otherwise interpret it as a number. If it is
+    not a number, raise 400."""
+    try:
+        uuid.UUID(mbid)
+    except ValueError:
+        # an invalid uuid is 404
+        raise webserver.exceptions.APINotFound("Not found")
+
+    if offset:
+        try:
+            offset = int(offset)
+        except ValueError:
+            raise webserver.exceptions.APIBadRequest("Offset must be an integer value")
+    else:
+        offset = 0
+
+    return mbid, offset

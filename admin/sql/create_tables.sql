@@ -5,23 +5,53 @@ CREATE TABLE lowlevel (
   mbid        UUID NOT NULL,
   build_sha1  TEXT NOT NULL,
   lossless    BOOLEAN                  DEFAULT 'n',
-  data        JSON NOT NULL,
-  submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  data_sha256 TEXT NOT NULL
+  submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE lowlevel_json (
+  id          INTEGER, -- FK to lowlevel.id
+  data        JSONB    NOT NULL,
+  data_sha256 CHAR(64) NOT NULL,
+  version     INTEGER  NOT NULL-- FK to version.id
 );
 
 CREATE TABLE highlevel (
   id         INTEGER, -- FK to lowlevel.id
   mbid       UUID    NOT NULL,
   build_sha1 TEXT    NOT NULL,
-  data       INTEGER NOT NULL, -- FK to highlevel_json.data
   submitted  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE highlevel_json (
-  id          SERIAL,
-  data        JSON     NOT NULL,
+CREATE TABLE highlevel_meta (
+  id          INTEGER, -- FK to highlevel.id
+  data        JSONB    NOT NULL,
   data_sha256 CHAR(64) NOT NULL
+);
+
+CREATE TABLE highlevel_model (
+  id          SERIAL,
+  highlevel   INTEGER, -- FK to highlevel.id
+  data        JSONB    NOT NULL,
+  data_sha256 CHAR(64) NOT NULL,
+  model       INTEGER  NOT NULL, -- FK to model.id
+  version     INTEGER  NOT NULL, -- FK to version.id
+  created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE version (
+  id          SERIAL,
+  data        JSONB    NOT NULL,
+  data_sha256 CHAR(64) NOT NULL,
+  type        version_type NOT NULL,
+  created     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE model (
+  id            SERIAL,
+  model         TEXT         NOT NULL,
+  model_version TEXT         NOT NULL,
+  date          TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  status        model_status NOT NULL    DEFAULT 'hidden'
 );
 
 CREATE TABLE statistics (
@@ -64,13 +94,21 @@ CREATE TABLE dataset_class_member (
 );
 
 CREATE TABLE dataset_eval_jobs (
-  id         UUID,
-  dataset_id UUID                     NOT NULL,
-  status     eval_job_status          NOT NULL DEFAULT 'pending',
-  status_msg VARCHAR,
-  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  result     JSON
+  id                UUID,
+  dataset_id        UUID                     NOT NULL,
+  status            eval_job_status          NOT NULL DEFAULT 'pending',
+  status_msg        VARCHAR,
+  options           JSONB,
+  training_snapshot INT,                     -- FK to dataset_snapshot
+  testing_snapshot  INT,                     -- FK to dataset_snapshot
+  created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  result            JSONB
+);
+
+CREATE TABLE dataset_snapshot (
+  id   SERIAL,
+  data JSONB NOT NULL
 );
 
 COMMIT;

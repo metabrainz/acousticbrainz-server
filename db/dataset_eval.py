@@ -107,7 +107,7 @@ def get_job(job_id):
     with db.engine.connect() as connection:
         query = text(
             """SELECT id::text
-                    , dataset_id
+                    , dataset_id::text
                     , status
                     , status_msg
                     , result

@@ -129,7 +129,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
         with self.assertRaises(dataset_eval.JobNotFoundException):
             dataset_eval.delete_job(self.test_uuid)
 
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True)
         self.assertIsNotNone(dataset_eval.get_job(job_id))
         dataset_eval.delete_job(job_id)
         self.assertIsNone(dataset_eval.get_job(job_id))

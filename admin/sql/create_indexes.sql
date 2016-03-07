@@ -17,6 +17,8 @@ CREATE INDEX data_sha256_ndx_highlevel_meta ON highlevel_meta (data_sha256);
 -- two different recordings. Instead map it over data, model, and the id of the item
 CREATE UNIQUE INDEX data_sha256_ndx_highlevel_model ON highlevel_model (data_sha256, highlevel, model);
 CREATE INDEX model_ndx_highlevel_model ON highlevel_model (model);
+CREATE INDEX version_ndx_highlevel_model ON highlevel_model (version);
+CREATE INDEX highlevel_ndx_highlevel_model ON highlevel_model (highlevel);
 
 CREATE UNIQUE INDEX lower_musicbrainz_id_ndx_user ON "user" (lower(musicbrainz_id));
 

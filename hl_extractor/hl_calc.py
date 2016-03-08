@@ -46,7 +46,7 @@ class HighLevel(Thread):
         try:
             f = tempfile.NamedTemporaryFile(delete=False)
             name = f.name
-            f.write(self.ll_data)
+            f.write(self.ll_data.encode("utf-8"))
             f.close()
         except IOError:
             print("IO Error while writing temp file")

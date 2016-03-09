@@ -118,7 +118,7 @@ def update(dataset_id, dictionary, author_id):
             dictionary["description"] = None
 
         connection.execute("""UPDATE dataset
-                          SET (name, description, public, author) = (%s, %s, %s, %s)
+                          SET (name, description, public, author, last_edited) = (%s, %s, %s, %s, now())
                           WHERE id = %s""",
                        (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
 
@@ -147,7 +147,7 @@ def get(id):
     """
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT id::text, name, description, author, created, public "
+            "SELECT id::text, name, description, author, created, public, last_edited "
             "FROM dataset "
             "WHERE id = %s",
             (str(id),)

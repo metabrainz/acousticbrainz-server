@@ -1,4 +1,3 @@
-/** @jsx React.DOM */
 /*
  This is a viewer for dataset evaluation jobs.
 
@@ -188,13 +187,10 @@ var JobRow = React.createClass({
                 status = <span className="label label-danger">Failed</span>;
                 break;
             case JOB_STATUS_DONE:
-                switch (this.props.outdated) {
-                    case false:
-                        status = <span className="label label-success">Done</span>;
-                        break;
-                    case true:
-                        status = <span className="label label-primary">Done, Outdated</span>;
-                        break;
+                if (this.props.outdated) {
+                    status = <span className="label label-primary">Done, Outdated</span>;
+                } else {
+                    status = <span className="label label-success">Done</span>;
                 }
                 break;
         }
@@ -217,7 +213,7 @@ var JobDetails = React.createClass({
         created: React.PropTypes.string.isRequired,
         updated: React.PropTypes.string.isRequired,
         status: React.PropTypes.string.isRequired,
-	outdated: React.PropTypes.string.isRequired,
+        outdated: React.PropTypes.string.isRequired,
         statusMsg: React.PropTypes.string,
         result: React.PropTypes.object,
         onReturn: React.PropTypes.func.isRequired
@@ -249,21 +245,16 @@ var JobDetails = React.createClass({
                 </div>;
                 break;
             case JOB_STATUS_DONE:
-		
-                switch (this.props.outdated) {
-                case false:
+                if (this.props.outdated) {
                     status = <div className="alert alert-success">
+                        The dataset has been changed since this job was run, so the results may be out of date.
+                    </div>;
+                } else {
+		    status = <div className="alert alert-success">
                         This evaluation job has been completed on {this.props.updated}.
                         You can find results below.
                     </div>;
-		    break;	
-                case true:
-		    status = <div className="alert alert-success">
-                        The dataset has been changed since this job was run, so the results may be out of date.
-                    </div>;
-		    break
                 }
-	
                 break;
         }
         var header = <div>

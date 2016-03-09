@@ -1,4 +1,3 @@
-
 BEGIN;
 
 CREATE TABLE lowlevel (
@@ -114,4 +113,3 @@ CREATE TABLE dataset_snapshot (
 );
 
 COMMIT;
-

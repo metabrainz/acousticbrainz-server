@@ -1,0 +1,7 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+  <div>
+    <h3>Datasets</h3>
+    <a href="{{ url_for('datasets.accuracy') }}">Accuracies and confusion matrices for default models</a>
+  </div>
+{%- endblock -%}

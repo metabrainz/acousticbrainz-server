@@ -126,11 +126,12 @@ class DatasetTestCase(DatabaseTestCase):
     def test_last_edited(self):
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         ds = dataset.get(id)
-        self.assertEqual(ds['created'],ds['last_edited'])
+        self.assertEqual(ds['created'], ds['last_edited'])
         with db.engine.begin() as connection:
-            connection.execute("""UPDATE dataset SET last_edited = now() - interval %s where id = %s""",('1 hour',id))
+            connection.execute("""UPDATE dataset SET last_edited = now() - interval %s where id = %s""",
+                    ('1 hour', id))
         ds = dataset.get(id)
-        self.assertTrue(ds['created']>ds['last_edited'])
+        self.assertTrue(ds['created'] > ds['last_edited'])
         dataset.update(id, self.test_data, author_id=self.test_user_id)
         ds_updated = dataset.get(id)
         self.assertTrue(ds_updated['last_edited'] > ds['last_edited'])

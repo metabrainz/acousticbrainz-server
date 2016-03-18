@@ -12,6 +12,7 @@
  mounted, it pull existing dataset for editing from the server.
  */
 var React = require('react');
+var ReactDOM = require('react-dom');
 
 var CONTAINER_ELEMENT_ID = "dataset-editor";
 var container = document.getElementById(CONTAINER_ELEMENT_ID);
@@ -591,4 +592,4 @@ var Recording = React.createClass({
 });
 
 
-if (container) React.render(<Dataset />, container);
+if (container) ReactDOM.render(<Dataset />, container);

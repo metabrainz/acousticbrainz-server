@@ -145,6 +145,7 @@ var EvaluationJobsViewer = React.createClass({
                         statusMsg={active_job.status_msg}
                         result={active_job.result}
                         showDelete={this.state.isAuthorViewing}
+                        outdated={active_job.outdated}
                         onReturn={this.handleReturn} />
                 );
             }
@@ -174,6 +175,7 @@ var JobList = React.createClass({
                         id={cls.id}
                         created={cls.created}
                         status={cls.status}
+                        outdated={cls.outdated}
                         showDelete={this.props.showDelete}
                         onViewDetails={this.props.onViewDetails}
                         onDelete={this.props.onDelete} />
@@ -208,6 +210,7 @@ var JobRow = React.createClass({
         id: React.PropTypes.string.isRequired,
         created: React.PropTypes.string.isRequired,
         status: React.PropTypes.string.isRequired,
+        outdated: React.PropTypes.string.isRequired,
         showDelete: React.PropTypes.bool.isRequired,
         onViewDetails: React.PropTypes.func.isRequired,
         onDelete: React.PropTypes.func.isRequired
@@ -232,7 +235,11 @@ var JobRow = React.createClass({
                 status = <span className="label label-danger">Failed</span>;
                 break;
             case JOB_STATUS_DONE:
-                status = <span className="label label-success">Done</span>;
+                if (this.props.outdated) {
+                    status = <span className="label label-primary">Done, Outdated</span>;
+                } else {
+                    status = <span className="label label-success">Done</span>;
+                }
                 break;
         }
         let controls = "";
@@ -298,6 +305,7 @@ var JobDetails = React.createClass({
         created: React.PropTypes.string.isRequired,
         updated: React.PropTypes.string.isRequired,
         status: React.PropTypes.string.isRequired,
+        outdated: React.PropTypes.string.isRequired,
         statusMsg: React.PropTypes.string,
         result: React.PropTypes.object,
         onReturn: React.PropTypes.func.isRequired
@@ -329,10 +337,16 @@ var JobDetails = React.createClass({
                 </div>;
                 break;
             case JOB_STATUS_DONE:
-                status = <div className="alert alert-success">
-                    This evaluation job has been completed on {this.props.updated}.
-                    You can find results below.
-                </div>;
+                if (this.props.outdated) {
+                    status = <div className="alert alert-success">
+                        The dataset has been changed since this job was run, so the results may be out of date.
+                    </div>;
+                } else {
+		    status = <div className="alert alert-success">
+                        This evaluation job has been completed on {this.props.updated}.
+                        You can find results below.
+                    </div>;
+                }
                 break;
         }
         var header = <div>

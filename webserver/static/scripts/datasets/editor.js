@@ -143,7 +143,7 @@ var Dataset = React.createClass({
                             onClassEdit={this.handleClassEdit}
                             onClassDelete={this.handleClassDelete} />
                         <hr />
-                        <p class="checkbox">
+                        <p className="checkbox">
                             <label>
                                 <input
                                     ref="public"

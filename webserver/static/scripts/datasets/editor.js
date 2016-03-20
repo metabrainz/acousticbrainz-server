@@ -154,7 +154,7 @@ var Dataset = React.createClass({
                                 &nbsp;<strong>Make this dataset public</strong>
                             </label>
                         </p>
-                        <SubmitDatasetButton
+                        <DatasetControlButtons
                             mode={this.state.mode}
                             data={this.state.data} />
                     </div>
@@ -213,7 +213,7 @@ var DatasetDetails = React.createClass({
     }
 });
 
-var SubmitDatasetButton = React.createClass({
+var DatasetControlButtons = React.createClass({
     propTypes: {
         mode: React.PropTypes.string.isRequired,
         data: React.PropTypes.object.isRequired
@@ -254,6 +254,10 @@ var SubmitDatasetButton = React.createClass({
             }
         });
     },
+    handleCancel: function (e) {
+        e.preventDefault();
+        history.back();
+    },
     getInitialState: function () {
         return {
             enabled: true,
@@ -274,6 +278,8 @@ var SubmitDatasetButton = React.createClass({
                 <button onClick={this.handleSubmit} type="button"
                         disabled={this.state.enabled ? '' : 'disabled'}
                         className="btn btn-default btn-primary">{buttonText}</button>
+                <button onClick={this.handleCancel} type="button"
+                        className="btn btn-default">Cancel</button>
             </div>
         );
     }

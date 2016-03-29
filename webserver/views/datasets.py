@@ -24,7 +24,17 @@ def view(id):
         dataset=ds,
         author=db.user.get(ds["author"]),
     )
+    
 
+@datasets_bp.route("/")
+def index():
+    return render_template("datasets/index.html")
+    
+    
+@datasets_bp.route("/accuracy")
+def accuracy():
+    return render_template("datasets/accuracy.html")
+    
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluation")
 def eval_info(dataset_id):

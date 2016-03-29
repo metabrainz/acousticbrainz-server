@@ -1,12 +1,18 @@
 {%- extends 'base.html' -%}
 {%- block title -%}API - AcousticBrainz{%- endblock -%}
 {%- block content -%}
-  <h2 class="page-title">AcousticBrainz API</h2>
+  <h2 class="page-title">AcousticBrainz data</h2>
+  <p><ul>
+      <li><a href="#getting-data">Getting data</a>
+      <li><a href="#highlevel-data">Highlevel data and datasets</a>
+      <li><a href="#sample-data">Sample data</a>
+  </ul></p>
   <p>
     Before diving into the API details, please have a look at the
     <a href="#sample-data">sample data</a> below.
   </p>
 
+  <a name="getting-data"></a>
   <h3>Getting data</h3>
   <p>
     To fetch the JSON documents for a given MusicBrainz recording ID, you can
@@ -52,7 +58,17 @@
     (see <a href="{{ url_for('index.contribute') }}">the contribute page</a>).
   </p>
 
-  <h4 id="sample-data">Sample data</h4>
+  <a name="highlevel-data"></a>
+  <h3>High-level models and dataset</h3>
+  <p>
+  AcousticBrainz includes models to compute semantically meaningful music features. You can read more about
+  the <a href="{{ url_for('datasets.accuracy') }}">Accuracies and confusion matrices for default models</a>
+  </p>
+  <p>Additionally, we provide the functionality to design your own datasets and use them to build new models
+  that can be integrated into the data that AcousticBrainz computes.
+  </p>
+
+  <h3 id="sample-data">Sample data</h3>
   <p>AcousticBrainz stores two levels of data: low-level and high-level.</p>
   <p>
     Both types of information are JSON documents, two documents per each

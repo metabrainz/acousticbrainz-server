@@ -74,4 +74,10 @@ def create_app():
     app.register_blueprint(user_bp)
     app.register_blueprint(datasets_bp, url_prefix='/datasets')
 
+    # Admin section
+    from flask_admin import Admin
+    from webserver.admin import views as admin_views
+    admin = Admin(app, index_view=admin_views.HomeView(name='Admin'))
+    admin.add_view(admin_views.AdminsView(name='Admins'))
+
     return app

@@ -8,10 +8,12 @@ login_manager.login_view = 'login.index'
 
 
 class User(UserMixin):
-    def __init__(self, id, created, musicbrainz_id):
+
+    def __init__(self, id, created, musicbrainz_id, admin):
         self.id = id
         self.created = created
         self.musicbrainz_id = musicbrainz_id
+        self.admin = admin
 
     @classmethod
     def from_dbrow(cls, user):
@@ -19,6 +21,7 @@ class User(UserMixin):
             id=user['id'],
             created=user['created'],
             musicbrainz_id=user['musicbrainz_id'],
+            admin=user['admin'],
         )
 
 

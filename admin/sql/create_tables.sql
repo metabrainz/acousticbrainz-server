@@ -68,7 +68,8 @@ CREATE TABLE incremental_dumps (
 CREATE TABLE "user" (
   id             SERIAL,
   created        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  musicbrainz_id VARCHAR
+  musicbrainz_id VARCHAR,
+  admin          BOOLEAN NOT NULL         DEFAULT FALSE
 );
 ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id);
 

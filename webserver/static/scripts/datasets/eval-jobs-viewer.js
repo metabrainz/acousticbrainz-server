@@ -5,6 +5,7 @@
  to be specified on container element.
  */
 var React = require('react');
+var ReactDOM = require('react-dom');
 
 var CONTAINER_ELEMENT_ID = "eval-viewer-container";
 var container = document.getElementById(CONTAINER_ELEMENT_ID);
@@ -438,4 +439,4 @@ var Results = React.createClass({
 });
 
 
-if (container) React.render(<EvaluationJobsViewer />, container);
+if (container) ReactDOM.render(<EvaluationJobsViewer />, container);

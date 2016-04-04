@@ -227,16 +227,20 @@ var Recording = React.createClass({
             type: "GET",
             url: "/datasets/recording/" + this.props.mbid,
             success: function (data) {
-                this.setState({
-                    details: data.recording,
-                    status: RECORDING_STATUS_LOADED
-                });
+                if (this.isMounted()) {
+                    this.setState({
+                        details: data.recording,
+                        status: RECORDING_STATUS_LOADED
+                    });
+                }
             }.bind(this),
             error: function () {
-                this.setState({
-                    error: "Recording not found!",
-                    status: RECORDING_STATUS_ERROR
-                });
+                if (this.isMounted()) {
+                    this.setState({
+                        error: "Recording not found!",
+                        status: RECORDING_STATUS_ERROR
+                    });
+                }
             }.bind(this)
         });
     },

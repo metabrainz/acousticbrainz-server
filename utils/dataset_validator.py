@@ -3,14 +3,11 @@ from flask_uuid import UUID_RE
 DATASET_NAME_LEN_MIN = 1
 DATASET_NAME_LEN_MAX = 100
 
-MIN_CLASSES = 2
 CLASS_NAME_LEN_MIN = 1
 CLASS_NAME_LEN_MAX = 100
 
-MIN_RECORDINGS_IN_CLASS = 2
 
-
-def validate(dataset, complete=False):
+def validate(dataset):
     """Validator for datasets.
 
     Dataset must have the following structure:
@@ -30,8 +27,6 @@ def validate(dataset, complete=False):
 
     Args:
         dataset: Dataset stored in a dictionary.
-        complete: Indicates if dataset is complete or not (see definition
-            above), which enables additional checking.
 
     Raises:
         ValidationException: A general exception for validation errors.
@@ -60,7 +55,7 @@ def validate(dataset, complete=False):
     # Classes
     if "classes" not in dataset:
         raise ValidationException("Dataset must have a list of classes.")
-    _validate_classes(dataset["classes"], complete)
+    _validate_classes(dataset["classes"])
 
     # Publicity
     if "public" not in dataset:
@@ -69,19 +64,14 @@ def validate(dataset, complete=False):
         raise ValidationException('Value "public" must be a boolean.')
 
 
-def _validate_classes(classes, complete=False):
+def _validate_classes(classes):
     if not isinstance(classes, list):
         raise ValidationException("Classes need to be in a list.")
     for cls in classes:
-        _validate_class(cls, complete)
-
-    if complete:
-        if len(classes) < MIN_CLASSES:
-            raise IncompleteDatasetException("Dataset needs to have at least %s classes." %
-                                             MIN_CLASSES)
+        _validate_class(cls)
 
 
-def _validate_class(cls, complete=False):
+def _validate_class(cls):
     if not isinstance(cls, dict):
         raise ValidationException("Class must be a dictionary.")
     _check_dict_structure(cls, ["name", "description", "recordings"])
@@ -104,22 +94,15 @@ def _validate_class(cls, complete=False):
     # Recordings
     if "recordings" not in cls:
         raise ValidationException("Each class must have a list of recordings.")
-    _validate_recordings(cls["recordings"], complete)
+    _validate_recordings(cls["recordings"])
 
 
-def _validate_recordings(recordings, complete=False):
+def _validate_recordings(recordings):
     if not isinstance(recordings, list):
         raise ValidationException("Recordings need to be in a list.")
     for recording in recordings:
         if not UUID_RE.match(recording):
             raise ValidationException('"%s" is not a valid recording MBID.' % recording)
-
-    if complete:
-        if len(recordings) < MIN_RECORDINGS_IN_CLASS:
-            # TODO: Would be nice to mention class name in an error message.
-            raise IncompleteDatasetException("There are not enough recordings in a class (%s). "
-                                             "At least %s are required in each class." %
-                                             (len(recordings), MIN_RECORDINGS_IN_CLASS))
 
 
 def _check_dict_structure(dictionary, allowed_keys):
@@ -130,7 +113,4 @@ def _check_dict_structure(dictionary, allowed_keys):
 
 class ValidationException(Exception):
     """Base class for dataset validation exceptions."""
-    pass
-
-class IncompleteDatasetException(ValidationException):
     pass

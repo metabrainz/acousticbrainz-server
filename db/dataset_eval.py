@@ -5,7 +5,6 @@ import db.data
 import json
 import sqlalchemy
 from sqlalchemy import text
-from utils import dataset_validator
 
 # Job statuses are defined in `eval_job_status` type. See schema definition.
 STATUS_PENDING = "pending"
@@ -63,25 +62,37 @@ def _job_exists(connection, dataset_id):
 
 
 def validate_dataset(dataset):
-    """Validate dataset by making sure that it matches JSON Schema for complete
-    datasets (JSON_SCHEMA_COMPLETE) and checking if all recordings referenced
-    in classes have low-level information in the database.
+    """Validate dataset by making sure that it's complete and checking if all
+    recordings referenced in classes have low-level information in the database.
 
     Raises IncompleteDatasetException if dataset is not ready for evaluation.
     """
-    dataset_validator.validate(dataset, complete=True)
+    MIN_CLASSES = 2
+    MIN_RECORDINGS_IN_CLASS = 2
 
     rec_memo = {}
+
+    if len(dataset["classes"]) < MIN_CLASSES:
+        raise IncompleteDatasetException(
+            "Dataset needs to have at least %s classes." % MIN_CLASSES
+        )
     for cls in dataset["classes"]:
+        if len(cls["recordings"]) < MIN_RECORDINGS_IN_CLASS:
+            # TODO: Would be nice to mention class name in an error message.
+            raise IncompleteDatasetException(
+                "There are not enough recordings in a class `%s` (%s). "
+                "At least %s are required in each class." %
+                (cls["name"], len(cls["recordings"]), MIN_RECORDINGS_IN_CLASS)
+            )
         for recording_mbid in cls["recordings"]:
             if recording_mbid in rec_memo and rec_memo[recording_mbid]:
                 pass
             if db.data.count_lowlevel(recording_mbid) > 0:
                 rec_memo[recording_mbid] = True
             else:
-                # TODO: Create a proper class for this exception:
-                raise Exception(
-                    "Can't find low-level data for recording: %s" % recording_mbid)
+                raise IncompleteDatasetException(
+                    "Can't find low-level data for recording: %s" % recording_mbid
+                )
 
 
 def get_next_pending_job():
@@ -259,6 +270,9 @@ def _create_job(connection, dataset_id, normalize, filter_type=None):
     job_id = result.fetchone()[0]
     return job_id
 
+
+class IncompleteDatasetException(db.exceptions.DatabaseException):
+    pass
 
 class IncorrectJobStatusException(db.exceptions.DatabaseException):
     pass

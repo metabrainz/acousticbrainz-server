@@ -63,6 +63,18 @@ def create_app():
     return app
 
 
+def create_app_sphinx():
+    """Creates application for generating the documentation using Sphinx.
+
+    Read the Docs builder doesn't have a database or any other custom software
+    that we use, so we have to ignore these initialization steps. Only
+    blueprints/views are needed to build documentation.
+    """
+    app = Flask(__name__)
+    _register_blueprints(app)
+    return app
+
+
 def _register_blueprints(app):
     from webserver.views.index import index_bp
     from webserver.views.data import data_bp

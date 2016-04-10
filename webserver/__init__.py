@@ -61,14 +61,14 @@ def create_app():
     # Blueprints
     from webserver.views.index import index_bp
     from webserver.views.data import data_bp
-    from webserver.views.api import api_bp
+    from webserver.views.api_legacy import api_legacy_bp
     from webserver.views.stats import stats_bp
     from webserver.views.login import login_bp
     from webserver.views.user import user_bp
     from webserver.views.datasets import datasets_bp
     app.register_blueprint(index_bp)
     app.register_blueprint(data_bp)
-    app.register_blueprint(api_bp)
+    app.register_blueprint(api_legacy_bp)
     app.register_blueprint(stats_bp)
     app.register_blueprint(login_bp, url_prefix='/login')
     app.register_blueprint(user_bp)

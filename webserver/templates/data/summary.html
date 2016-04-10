@@ -98,13 +98,13 @@
     <ul>
       <li>
         <a href="{{ url_for('data.view_low_level', mbid=metadata['mbid'], n=offset) }}">Low-level</a>
-        (<a href="{{ url_for('api_legacy.get_low_level', mbid=metadata['mbid'], n=offset) }}">raw JSON</a>)
+        (<a href="{{ url_for('api_v1.get_low_level', mbid=metadata['mbid'], n=offset) }}">raw JSON</a>)
       </li>
       {% if data.highlevel %}
         <li>
           {# FIXME(roman): Offset might not point to the right high-level data there. #}
           <a href="{{ url_for('data.view_high_level', mbid=metadata['mbid'], n=offset) }}">High-level</a>
-          (<a href="{{ url_for('api_legacy.get_high_level', mbid=metadata['mbid'], n=offset) }}">raw JSON</a>)
+          (<a href="{{ url_for('api_v1.get_high_level', mbid=metadata['mbid'], n=offset) }}">raw JSON</a>)
         </li>
       {% endif %}
     </ul>

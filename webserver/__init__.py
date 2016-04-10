@@ -58,9 +58,15 @@ def create_app():
     app.jinja_env.filters['datetime'] = utils.reformat_datetime
     app.context_processor(lambda: dict(get_static_path=static_manager.get_static_path))
 
-    # Blueprints
+    _register_blueprints(app)
+
+    return app
+
+
+def _register_blueprints(app):
     from webserver.views.index import index_bp
     from webserver.views.data import data_bp
+    from webserver.views.api_v1 import api_v1_bp
     from webserver.views.api_legacy import api_legacy_bp
     from webserver.views.stats import stats_bp
     from webserver.views.login import login_bp
@@ -68,10 +74,9 @@ def create_app():
     from webserver.views.datasets import datasets_bp
     app.register_blueprint(index_bp)
     app.register_blueprint(data_bp)
+    app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
     app.register_blueprint(api_legacy_bp)
     app.register_blueprint(stats_bp)
     app.register_blueprint(login_bp, url_prefix='/login')
     app.register_blueprint(user_bp)
     app.register_blueprint(datasets_bp, url_prefix='/datasets')
-
-    return app

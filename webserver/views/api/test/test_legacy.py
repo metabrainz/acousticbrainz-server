@@ -4,7 +4,7 @@ from db.testing import TEST_DATA_PATH
 import os
 
 
-class APILegacyViewsTestCase(ServerTestCase):
+class LegacyViewsTestCase(ServerTestCase):
 
     def test_submit_low_level(self):
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'

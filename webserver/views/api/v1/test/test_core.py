@@ -7,9 +7,10 @@ import uuid
 import os
 
 
-class API1ViewsTestCase(ServerTestCase):
+class CoreViewsTestCase(ServerTestCase):
 
     def setUp(self):
+        super(CoreViewsTestCase, self).setUp()
         self.uuid = str(uuid.uuid4())
         
     def test_get_low_level(self):
@@ -32,7 +33,7 @@ class API1ViewsTestCase(ServerTestCase):
                                        content_type="application/json")
                 self.assertEqual(sub_resp.status_code, 200)
 
-        resp = self.client.get("/%s/low-level" % mbid)
+        resp = self.client.get("/api/v1/%s/low-level" % mbid)
         self.assertEqual(resp.status_code, 200)
 
     def test_cors_headers(self):

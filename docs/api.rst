@@ -8,8 +8,11 @@ AcousticBrianz server provides a Web API for getting and submitting data.
 Endpoint Reference
 ------------------
 
+Core data
+^^^^^^^^^
+
 .. autoflask:: webserver:create_app_sphinx()
-   :blueprints: api_v1
+   :blueprints: api_v1_core
    :include-empty-docstring:
    :undoc-static:
 

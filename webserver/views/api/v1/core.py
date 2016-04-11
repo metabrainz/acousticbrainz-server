@@ -7,10 +7,10 @@ from webserver.decorators import crossdomain
 import webserver.exceptions
 import json
 
-api_v1_bp = Blueprint('api_v1', __name__)
+bp_core = Blueprint('api_v1_core', __name__)
 
 
-@api_v1_bp.route("/<uuid:mbid>/count", methods=["GET"])
+@bp_core.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
 def count(mbid):
     """Endpoint for getting number of submissions for a given recording."""
@@ -20,7 +20,7 @@ def count(mbid):
     })
 
 
-@api_v1_bp.route("/<uuid:mbid>/low-level", methods=["GET"])
+@bp_core.route("/<uuid:mbid>/low-level", methods=["GET"])
 @crossdomain()
 def get_low_level(mbid):
     """Endpoint for fetching low-level data.
@@ -36,7 +36,7 @@ def get_low_level(mbid):
         raise webserver.exceptions.APINotFound("Not found")
 
 
-@api_v1_bp.route("/<uuid:mbid>/high-level", methods=["GET"])
+@bp_core.route("/<uuid:mbid>/high-level", methods=["GET"])
 @crossdomain()
 def get_high_level(mbid):
     """Endpoint for fetching high-level data.
@@ -52,7 +52,7 @@ def get_high_level(mbid):
         raise webserver.exceptions.APINotFound("Not found")
 
 
-@api_v1_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
+@bp_core.route("/<uuid:mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz."""
     raw_data = request.get_data()

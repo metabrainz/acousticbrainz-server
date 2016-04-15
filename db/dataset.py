@@ -1,10 +1,11 @@
 import db
+import db.dataset_eval
 import copy
 import jsonschema
 import unicodedata
 import re
 from sqlalchemy import text
-
+import dataset_eval
 # JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
 # defines basic structure of a dataset. JSON_SCHEMA_COMPLETE adds additional
 # constraints required for further processing of a dataset. More information
@@ -177,8 +178,12 @@ def get_public_datasets():
         """)
         result = connection.execute(query)
         datasets = []
+        dataset_status = db.dataset_eval.get_dataset_status()
         for row in result.fetchall():
-            datasets.append(dict(row))
+            row = dict(row)
+            dataset_id = row["id"].encode('utf-8')
+            row["status"] = dataset_status[dataset_id]
+            datasets.append(row)
         return datasets
 
 

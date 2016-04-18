@@ -112,4 +112,11 @@ CREATE TABLE dataset_snapshot (
   data JSONB NOT NULL
 );
 
+CREATE TABLE api_key (
+  value     TEXT    NOT NULL,
+  is_active BOOLEAN NOT NULL         DEFAULT TRUE,
+  owner     INTEGER NOT NULL,
+  created   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 COMMIT;

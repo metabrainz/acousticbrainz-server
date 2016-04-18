@@ -1,5 +1,6 @@
 import db
 
+
 def create(musicbrainz_id):
     with db.engine.connect() as connection:
         result = connection.execute(

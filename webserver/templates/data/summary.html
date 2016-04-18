@@ -102,7 +102,6 @@
       </li>
       {% if data.highlevel %}
         <li>
-          {# FIXME(roman): Offset might not point to the right high-level data there. #}
           <a href="{{ url_for('data.view_high_level', mbid=metadata['mbid'], n=offset) }}">High-level</a>
           (<a href="{{ url_for('api_v1_core.get_high_level', mbid=metadata['mbid'], n=offset) }}">raw JSON</a>)
         </li>

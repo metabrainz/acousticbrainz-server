@@ -13,7 +13,11 @@ bp_core = Blueprint('api_v1_core', __name__)
 @bp_core.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
 def count(mbid):
-    """Endpoint for getting number of submissions for a given recording."""
+    """Get number of low-level data submissions for a recording with a
+    given MBID.
+
+    :resheader Content-Type: *application/json*
+    """
     return jsonify({
         'mbid': mbid,
         'count': count_lowlevel(str(mbid)),
@@ -23,11 +27,18 @@ def count(mbid):
 @bp_core.route("/<uuid:mbid>/low-level", methods=["GET"])
 @crossdomain()
 def get_low_level(mbid):
-    """Endpoint for fetching low-level data.
+    """Get low-level data for recording with a given MBID.
 
-    If there is more than one document with the same mbid, you can specify
-    an offset as a query parameter in the form of ?n=x, where x is an integer
-    starting from 0
+    This endpoint returns one document at a time. If there are more submissions
+    for an MBID, you can browse through them by specifying an offset parameter
+    ``n``. Documents are sorted by their submission time.
+
+    You can get total number of low-level submissions using ``/<mbid>/count``
+    endpoint.
+
+    :query n: *Optional.* Integer specifying an offset for a document.
+
+    :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
     try:
@@ -39,11 +50,19 @@ def get_low_level(mbid):
 @bp_core.route("/<uuid:mbid>/high-level", methods=["GET"])
 @crossdomain()
 def get_high_level(mbid):
-    """Endpoint for fetching high-level data.
+    """Get high-level data for recording with a given MBID.
 
-    If there is more than one document with the same mbid, you can specify
-    an offset as a query parameter in the form of ?n=x, where x is an integer
-    starting from 0
+    This endpoint returns one document at a time. If there are more submissions
+    for an MBID, you can browse through them by specifying an offset parameter
+    ``n``. Documents are sorted by submission time of low-level data associated
+    with them.
+
+    You can get total number of low-level submissions using ``/<mbid>/count``
+    endpoint.
+
+    :query n: *Optional.* Integer specifying an offset for a document.
+
+    :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
     try:
@@ -54,7 +73,12 @@ def get_high_level(mbid):
 
 @bp_core.route("/<uuid:mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):
-    """Endpoint for submitting low-level information to AcousticBrainz."""
+    """Submit low-level data to AcousticBrainz.
+
+    :reqheader Content-Type: *application/json*
+
+    :resheader Content-Type: *application/json*
+    """
     raw_data = request.get_data()
     try:
         data = json.loads(raw_data.decode("utf-8"))

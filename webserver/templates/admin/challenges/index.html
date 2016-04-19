@@ -1,0 +1,36 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+  <h1>Challenges</h1>
+  <p><em>Dataset creation challenges.</em></p>
+  <p>
+    <a href="{{ url_for('challengesview.create') }}"
+       class="btn btn-small btn-primary">+ Create challenge</a>
+  </p>
+  <table class="table table-striped">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Creator (User ID)</th>
+      <th>Start time</th>
+      <th>End time</th>
+      <th>{# Controls #}</th>
+    </tr>
+    </thead>
+    {% for challenge in challenges %}
+      <tr>
+        <td>{{ challenge["id"] }}</td>
+        <td><strong>{{ challenge["name"] }}</strong></td>
+        <td>{{ challenge["creator"] }}</td>
+        <td>{{ challenge["start_time"] }}</td>
+        <td>{{ challenge["creator"] }}</td>
+        <td>
+          <a href="{{ url_for('challengesview.modify', id=challenge["id"]) }}"
+             class="btn btn-mini btn-default" role="button">Modify</a>
+          <a href="{{ url_for('challengesview.delete', id=challenge["id"]) }}"
+             class="btn btn-mini btn-danger" role="button">Delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

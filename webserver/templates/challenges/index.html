@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset creation challenges - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2 class="page-title">Dataset creation challenges</h2>
+  {% for challenge in challenges %}
+    <div class="challenge">
+      <div class="name">
+        <a href="{{ url_for("challenges.details", id=challenge["id"]) }}">
+          {{ challenge["name"] }}
+        </a>
+      </div>
+      <div class="duration">{{ challenge["start_time"] }} - {{ challenge["start_time"] }}</div>
+    </div>
+  {% endfor %}
+{% endblock %}

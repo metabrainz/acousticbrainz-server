@@ -1,0 +1,21 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+  <h1>Challenges</h1>
+  <h2>Modify</h2>
+
+  {% for field in form.errors %}
+    {% for error in form.errors[field] %}
+      <div class="alert alert-danger">{{ field }}: {{ error }}</div>
+    {% endfor %}
+  {% endfor %}
+
+  <form class="form-horizontal" role="form" method="POST">
+    {{ form.csrf_token }}
+
+    {{ form.name.label }}{{ form.name(required=true) }}
+    {{ form.start_time.label }}{{ form.start_time(required=true) }}
+    {{ form.end_time.label }}{{ form.end_time(required=true) }}
+
+    <button type="submit" class="btn btn-primary">Update</button>
+  </form>
+{% endblock %}

@@ -161,7 +161,7 @@ def get(id):
         else:
             return None
 
-def get_public_datasets():
+def get_public_datasets(status_value,page_no):
     with db.engine.connect() as connection:
         query = text("""
             SELECT dataset.id::text
@@ -183,7 +183,15 @@ def get_public_datasets():
             row = dict(row)
             dataset_id = row["id"].encode('utf-8')
             row["status"] = dataset_status[dataset_id]
-            datasets.append(row)
+            if(status_value == "all" or row["status"] == status_value):
+                datasets.append(row)
+        page_size = 2
+        page_start_index = page_no*page_size
+        page_end_index = (page_no+1)*page_size
+        if(len(datasets)<=page_end_index):
+            datasets = datasets[page_start_index:]
+        else:
+            datasets = datasets[page_start_index:page_end_index]
         return datasets
 
 

@@ -50,17 +50,3 @@ def deploy():
     install_requirements()
     build_static()
     clear_memcached()
-
-
-def test(coverage=True):
-    """Run all tests.
-
-    It will also create code coverage report, unless specified otherwise. It
-    will be located in cover/index.html file.
-    """
-    if coverage:
-        local("nosetests --exe --with-coverage --cover-erase --cover-html "
-              "--cover-package=db,webserver,hl_extractor,dataset_eval")
-        print(yellow("Coverage report can be found in cover/index.html file.", bold=True))
-    else:
-        local("nosetests --exe")

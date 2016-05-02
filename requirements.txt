@@ -11,10 +11,11 @@ Jinja2 == 2.8
 jsonschema == 2.5.1
 mock == 1.3.0
 musicbrainzngs == 0.5
-nose == 1.3.7
 psycopg2 == 2.6.1
 python-memcached == 1.57
 pytz==2015.7
+pytest == 2.9.1
+pytest-cov == 2.2.1
 pyyaml == 3.11
 rauth == 0.7.1
 raven[flask] == 5.9.2

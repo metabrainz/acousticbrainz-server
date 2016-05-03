@@ -78,4 +78,10 @@ ALTER TABLE dataset_eval_jobs
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 
+
+ALTER TABLE challenge
+  ADD CONSTRAINT challenge_fk_user
+  FOREIGN KEY (creator)
+  REFERENCES "user" (id);
+
 COMMIT;

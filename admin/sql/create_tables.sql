@@ -68,7 +68,8 @@ CREATE TABLE incremental_dumps (
 CREATE TABLE "user" (
   id             SERIAL,
   created        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  musicbrainz_id VARCHAR
+  musicbrainz_id VARCHAR,
+  admin          BOOLEAN NOT NULL         DEFAULT FALSE
 );
 ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id);
 
@@ -110,6 +111,15 @@ CREATE TABLE dataset_eval_jobs (
 CREATE TABLE dataset_snapshot (
   id   SERIAL,
   data JSONB NOT NULL
+);
+
+CREATE TABLE challenge (
+  id         UUID,
+  name       TEXT                     NOT NULL,
+  creator    INTEGER                  NOT NULL,
+  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time   TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 COMMIT;

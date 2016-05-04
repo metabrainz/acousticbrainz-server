@@ -50,6 +50,8 @@ class HighLevel(Thread):
             f.close()
         except IOError:
             print("IO Error while writing temp file")
+            # If we return early, remove the ll file we created
+            os.unlink(name)
             return "{}"
 
         # Securely generate a temporary filename
@@ -62,21 +64,27 @@ class HighLevel(Thread):
             subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY),
                                    name, out_file, PROFILE_CONF],
                                   stdout=fnull, stderr=fnull)
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, OSError):
             print("Cannot call high-level extractor")
+            # If we return early, make sure we remove the temp
+            # output file that we created
+            os.unlink(out_file)
             return "{}"
-
-        fnull.close()
-        os.unlink(name)
+        finally:
+            # At this point we can remove the source file,
+            # regardless of if we failed or if we succeeded
+            fnull.close()
+            os.unlink(name)
 
         try:
             f = open(out_file)
             hl_data = f.read()
             f.close()
-            os.unlink(out_file)
         except IOError:
             print("IO Error while removing temp file")
             return "{}"
+        finally:
+            os.unlink(out_file)
 
         return hl_data
 

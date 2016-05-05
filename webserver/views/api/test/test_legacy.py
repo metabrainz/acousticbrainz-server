@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from webserver.testing import ServerTestCase
 from db.testing import TEST_DATA_PATH
+from flask import url_for
 import os
 
 
@@ -19,3 +20,20 @@ class LegacyViewsTestCase(ServerTestCase):
         # Getting from the new API
         resp = self.client.get("/api/v1/%s/low-level" % mbid)
         self.assertEqual(resp.status_code, 200)
+
+    def test_get_low_level(self):
+        mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
+        resp = self.client.get(url_for('api.get_low_level', mbid=mbid))
+        self.assertEqual(resp.status_code, 404)
+
+        self.load_low_level_data(mbid)
+
+        resp = self.client.get(url_for('api.get_low_level', mbid=mbid))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_cors_headers(self):
+        mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
+        self.load_low_level_data(mbid)
+
+        resp = self.client.get(url_for('api.get_low_level', mbid=mbid))
+        self.assertEqual(resp.headers['Access-Control-Allow-Origin'], '*')

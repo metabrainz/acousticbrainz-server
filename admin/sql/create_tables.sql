@@ -97,20 +97,27 @@ CREATE TABLE dataset_class_member (
 
 CREATE TABLE dataset_eval_jobs (
   id                UUID,
-  dataset_id        UUID                     NOT NULL,
+  snapshot_id       UUID                     NOT NULL, -- FK to snapshot
   status            eval_job_status          NOT NULL DEFAULT 'pending',
   status_msg        VARCHAR,
   options           JSONB,
-  training_snapshot INT,                     -- FK to dataset_snapshot
-  testing_snapshot  INT,                     -- FK to dataset_snapshot
+  training_snapshot INT,                     -- FK to dataset_eval_sets
+  testing_snapshot  INT,                     -- FK to dataset_eval_sets
   created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   result            JSONB
 );
 
-CREATE TABLE dataset_snapshot (
+CREATE TABLE dataset_eval_sets (
   id   SERIAL,
   data JSONB NOT NULL
+);
+
+CREATE TABLE dataset_snapshot (
+  id         UUID, -- PK
+  dataset_id UUID, -- FK to dataset
+  data       JSONB                    NOT NULL,
+  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE api_key (

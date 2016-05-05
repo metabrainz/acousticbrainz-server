@@ -2,6 +2,8 @@ import db
 import db.dataset_eval
 from utils import dataset_validator
 
+import json
+import sqlalchemy
 import re
 from sqlalchemy import text
 import unicodedata
@@ -102,6 +104,7 @@ def get(id):
             row["classes"] = _get_classes(row["id"])
             return row
         else:
+            # TODO(roman): Probably better to raise an exception there instead of returning None.
             return None
 
 
@@ -124,22 +127,19 @@ def get_public_datasets(status):
             FROM dataset
             JOIN "user"
               ON "user".id = dataset.author
-              LEFT JOIN LATERAL (SELECT status
+              LEFT JOIN LATERAL (SELECT dataset_eval_jobs.status
                                    FROM dataset_eval_jobs
-                                  WHERE dataset.id = dataset_eval_jobs.dataset_id
-                               ORDER BY updated DESC
+                                   JOIN dataset_snapshot ON dataset_snapshot.dataset_id = dataset_eval_jobs.snapshot_id
+                                  WHERE dataset.id = dataset_snapshot.dataset_id
+                               ORDER BY dataset_eval_jobs.updated DESC
                                LIMIT 1)
                                AS JOB ON TRUE
           WHERE dataset.public = 't'
             AND job.status = ANY((:status)::eval_job_status[])
        ORDER BY dataset.created DESC
              """)
-        res = connection.execute(query, {"status": statuses})
-        datasets = []
-        for row in res:
-            datasets.append(dict(row))
-
-        return datasets
+        result = connection.execute(query, {"status": statuses})
+        return [dict(row) for row in result]
 
 
 def _get_classes(dataset_id):
@@ -192,3 +192,72 @@ def delete(id):
     """Delete dataset with a specified ID."""
     with db.engine.begin() as connection:
         connection.execute("DELETE FROM dataset WHERE id = %s", (str(id),))
+
+
+def create_snapshot(dataset_id):
+    """Creates a snapshot of current version of a dataset.
+
+    Snapshots are stored as JSON and have the following structure:
+    {
+        "name": "..",
+        "description": "..",
+        "classes": [
+            {
+                "name": "..",
+                "description: "..",
+                "recordings": ["..", ...]
+            },
+            ...
+        ]
+    }
+
+    Args:
+        dataset_id (string/uuid): ID of a dataset.
+
+    Returns:
+        ID (UUID) of a snapshot that was created.
+    """
+    dataset = get(dataset_id)
+    if not dataset:
+        raise exceptions.NoDataFoundException("Can't find dataset with a specified ID.")
+    snapshot = {
+        "name": dataset["name"],
+        "description": dataset["description"],
+        "classes": dataset["classes"],
+    }
+    with db.engine.connect() as connection:
+        result = connection.execute(sqlalchemy.text("""
+            INSERT INTO dataset_snapshot (id, dataset_id, data)
+                 VALUES (uuid_generate_v4(), :dataset_id, :data)
+              RETURNING id
+        """), {
+            "dataset_id": dataset_id,
+            "data": json.dumps(snapshot),
+        })
+        return result.fetchone()["id"]
+
+
+def get_snapshot(id):
+    """Get snapshot of a dataset.
+
+    Args:
+        id (string/uuid): ID of a snapshot.
+
+    Returns:
+        dictionary: {
+            "id": <ID of the snapshot>,
+            "dataset_id": <ID of the dataset that this snapshot is associated with>,
+            "created": <creation time>,
+            "data": <actual content of a snapshot (see `create_snapshot` function)>
+        }
+    """
+    with db.engine.connect() as connection:
+        result = connection.execute(sqlalchemy.text("""
+            SELECT id, dataset_id, data, created
+              FROM dataset_snapshot
+             WHERE id = :id
+        """), {"id": id})
+        row = result.fetchone()
+        if not row:
+            raise db.exceptions.NoDataFoundException("Can't find dataset snapshot with a specified ID.")
+        return dict(row)

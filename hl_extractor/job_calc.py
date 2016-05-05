@@ -136,10 +136,12 @@ def get_build_sha1(binary):
 
     return sha1(bin).hexdigest()
 
+
 def load_includes_from_eval(jobid):
     job = db.dataset_eval.get_job(jobid)
-    test = db.dataset_eval.get_dataset_snapshot(job["testing_snapshot"])
+    test = db.dataset_eval.get_dataset_eval_set(job["testing_snapshot"])
     return test["data"].keys()
+
 
 def get_model_from_eval(jobid):
     job = db.dataset_eval.get_job(jobid)

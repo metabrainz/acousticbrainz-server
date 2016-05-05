@@ -46,11 +46,12 @@ class DatabaseTestCase(unittest.TestCase):
             connection.execute('DROP TABLE IF EXISTS version              CASCADE;')
             connection.execute('DROP TABLE IF EXISTS statistics           CASCADE;')
             connection.execute('DROP TABLE IF EXISTS incremental_dumps    CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS dataset_snapshot     CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_eval_jobs    CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_class_member CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_class        CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset              CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset_snapshot     CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS dataset_eval_sets    CASCADE;')
             connection.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
             connection.execute('DROP TABLE IF EXISTS api_key              CASCADE;')
 

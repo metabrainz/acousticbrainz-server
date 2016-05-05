@@ -56,10 +56,15 @@ def job_exists(dataset_id):
 
 
 def _job_exists(connection, dataset_id):
-    result = connection.execute(
-        "SELECT count(*) FROM dataset_eval_jobs WHERE dataset_id = %s AND status IN %s",
-        (dataset_id, (STATUS_PENDING, STATUS_RUNNING))
-    )
+    result = connection.execute(sqlalchemy.text("""
+        SELECT count(*)
+          FROM dataset_eval_jobs
+          JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+         WHERE dataset_snapshot.dataset_id = :dataset_id AND dataset_eval_jobs.status IN :statses
+    """), {
+        "dataset_id": dataset_id,
+        "statses": (STATUS_PENDING, STATUS_RUNNING),
+    })
     return result.fetchone()[0] > 0
 
 
@@ -116,18 +121,20 @@ def get_next_pending_job():
 def get_job(job_id):
     with db.engine.connect() as connection:
         query = text(
-            """SELECT id::text
-                    , dataset_id::text
-                    , status
-                    , status_msg
-                    , result
-                    , options
-                    , training_snapshot
-                    , testing_snapshot
-                    , created
-                    , updated
+            """SELECT dataset_eval_jobs.id::text
+                    , dataset_snapshot.dataset_id::text
+                    , dataset_eval_jobs.snapshot_id::text
+                    , dataset_eval_jobs.status
+                    , dataset_eval_jobs.status_msg
+                    , dataset_eval_jobs.result
+                    , dataset_eval_jobs.options
+                    , dataset_eval_jobs.training_snapshot
+                    , dataset_eval_jobs.testing_snapshot
+                    , dataset_eval_jobs.created
+                    , dataset_eval_jobs.updated
                  FROM dataset_eval_jobs
-                WHERE id = :id""")
+                 JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+                WHERE dataset_eval_jobs.id = :id""")
         result = connection.execute(query, {"id": job_id})
 
         row = result.fetchone()
@@ -145,13 +152,13 @@ def get_jobs_for_dataset(dataset_id):
         time (oldest job first)
     """
     with db.engine.connect() as connection:
-        result = connection.execute(
-            "SELECT id, dataset_id, status, status_msg, result, options, created, updated "
-            "FROM dataset_eval_jobs "
-            "WHERE dataset_id = %s "
-            "ORDER BY created ASC",
-            (dataset_id,)
-        )
+        result = connection.execute(sqlalchemy.text("""
+            SELECT dataset_eval_jobs.*
+              FROM dataset_eval_jobs
+              JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+             WHERE dataset_snapshot.dataset_id = :dataset_id
+          ORDER BY dataset_eval_jobs.created ASC
+        """), {"dataset_id": dataset_id})
         return [dict(j) for j in result.fetchall()]
 
 
@@ -164,7 +171,8 @@ def set_job_result(job_id, result):
             (result, job_id)
         )
 
-def add_datasets_to_job(job_id, training, testing):
+
+def add_sets_to_job(job_id, training, testing):
     """Add a training and testing set to a job
 
     Args:
@@ -173,8 +181,8 @@ def add_datasets_to_job(job_id, training, testing):
         testing : Dictionary of the test set
     """
     with db.engine.begin() as connection:
-        training_id = add_dataset_snapshot(connection, training)
-        testing_id = add_dataset_snapshot(connection, testing)
+        training_id = add_dataset_eval_set(connection, training)
+        testing_id = add_dataset_eval_set(connection, testing)
         query = text(
             """UPDATE dataset_eval_jobs
                   SET (training_snapshot, testing_snapshot) = (:training_id, :testing_id)
@@ -182,6 +190,7 @@ def add_datasets_to_job(job_id, training, testing):
         connection.execute(query, {"training_id": training_id,
                                    "testing_id": testing_id,
                                    "job_id": job_id})
+
 
 def set_job_status(job_id, status, status_msg=None):
     """Set status for existing job.
@@ -228,11 +237,11 @@ def delete_job(job_id):
         )
 
 
-def get_dataset_snapshot(id):
+def get_dataset_eval_set(id):
     with db.engine.connect() as connection:
         result = connection.execute(
             "SELECT id, data "
-            "FROM dataset_snapshot "
+            "FROM dataset_eval_sets "
             "WHERE id = %s",
             (id,)
         )
@@ -240,9 +249,9 @@ def get_dataset_snapshot(id):
         return dict(row) if row else None
 
 
-def add_dataset_snapshot(connection, data):
+def add_dataset_eval_set(connection, data):
     query = text(
-        """INSERT INTO dataset_snapshot (data)
+        """INSERT INTO dataset_eval_sets (data)
         VALUES (:data)
         RETURNING id""")
     result = connection.execute(query, {"data": json.dumps(data)})
@@ -256,13 +265,14 @@ def _create_job(connection, dataset_id, normalize, filter_type=None):
     if filter_type is not None:
         if filter_type not in [FILTER_ARTIST]:
             raise ValueError("Incorrect 'filter_type'. See module documentation.")
+    snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
-                INSERT INTO dataset_eval_jobs (id, dataset_id, status, options)
-                     VALUES (uuid_generate_v4(), :dataset_id, :status, :options)
+                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options)
+                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options)
                   RETURNING id
             """)
     result = connection.execute(query, {
-        "dataset_id": dataset_id,
+        "snapshot_id": snapshot_id,
         "status": STATUS_PENDING,
         "options": json.dumps({
             "normalize": normalize,

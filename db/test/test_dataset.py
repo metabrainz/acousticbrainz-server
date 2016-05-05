@@ -165,13 +165,18 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
 
     def _create_dataset_job(self, dataset_id, status):
         """Create a job for a dataset with a given status"""
-
         dataset_job_id = str(uuid.uuid4())
-        query = text("""insert into dataset_eval_jobs (id, dataset_id, status)
-            values (:id, :dataset_id, :status) returning id""")
+        snapshot_id = db.dataset.create_snapshot(dataset_id)
         with db.engine.connect() as connection:
-            res = connection.execute(query, {"id": dataset_job_id,
-                "dataset_id": dataset_id, "status": status})
+            res = connection.execute(text("""
+                INSERT INTO dataset_eval_jobs (id, snapshot_id, status)
+                     VALUES (:id, :snapshot_id, :status)
+                  RETURNING id
+            """), {
+                "id": dataset_job_id,
+                "snapshot_id": snapshot_id,
+                "status": status,
+            })
             return res.fetchone()[0]
 
     def _update_dataset_job(self, dataset_job_id, status, updated=None):

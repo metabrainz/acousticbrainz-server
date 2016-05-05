@@ -58,30 +58,33 @@ ALTER TABLE dataset_class_member
   ON DELETE CASCADE;
 
 ALTER TABLE dataset_eval_jobs
-  ADD CONSTRAINT dataset_eval_jobs_fk_dataset
-  FOREIGN KEY (dataset_id)
-  REFERENCES dataset (id)
-  ON UPDATE CASCADE
-  ON DELETE CASCADE;
+  ADD CONSTRAINT dataset_eval_jobs_fk_dataset_snapshot
+  FOREIGN KEY (snapshot_id)
+  REFERENCES dataset_snapshot (id);
 
 ALTER TABLE dataset_eval_jobs
   ADD CONSTRAINT dataset_eval_jobs_fk_training_snapshot
   FOREIGN KEY (training_snapshot)
-  REFERENCES dataset_snapshot (id)
+  REFERENCES dataset_eval_sets (id)
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 
 ALTER TABLE dataset_eval_jobs
   ADD CONSTRAINT dataset_eval_jobs_fk_testing_snapshot
   FOREIGN KEY (testing_snapshot)
-  REFERENCES dataset_snapshot (id)
+  REFERENCES dataset_eval_sets (id)
   ON UPDATE CASCADE
   ON DELETE CASCADE;
+
+ALTER TABLE dataset_snapshot
+  ADD CONSTRAINT dataset_id_fk_dataset
+  FOREIGN KEY (dataset_id)
+  REFERENCES dataset (id);
 
 
 ALTER TABLE api_key
   ADD CONSTRAINT api_key_fk_user
-  FOREIGN KEY (owner)
-  REFERENCES "user" (id);
+FOREIGN KEY (owner)
+REFERENCES "user" (id);
 
 COMMIT;

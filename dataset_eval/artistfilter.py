@@ -62,8 +62,8 @@ def recordings_to_artists(recordings):
                 recordingtoartist[r] = a
     return recordingtoartist
 
-def filter(dataset_id, options):
-    dataset = db.dataset.get(dataset_id)
+def filter(snapshot_id, options):
+    dataset = db.dataset.get(snapshot_id)
     datadict = dataset_to_dict(dataset)
     if options["filter_type"] == "artist":
         print ("Filtering by artist")

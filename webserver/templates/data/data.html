@@ -19,39 +19,39 @@
     construct the following endpoints for low-level and high-level:
   </p>
 <pre>
-   GET http://acousticbrainz.org/&lt;MBID&gt;/low-level
-   GET http://acousticbrainz.org/&lt;MBID&gt;/high-level
+   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/low-level
+   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/high-level
 </pre>
   <p><em>Examples:</em></p>
 <pre>
-   GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level</a>
-   GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/high-level</a>
+   GET <a href="https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/low-level">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/low-level</a>
+   GET <a href="https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/high-level">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/high-level</a>
 </pre>
   <p>
     You can find out how many low-level documents we have for a given recording
     using the following endpoint:
   </p>
 <pre>
-   GET http://acousticbrainz.org/&lt;MBID&gt;/count
+   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/count
 </pre>
   <p><em>Example:</em></p>
 <pre>
-   GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/count">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/count</a>
+   GET <a href="https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/count">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/count</a>
 </pre>
   <p>If there's more than one document, you can specify a number argument <em>n</em>:</p>
 <pre>
-   GET http://acousticbrainz.org/&lt;MBID&gt;/low-level?n=1
+   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/low-level?n=1
 </pre>
   <p>Documents are counted from 0 to count-1.</p>
   <p><em>Example:</em></p>
 <pre>
-   GET <a href="http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level?n=1">http://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level?n=1</a>
+   GET <a href="https://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level?n=1">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/low-level?n=1</a>
 </pre>
 
   <h3>Submitting data</h3>
   <p>The submit API endpoint is:</p>
 <pre>
-   POST http://acousticbrainz.org/&lt;MBID&gt;/low-level
+   POST https://acousticbrainz.org/api/v1/&lt;MBID&gt;/low-level
 </pre>
   <p>
     It expects a JSON payload, containing the output of a feature extractor

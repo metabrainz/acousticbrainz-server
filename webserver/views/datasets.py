@@ -127,7 +127,20 @@ def evaluate(dataset_id):
 
 @datasets_bp.route("/<uuid:id>/json")
 def view_json(id):
-    return jsonify(get_dataset(id))
+    dataset = get_dataset(id)
+    dataset_clean = {
+        "name": dataset["name"],
+        "description": dataset["description"],
+        "classes": [],
+        "public": dataset["public"],
+    }
+    for cls in dataset["classes"]:
+        dataset_clean["classes"].append({
+            "name": cls["name"],
+            "description": cls["description"],
+            "recordings": cls["recordings"],
+        })
+    return jsonify(dataset_clean)
 
 
 @datasets_bp.route("/create", methods=("GET", "POST"))

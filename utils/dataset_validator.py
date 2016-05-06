@@ -47,7 +47,7 @@ def validate(dataset):
                                   (DATASET_NAME_LEN_MIN, DATASET_NAME_LEN_MAX))
 
     # Description (optional)
-    if "description" in dataset:
+    if "description" in dataset and dataset["description"] is not None:
         if not isinstance(dataset["description"], basestring):
             raise ValidationException("Description must be a string.")
         # TODO: Do we need to check the length there?
@@ -86,7 +86,7 @@ def _validate_class(cls):
                                   (CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
 
     # Description (optional)
-    if "description" in cls:
+    if "description" in cls and cls["description"] is not None:
         if not isinstance(cls["description"], basestring):
             raise ValidationException("Description must be a string.")
         # TODO: Do we need to check the length there?

@@ -1,11 +1,9 @@
 import db
-import db.dataset_eval
 import copy
 import jsonschema
 import unicodedata
 import re
 from sqlalchemy import text
-import dataset_eval
 # JSON schema is used for validation of submitted datasets. BASE_JSON_SCHEMA
 # defines basic structure of a dataset. JSON_SCHEMA_COMPLETE adds additional
 # constraints required for further processing of a dataset. More information
@@ -161,38 +159,36 @@ def get(id):
         else:
             return None
 
-def get_public_datasets(status_value,page_no):
+
+def get_public_datasets(status_value, offset, limit):
     with db.engine.connect() as connection:
-        query = text("""
-            SELECT dataset.id::text
+        query = """
+            SELECT dataset.id :: TEXT
                  , dataset.name
                  , dataset.description
                  , dataset.author
-                 , "user".musicbrainz_id as author_name
+                 , "user".musicbrainz_id AS author_name
                  , dataset.created
-              FROM dataset
-              JOIN "user"
-                ON "user".id = dataset.author
-             WHERE dataset.public = 't'
-          ORDER BY created desc
-        """)
-        result = connection.execute(query)
-        datasets = []
-        dataset_status = db.dataset_eval.get_dataset_status()
-        for row in result.fetchall():
-            row = dict(row)
-            dataset_id = row["id"].encode('utf-8')
-            row["status"] = dataset_status[dataset_id]
-            if(status_value == "all" or row["status"] == status_value):
-                datasets.append(row)
-        page_size = 2
-        page_start_index = page_no*page_size
-        page_end_index = (page_no+1)*page_size
-        if(len(datasets)<=page_end_index):
-            datasets = datasets[page_start_index:]
-        else:
-            datasets = datasets[page_start_index:page_end_index]
-        return datasets
+                 , job.status
+            FROM dataset
+            JOIN "user"
+              ON "user".id = dataset.author
+              LEFT JOIN LATERAL (SELECT status
+                                   FROM dataset_eval_jobs
+                                  WHERE dataset.id = dataset_eval_jobs.dataset_id
+                               ORDER BY updated DESC
+                               LIMIT 1)
+                               AS JOB ON TRUE
+          WHERE dataset.public = 't'
+            and job.status = %s
+       ORDER BY dataset.created DESC
+       OFFSET %s LIMIT %s           
+             """
+        result = connection.execute(query, (status_value, offset, limit))
+        valid_datasets = []
+        for row in result:
+            valid_datasets.append(dict(row))
+        return valid_datasets
 
 
 def _get_classes(dataset_id):

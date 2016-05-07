@@ -15,10 +15,11 @@ import six
 
 datasets_bp = Blueprint("datasets", __name__)
 
-
-@datasets_bp.route("/<status_value>/<int:page_no>")
-def list_datasets(status_value,page_no):
-    datasets = db.dataset.get_public_datasets(status_value,page_no)
+@datasets_bp.route("/", defaults={'status_value': "running", 'offset': 0, 'limit': 20})
+@datasets_bp.route("/<status_value>/", defaults={'offset': 0, 'limit': 20})
+@datasets_bp.route("/<status_value>/<int:offset>/<int:limit>")
+def list_datasets(status_value, offset, limit):
+    datasets = db.dataset.get_public_datasets(status_value, offset, limit)
     return render_template("datasets/list.html", datasets=datasets)
 
 

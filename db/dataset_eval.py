@@ -263,21 +263,6 @@ def _create_job(connection, dataset_id, normalize, filter_type=None):
     return job_id
 
 
-def get_dataset_status():
-    with db.engine.connect() as connection:
-        query = text("""
-            SELECT dataset_jobs.dataset_id
-                 , dataset_jobs.status
-              FROM dataset_eval_jobs as dataset_jobs
-             WHERE created = (SELECT MAX(created) FROM dataset_eval_jobs where dataset_id = dataset_jobs.dataset_id)
-             """)
-        result = connection.execute(query)
-        dataset_status = {}
-        for row in result.fetchall():
-            dataset_status[str(row[0])] = row[1]
-        return dataset_status
-
-
 class IncorrectJobStatusException(db.exceptions.DatabaseException):
     pass
 

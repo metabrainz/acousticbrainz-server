@@ -1,4 +1,5 @@
 from flask_uuid import UUID_RE
+from six import string_types
 
 DATASET_NAME_LEN_MIN = 1
 DATASET_NAME_LEN_MAX = 100
@@ -35,80 +36,108 @@ def validate(dataset):
     """
     if not isinstance(dataset, dict):
         raise ValidationException("Dataset must be a dictionary.")
-    _check_dict_structure(dataset, ["name", "description", "classes", "public"])
+    _check_dict_structure(
+        dataset,
+        [
+            ("name", True),
+            ("description", False),
+            ("classes", True),
+            ("public", True),
+        ],
+        "dataset dictionary",
+    )
 
     # Name
-    if "name" not in dataset:
-        raise ValidationException("Dataset must have a name.")
-    if not isinstance(dataset["name"], basestring):
-        raise ValidationException("Class name must be a string.")
+    if not isinstance(dataset["name"], string_types):
+        raise ValidationException("Field `name` must be a string.")
     if not (DATASET_NAME_LEN_MIN < len(dataset["name"]) < DATASET_NAME_LEN_MAX):
         raise ValidationException("Class name must be between %s and %s characters" %
                                   (DATASET_NAME_LEN_MIN, DATASET_NAME_LEN_MAX))
 
     # Description (optional)
     if "description" in dataset and dataset["description"] is not None:
-        if not isinstance(dataset["description"], basestring):
-            raise ValidationException("Description must be a string.")
-        # TODO: Do we need to check the length there?
+        if not isinstance(dataset["description"], string_types):
+            raise ValidationException("Value of `description` in a dataset must be a string.")
 
     # Classes
-    if "classes" not in dataset:
-        raise ValidationException("Dataset must have a list of classes.")
     _validate_classes(dataset["classes"])
 
     # Publicity
-    if "public" not in dataset:
-        raise ValidationException("You need to specify if dataset is public or not.")
     if not isinstance(dataset["public"], bool):
-        raise ValidationException('Value "public" must be a boolean.')
+        raise ValidationException('Value of `public` must be a boolean.')
 
 
 def _validate_classes(classes):
     if not isinstance(classes, list):
-        raise ValidationException("Classes need to be in a list.")
-    for cls in classes:
-        _validate_class(cls)
+        raise ValidationException("Field `classes` must be a list of strings.")
+    for idx, cls in enumerate(classes):
+        _validate_class(cls, idx)
 
 
-def _validate_class(cls):
+def _validate_class(cls, idx):
     if not isinstance(cls, dict):
-        raise ValidationException("Class must be a dictionary.")
-    _check_dict_structure(cls, ["name", "description", "recordings"])
+        raise ValidationException("Class number %s is not stored in a dictionary. All classes "
+                                  "must be dictionaries." % idx)
+    _check_dict_structure(
+        cls,
+        [
+            ("name", True),
+            ("description", False),
+            ("recordings", True),
+        ],
+        "class number %s" % idx,
+    )
 
     # Name
-    if "name" not in cls:
-        raise ValidationException("Each class must have a name.")
-    if not isinstance(cls["name"], basestring):
-        raise ValidationException("Class name must be a string.")
+    if not isinstance(cls["name"], string_types):
+        raise ValidationException("Field `name` of the class number %s is not a string." % idx)
     if not (CLASS_NAME_LEN_MIN < len(cls["name"]) < CLASS_NAME_LEN_MAX):
-        raise ValidationException("Class name must be between %s and %s characters" %
-                                  (CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
+        raise ValidationException("Length of the `name` filed in class number %s doesn't fit the limits. "
+                                  "Class name must be between %s and %s characters" %
+                                  (idx, CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
 
     # Description (optional)
     if "description" in cls and cls["description"] is not None:
-        if not isinstance(cls["description"], basestring):
-            raise ValidationException("Description must be a string.")
-        # TODO: Do we need to check the length there?
+        if not isinstance(cls["description"], string_types):
+            raise ValidationException('Field `description` in class "%s" (number %s) is not a string.' %
+                                      (cls["name"], idx))
 
     # Recordings
-    if "recordings" not in cls:
-        raise ValidationException("Each class must have a list of recordings.")
-    _validate_recordings(cls["recordings"])
+    _validate_recordings(cls["recordings"], cls["name"], idx)
 
 
-def _validate_recordings(recordings):
+def _validate_recordings(recordings, cls_name, cls_index):
     if not isinstance(recordings, list):
-        raise ValidationException("Recordings need to be in a list.")
+        raise ValidationException('Field `recordings` in class "%s" (number %s) is not a list.'
+                                  % (cls_name, cls_index))
     for recording in recordings:
         if not UUID_RE.match(recording):
-            raise ValidationException('"%s" is not a valid recording MBID.' % recording)
+            raise ValidationException('"%s" is not a valid recording MBID in class "%s" (number %s).' %
+                                      (recording, cls_name, cls_index))
 
 
-def _check_dict_structure(dictionary, allowed_keys):
-    for key in dictionary.iterkeys():
+def _check_dict_structure(dictionary, keys, error_location):
+    """Checks if dictionary contains only allowed values and, if necessary, if
+    required items are missing.
+
+    Args:
+        dictionary: Dictionary that needs to be checked.
+        keys: List of <name, required> tuples. `required` value must be a boolean:
+            True if the field is required, False if not.
+        error_location: Part of the error message that indicates where error occurs.
+
+    Raises:
+        ValidationException when dictionary structure doesn't match the requirements.
+    """
+    allowed_keys = [v[0] for v in keys]
+    dict_keys = dictionary.keys()
+    print(dict_keys)
+    for k, req in keys:
+        if req and k not in dict_keys:
+            raise ValidationException("Field `%s` is missing from %s." % (k, error_location))
+    for key in dict_keys:
         if key not in allowed_keys:
-            raise ValidationException("Unexpected item: %s." % key)
+            raise ValidationException("Unexpected field `%s` in %s." % (key, error_location))
 
 
 class ValidationException(Exception):

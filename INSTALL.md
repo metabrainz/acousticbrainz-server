@@ -9,7 +9,7 @@ Prerequisites
 -------------
 
 * [Python](https://www.python.org/) 2.7.x
-* [PostgreSQL](http://www.postgresql.org/) >=9.2 (needs the JSON data type)
+* [PostgreSQL](http://www.postgresql.org/) >=9.4 (needs the JSONB data type)
 * [Node.js](http://memcached.org/)
 * [memcached](http://memcached.org/)
 * [pxz](http://manpages.ubuntu.com/manpages/trusty/man1/pxz.1.html) for
@@ -18,7 +18,7 @@ exporting and importing the data
 For example in the latest Ubuntu, this command will install pre-requisites:
 
     $ sudo apt-get install python-dev python-virtualenv memcached pxz \
-        postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3
+        postgresql-9.4 postgresql-client-9.4 postgresql-server-dev-9.4
 
 
 Web Server

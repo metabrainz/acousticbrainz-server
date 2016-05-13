@@ -161,8 +161,10 @@ def get(id):
 
 
 def get_public_datasets(status_value, offset, limit):
+    result = ''
     with db.engine.connect() as connection:
-        query = """
+        if status_value == "all":
+            query = """
             SELECT dataset.id :: TEXT
                  , dataset.name
                  , dataset.description
@@ -180,11 +182,34 @@ def get_public_datasets(status_value, offset, limit):
                                LIMIT 1)
                                AS JOB ON TRUE
           WHERE dataset.public = 't'
-            and job.status = %s
        ORDER BY dataset.created DESC
        OFFSET %s LIMIT %s           
              """
-        result = connection.execute(query, (status_value, offset, limit))
+            result = connection.execute(query, (offset, limit))
+        else:
+            query = """
+                SELECT dataset.id :: TEXT
+                     , dataset.name
+                     , dataset.description
+                     , dataset.author
+                     , "user".musicbrainz_id AS author_name
+                     , dataset.created
+                     , job.status
+                FROM dataset
+                JOIN "user"
+                  ON "user".id = dataset.author
+                  LEFT JOIN LATERAL (SELECT status
+                                       FROM dataset_eval_jobs
+                                      WHERE dataset.id = dataset_eval_jobs.dataset_id
+                                   ORDER BY updated DESC
+                                   LIMIT 1)
+                                   AS JOB ON TRUE
+              WHERE dataset.public = 't'
+                and job.status = %s
+           ORDER BY dataset.created DESC
+           OFFSET %s LIMIT %s           
+                 """
+            result = connection.execute(query, (status_value, offset, limit))
         valid_datasets = []
         for row in result:
             valid_datasets.append(dict(row))

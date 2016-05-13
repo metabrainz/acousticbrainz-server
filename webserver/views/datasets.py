@@ -15,12 +15,17 @@ import six
 
 datasets_bp = Blueprint("datasets", __name__)
 
-@datasets_bp.route("/", defaults={'status_value': "running", 'offset': 0, 'limit': 20})
-@datasets_bp.route("/<status_value>/", defaults={'offset': 0, 'limit': 20})
-@datasets_bp.route("/<status_value>/<int:offset>/<int:limit>")
+@datasets_bp.route("/", defaults={'status_value': "running", 'offset': 0, 'limit': 20}, methods=["GET", "POST"])
+@datasets_bp.route("/<status_value>/", defaults={'offset': 0, 'limit': 20}, methods=["GET", "POST"])
+@datasets_bp.route("/<status_value>/<int:offset>/<int:limit>", methods=["GET", "POST"])
 def list_datasets(status_value, offset, limit):
+    form = forms.DatasetListForm()
+    if form.validate_on_submit():
+        status_value = form.filter_type.data
+        redirect_url = "datasets/"+ status_value + "/"
+        return redirect(url_for(".list_datasets", status_value=status_value, offset=0, limit=20))
     datasets = db.dataset.get_public_datasets(status_value, offset, limit)
-    return render_template("datasets/list.html", datasets=datasets)
+    return render_template("datasets/list.html", datasets=datasets, form=form, status=status_value, offset=offset, limit=limit)
 
 
 @datasets_bp.route("/<uuid:id>")

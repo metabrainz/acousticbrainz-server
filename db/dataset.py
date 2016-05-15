@@ -1,6 +1,7 @@
 import db
 import copy
 import jsonschema
+from db import exceptions
 import unicodedata
 import re
 
@@ -152,12 +153,11 @@ def get(id):
             "WHERE id = %s",
             (str(id),)
         )
-        if result.rowcount > 0:
-            row = dict(result.fetchone())
-            row["classes"] = _get_classes(row["id"])
-            return row
-        else:
-            return None
+        if result.rowcount < 1:
+            raise exceptions.NoDataFoundException("Can't find dataset with a specified ID.")
+        row = dict(result.fetchone())
+        row["classes"] = _get_classes(row["id"])
+        return row
 
 
 def _get_classes(dataset_id):

@@ -1,6 +1,10 @@
 from __future__ import absolute_import
-from flask import Blueprint
+from flask import Blueprint, jsonify, request
+from flask_login import current_user
 from webserver.decorators import auth_required
+from webserver.views.api import exceptions as api_exceptions
+import db.dataset
+import db.exceptions
 
 bp_datasets = Blueprint('api_v1_datasets', __name__)
 
@@ -11,12 +15,13 @@ def get_dataset(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    return jsonify(get_check_dataset(dataset_id))
 
 
 @bp_datasets.route("/", methods=["POST"])
 @auth_required
 def create_dataset():
+    # TODO(roman): Document return values.
     """Create a new dataset.
 
     **Example request**:
@@ -58,14 +63,29 @@ def create_dataset():
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    dataset_dict = request.get_json()
+    if not dataset_dict:
+        raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
+    # TODO: MUST CATCH VALIDATION ERRORS HERE!!! MERGE CHANGES TO VALIDATOR FIRST.
+    dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
+    return jsonify(
+        success=True,
+        dataset_id=dataset_id,
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>", methods=["DELETE"])
 @auth_required
 def delete_dataset(dataset_id):
     """Delete a dataset."""
-    raise NotImplementedError
+    ds = get_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise api_exceptions.APIUnauthorized("You can't delete this dataset.")
+    db.dataset.delete(ds["id"])
+    return jsonify(
+        success=True,
+        message="Dataset has been deleted."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>", methods=["PUT"])
@@ -212,3 +232,22 @@ def delete_recordings(dataset_id):
     :resheader Content-Type: *application/json*
     """
     raise NotImplementedError
+
+
+def get_check_dataset(dataset_id):
+    """Wrapper for `dataset.get` function in `db` package. Meant for use with the API.
+
+    Checks the following conditions and raises NotFound exception if they
+    aren't met:
+    * Specified dataset exists.
+    * Current user is allowed to access this dataset.
+    """
+    try:
+        ds = db.dataset.get(dataset_id)
+    except db.exceptions.NoDataFoundException as e:
+        raise api_exceptions.APINotFound("Can't find this dataset.")
+    if ds["public"] or (current_user.is_authenticated and
+                        ds["author"] == current_user.id):
+        return ds
+    else:
+        raise api_exceptions.APINotFound("Can't find this dataset.")

@@ -1,9 +1,12 @@
 from __future__ import absolute_import
+
+import json
+
 from flask import Blueprint, request, jsonify
+
+import webserver.views.api.exceptions
 from db.data import submit_low_level_data
 from db.exceptions import BadDataException
-import webserver.exceptions
-import json
 
 api_legacy_bp = Blueprint('api_legacy', __name__)
 
@@ -15,10 +18,10 @@ def submit_low_level(mbid):
     try:
         data = json.loads(raw_data.decode("utf-8"))
     except ValueError as e:
-        raise webserver.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
+        raise webserver.views.api.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
     try:
         submit_low_level_data(mbid, data)
     except BadDataException as e:
-        raise webserver.exceptions.APIBadRequest("%s" % e)
+        raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})

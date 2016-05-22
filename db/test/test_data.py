@@ -12,6 +12,7 @@ class DataDBTestCase(DatabaseTestCase):
     def setUp(self):
         super(DataDBTestCase, self).setUp()
         self.test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
+        self.test_md5 = "19967dc1f0699ba7c63660c0f1c4125f"
         self.test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '.json')).read()
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
 
@@ -263,6 +264,11 @@ class DataDBTestCase(DatabaseTestCase):
 
     def test_get_summary_data(self):
         pass
+    
+    def test_check_low_level_duplicates(self):
+        
+        self.assertEqual(db.data.check_low_level_duplicates(self.test_lowlevel_data), '0000')
+        # implement the test for successful query
 
 class DataUtilTestCase(DatabaseTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """
@@ -293,6 +299,7 @@ class DataUtilTestCase(DatabaseTestCase):
                     "codec": "mp3",
                     "length": 280.685699463,
                     "lossless": False,
+                    "md5_encoded": "a7c9979494e9efd6e208aeaa9376484e",
                 },
                 "tags": {
                     "file_name": "example.mp3",
@@ -326,3 +333,11 @@ class DataUtilTestCase(DatabaseTestCase):
         db.data.clean_metadata(d)
         self.assertFalse('unknown_tag' in d['metadata']['tags'])
         self.assertTrue('file_name' in d['metadata']['tags'])
+        
+    def test_generate_datasetitem_uuid(self):
+        test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
+        test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, test_mbid + '.json')).read()
+        test_lowlevel_data = json.loads(test_lowlevel_data_json)
+        self.assertTrue(db.data.generate_datasetitem_uuid(test_lowlevel_data))
+
+

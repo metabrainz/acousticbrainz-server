@@ -21,6 +21,7 @@ SANITY_CHECK_KEYS = [
     ['metadata', 'audio_properties', 'bit_rate'],
     ['metadata', 'audio_properties', 'codec'],
     ['metadata', 'audio_properties', 'lossless'],
+    ['metadata', 'audio_properties', 'md5_encoded'],
     ['metadata', 'tags', 'file_name'],
     ['metadata', 'tags', 'musicbrainz_recordingid'],
     ['lowlevel'],
@@ -460,3 +461,32 @@ def get_summary_data(mbid, offset=0):
         pass
 
     return summary
+
+def check_low_level_duplicates(data):
+    """
+        Check if data comes from an audio file already analysed
+        Uses the md5_encoded field
+    Args: data
+        A dictionary containing the low-level data extracted using essentia
+    """
+    if 'md5_encoded' in data['metadata']['audio_properties']:
+        input_md5 = data['metadata']['audio_properties']['md5_encoded']
+        query = text("select data->'metadata'->'tags'->'musicbrainz_recordingid' from lowlevel_json where data->'metadata'->'audio_properties'->'md5_encoded' ? :md5 ")
+        with db.engine.begin() as connection:
+            result = connection.execute(query, {"md5": input_md5})
+            row = result.fetchone()
+            if row:
+                # returns the retrieved mbid
+                return row[0]
+            else:
+                # create uuid and insert the data into the DB TO DO!
+                return '0000'
+    else:
+        #
+        return
+
+def generate_datasetitem_uuid(data):
+    """
+        Generate an uuid for dataset items that are not present in the DB as recordings
+    """
+    return True

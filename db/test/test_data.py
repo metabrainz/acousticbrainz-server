@@ -5,6 +5,7 @@ import os.path
 import json
 import mock
 import copy
+import unittest
 
 
 class DataDBTestCase(DatabaseTestCase):
@@ -261,7 +262,6 @@ class DataDBTestCase(DatabaseTestCase):
         get_id = db.data._get_model_id("modelname", "v1")
         self.assertEqual(modelid, get_id)
 
-
     def test_get_summary_data(self):
         pass
     
@@ -269,6 +269,7 @@ class DataDBTestCase(DatabaseTestCase):
         
         self.assertEqual(db.data.check_low_level_duplicates(self.test_lowlevel_data), '0000')
         # implement the test for successful query
+        
 
 class DataUtilTestCase(DatabaseTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """
@@ -333,7 +334,8 @@ class DataUtilTestCase(DatabaseTestCase):
         db.data.clean_metadata(d)
         self.assertFalse('unknown_tag' in d['metadata']['tags'])
         self.assertTrue('file_name' in d['metadata']['tags'])
-        
+    
+    @unittest.skip("Implement the test for this function")
     def test_generate_datasetitem_uuid(self):
         test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
         test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, test_mbid + '.json')).read()

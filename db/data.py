@@ -469,9 +469,20 @@ def check_low_level_duplicates(data):
     Args: data
         A dictionary containing the low-level data extracted using essentia
     """
-    if 'md5_encoded' in data['metadata']['audio_properties']:
+    missing_key = sanity_check_data(data)
+    if missing_key is not None:
+        raise db.exceptions.BadDataException(
+            "Key '%s' was not found in submitted data." %
+            ' : '.join(missing_key)
+        )
+    else:
         input_md5 = data['metadata']['audio_properties']['md5_encoded']
-        query = text("select data->'metadata'->'tags'->'musicbrainz_recordingid' from lowlevel_json where data->'metadata'->'audio_properties'->'md5_encoded' ? :md5 ")
+        query = text("""
+                     SELECT lowlevel.mbid
+                     FROM lowlevel, lowlevel_json
+                     WHERE lowlevel_json.data#> '{metadata,audio_properties,md5_encoded}' ? :md5
+                     AND lowlevel.id = lowlevel_json.id
+                     """)
         with db.engine.begin() as connection:
             result = connection.execute(query, {"md5": input_md5})
             row = result.fetchone()
@@ -481,9 +492,6 @@ def check_low_level_duplicates(data):
             else:
                 # create uuid and insert the data into the DB TO DO!
                 return '0000'
-    else:
-        #
-        return
 
 def generate_datasetitem_uuid(data):
     """

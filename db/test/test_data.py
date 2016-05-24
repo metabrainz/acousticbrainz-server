@@ -265,12 +265,12 @@ class DataDBTestCase(DatabaseTestCase):
     def test_get_summary_data(self):
         pass
     
-    def test_check_low_level_duplicates(self):
+    def test_find_md5_duplicates(self):
         
-        self.assertEqual(db.data.check_low_level_duplicates(self.test_lowlevel_data), '0000')
+        self.assertEqual(db.data.find_md5_duplicates(self.test_md5), None)
         # implement the test for successful query
+        self.assertTrue(False)
         
-
 class DataUtilTestCase(DatabaseTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """
 

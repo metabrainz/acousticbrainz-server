@@ -462,36 +462,30 @@ def get_summary_data(mbid, offset=0):
 
     return summary
 
-def check_low_level_duplicates(data):
+def find_md5_duplicates(md5):
+    """Check if data comes from an audio file with the same md5 (Uses data->md5_encoded)
+        
+    Args: md5
+        The md5_encoded from the low-level data to check
+    Returns:
+        The retrieved mbid if the md5 already exists
+        None if the md5 is not found
     """
-        Check if data comes from an audio file already analysed
-        Uses the md5_encoded field
-    Args: data
-        A dictionary containing the low-level data extracted using essentia
-    """
-    missing_key = sanity_check_data(data)
-    if missing_key is not None:
-        raise db.exceptions.BadDataException(
-            "Key '%s' was not found in submitted data." %
-            ' : '.join(missing_key)
-        )
-    else:
-        input_md5 = data['metadata']['audio_properties']['md5_encoded']
-        query = text("""
-                     SELECT lowlevel.mbid
-                     FROM lowlevel, lowlevel_json
-                     WHERE lowlevel_json.data#> '{metadata,audio_properties,md5_encoded}' ? :md5
-                     AND lowlevel.id = lowlevel_json.id
-                     """)
-        with db.engine.begin() as connection:
-            result = connection.execute(query, {"md5": input_md5})
-            row = result.fetchone()
-            if row:
-                # returns the retrieved mbid
-                return row[0]
-            else:
-                # create uuid and insert the data into the DB TO DO!
-                return '0000'
+
+    query = text("""
+                 SELECT lowlevel.mbid
+                 FROM lowlevel, lowlevel_json
+                 WHERE lowlevel_json.data#> '{metadata,audio_properties,md5_encoded}' ? :md5
+                 AND lowlevel.id = lowlevel_json.id
+                 """)
+    with db.engine.begin() as connection:
+        result = connection.execute(query, {"md5": md5})
+        row = result.fetchone()
+        if row:
+            # returns the retrieved mbid
+            return row[0]
+        else:
+            return None
 
 def generate_datasetitem_uuid(data):
     """

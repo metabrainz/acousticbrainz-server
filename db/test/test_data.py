@@ -16,6 +16,7 @@ class DataDBTestCase(DatabaseTestCase):
         self.test_md5 = "19967dc1f0699ba7c63660c0f1c4125f"
         self.test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '.json')).read()
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
+        self.test_lowlevel_data_uuidv3 = '7b199968-d177-3da4-b86c-94cb439fb750'
 
 
     @mock.patch("db.data.sanity_check_data")
@@ -270,6 +271,17 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(db.data.find_md5_duplicates(self.test_md5), None)
         # implement the test for successful query
         self.assertTrue(False)
+
+    def test_generate_datasetitem_uuidv3(self):
+        
+        self.assertTrue(db.data.generate_datasetitem_uuidv3())
+        self.assertNotEqual(db.data.generate_datasetitem_uuidv3(), None)
+        
+    def test_generate_datasetitem_uuidv4(self):
+        
+        self.assertNotEqual(db.data.generate_datasetitem_uuidv4(self.test_lowlevel_data), None)
+        self.assertEqual(db.data.generate_datasetitem_uuidv4(self.test_lowlevel_data), self.test_lowlevel_data_uuidv3)
+        
         
 class DataUtilTestCase(DatabaseTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """
@@ -334,12 +346,6 @@ class DataUtilTestCase(DatabaseTestCase):
         db.data.clean_metadata(d)
         self.assertFalse('unknown_tag' in d['metadata']['tags'])
         self.assertTrue('file_name' in d['metadata']['tags'])
-    
-    @unittest.skip("Implement the test for this function")
-    def test_generate_datasetitem_uuid(self):
-        test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
-        test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, test_mbid + '.json')).read()
-        test_lowlevel_data = json.loads(test_lowlevel_data_json)
-        self.assertTrue(db.data.generate_datasetitem_uuid(test_lowlevel_data))
+
 
 

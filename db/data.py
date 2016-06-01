@@ -1,4 +1,5 @@
 from hashlib import sha256
+from uuid import uuid3, uuid4, NAMESPACE_URL
 import logging
 import copy
 import time
@@ -465,8 +466,9 @@ def get_summary_data(mbid, offset=0):
 def find_md5_duplicates(md5):
     """Check if data comes from an audio file with the same md5 (Uses data->md5_encoded)
         
-    Args: md5
-        The md5_encoded from the low-level data to check
+    Args: 
+        md5: The md5_encoded from the low-level data to check
+    
     Returns:
         The retrieved mbid if the md5 already exists
         None if the md5 is not found
@@ -487,8 +489,39 @@ def find_md5_duplicates(md5):
         else:
             return None
 
-def generate_datasetitem_uuid(data):
+def generate_datasetitem_uuidv3():
+    """Generate a random UUIDv4 for dataset items that are not present in the DB as recordings
+    
+    Returns: 
+        itemuuid: The generated random UUIDv3 assigned to a specific dataset item
     """
-        Generate an uuid for dataset items that are not present in the DB as recordings
+    try:
+        itemuuid = uuid4()
+        return str(itemuuid)
+    except:
+        raise "Error Generating the random uuid"
+    
+    return None
+    
+def generate_datasetitem_uuidv4(data):
+    """Generate an UUIDv3 using as string the data json conveted to string
+    
+    Args: 
+        data: A dictionary containing the low-level data submitted for the dataset item
+    
+    Returns: 
+        uuid: The generated UUIDv3 based on the namespace md5
     """
-    return True
+    # This could be saved as a constant
+    aburl = 'http://acousticbrainz.org/'
+    namespaceuuid = uuid3(NAMESPACE_URL, aburl)
+    #
+    txtdata = str(data)
+        
+    try:
+        itemuuid = uuid3(namespaceuuid, txtdata)
+        return str(itemuuid)
+    except:
+        raise "UUIDv3 cannot be generated!"
+    
+    return None

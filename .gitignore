@@ -15,13 +15,8 @@ __pycache__/
 target/
 
 # Unit test / coverage reports
-/htmlcov
-/cover
-.tox/
+htmlcov
 .coverage
-.cache
-nosetests.xml
-coverage.xml
 
 # Logs
 *.log

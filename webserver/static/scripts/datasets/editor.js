@@ -12,6 +12,7 @@
  mounted, it pull existing dataset for editing from the server.
  */
 var React = require('react');
+var ReactDOM = require('react-dom');
 
 var CONTAINER_ELEMENT_ID = "dataset-editor";
 var container = document.getElementById(CONTAINER_ELEMENT_ID);
@@ -91,7 +92,7 @@ var Dataset = React.createClass({
     },
     handlePrivacyUpdate: function () {
         var nextStateData = this.state.data;
-        nextStateData.public = this.refs.public.getDOMNode().checked;
+        nextStateData.public = this.refs.public.checked;
         this.setState({data: nextStateData});
     },
     handleReturn: function () {
@@ -143,7 +144,7 @@ var Dataset = React.createClass({
                             onClassEdit={this.handleClassEdit}
                             onClassDelete={this.handleClassDelete} />
                         <hr />
-                        <p class="checkbox">
+                        <p className="checkbox">
                             <label>
                                 <input
                                     ref="public"
@@ -153,7 +154,7 @@ var Dataset = React.createClass({
                                 &nbsp;<strong>Make this dataset public</strong>
                             </label>
                         </p>
-                        <SubmitDatasetButton
+                        <DatasetControlButtons
                             mode={this.state.mode}
                             data={this.state.data} />
                     </div>
@@ -188,20 +189,21 @@ var DatasetDetails = React.createClass({
     },
     handleDetailsUpdate: function () {
         this.props.onDetailsUpdate(
-            this.refs.name.getDOMNode().value,
-            this.refs.description.getDOMNode().value
+            this.refs.name.value,
+            this.refs.description.value
         );
     },
     render: function () {
         return (
             <div className="dataset-details">
-                <h3>
+                <h2 className="page-title">
+                    Dataset&nbsp;
                     <input type="text"
                            placeholder="Name" required="required"
                            value={this.props.name} ref="name"
                            size={this.props.name.length}
                            onChange={this.handleDetailsUpdate} />
-                </h3>
+                </h2>
                 <textarea ref="description"
                           placeholder="Description (optional)"
                           value={this.props.description}
@@ -211,7 +213,7 @@ var DatasetDetails = React.createClass({
     }
 });
 
-var SubmitDatasetButton = React.createClass({
+var DatasetControlButtons = React.createClass({
     propTypes: {
         mode: React.PropTypes.string.isRequired,
         data: React.PropTypes.object.isRequired
@@ -252,6 +254,10 @@ var SubmitDatasetButton = React.createClass({
             }
         });
     },
+    handleCancel: function (e) {
+        e.preventDefault();
+        history.back();
+    },
     getInitialState: function () {
         return {
             enabled: true,
@@ -272,6 +278,8 @@ var SubmitDatasetButton = React.createClass({
                 <button onClick={this.handleSubmit} type="button"
                         disabled={this.state.enabled ? '' : 'disabled'}
                         className="btn btn-default btn-primary">{buttonText}</button>
+                <button onClick={this.handleCancel} type="button"
+                        className="btn btn-default">Cancel</button>
             </div>
         );
     }
@@ -365,8 +373,8 @@ var ClassDetails = React.createClass({
     handleClassUpdate: function() {
         this.props.onClassUpdate(
             this.props.id,
-            this.refs.name.getDOMNode().value,
-            this.refs.description.getDOMNode().value,
+            this.refs.name.value,
+            this.refs.description.value,
             this.props.recordings
         );
     },
@@ -451,15 +459,15 @@ var RecordingAddForm = React.createClass({
     },
     handleSubmit: function (event) {
         event.preventDefault();
-        var mbid = this.refs.mbid.getDOMNode().value.trim();
+        var mbid = this.refs.mbid.value.trim();
         if (!mbid) {
             return;
         }
         this.props.onRecordingSubmit(mbid);
-        this.refs.mbid.getDOMNode().value = '';
+        this.refs.mbid.value = '';
     },
     handleChange: function () {
-        var mbid = this.refs.mbid.getDOMNode().value;
+        var mbid = this.refs.mbid.value;
         var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mbid);
         var isNotDuplicate = this.props.recordings.indexOf(mbid) == -1;
         this.setState({
@@ -538,16 +546,20 @@ var Recording = React.createClass({
             type: "GET",
             url: "/datasets/recording/" + this.props.mbid,
             success: function (data) {
-                this.setState({
-                    details: data.recording,
-                    status: RECORDING_STATUS_LOADED
-                });
+                if (this.isMounted()) {
+                    this.setState({
+                        details: data.recording,
+                        status: RECORDING_STATUS_LOADED
+                    });
+                }
             }.bind(this),
             error: function () {
-                this.setState({
-                    error: "Recording not found!",
-                    status: RECORDING_STATUS_ERROR
-                });
+                if (this.isMounted()) {
+                    this.setState({
+                        error: "Recording not found!",
+                        status: RECORDING_STATUS_ERROR
+                    });
+                }
             }.bind(this)
         });
     },
@@ -591,4 +603,4 @@ var Recording = React.createClass({
 });
 
 
-if (container) React.render(<Dataset />, container);
+if (container) ReactDOM.render(<Dataset />, container);

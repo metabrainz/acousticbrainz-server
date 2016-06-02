@@ -1,0 +1,1366 @@
+{%- extends 'base.html' -%}
+{%- block content -%}
+    <div id="accuracy-page">
+
+	  <h1 class="page-title">Accuracies and confusion matrices for default models</h1>
+      <p>Read more about the <a href="https://github.com/MTG/essentia/blob/master/FAQ.md#how-it-works">model training process on the essentia website</a>.</p>
+
+	  <div class="table-of-contents">
+	    <h4>Table of Contents</h4>
+	    <div class="col-md-4">
+  	      <a href="#danceability">danceability</a>
+	      <a href="#gender">gender</a>
+	      <a href="#genre_dortmund">genre_dortmund</a>
+	      <a href="#genre_electronic">genre_electronic</a>
+	      <a href="#genre_rosamerica">genre_rosamerica</a>
+	      <a href="#genre_tzanetakis">genre_tzanetakis</a>
+	    </div>
+	    <div class="col-md-4">
+	      <a href="#ismir04_rhythm">ismir04_rhythm</a>
+	      <a href="#mood_acoustic">mood_acoustic</a>
+	      <a href="#mood_aggressive">mood_aggressive</a>
+	      <a href="#mood_electronic">mood_electronic</a>
+	      <a href="#mood_happy">mood_happy</a>
+	      <a href="#mood_party">mood_party</a>
+	    </div>
+	    <div class="col-md-4">
+	      <a href="#mood_relaxed">mood_relaxed</a>
+	      <a href="#mood_sad">mood_sad</a>
+	      <a href="#moods_mirex">moods_mirex</a>
+	      <a href="#timbre">timbre</a>
+	      <a href="#tonal_atonal">tonal_atonal</a>
+	      <a href="#voice_instrumental">voice_instrumental</a>
+	    </div>
+	  </div>
+
+      <h2 id="danceability">danceability</h2>
+        <p>In-house MTG collection</p>
+        <p>Use: classification of music by danceability</p>
+        <p>Size: 306 full tracks, 124/182 per class</p>
+      <h5>Accuracy: 92.410714%</h5>
+     <table>
+       <tr><th><h3>Predicted (%)</h3></th>
+         <td></td>
+       </tr>
+       <tr>
+         <td>
+           <table>
+             <tr>
+               <td></td>
+               <th>danceable</th>
+               <th>not_danceable</th>
+               <td></td>
+               <th>Proportion</th>
+             </tr>
+             <tr><th>danceable</th>
+               <td class="hi animate">92.31 <span>132 danceable (out of 143) classified as danceable</span></td>
+               <td class="animate">7.69 <span>11 danceable (out of 143) classified as not_danceable</span></td>
+               <th>danceable</th>
+               <td>63.84 %</td>
+             </tr>
+             <tr><th>not_danceable</th>
+               <td class="animate">7.41 <span>6 not_danceable (out of 81) classified as danceable</span></td>
+               <td class="hi animate">92.59 <span>75 not_danceable (out of 81) classified as not_danceable</span></td>
+               <th>not_danceable</th><td>36.16 %</td>
+             </tr>
+           </table>
+         </td>
+         <th><h3>Actual (%)</h3></th>
+       </tr>
+     </table>
+
+     <br/>
+     <h2 id="gender">gender</h2>
+      <p>In-house MTG collection</p>
+      <p>Use: classification of vocal music by gender (male/female)</p>
+      <p>Size: 3311 full tracks, 1508/1803 per class</p>
+	 <h5>Accuracy: 87.213915%</h5>
+     <table>
+       <tr>
+         <th><h3>Predicted (%)</h3></th>
+         <td></td>
+       </tr>
+       <tr>
+         <td>
+           <table>
+             <tr>
+               <td></td>
+               <th>female</th>
+               <th>male</th>
+               <td></td>
+               <th>Proportion</th>
+             </tr>
+             <tr>
+               <th>female</th>
+               <td class="hi animate">91.20 <span>1627 female (out of 1784) classified as female</span></td>
+               <td class="animate">8.80 <span>157 female (out of 1784) classified as male</span></td>
+               <th>female</th>
+               <td>54.44 %</td>
+             </tr>
+             <tr>
+               <th>male</th>
+               <td class="bad animate">17.55 <span>262 male (out of 1493) classified as female</span></td>
+               <td class="hi animate">82.45 <span>1231 male (out of 1493) classified as male</span></td>
+               <th>male</th>
+               <td>45.56 %</td>
+             </tr>
+           </table>
+         </td>
+         <th><h3>Actual (%)</h3></th>
+       </tr>
+     </table>
+
+     <br/>
+     <h2 id="genre_dortmund">genre_dortmund</h2>
+      <p><a href="http://www-ai.cs.uni-dortmund.de/audio.html">Music Audio Benchmark Data Set</a> by TU Dortmund University (Homburg et al., 2005)</p>
+      <p>Use: classification of music by genre</p>
+      <p>Size: 1820 track excerpts, 46-490 per genre</p>
+      <p>Homburg, H., Mierswa, I., M&ouml;ller, B., Morik, K., &amp; Wurst, M. (2005). A Benchmark Dataset for Audio Classification and Clustering. In 6th International Conference on Music Information Retrieval (ISMIR'05), pp. 528-31.</a></p>
+
+	 <h5>Accuracy: 60.254372%</h5>
+     <table>
+       <tr>
+         <th><h3>Predicted (%)</h3></th>
+         <td></td>
+       </tr>
+       <tr>
+         <td>
+           <table>
+             <tr>
+               <td></td>
+               <th>alternative</th>
+               <th>blues</th>
+               <th>electronic</th>
+               <th>folkcountry</th>
+               <th>funksoulrnb</th>
+               <th>jazz</th>
+               <th>pop</th>
+               <th>raphiphop</th>
+               <th>rock</th>
+                 <td></td>
+               <th>Proportion</th>
+             </tr>
+             <tr>
+               <th>alternative</th>
+                 <td class="hi animate">10.27 <span>15 alternative (out of 146) classified as alternative</span></td>
+                 <td class="animate">4.79 <span>7 alternative (out of 146) classified as blues</span></td>
+                 <td class="animate">4.79 <span>7 alternative (out of 146) classified as electronic</span></td>
+                 <td class="bad animate">17.81 <span>26 alternative (out of 146) classified as folkcountry</span></td>
+                 <td class="animate">0.00 <span>0 alternative (out of 146) classified as funksoulrnb</span></td>
+                 <td class="bad animate">10.96 <span>16 alternative (out of 146) classified as jazz</span></td>
+                 <td class="animate">2.05 <span>3 alternative (out of 146) classified as pop</span></td>
+                 <td class="animate">1.37 <span>2 alternative (out of 146) classified as raphiphop</span></td>
+                 <td class="bad animate">47.95 <span>70 alternative (out of 146) classified as rock</span></td>
+               <th>alternative</th>
+                 <td>7.74 %</td>
+             </tr>
+             <tr>
+               <th>blues</th>
+                 <td class="animate">1.67 <span>2 blues (out of 120) classified as alternative</span></td>
+                 <td class="hi animate">35.83 <span>43 blues (out of 120) classified as blues</span></td>
+                 <td class="animate">0.83 <span>1 blues (out of 120) classified as electronic</span></td>
+                 <td class="bad animate">10.00 <span>12 blues (out of 120) classified as folkcountry</span></td>
+                 <td class="animate">0.83 <span>1 blues (out of 120) classified as funksoulrnb</span></td>
+                 <td class="bad animate">19.17 <span>23 blues (out of 120) classified as jazz</span></td>
+                 <td class="animate">0.00 <span>0 blues (out of 120) classified as pop</span></td>
+                 <td class="animate">2.50 <span>3 blues (out of 120) classified as raphiphop</span></td>
+                 <td class="bad animate">29.17 <span>35 blues (out of 120) classified as rock</span></td>
+               <th>blues</th>
+                 <td>6.36 %</td>
+             </tr>
+             <tr>
+               <th>electronic</th>
+                 <td class="animate">9.73 <span>11 electronic (out of 113) classified as alternative</span></td>
+                 <td class="animate">0.00 <span>0 electronic (out of 113) classified as blues</span></td>
+                 <td class="hi animate">39.82 <span>45 electronic (out of 113) classified as electronic</span></td>
+                 <td class="animate">5.31 <span>6 electronic (out of 113) classified as folkcountry</span></td>
+                 <td class="animate">0.00 <span>0 electronic (out of 113) classified as funksoulrnb</span></td>
+                 <td class="bad animate">17.70 <span>20 electronic (out of 113) classified as jazz</span></td>
+                 <td class="animate">0.88 <span>1 electronic (out of 113) classified as pop</span></td>
+                 <td class="bad animate">12.39 <span>14 electronic (out of 113) classified as raphiphop</span></td>
+                 <td class="bad animate">14.16 <span>16 electronic (out of 113) classified as rock</span></td>
+               <th>electronic</th>
+                 <td>5.99 %</td>
+             </tr>
+             <tr>
+               <th>folkcountry</th>
+                 <td class="animate">4.50 <span>10 folkcountry (out of 222) classified as alternative</span></td>
+                 <td class="animate">4.95 <span>11 folkcountry (out of 222) classified as blues</span></td>
+                 <td class="animate">0.45 <span>1 folkcountry (out of 222) classified as electronic</span></td>
+                 <td class="hi animate">56.76 <span>126 folkcountry (out of 222) classified as folkcountry</span></td>
+                 <td class="animate">0.00 <span>0 folkcountry (out of 222) classified as funksoulrnb</span></td>
+                 <td class="bad animate">12.16 <span>27 folkcountry (out of 222) classified as jazz</span></td>
+                 <td class="animate">3.15 <span>7 folkcountry (out of 222) classified as pop</span></td>
+                 <td class="animate">1.35 <span>3 folkcountry (out of 222) classified as raphiphop</span></td>
+                 <td class="bad animate">16.67 <span>37 folkcountry (out of 222) classified as rock</span></td>
+               <th>folkcountry</th>
+                 <td>11.76 %</td>
+             </tr>
+             <tr>
+               <th>funksoulrnb</th>
+                 <td class="animate">0.00 <span>0 funksoulrnb (out of 47) classified as alternative</span></td>
+                 <td class="animate">2.13 <span>1 funksoulrnb (out of 47) classified as blues</span></td>
+                 <td class="animate">2.13 <span>1 funksoulrnb (out of 47) classified as electronic</span></td>
+                 <td class="animate">4.26 <span>2 funksoulrnb (out of 47) classified as folkcountry</span></td>
+                 <td class="hi animate">2.13 <span>1 funksoulrnb (out of 47) classified as funksoulrnb</span></td>
+                 <td class="bad animate">31.91 <span>15 funksoulrnb (out of 47) classified as jazz</span></td>
+                 <td class="animate">2.13 <span>1 funksoulrnb (out of 47) classified as pop</span></td>
+                 <td class="bad animate">14.89 <span>7 funksoulrnb (out of 47) classified as raphiphop</span></td>
+                 <td class="bad animate">40.43 <span>19 funksoulrnb (out of 47) classified as rock</span></td>
+               <th>funksoulrnb</th>
+                 <td>2.49 %</td>
+             </tr>
+             <tr>
+               <th>jazz</th>
+                 <td class="animate">3.13 <span>10 jazz (out of 319) classified as alternative</span></td>
+                 <td class="animate">3.45 <span>11 jazz (out of 319) classified as blues</span></td>
+                 <td class="animate">4.08 <span>13 jazz (out of 319) classified as electronic</span></td>
+                 <td class="animate">8.78 <span>28 jazz (out of 319) classified as folkcountry</span></td>
+                 <td class="animate">0.63 <span>2 jazz (out of 319) classified as funksoulrnb</span></td>
+                 <td class="hi animate">67.08 <span>214 jazz (out of 319) classified as jazz</span></td>
+                 <td class="animate">1.57 <span>5 jazz (out of 319) classified as pop</span></td>
+                 <td class="animate">3.45 <span>11 jazz (out of 319) classified as raphiphop</span></td>
+                 <td class="animate">7.84 <span>25 jazz (out of 319) classified as rock</span></td>
+               <th>jazz</th>
+                 <td>16.91 %</td>
+             </tr>
+             <tr>
+               <th>pop</th>
+                 <td class="animate">6.03 <span>7 pop (out of 116) classified as alternative</span></td>
+                 <td class="animate">4.31 <span>5 pop (out of 116) classified as blues</span></td>
+                 <td class="animate">3.45 <span>4 pop (out of 116) classified as electronic</span></td>
+                 <td class="bad animate">28.45 <span>33 pop (out of 116) classified as folkcountry</span></td>
+                 <td class="animate">0.00 <span>0 pop (out of 116) classified as funksoulrnb</span></td>
+                 <td class="animate">4.31 <span>5 pop (out of 116) classified as jazz</span></td>
+                 <td class="hi animate">8.62 <span>10 pop (out of 116) classified as pop</span></td>
+                 <td class="animate">8.62 <span>10 pop (out of 116) classified as raphiphop</span></td>
+                 <td class="bad animate">36.21 <span>42 pop (out of 116) classified as rock</span></td>
+               <th>pop</th>
+                 <td>6.15 %</td>
+             </tr>
+             <tr>
+               <th>raphiphop</th>
+                 <td class="animate">0.33 <span>1 raphiphop (out of 300) classified as alternative</span></td>
+                 <td class="animate">1.33 <span>4 raphiphop (out of 300) classified as blues</span></td>
+                 <td class="animate">2.33 <span>7 raphiphop (out of 300) classified as electronic</span></td>
+                 <td class="animate">0.67 <span>2 raphiphop (out of 300) classified as folkcountry</span></td>
+                 <td class="animate">0.00 <span>0 raphiphop (out of 300) classified as funksoulrnb</span></td>
+                 <td class="animate">1.67 <span>5 raphiphop (out of 300) classified as jazz</span></td>
+                 <td class="animate">0.67 <span>2 raphiphop (out of 300) classified as pop</span></td>
+                 <td class="hi animate">88.00 <span>264 raphiphop (out of 300) classified as raphiphop</span></td>
+                 <td class="animate">5.00 <span>15 raphiphop (out of 300) classified as rock</span></td>
+               <th>raphiphop</th>
+                 <td>15.90 %</td>
+             </tr>
+             <tr>
+               <th>rock</th>
+                 <td class="animate">3.37 <span>17 rock (out of 504) classified as alternative</span></td>
+                 <td class="animate">2.58 <span>13 rock (out of 504) classified as blues</span></td>
+                 <td class="animate">1.19 <span>6 rock (out of 504) classified as electronic</span></td>
+                 <td class="animate">4.76 <span>24 rock (out of 504) classified as folkcountry</span></td>
+                 <td class="animate">0.00 <span>0 rock (out of 504) classified as funksoulrnb</span></td>
+                 <td class="animate">3.37 <span>17 rock (out of 504) classified as jazz</span></td>
+                 <td class="animate">0.60 <span>3 rock (out of 504) classified as pop</span></td>
+                 <td class="animate">0.99 <span>5 rock (out of 504) classified as raphiphop</span></td>
+                 <td class="hi animate">83.13 <span>419 rock (out of 504) classified as rock</span></td>
+               <th>rock</th>
+                 <td>26.71 %</td>
+            </tr>
+          </table>
+        </td>
+        <th><h3>Actual (%)</h3></th>
+      </tr>
+     </table>
+
+     <br/>
+     <h2 id="genre_electronic">genre_electronic</h2>
+      <p>In-house MTG collection</p>
+      <p>Use: classification of electronic music by subgenres</p>
+      <p>Size: 250 track excerpts, 50 per genre</p>
+     <h5>Accuracy: 91.699605%</h5>
+     <table>
+       <tr>
+       	<th><h3>Predicted (%)</h3></th>
+       	  <td></td>
+       </tr>
+       <tr>
+       	<td>
+          <table>
+            <tr>
+              <td></td>
+                <th>ambient</th>
+                <th>dnb</th>
+                <th>house</th>
+                <th>techno</th>
+                <th>trance</th>
+                  <td></td>
+                <th>Proportion</th>
+            </tr>
+            <tr>
+              <th>ambient</th>
+                <td class="hi animate">98.11 <span>52 ambient (out of 53) classified as ambient</span></td>
+                <td class="animate">0.00 <span>0 ambient (out of 53) classified as dnb</span></td>
+                <td class="animate">0.00 <span>0 ambient (out of 53) classified as house</span></td>
+                <td class="animate">1.89 <span>1 ambient (out of 53) classified as techno</span></td>
+                <td class="animate">0.00 <span>0 ambient (out of 53) classified as trance</span></td>
+              <th>ambient</th>
+                <td>20.95 %</td>
+            </tr>
+            <tr>
+              <th>dnb</th>
+                <td class="animate">0.00 <span>0 dnb (out of 50) classified as ambient</span></td>
+                <td class="hi animate">96.00 <span>48 dnb (out of 50) classified as dnb</span></td>
+                <td class="animate">0.00 <span>0 dnb (out of 50) classified as house</span></td>
+                <td class="animate">2.00 <span>1 dnb (out of 50) classified as techno</span></td>
+                <td class="animate">2.00 <span>1 dnb (out of 50) classified as trance</span></td>
+              <th>dnb</th>
+                <td>19.76 %</td>
+            </tr>
+            <tr>
+              <th>house</th>
+                <td class="animate">0.00 <span>0 house (out of 50) classified as ambient</span></td>
+                <td class="animate">2.00 <span>1 house (out of 50) classified as dnb</span></td>
+                <td class="hi animate">94.00 <span>47 house (out of 50) classified as house</span></td>
+                <td class="animate">4.00 <span>2 house (out of 50) classified as techno</span></td>
+                <td class="animate">0.00 <span>0 house (out of 50) classified as trance</span></td>
+              <th>house</th>
+                <td>19.76 %</td>
+            </tr>
+            <tr>
+              <th>techno</th>
+                <td class="animate">0.00 <span>0 techno (out of 50) classified as ambient</span></td>
+                <td class="animate">8.00 <span>4 techno (out of 50) classified as dnb</span></td>
+                <td class="bad animate">12.00 <span>6 techno (out of 50) classified as house</span></td>
+                <td class="hi animate">80.00 <span>40 techno (out of 50) classified as techno</span></td>
+                <td class="animate">0.00 <span>0 techno (out of 50) classified as trance</span></td>
+              <th>techno</th>
+                <td>19.76 %</td>
+            </tr>
+            <tr>
+              <th>trance</th>
+                <td class="animate">0.00 <span>0 trance (out of 50) classified as ambient</span></td>
+                <td class="animate">4.00 <span>2 trance (out of 50) classified as dnb</span></td>
+                <td class="animate">4.00 <span>2 trance (out of 50) classified as house</span></td>
+                <td class="animate">2.00 <span>1 trance (out of 50) classified as techno</span></td>
+                <td class="hi animate">90.00 <span>45 trance (out of 50) classified as trance</span></td>
+              <th>trance</th>
+                <td>19.76 %</td>
+            </tr>
+          </table>
+        </td>
+        <th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="genre_rosamerica">genre_rosamerica</h2>
+      <p>In-house MTG collection created by a musicologist (Guaus, 2009)</p>
+      <p>Use: classification of music by genre</p>
+      <p>Size: 400 tracks, 50 per genre</p>
+      <p>Classes: classical, dance, hip-hop, jazz, pop, rhythm'n'blues, rock, speech</p>
+      <p>Guaus, E. (2009). Audio content processing for automatic music genre classification: descriptors, databases, and classifiers (Doctoral dissertation, Universitat Pompeu Fabra, Barcelona).
+    <h5>Accuracy: 87.557604%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+          <table>
+            <tr>
+              <td></td>
+              <th>cla</th>
+              <th>dan</th>
+              <th>hip</th>
+              <th>jaz</th>
+              <th>pop</th>
+              <th>rhy</th>
+              <th>roc</th>
+              <th>spe</th>
+                <td></td>
+              <th>Proportion</th>
+            </tr>
+            <tr>
+              <th>cla</th>
+                <td class="hi animate">92.73 <span>51 cla (out of 55) classified as cla</span></td>
+                <td class="animate">0.00 <span>0 cla (out of 55) classified as dan</span></td>
+                <td class="animate">0.00 <span>0 cla (out of 55) classified as hip</span></td>
+                <td class="animate">1.82 <span>1 cla (out of 55) classified as jaz</span></td>
+                <td class="animate">1.82 <span>1 cla (out of 55) classified as pop</span></td>
+                <td class="animate">1.82 <span>1 cla (out of 55) classified as rhy</span></td>
+                <td class="animate">1.82 <span>1 cla (out of 55) classified as roc</span></td>
+                <td class="animate">0.00 <span>0 cla (out of 55) classified as spe</span></td>
+              <th>cla</th>
+                <td>12.67 %</td>
+            </tr>
+            <tr>
+              <th>dan</th>
+                <td class="animate">0.00 <span>0 dan (out of 54) classified as cla</span></td>
+                <td class="hi animate">96.30 <span>52 dan (out of 54) classified as dan</span></td>
+                <td class="animate">1.85 <span>1 dan (out of 54) classified as hip</span></td>
+                <td class="animate">0.00 <span>0 dan (out of 54) classified as jaz</span></td>
+                <td class="animate">0.00 <span>0 dan (out of 54) classified as pop</span></td>
+                <td class="animate">1.85 <span>1 dan (out of 54) classified as rhy</span></td>
+                <td class="animate">0.00 <span>0 dan (out of 54) classified as roc</span></td>
+                <td class="animate">0.00 <span>0 dan (out of 54) classified as spe</span></td>
+              <th>dan</th>
+                <td>12.44 %</td>
+            </tr>
+            <tr>
+              <th>hip</th>
+                <td class="animate">0.00 <span>0 hip (out of 55) classified as cla</span></td>
+                <td class="animate">1.82 <span>1 hip (out of 55) classified as dan</span></td>
+                <td class="hi animate">94.55 <span>52 hip (out of 55) classified as hip</span></td>
+                <td class="animate">0.00 <span>0 hip (out of 55) classified as jaz</span></td>
+                <td class="animate">0.00 <span>0 hip (out of 55) classified as pop</span></td>
+                <td class="animate">3.64 <span>2 hip (out of 55) classified as rhy</span></td>
+                <td class="animate">0.00 <span>0 hip (out of 55) classified as roc</span></td>
+                <td class="animate">0.00 <span>0 hip (out of 55) classified as spe</span></td>
+              <th>hip</th>
+                <td>12.67 %</td>
+            </tr>
+            <tr>
+              <th>jaz</th>
+                <td class="animate">3.77 <span>2 jaz (out of 53) classified as cla</span></td>
+                <td class="animate">0.00 <span>0 jaz (out of 53) classified as dan</span></td>
+                <td class="animate">0.00 <span>0 jaz (out of 53) classified as hip</span></td>
+                <td class="hi animate">90.57 <span>48 jaz (out of 53) classified as jaz</span></td>
+                <td class="animate">5.66 <span>3 jaz (out of 53) classified as pop</span></td>
+                <td class="animate">0.00 <span>0 jaz (out of 53) classified as rhy</span></td>
+                <td class="animate">0.00 <span>0 jaz (out of 53) classified as roc</span></td>
+                <td class="animate">0.00 <span>0 jaz (out of 53) classified as spe</span></td>
+              <th>jaz</th>
+                <td>12.21 %</td>
+            </tr>
+            <tr>
+              <th>pop</th>
+                <td class="animate">1.82 <span>1 pop (out of 55) classified as cla</span></td>
+                <td class="animate">7.27 <span>4 pop (out of 55) classified as dan</span></td>
+                <td class="animate">1.82 <span>1 pop (out of 55) classified as hip</span></td>
+                <td class="animate">0.00 <span>0 pop (out of 55) classified as jaz</span></td>
+                <td class="hi animate">69.09 <span>38 pop (out of 55) classified as pop</span></td>
+                <td class="bad animate">16.36 <span>9 pop (out of 55) classified as rhy</span></td>
+                <td class="animate">3.64 <span>2 pop (out of 55) classified as roc</span></td>
+                <td class="animate">0.00 <span>0 pop (out of 55) classified as spe</span></td>
+              <th>pop</th>
+                <td>12.67 %</td>
+            </tr>
+            <tr>
+              <th>rhy</th>
+                <td class="animate">1.85 <span>1 rhy (out of 54) classified as cla</span></td>
+                <td class="animate">3.70 <span>2 rhy (out of 54) classified as dan</span></td>
+                <td class="animate">5.56 <span>3 rhy (out of 54) classified as hip</span></td>
+                <td class="bad animate">11.11 <span>6 rhy (out of 54) classified as jaz</span></td>
+                <td class="bad animate">11.11 <span>6 rhy (out of 54) classified as pop</span></td>
+                <td class="hi animate">66.67 <span>36 rhy (out of 54) classified as rhy</span></td>
+                <td class="animate">0.00 <span>0 rhy (out of 54) classified as roc</span></td>
+                <td class="animate">0.00 <span>0 rhy (out of 54) classified as spe</span></td>
+              <th>rhy</th>
+                <td>12.44 %</td>
+            </tr>
+            <tr>
+              <th>roc</th>
+                <td class="animate">0.00 <span>0 roc (out of 54) classified as cla</span></td>
+                <td class="animate">1.85 <span>1 roc (out of 54) classified as dan</span></td>
+                <td class="animate">0.00 <span>0 roc (out of 54) classified as hip</span></td>
+                <td class="animate">0.00 <span>0 roc (out of 54) classified as jaz</span></td>
+                <td class="animate">7.41 <span>4 roc (out of 54) classified as pop</span></td>
+                <td class="animate">0.00 <span>0 roc (out of 54) classified as rhy</span></td>
+                <td class="hi animate">90.74 <span>49 roc (out of 54) classified as roc</span></td>
+                <td class="animate">0.00 <span>0 roc (out of 54) classified as spe</span></td>
+              <th>roc</th>
+                <td>12.44 %</td>
+            </tr>
+            <tr>
+              <th>spe</th>
+                <td class="animate">0.00 <span>0 spe (out of 54) classified as cla</span></td>
+                <td class="animate">0.00 <span>0 spe (out of 54) classified as dan</span></td>
+                <td class="animate">0.00 <span>0 spe (out of 54) classified as hip</span></td>
+                <td class="animate">0.00 <span>0 spe (out of 54) classified as jaz</span></td>
+                <td class="animate">0.00 <span>0 spe (out of 54) classified as pop</span></td>
+                <td class="animate">0.00 <span>0 spe (out of 54) classified as rhy</span></td>
+                <td class="animate">0.00 <span>0 spe (out of 54) classified as roc</span></td>
+                <td class="hi animate">100.00 <span>54 spe (out of 54) classified as spe</span></td>
+              <th>spe</th>
+                <td>12.44 %</td>
+            </tr>
+          </table>
+        </td><th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="genre_tzanetakis">genre_tzanetakis</h2>
+      <p><a href="http://marsyas.info/download/data_sets/">GTZAN Genre Collection</a> (Tzanetakis and Cook, 2002)</p>
+      <p>Use: classification of music by genre</p>
+      <p>Size: 1000 track excerpts, 100 per genre</p>
+      <p>Tzanetakis, G., &amp; Cook, P. (2002). Musical genre classification of audio signals. IEEE transactions on Speech and Audio Processing, 10(5), 293-302.</p>
+      <p>Sturm, B. L. (2012). An analysis of the GTZAN music genre dataset. In 2nd International ACM Workshop on Music Information Retrieval with User-centered and Multimodal Strategies (pp. 7-12).</p>
+    <h5>Accuracy: 75.528701%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>blu</th>
+      	        <th>cla</th>
+      	        <th>cou</th>
+      	        <th>dis</th>
+      	        <th>hip</th>
+      	        <th>jaz</th>
+      	        <th>met</th>
+      	        <th>pop</th>
+      	        <th>reg</th>
+      	        <th>roc</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>blu</th>
+      	        <td class="hi animate">78.00 <span>78 blu (out of 100) classified as blu</span></td>
+      	        <td class="animate">1.00 <span>1 blu (out of 100) classified as cla</span></td>
+      	        <td class="animate">8.00 <span>8 blu (out of 100) classified as cou</span></td>
+      	        <td class="animate">3.00 <span>3 blu (out of 100) classified as dis</span></td>
+      	        <td class="animate">1.00 <span>1 blu (out of 100) classified as hip</span></td>
+      	        <td class="animate">1.00 <span>1 blu (out of 100) classified as jaz</span></td>
+      	        <td class="animate">3.00 <span>3 blu (out of 100) classified as met</span></td>
+      	        <td class="animate">0.00 <span>0 blu (out of 100) classified as pop</span></td>
+      	        <td class="animate">2.00 <span>2 blu (out of 100) classified as reg</span></td>
+      	        <td class="animate">3.00 <span>3 blu (out of 100) classified as roc</span></td>
+      	      <th>blu</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>cla</th>
+      	        <td class="animate">2.15 <span>2 cla (out of 93) classified as blu</span></td>
+      	        <td class="hi animate">92.47 <span>86 cla (out of 93) classified as cla</span></td>
+      	        <td class="animate">1.08 <span>1 cla (out of 93) classified as cou</span></td>
+      	        <td class="animate">2.15 <span>2 cla (out of 93) classified as dis</span></td>
+      	        <td class="animate">0.00 <span>0 cla (out of 93) classified as hip</span></td>
+      	        <td class="animate">0.00 <span>0 cla (out of 93) classified as jaz</span></td>
+      	        <td class="animate">0.00 <span>0 cla (out of 93) classified as met</span></td>
+      	        <td class="animate">1.08 <span>1 cla (out of 93) classified as pop</span></td>
+      	        <td class="animate">0.00 <span>0 cla (out of 93) classified as reg</span></td>
+      	        <td class="animate">1.08 <span>1 cla (out of 93) classified as roc</span></td>
+      	      <th>cla</th>
+      	        <td>9.37 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>cou</th>
+      	        <td class="animate">1.00 <span>1 cou (out of 100) classified as blu</span></td>
+      	        <td class="animate">1.00 <span>1 cou (out of 100) classified as cla</span></td>
+      	        <td class="hi animate">78.00 <span>78 cou (out of 100) classified as cou</span></td>
+      	        <td class="animate">7.00 <span>7 cou (out of 100) classified as dis</span></td>
+      	        <td class="animate">0.00 <span>0 cou (out of 100) classified as hip</span></td>
+      	        <td class="animate">2.00 <span>2 cou (out of 100) classified as jaz</span></td>
+      	        <td class="animate">0.00 <span>0 cou (out of 100) classified as met</span></td>
+      	        <td class="animate">4.00 <span>4 cou (out of 100) classified as pop</span></td>
+      	        <td class="animate">3.00 <span>3 cou (out of 100) classified as reg</span></td>
+      	        <td class="animate">4.00 <span>4 cou (out of 100) classified as roc</span></td>
+      	      <th>cou</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>dis</th>
+      	        <td class="animate">0.00 <span>0 dis (out of 100) classified as blu</span></td>
+      	        <td class="animate">1.00 <span>1 dis (out of 100) classified as cla</span></td>
+      	        <td class="animate">5.00 <span>5 dis (out of 100) classified as cou</span></td>
+      	        <td class="hi animate">71.00 <span>71 dis (out of 100) classified as dis</span></td>
+      	        <td class="animate">3.00 <span>3 dis (out of 100) classified as hip</span></td>
+      	        <td class="animate">1.00 <span>1 dis (out of 100) classified as jaz</span></td>
+      	        <td class="animate">2.00 <span>2 dis (out of 100) classified as met</span></td>
+      	        <td class="animate">7.00 <span>7 dis (out of 100) classified as pop</span></td>
+      	        <td class="animate">5.00 <span>5 dis (out of 100) classified as reg</span></td>
+      	        <td class="animate">5.00 <span>5 dis (out of 100) classified as roc</span></td>
+      	      <th>dis</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>hip</th>
+      	        <td class="animate">2.00 <span>2 hip (out of 100) classified as blu</span></td>
+      	        <td class="animate">1.00 <span>1 hip (out of 100) classified as cla</span></td>
+      	        <td class="animate">0.00 <span>0 hip (out of 100) classified as cou</span></td>
+      	        <td class="animate">6.00 <span>6 hip (out of 100) classified as dis</span></td>
+      	        <td class="hi animate">73.00 <span>73 hip (out of 100) classified as hip</span></td>
+      	        <td class="animate">0.00 <span>0 hip (out of 100) classified as jaz</span></td>
+      	        <td class="animate">3.00 <span>3 hip (out of 100) classified as met</span></td>
+      	        <td class="animate">3.00 <span>3 hip (out of 100) classified as pop</span></td>
+      	        <td class="bad animate">11.00 <span>11 hip (out of 100) classified as reg</span></td>
+      	        <td class="animate">1.00 <span>1 hip (out of 100) classified as roc</span></td>
+      	      <th>hip</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>jaz</th>
+      	        <td class="animate">7.00 <span>7 jaz (out of 100) classified as blu</span></td>
+      	        <td class="animate">4.00 <span>4 jaz (out of 100) classified as cla</span></td>
+      	        <td class="animate">4.00 <span>4 jaz (out of 100) classified as cou</span></td>
+      	        <td class="animate">3.00 <span>3 jaz (out of 100) classified as dis</span></td>
+      	        <td class="animate">1.00 <span>1 jaz (out of 100) classified as hip</span></td>
+      	        <td class="hi animate">79.00 <span>79 jaz (out of 100) classified as jaz</span></td>
+      	        <td class="animate">0.00 <span>0 jaz (out of 100) classified as met</span></td>
+      	        <td class="animate">1.00 <span>1 jaz (out of 100) classified as pop</span></td>
+      	        <td class="animate">1.00 <span>1 jaz (out of 100) classified as reg</span></td>
+      	        <td class="animate">0.00 <span>0 jaz (out of 100) classified as roc</span></td>
+      	      <th>jaz</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>met</th>
+      	        <td class="animate">2.00 <span>2 met (out of 100) classified as blu</span></td>
+      	        <td class="animate">0.00 <span>0 met (out of 100) classified as cla</span></td>
+      	        <td class="animate">0.00 <span>0 met (out of 100) classified as cou</span></td>
+      	        <td class="animate">1.00 <span>1 met (out of 100) classified as dis</span></td>
+      	        <td class="animate">3.00 <span>3 met (out of 100) classified as hip</span></td>
+      	        <td class="animate">2.00 <span>2 met (out of 100) classified as jaz</span></td>
+      	        <td class="hi animate">86.00 <span>86 met (out of 100) classified as met</span></td>
+      	        <td class="animate">1.00 <span>1 met (out of 100) classified as pop</span></td>
+      	        <td class="animate">0.00 <span>0 met (out of 100) classified as reg</span></td>
+      	        <td class="animate">5.00 <span>5 met (out of 100) classified as roc</span></td>
+      	      <th>met</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>pop</th>
+      	        <td class="animate">0.00 <span>0 pop (out of 100) classified as blu</span></td>
+      	        <td class="animate">1.00 <span>1 pop (out of 100) classified as cla</span></td>
+      	        <td class="animate">6.00 <span>6 pop (out of 100) classified as cou</span></td>
+      	        <td class="animate">6.00 <span>6 pop (out of 100) classified as dis</span></td>
+      	        <td class="animate">5.00 <span>5 pop (out of 100) classified as hip</span></td>
+      	        <td class="animate">0.00 <span>0 pop (out of 100) classified as jaz</span></td>
+      	        <td class="animate">0.00 <span>0 pop (out of 100) classified as met</span></td>
+      	        <td class="hi animate">75.00 <span>75 pop (out of 100) classified as pop</span></td>
+      	        <td class="animate">4.00 <span>4 pop (out of 100) classified as reg</span></td>
+      	        <td class="animate">3.00 <span>3 pop (out of 100) classified as roc</span></td><
+      	      th>pop</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>reg</th>
+      	        <td class="animate">3.00 <span>3 reg (out of 100) classified as blu</span></td>
+      	        <td class="animate">2.00 <span>2 reg (out of 100) classified as cla</span></td>
+      	        <td class="animate">4.00 <span>4 reg (out of 100) classified as cou</span></td>
+      	        <td class="animate">4.00 <span>4 reg (out of 100) classified as dis</span></td>
+      	        <td class="bad animate">11.00 <span>11 reg (out of 100) classified as hip</span></td>
+      	        <td class="animate">2.00 <span>2 reg (out of 100) classified as jaz</span></td>
+      	        <td class="animate">0.00 <span>0 reg (out of 100) classified as met</span></td>
+      	        <td class="animate">5.00 <span>5 reg (out of 100) classified as pop</span></td>
+      	        <td class="hi animate">64.00 <span>64 reg (out of 100) classified as reg</span></td>
+      	        <td class="animate">5.00 <span>5 reg (out of 100) classified as roc</span></td>
+      	      <th>reg</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>roc</th>
+      	        <td class="animate">7.00 <span>7 roc (out of 100) classified as blu</span></td>
+      	        <td class="animate">2.00 <span>2 roc (out of 100) classified as cla</span></td>
+      	        <td class="animate">6.00 <span>6 roc (out of 100) classified as cou</span></td>
+      	        <td class="bad animate">10.00 <span>10 roc (out of 100) classified as dis</span></td>
+      	        <td class="animate">3.00 <span>3 roc (out of 100) classified as hip</span></td>
+      	        <td class="animate">2.00 <span>2 roc (out of 100) classified as jaz</span></td>
+      	        <td class="animate">4.00 <span>4 roc (out of 100) classified as met</span></td>
+      	        <td class="animate">2.00 <span>2 roc (out of 100) classified as pop</span></td>
+      	        <td class="animate">4.00 <span>4 roc (out of 100) classified as reg</span></td>
+      	        <td class="hi animate">60.00 <span>60 roc (out of 100) classified as roc</span></td>
+      	      <th>roc</th>
+      	        <td>10.07 %</td>
+      	    </tr>
+      	  </table>
+      	</td>
+      	<th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="ismir04_rhythm">ismir04_rhythm</h2>
+      <p><a href="http://mtg.upf.edu/ismir2004/contest/tempoContest/node5.html">ISMIR2004 Rhythm Classification Dataset</a> ("Ballroom dataset") (Cano et al., 2006)</p>
+      <p>Use: classification of ballroom music by dance styles</p>
+      <p>Size: 683 track excerpts, 60-110 per class</p>
+      <p>Cano, P., G&oacute;mez, E., Gouyon, F., Herrera, P., Koppenberger, M., Ong, B., ... &amp; Wack, N. (2006). ISMIR 2004 audio description contest. Music Technology Group, Universitat Pompeu Fabra, Tech. Rep.</p>
+    <h5>Accuracy: 73.209169%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>ChaChaCha</th>
+      	        <th>Jive</th>
+      	        <th>Quickstep</th>
+      	        <th>Rumba-American</th>
+      	        <th>Rumba-International</th>
+      	        <th>Rumba-Misc</th>
+      	        <th>Samba</th>
+      	        <th>Tango</th>
+      	        <th>VienneseWaltz</th>
+      	        <th>Waltz</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>ChaChaCha</th>
+      	        <td class="hi animate">83.78 <span>93 ChaChaCha (out of 111) classified as ChaChaCha</span></td>
+      	        <td class="animate">5.41 <span>6 ChaChaCha (out of 111) classified as Jive</span></td>
+      	        <td class="animate">1.80 <span>2 ChaChaCha (out of 111) classified as Quickstep</span></td>
+      	        <td class="animate">0.00 <span>0 ChaChaCha (out of 111) classified as Rumba-American</span></td>
+      	        <td class="animate">3.60 <span>4 ChaChaCha (out of 111) classified as Rumba-International</span></td>
+      	        <td class="animate">0.00 <span>0 ChaChaCha (out of 111) classified as Rumba-Misc</span></td>
+      	        <td class="animate">3.60 <span>4 ChaChaCha (out of 111) classified as Samba</span></td>
+      	        <td class="animate">1.80 <span>2 ChaChaCha (out of 111) classified as Tango</span></td>
+      	        <td class="animate">0.00 <span>0 ChaChaCha (out of 111) classified as VienneseWaltz</span></td>
+      	        <td class="animate">0.00 <span>0 ChaChaCha (out of 111) classified as Waltz</span></td>
+      	      <th>ChaChaCha</th>
+      	        <td>15.90 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>Jive</th>
+      	        <td class="bad animate">15.00 <span>9 Jive (out of 60) classified as ChaChaCha</span></td>
+      	        <td class="hi animate">68.33 <span>41 Jive (out of 60) classified as Jive</span></td>
+      	        <td class="animate">3.33 <span>2 Jive (out of 60) classified as Quickstep</span></td>
+      	        <td class="animate">0.00 <span>0 Jive (out of 60) classified as Rumba-American</span></td>
+      	        <td class="animate">3.33 <span>2 Jive (out of 60) classified as Rumba-International</span></td>
+      	        <td class="animate">1.67 <span>1 Jive (out of 60) classified as Rumba-Misc</span></td>
+      	        <td class="animate">5.00 <span>3 Jive (out of 60) classified as Samba</span></td>
+      	        <td class="animate">0.00 <span>0 Jive (out of 60) classified as Tango</span></td>
+      	        <td class="animate">3.33 <span>2 Jive (out of 60) classified as VienneseWaltz</span></td>
+      	        <td class="animate">0.00 <span>0 Jive (out of 60) classified as Waltz</span></td>
+      	      <th>Jive</th>
+      	        <td>8.60 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>Quickstep</th>
+      	        <td class="animate">6.10 <span>5 Quickstep (out of 82) classified as ChaChaCha</span></td>
+      	        <td class="animate">3.66 <span>3 Quickstep (out of 82) classified as Jive</span></td>
+      	        <td class="hi animate">74.39 <span>61 Quickstep (out of 82) classified as Quickstep</span></td>
+      	        <td class="animate">1.22 <span>1 Quickstep (out of 82) classified as Rumba-American</span></td>
+      	        <td class="animate">2.44 <span>2 Quickstep (out of 82) classified as Rumba-International</span></td>
+      	        <td class="animate">0.00 <span>0 Quickstep (out of 82) classified as Rumba-Misc</span></td>
+      	        <td class="bad animate">10.98 <span>9 Quickstep (out of 82) classified as Samba</span></td>
+      	        <td class="animate">0.00 <span>0 Quickstep (out of 82) classified as Tango</span></td>
+      	        <td class="animate">0.00 <span>0 Quickstep (out of 82) classified as VienneseWaltz</span></td>
+      	        <td class="animate">1.22 <span>1 Quickstep (out of 82) classified as Waltz</span></td>
+      	      <th>Quickstep</th>
+      	        <td>11.75 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>Rumba-American</th>
+      	        <td class="animate">0.00 <span>0 Rumba-American (out of 7) classified as ChaChaCha</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-American (out of 7) classified as Jive</span></td>
+      	        <td class="bad animate">14.29 <span>1 Rumba-American (out of 7) classified as Quickstep</span></td>
+      	        <td class="hi animate">28.57 <span>2 Rumba-American (out of 7) classified as Rumba-American</span></td>
+      	        <td class="bad animate">42.86 <span>3 Rumba-American (out of 7) classified as Rumba-International</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-American (out of 7) classified as Rumba-Misc</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-American (out of 7) classified as Samba</span></td>
+      	        <td class="bad animate">14.29 <span>1 Rumba-American (out of 7) classified as Tango</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-American (out of 7) classified as VienneseWaltz</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-American (out of 7) classified as Waltz</span></td>
+      	      <th>Rumba-American</th><td>1.00 %</td></tr><tr><th>Rumba-International</th>
+      	        <td class="animate">1.96 <span>1 Rumba-International (out of 51) classified as ChaChaCha</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-International (out of 51) classified as Jive</span></td>
+      	        <td class="animate">3.92 <span>2 Rumba-International (out of 51) classified as Quickstep</span></td>
+      	        <td class="animate">1.96 <span>1 Rumba-International (out of 51) classified as Rumba-American</span></td>
+      	        <td class="hi animate">74.51 <span>38 Rumba-International (out of 51) classified as Rumba-International</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-International (out of 51) classified as Rumba-Misc</span></td>
+      	        <td class="animate">1.96 <span>1 Rumba-International (out of 51) classified as Samba</span></td>
+      	        <td class="animate">1.96 <span>1 Rumba-International (out of 51) classified as Tango</span></td>
+      	        <td class="animate">7.84 <span>4 Rumba-International (out of 51) classified as VienneseWaltz</span></td>
+      	        <td class="animate">5.88 <span>3 Rumba-International (out of 51) classified as Waltz</span></td>
+      	      <th>Rumba-International</th>
+      	        <td>7.31 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>Rumba-Misc</th>
+      	        <td class="animate">5.00 <span>2 Rumba-Misc (out of 40) classified as ChaChaCha</span></td>
+      	        <td class="animate">7.50 <span>3 Rumba-Misc (out of 40) classified as Jive</span></td>
+      	        <td class="animate">7.50 <span>3 Rumba-Misc (out of 40) classified as Quickstep</span></td>
+      	        <td class="animate">0.00 <span>0 Rumba-Misc (out of 40) classified as Rumba-American</span></td>
+      	        <td class="animate">2.50 <span>1 Rumba-Misc (out of 40) classified as Rumba-International</span></td>
+      	        <td class="hi animate">52.50 <span>21 Rumba-Misc (out of 40) classified as Rumba-Misc</span></td>
+      	        <td class="animate">5.00 <span>2 Rumba-Misc (out of 40) classified as Samba</span></td>
+      	        <td class="animate">5.00 <span>2 Rumba-Misc (out of 40) classified as Tango</span></td>
+      	        <td class="animate">2.50 <span>1 Rumba-Misc (out of 40) classified as VienneseWaltz</span></td>
+      	        <td class="bad animate">12.50 <span>5 Rumba-Misc (out of 40) classified as Waltz</span></td>
+      	      <th>Rumba-Misc</th>
+      	        <td>5.73 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>Samba</th>
+      	        <td class="animate">6.98 <span>6 Samba (out of 86) classified as ChaChaCha</span></td>
+      	        <td class="animate">6.98 <span>6 Samba (out of 86) classified as Jive</span></td>
+      	        <td class="bad animate">13.95 <span>12 Samba (out of 86) classified as Quickstep</span></td>
+      	        <td class="animate">0.00 <span>0 Samba (out of 86) classified as Rumba-American</span></td>
+      	        <td class="animate">2.33 <span>2 Samba (out of 86) classified as Rumba-International</span></td>
+      	        <td class="animate">1.16 <span>1 Samba (out of 86) classified as Rumba-Misc</span></td>
+      	        <td class="hi animate">66.28 <span>57 Samba (out of 86) classified as Samba</span></td>
+      	        <td class="animate">2.33 <span>2 Samba (out of 86) classified as Tango</span></td>
+      	        <td class="animate">0.00 <span>0 Samba (out of 86) classified as VienneseWaltz</span></td>
+      	        <td class="animate">0.00 <span>0 Samba (out of 86) classified as Waltz</span></td>
+      	      <th>Samba</th>
+      	        <td>12.32 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>Tango</th>
+      	        <td class="animate">4.65 <span>4 Tango (out of 86) classified as ChaChaCha</span></td>
+      	        <td class="animate">0.00 <span>0 Tango (out of 86) classified as Jive</span></td>
+      	        <td class="animate">0.00 <span>0 Tango (out of 86) classified as Quickstep</span></td>
+      	        <td class="animate">2.33 <span>2 Tango (out of 86) classified as Rumba-American</span></td>
+      	        <td class="animate">0.00 <span>0 Tango (out of 86) classified as Rumba-International</span></td>
+      	        <td class="animate">5.81 <span>5 Tango (out of 86) classified as Rumba-Misc</span></td>
+      	        <td class="animate">0.00 <span>0 Tango (out of 86) classified as Samba</span></td>
+      	        <td class="hi animate">83.72 <span>72 Tango (out of 86) classified as Tango</span></td>
+      	        <td class="animate">1.16 <span>1 Tango (out of 86) classified as VienneseWaltz</span></td>
+      	        <td class="animate">2.33 <span>2 Tango (out of 86) classified as Waltz</span></td>
+      	      <th>Tango</th>
+      	        <td>12.32 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>VienneseWaltz</th>
+      	        <td class="animate">0.00 <span>0 VienneseWaltz (out of 65) classified as ChaChaCha</span></td>
+      	        <td class="animate">1.54 <span>1 VienneseWaltz (out of 65) classified as Jive</span></td>
+      	        <td class="animate">1.54 <span>1 VienneseWaltz (out of 65) classified as Quickstep</span></td>
+      	        <td class="animate">0.00 <span>0 VienneseWaltz (out of 65) classified as Rumba-American</span></td>
+      	        <td class="animate">4.62 <span>3 VienneseWaltz (out of 65) classified as Rumba-International</span></td>
+      	        <td class="animate">3.08 <span>2 VienneseWaltz (out of 65) classified as Rumba-Misc</span></td>
+      	        <td class="animate">0.00 <span>0 VienneseWaltz (out of 65) classified as Samba</span></td>
+      	        <td class="animate">0.00 <span>0 VienneseWaltz (out of 65) classified as Tango</span></td>
+      	        <td class="hi animate">67.69 <span>44 VienneseWaltz (out of 65) classified as VienneseWaltz</span></td>
+      	        <td class="bad animate">21.54 <span>14 VienneseWaltz (out of 65) classified as Waltz</span></td>
+      	      <th>VienneseWaltz</th>
+      	        <td>9.31 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>Waltz</th>
+      	        <td class="animate">0.00 <span>0 Waltz (out of 110) classified as ChaChaCha</span></td>
+      	        <td class="animate">0.00 <span>0 Waltz (out of 110) classified as Jive</span></td>
+      	        <td class="animate">0.91 <span>1 Waltz (out of 110) classified as Quickstep</span></td>
+      	        <td class="animate">0.00 <span>0 Waltz (out of 110) classified as Rumba-American</span></td>
+      	        <td class="animate">4.55 <span>5 Waltz (out of 110) classified as Rumba-International</span></td>
+      	        <td class="animate">6.36 <span>7 Waltz (out of 110) classified as Rumba-Misc</span></td>
+      	        <td class="animate">0.00 <span>0 Waltz (out of 110) classified as Samba</span></td>
+      	        <td class="animate">2.73 <span>3 Waltz (out of 110) classified as Tango</span></td>
+      	        <td class="bad animate">10.91 <span>12 Waltz (out of 110) classified as VienneseWaltz</span></td>
+      	        <td class="hi animate">74.55 <span>82 Waltz (out of 110) classified as Waltz</span></td>
+      	      <th>Waltz</th>
+      	        <td>15.76 %</td>
+      	    </tr>
+      	  </table>
+        </td>
+        <th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="mood_acoustic">mood_acoustic</h2>
+      <p>In-house MTG collection (Laurier et al., 2009)</p>
+      <p>Use: classification of music by type of sound (acoustic/non-acoustic)</p>
+      <p>Size: 321 full tracks + excerpts, 193/128 per class</p>
+      <p>Laurier, C., Meyers, O., Serra, J., Blech, M., &amp; Herrera, P. (2009). Music mood annotator design and integration. In 7th International Workshop on Content-Based Multimedia Indexing (CBMI'09), pp. 156-161.</p>
+    <h5>Accuracy: 92.982456%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>acoustic</th>
+      	        <th>not_acoustic</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>acoustic</th>
+      	        <td class="hi animate">95.04 <span>115 acoustic (out of 121) classified as acoustic</span></td>
+      	        <td class="animate">4.96 <span>6 acoustic (out of 121) classified as not_acoustic</span></td>
+      	      <th>acoustic</th>
+      	        <td>53.07 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>not_acoustic</th>
+      	        <td class="animate">9.35 <span>10 not_acoustic (out of 107) classified as acoustic</span></td>
+      	        <td class="hi animate">90.65 <span>97 not_acoustic (out of 107) classified as not_acoustic</span></td>
+      	      <th>not_acoustic</th><td>46.93 %</td>
+      	    </tr>
+      	  </table>
+      	</td>
+      	<th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="mood_aggressive">mood_aggressive</h2>
+      <p>In-house MTG collection (Laurier et al., 2009)</p>
+      <p>Use: classification of music by mood (aggressive/non-aggressive)</p>
+      <p>Size: 280 full tracks + excerpts, 133/147 per class</p>
+      <p>Laurier, C., Meyers, O., Serra, J., Blech, M., &amp; Herrera, P. (2009). Music mood annotator design and integration. In 7th International Workshop on Content-Based Multimedia Indexing (CBMI'09), pp. 156-161.</p>
+
+    <h5>Accuracy: 97.500000%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>aggressive</th>
+      	        <th>not_aggressive</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>aggressive</th>
+      	    	<td class="hi animate">95.49 <span>127 aggressive (out of 133) classified as aggressive</span></td>
+      	    	<td class="animate">4.51 <span>6 aggressive (out of 133) classified as not_aggressive</span></td>
+      	      <th>aggressive</th>
+      	        <td>47.50 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>not_aggressive</th>
+      	        <td class="animate">0.68 <span>1 not_aggressive (out of 147) classified as aggressive</span></td>
+      	        <td class="hi animate">99.32 <span>146 not_aggressive (out of 147) classified as not_aggressive</span></td>
+      	      <th>not_aggressive</th>
+      	        <td>52.50 %</td>
+      	    </tr>
+      	  </table>
+      	</td><th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="mood_electronic">mood_electronic</h2>
+  <p>In-house MTG collection (Laurier et al., 2009)</p>
+  <p>Use: classification of music by type of sound (electronic/non-electronic)</p>
+  <p>Size: 332 full tracks + excerpts, 164/168 per class</p>
+  <p>Laurier, C., Meyers, O., Serra, J., Blech, M., &amp; Herrera, P. (2009). Music mood annotator design and integration. In 7th International Workshop on Content-Based Multimedia Indexing (CBMI'09), pp. 156-161.</p>
+
+    <h5>Accuracy: 86.379928%</h5>
+    <table>
+      <tr>
+        <th><h3>Predicted (%)</h3></th>
+          <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>electronic</th>
+      	        <th>not_electronic</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>electronic</th>
+      	        <td class="hi animate">82.84 <span>111 electronic (out of 134) classified as electronic</span></td>
+      	        <td class="bad animate">17.16 <span>23 electronic (out of 134) classified as not_electronic</span></td>
+      	      <th>electronic</th>
+      	        <td>48.03 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>not_electronic</th>
+      	        <td class="bad animate">10.34 <span>15 not_electronic (out of 145) classified as electronic</span></td>
+      	        <td class="hi animate">89.66 <span>130 not_electronic (out of 145) classified as not_electronic</span></td>
+      	      <th>not_electronic</th>
+      	        <td>51.97 %</td>
+      	    </tr>
+      	  </table>
+      	</td>
+      	<th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="mood_happy">mood_happy</h2>
+      <p>In-house MTG collection (Laurier et al., 2009)</p>
+      <p>Use: classification of music by mood (happy/non-happy)</p>
+      <p>Size: 302 full tracks + excerpts, 139/163 per class</p>
+      <p>Laurier, C., Meyers, O., Serra, J., Blech, M., &amp; Herrera, P. (2009). Music mood annotator design and integration. In 7th International Workshop on Content-Based Multimedia Indexing (CBMI'09), pp. 156-161.</p>
+
+    <h5>Accuracy: 83.265306%</h5>
+    <table>
+    	<tr><th><h3>Predicted (%)</h3></th><td></td>
+    	</tr>
+    	<tr>
+    	  <td>
+    	    <table>
+    	      <tr>
+    	      	<td></td>
+    	      	  <th>happy</th>
+    	      	  <th>not_happy</th>
+    	      	<td></td>
+    	      	  <th>Proportion</th>
+    	      </tr>
+    	      <tr>
+    	      	<th>happy</th>
+    	      	  <td class="hi animate">82.14 <span>92 happy (out of 112) classified as happy</span></td>
+    	      	  <td class="bad animate">17.86 <span>20 happy (out of 112) classified as not_happy</span></td>
+    	      	<th>happy</th>
+    	      	  <td>45.71 %</td>
+    	      </tr>
+    	      <tr>
+    	      	<th>not_happy</th>
+    	      	  <td class="bad animate">15.79 <span>21 not_happy (out of 133) classified as happy</span></td>
+    	      	  <td class="hi animate">84.21 <span>112 not_happy (out of 133) classified as not_happy</span></td>
+    	      	<th>not_happy</th><td>54.29 %</td>
+    	      </tr>
+    	    </table>
+    	  </td>
+    	  <th><h3>Actual (%)</h3></th>
+    	</tr>
+    </table>
+
+    <br/>
+    <h2 id="mood_party">mood_party</h2>
+      <p>In-house MTG collection (Laurier et al., 2009)</p>
+      <p>Use: classification of music by mood (party/non-party)</p>
+      <p>Size: 349 full tracks + excerpts, 198/151 per class</p>
+      <p>Laurier, C., Meyers, O., Serra, J., Blech, M., &amp; Herrera, P. (2009). Music mood annotator design and integration. In 7th International Workshop on Content-Based Multimedia Indexing (CBMI'09), pp. 156-161.</p>
+
+    <h5>Accuracy: 88.381743%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>not_party</th>
+      	        <th>party</th>
+      	          <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>not_party</th>
+      	        <td class="hi animate">85.07 <span>114 not_party (out of 134) classified as not_party</span></td>
+      	        <td class="bad animate">14.93 <span>20 not_party (out of 134) classified as party</span></td>
+      	      <th>not_party</th>
+      	        <td>55.60 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>party</th>
+      	        <td class="animate">7.48 <span>8 party (out of 107) classified as not_party</span></td>
+      	        <td class="hi animate">92.52 <span>99 party (out of 107) classified as party</span></td>
+      	      <th>party</th><td>44.40 %</td>
+      	    </tr>
+      	  </table>
+      	</td>
+      	<th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="mood_relaxed">mood_relaxed</h2>
+      <p>In-house MTG collection (Laurier et al., 2009)</p>
+      <p>Use: classification of music by mood (relaxed/non-relaxed)</p>
+      <p>Size: 446 full tracks + excerpts, 145/301 per class</p>
+      <p>Laurier, C., Meyers, O., Serra, J., Blech, M., &amp; Herrera, P. (2009). Music mood annotator design and integration. In 7th International Workshop on Content-Based Multimedia Indexing (CBMI'09), pp. 156-161.</p>
+
+    <h5>Accuracy: 93.201133%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>not_relaxed</th>
+      	        <th>relaxed</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>not_relaxed</th>
+      	        <td class="hi animate">85.48 <span>106 not_relaxed (out of 124) classified as not_relaxed</span></td>
+      	        <td class="bad animate">14.52 <span>18 not_relaxed (out of 124) classified as relaxed</span></td>
+      	      <th>not_relaxed</th>
+      	        <td>35.13 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>relaxed</th>
+      	        <td class="animate">2.62 <span>6 relaxed (out of 229) classified as not_relaxed</span></td>
+      	        <td class="hi animate">97.38 <span>223 relaxed (out of 229) classified as relaxed</span></td>
+      	      <th>relaxed</th>
+      	        <td>64.87 %</td>
+      	    </tr>
+      	  </table>
+      	</td>
+      	<th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="mood_sad">mood_sad</h2>
+      <p>In-house MTG collection (Laurier et al., 2009)</p>
+      <p>Use: classification of music by mood (sad/non-sad)</p>
+      <p>Size: 230 full tracks + excerpts, 96/134 per class</p>
+      <p>Laurier, C., Meyers, O., Serra, J., Blech, M., &amp; Herrera, P. (2009). Music mood annotator design and integration. In 7th International Workshop on Content-Based Multimedia Indexing (CBMI'09), pp. 156-161.</p>
+
+    <h5>Accuracy: 87.826087%</h5>
+    <table>
+      <tr>
+        <th><h3>Predicted (%)</h3></th>
+          <td></td>
+      </tr>
+      <tr>
+      	<td>
+          <table>
+            <tr>
+              <td></td>
+                <th>not_sad</th>
+                <th>sad</th>
+              <td></td>
+                <th>Proportion</th>
+            </tr>
+            <tr>
+              <th>not_sad</th>
+                <td class="hi animate">82.29 <span>79 not_sad (out of 96) classified as not_sad</span></td>
+                <td class="bad animate">17.71 <span>17 not_sad (out of 96) classified as sad</span></td>
+              <th>not_sad</th>
+                <td>41.74 %</td>
+            </tr>
+            <tr>
+              <th>sad</th>
+                <td class="animate">8.21 <span>11 sad (out of 134) classified as not_sad</span></td>
+                <td class="hi animate">91.79 <span>123 sad (out of 134) classified as sad</span></td>
+              <th>sad</th>
+                <td>58.26 %</td>
+            </tr>
+          </table>
+        </td>
+        <th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="moods_mirex">moods_mirex</h2>
+      <p><a href="http://www.music-ir.org/mirex/wiki/2007:Audio_Music_Mood_Classification">MIREX Audio Mood Classification Dataset</a> (Hu and Downie, 2007)</p>
+      <p>Use: classification of music into 5 mood clusters</p>
+      <ul>
+        <li>Cluster1: passionate, rousing, confident,boisterous, rowdy</li>
+        <li>Cluster2: rollicking, cheerful, fun, sweet, amiable/good natured</li>
+        <li>Cluster3: literate, poignant, wistful, bittersweet, autumnal, brooding</li>
+        <li>Cluster4: humorous, silly, campy, quirky, whimsical, witty, wry</li>
+        <li>Cluster5: aggressive, fiery,tense/anxious, intense, volatile,visceral</li>
+      </ul>
+      <p>Size: 269 track excerpts, 60-110 per class</p>
+      <p>Hu, X., &amp; Downie, J. S. (2007). Exploring Mood Metadata: Relationships with Genre, Artist and Usage Metadata. In 8th International Conference on Music Information Retrieval (ISMIR'07), pp. 67-72.</p>
+    <h5>Accuracy: 57.089552%</h5>
+    <table>
+    	<tr>
+    	  <th><h3>Predicted (%)</h3></th>
+    	    <td></td>
+    	</tr>
+    	<tr>
+    	  <td>
+    	    <table>
+    	      <tr>
+    	        <td></td>
+    	          <th>Cluster1</th>
+    	          <th>Cluster2</th>
+    	          <th>Cluster3</th>
+    	          <th>Cluster4</th>
+    	          <th>Cluster5</th>
+    	            <td></td>
+    	          <th>Proportion</th>
+    	      </tr>
+    	      <tr>
+    	      	<th>Cluster1</th>
+    	      	  <td class="hi animate">56.90 <span>33 Cluster1 (out of 58) classified as Cluster1</span></td>
+    	      	  <td class="bad animate">15.52 <span>9 Cluster1 (out of 58) classified as Cluster2</span></td>
+    	      	  <td class="animate">8.62 <span>5 Cluster1 (out of 58) classified as Cluster3</span></td>
+    	      	  <td class="animate">5.17 <span>3 Cluster1 (out of 58) classified as Cluster4</span></td>
+    	      	  <td class="bad animate">13.79 <span>8 Cluster1 (out of 58) classified as Cluster5</span></td>
+    	      	<th>Cluster1</th>
+    	      	  <td>21.64 %</td>
+    	      </tr>
+    	      <tr>
+    	      	<th>Cluster2</th>
+    	      	  <td class="bad animate">22.22 <span>12 Cluster2 (out of 54) classified as Cluster1</span></td>
+    	      	  <td class="hi animate">53.70 <span>29 Cluster2 (out of 54) classified as Cluster2</span></td>
+    	      	  <td class="bad animate">16.67 <span>9 Cluster2 (out of 54) classified as Cluster3</span></td>
+    	      	  <td class="animate">5.56 <span>3 Cluster2 (out of 54) classified as Cluster4</span></td>
+    	      	  <td class="animate">1.85 <span>1 Cluster2 (out of 54) classified as Cluster5</span></td>
+    	      	<th>Cluster2</th>
+    	      	  <td>20.15 %</td>
+    	      </tr>
+    	      <tr>
+    	      	<th>Cluster3</th>
+    	      	  <td class="animate">5.48 <span>4 Cluster3 (out of 73) classified as Cluster1</span></td>
+    	      	  <td class="bad animate">19.18 <span>14 Cluster3 (out of 73) classified as Cluster2</span></td>
+    	      	  <td class="hi animate">68.49 <span>50 Cluster3 (out of 73) classified as Cluster3</span></td>
+    	      	  <td class="animate">5.48 <span>4 Cluster3 (out of 73) classified as Cluster4</span></td>
+    	      	  <td class="animate">1.37 <span>1 Cluster3 (out of 73) classified as Cluster5</span></td>
+    	      	<th>Cluster3</th>
+    	      	  <td>27.24 %</td>
+    	      </tr>
+    	      <tr>
+    	      	<th>Cluster4</th>
+    	      	  <td class="bad animate">15.62 <span>5 Cluster4 (out of 32) classified as Cluster1</span></td>
+    	      	  <td class="bad animate">37.50 <span>12 Cluster4 (out of 32) classified as Cluster2</span></td>
+    	      	  <td class="bad animate">15.62 <span>5 Cluster4 (out of 32) classified as Cluster3</span></td>
+    	      	  <td class="hi animate">25.00 <span>8 Cluster4 (out of 32) classified as Cluster4</span></td>
+    	      	  <td class="animate">6.25 <span>2 Cluster4 (out of 32) classified as Cluster5</span></td>
+    	      	<th>Cluster4</th>
+    	      	  <td>11.94 %</td>
+    	      </tr>
+    	      <tr>
+    	      	<th>Cluster5</th>
+    	      	  <td class="bad animate">27.45 <span>14 Cluster5 (out of 51) classified as Cluster1</span></td>
+    	      	  <td class="animate">7.84 <span>4 Cluster5 (out of 51) classified as Cluster2</span></td>
+    	      	  <td class="animate">0.00 <span>0 Cluster5 (out of 51) classified as Cluster3</span></td>
+    	      	  <td class="animate">0.00 <span>0 Cluster5 (out of 51) classified as Cluster4</span></td>
+    	      	  <td class="hi animate">64.71 <span>33 Cluster5 (out of 51) classified as Cluster5</span></td>
+    	      	<th>Cluster5</th><td>19.03 %</td>
+    	      </tr>
+    	    </table>
+    	  </td>
+    	  <th><h3>Actual (%)</h3></th>
+    	</tr>
+    </table>
+
+    <br/>
+    <h2 id="timbre">timbre</h2>
+      <p>In-house MTG collection</p>  
+      <p>Use: classification of music by timbre colour (dark/bright timbre)</p>
+      <p>Size: 3000 track excerpts, 1500 per class</p>
+    <h5>Accuracy: 94.317418%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>bright</th>
+      	        <th>dark</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>bright</th>
+      	        <td class="hi animate">93.76 <span>1383 bright (out of 1475) classified as bright</span></td>
+      	        <td class="animate">6.24 <span>92 bright (out of 1475) classified as dark</span></td>
+      	      <th>bright</th>
+      	        <td>49.60 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>dark</th>
+      	        <td class="animate">5.14 <span>77 dark (out of 1499) classified as bright</span></td>
+      	        <td class="hi animate">94.86 <span>1422 dark (out of 1499) classified as dark</span></td>
+      	      <th>dark</th><td>50.40 %</td>
+      	    </tr>
+      	  </table>
+      	</td>
+      	<th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+
+    <br/>
+    <h2 id="tonal_atonal">tonal_atonal</h2>
+      <p>In-house MTG collection</p>  
+      <p>Use: classification of music by tonality (tonal/atonal)</p>
+      <p>Size: 345 track excerpts, 200/145</p>
+    <h5>Accuracy: 97.667638%</h5>
+    <table>
+    	<tr>
+    	  <th><h3>Predicted (%)</h3></th>
+    	    <td></td>
+    	</tr>
+    	<tr>
+    	  <td>
+    	    <table>
+    	      <tr>
+    	      	<td></td>
+    	      	  <th>atonal</th>
+    	      	  <th>tonal</th>
+    	      	<td></td>
+    	      	  <th>Proportion</th>
+    	      </tr>
+    	      <tr>
+    	      	<th>atonal</th>
+    	      	  <td class="hi animate">96.53 <span>139 atonal (out of 144) classified as atonal</span></td>
+    	      	  <td class="animate">3.47 <span>5 atonal (out of 144) classified as tonal</span></td>
+    	      	<th>atonal</th>
+    	      	  <td>41.98 %</td>
+    	      </tr>
+    	      <tr>
+    	        <th>tonal</th>
+    	          <td class="animate">1.51 <span>3 tonal (out of 199) classified as atonal</span></td>
+    	          <td class="hi animate">98.49 <span>196 tonal (out of 199) classified as tonal</span></td>
+    	        <th>tonal</th>
+    	          <td>58.02 %</td>
+    	      </tr>
+    	    </table>
+    	  </td>
+    	  <th><h3>Actual (%)</h3></th>
+    	</tr>
+    </table>
+
+    <br/>
+    <h2 id="voice_instrumental">voice_instrumental</h2>
+      <p>In-house MTG collection</p>
+      <p>Use: classification into music with voice/instrumental</p>
+      <p>Size: 1000 track excerpts, 500 per class</p>
+    <h5>Accuracy: 93.800000%</h5>
+    <table>
+      <tr>
+      	<th><h3>Predicted (%)</h3></th>
+      	  <td></td>
+      </tr>
+      <tr>
+      	<td>
+      	  <table>
+      	    <tr>
+      	      <td></td>
+      	        <th>instrumental</th>
+      	        <th>voice</th>
+      	      <td></td>
+      	        <th>Proportion</th>
+      	    </tr>
+      	    <tr>
+      	      <th>instrumental</th>
+      	        <td class="hi animate">94.20 <span>471 instrumental (out of 500) classified as instrumental</span></td>
+      	        <td class="animate">5.80 <span>29 instrumental (out of 500) classified as voice</span></td>
+      	      <th>instrumental</th>
+      	        <td>50.00 %</td>
+      	    </tr>
+      	    <tr>
+      	      <th>voice</th>
+      	        <td class="animate">6.60 <span>33 voice (out of 500) classified as instrumental</span></td>
+      	        <td class="hi animate">93.40 <span>467 voice (out of 500) classified as voice</span></td>
+      	        <th>voice</th><td>50.00 %</td>
+      	    </tr>
+      	  </table>
+      	</td>
+        <th><h3>Actual (%)</h3></th>
+      </tr>
+    </table>
+    <br/>
+
+    </div>
+{%- endblock -%}

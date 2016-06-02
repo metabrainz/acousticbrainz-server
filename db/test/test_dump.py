@@ -13,7 +13,7 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        super(DatabaseDumpTestCase, self).setUp()
+        super(DatabaseDumpTestCase, self).tearDown()
         shutil.rmtree(self.temp_dir)
 
     def test_dump_db(self):

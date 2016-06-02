@@ -1,17 +1,17 @@
 from __future__ import absolute_import
 from flask import Blueprint, request, jsonify
 from db.data import submit_low_level_data, count_lowlevel
-import db.data
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
 import webserver.exceptions
+import db.data
 import json
 import uuid
 
-api_bp = Blueprint('api', __name__)
+api_legacy_bp = Blueprint('api', __name__)
 
 
-@api_bp.route("/<uuid:mbid>/count", methods=["GET"])
+@api_legacy_bp.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
 def count(mbid):
     return jsonify({
@@ -20,11 +20,10 @@ def count(mbid):
     })
 
 
-@api_bp.route("/<string:mbid>/low-level", methods=["GET"])
+@api_legacy_bp.route("/<string:mbid>/low-level", methods=["GET"])
 @crossdomain()
 def get_low_level(mbid):
     """Endpoint for fetching low-level data.
-
     If there is more than one document with the same mbid, you can specify
     an offset as a query parameter in the form of ?n=x, where x is an integer
     starting from 0
@@ -36,11 +35,10 @@ def get_low_level(mbid):
         raise webserver.exceptions.APINotFound("Not found")
 
 
-@api_bp.route("/<string:mbid>/high-level", methods=["GET"])
+@api_legacy_bp.route("/<string:mbid>/high-level", methods=["GET"])
 @crossdomain()
 def get_high_level(mbid):
     """Endpoint for fetching high-level data.
-
     If there is more than one document with the same mbid, you can specify
     an offset as a query parameter in the form of ?n=x, where x is an integer
     starting from 0
@@ -52,7 +50,7 @@ def get_high_level(mbid):
         raise webserver.exceptions.APINotFound("Not found")
 
 
-@api_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
+@api_legacy_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
 def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz."""
     raw_data = request.get_data()

@@ -25,7 +25,7 @@ def init(servers, namespace="AB", debug=0):
     """Initializes memcached client. Needs to be called before use.
 
     Args:
-        server: List of strings with memcached server addresses (host:port).
+        servers: List of strings with memcached server addresses (host:port).
         namespace: Optional global namespace that will be prepended to all keys.
         debug: Whether to display error messages when a server can't be contacted.
     """
@@ -40,7 +40,7 @@ def set(key, val, time=0, namespace=None):
 
     Args:
         key: Key of the item.
-        value: Item's value.
+        val: Item's value.
         time: The time after which this value should expire, either as a delta
             number of seconds, or an absolute unix time-since-the-epoch value.
             If set to 0, value will be stored "forever".
@@ -88,6 +88,8 @@ def set_multi(mapping, time=0, namespace=None):
 
     Args:
         mapping: A dict of key/value pairs to set.
+        time: Time to store the keys (in milliseconds).
+        namespace: Namespace for the keys.
 
     Returns:
         List of keys which failed to be stored (memcache out of memory, etc.).
@@ -101,6 +103,7 @@ def get_multi(keys, namespace=None):
 
     Args:
         keys: Array of keys that need to be retrieved.
+        namespace: Namespace for the keys.
 
     Returns:
         A dictionary of key/value pairs that were available.

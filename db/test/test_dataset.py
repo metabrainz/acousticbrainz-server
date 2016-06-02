@@ -1,8 +1,8 @@
+import db
 from db.testing import DatabaseTestCase
 from db import dataset, user
-import jsonschema
+from utils import dataset_validator
 import copy
-
 
 class DatasetTestCase(DatabaseTestCase):
 
@@ -58,17 +58,16 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(len(ds["classes"][0]["recordings"]), 2)
         self.assertIn("19e698e7-71df-48a9-930e-d4b1a2026c82", ds["classes"][0]["recordings"])
 
-
     def test_create_from_dict_malformed(self):
         bad_dict = copy.deepcopy(self.test_data)
 
         bad_dict["classes"][0]["name"] = None
-        self.assertRaises(jsonschema.ValidationError, dataset.create_from_dict,
-                          dictionary=bad_dict, author_id=self.test_user_id)
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
 
         bad_dict["classes"][0]["name"] = ""
-        self.assertRaises(jsonschema.ValidationError, dataset.create_from_dict,
-                          dictionary=bad_dict, author_id=self.test_user_id)
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
 
     def test_update(self):
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
@@ -90,12 +89,12 @@ class DatasetTestCase(DatabaseTestCase):
         bad_dataset = copy.deepcopy(self.test_data)
 
         bad_dataset["classes"][0]["name"] = None
-        self.assertRaises(jsonschema.ValidationError, dataset.update,
-                          dataset_id=id, dictionary=bad_dataset, author_id=self.test_user_id)
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset.update(dataset_id=id, dictionary=bad_dataset, author_id=self.test_user_id)
 
         bad_dataset["classes"][0]["name"] = ""
-        self.assertRaises(jsonschema.ValidationError, dataset.update,
-                          dataset_id=id, dictionary=bad_dataset, author_id=self.test_user_id)
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset.update(dataset_id=id, dictionary=bad_dataset, author_id=self.test_user_id)
 
     def test_get_by_user_id(self):
         dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
@@ -122,3 +121,16 @@ class DatasetTestCase(DatabaseTestCase):
 
         dataset.delete(id)
         self.assertIsNone(dataset.get(id))
+
+    def test_last_edited(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        ds = dataset.get(id)
+        self.assertEqual(ds['created'], ds['last_edited'])
+        with db.engine.begin() as connection:
+            connection.execute("""UPDATE dataset SET last_edited = now() - interval %s where id = %s""",
+                    ('1 hour', id))
+        ds = dataset.get(id)
+        self.assertTrue(ds['created'] > ds['last_edited'])
+        dataset.update(id, self.test_data, author_id=self.test_user_id)
+        ds_updated = dataset.get(id)
+        self.assertTrue(ds_updated['last_edited'] > ds['last_edited'])

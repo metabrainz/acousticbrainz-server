@@ -489,39 +489,36 @@ def find_md5_duplicates(md5):
         else:
             return None
 
-def generate_datasetitem_uuidv3():
+def generate_datasetitem_uuidv4():
     """Generate a random UUIDv4 for dataset items that are not present in the DB as recordings
     
     Returns: 
-        itemuuid: The generated random UUIDv3 assigned to a specific dataset item
+        itemuuid: The generated random UUIDv4 assigned to a specific dataset item
     """
-    try:
-        itemuuid = uuid4()
+    itemuuid = uuid4()
+    
+    if itemuuid:
         return str(itemuuid)
-    except:
-        raise "Error Generating the random uuid"
-    
-    return None
-    
-def generate_datasetitem_uuidv4(data):
+    else:
+        return None
+
+def generate_datasetitem_uuidv3(data):
     """Generate an UUIDv3 using as string the data json conveted to string
     
     Args: 
         data: A dictionary containing the low-level data submitted for the dataset item
     
     Returns: 
-        uuid: The generated UUIDv3 based on the namespace md5
+        itemuuid: The generated UUIDv3 based on the namespace md5
     """
     # This could be saved as a constant
     aburl = 'http://acousticbrainz.org/'
     namespaceuuid = uuid3(NAMESPACE_URL, aburl)
     #
     txtdata = str(data)
-        
-    try:
-        itemuuid = uuid3(namespaceuuid, txtdata)
-        return str(itemuuid)
-    except:
-        raise "UUIDv3 cannot be generated!"
+    itemuuid = uuid3(namespaceuuid, txtdata)
     
-    return None
+    if itemuuid:
+        return str(itemuuid)
+    else:
+        return None

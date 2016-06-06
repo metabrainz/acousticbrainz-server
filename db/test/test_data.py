@@ -272,11 +272,6 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertIsNone(db.data.find_md5_duplicates(self.test_md5))
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
         self.assertEqual(str(db.data.find_md5_duplicates(self.test_md5)), self.test_mbid)
-
-    def test_generate_datasetitem_uuidv3(self):
-        
-        self.assertNotEqual(db.data.generate_datasetitem_uuidv3(self.test_lowlevel_data), None)
-        self.assertEqual(db.data.generate_datasetitem_uuidv3(self.test_lowlevel_data), self.test_lowlevel_data_uuidv3)
         
     def test_generate_datasetitem_uuidv4(self):
         

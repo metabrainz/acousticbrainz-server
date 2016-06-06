@@ -501,24 +501,3 @@ def generate_datasetitem_uuidv4():
         return str(itemuuid)
     else:
         return None
-
-def generate_datasetitem_uuidv3(data):
-    """Generate an UUIDv3 using as string the data json conveted to string
-    
-    Args: 
-        data: A dictionary containing the low-level data submitted for the dataset item
-    
-    Returns: 
-        itemuuid: The generated UUIDv3 based on the namespace md5
-    """
-    # This could be saved as a constant
-    aburl = 'http://acousticbrainz.org/'
-    namespaceuuid = uuid3(NAMESPACE_URL, aburl)
-    #
-    txtdata = str(data)
-    itemuuid = uuid3(namespaceuuid, txtdata)
-    
-    if itemuuid:
-        return str(itemuuid)
-    else:
-        return None

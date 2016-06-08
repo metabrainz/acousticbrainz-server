@@ -1,7 +1,10 @@
 import db
-import re
-import unicodedata
+import db.dataset_eval
 from utils import dataset_validator
+
+import re
+from sqlalchemy import text
+import unicodedata
 
 
 def _slugify(string):
@@ -102,15 +105,19 @@ def get(id):
             return None
 
 
-def get_public_datasets(status_value, offset, limit):
-    result = ''
+def get_public_datasets(status, offset, limit):
+    if status == "all":
+        statuses = db.dataset_eval.VALID_STATUSES
+    elif status in db.dataset_eval.VALID_STATUSES:
+        statuses = [status]
+    else:
+        raise Exception("Unknown status")
+
     with db.engine.connect() as connection:
-        if status_value == "all":
-            query = """
-            SELECT dataset.id :: TEXT
+        query = text("""
+            SELECT dataset.id::text
                  , dataset.name
                  , dataset.description
-                 , dataset.author
                  , "user".musicbrainz_id AS author_name
                  , dataset.created
                  , job.status
@@ -124,36 +131,13 @@ def get_public_datasets(status_value, offset, limit):
                                LIMIT 1)
                                AS JOB ON TRUE
           WHERE dataset.public = 't'
+            AND job.status = ANY((:status)::eval_job_status[])
        ORDER BY dataset.created DESC
-       OFFSET %s LIMIT %s
-             """
-            result = connection.execute(query, (offset, limit))
-        else:
-            query = """
-                SELECT dataset.id :: TEXT
-                     , dataset.name
-                     , dataset.description
-                     , dataset.author
-                     , "user".musicbrainz_id AS author_name
-                     , dataset.created
-                     , job.status
-                FROM dataset
-                JOIN "user"
-                  ON "user".id = dataset.author
-                  LEFT JOIN LATERAL (SELECT status
-                                       FROM dataset_eval_jobs
-                                      WHERE dataset.id = dataset_eval_jobs.dataset_id
-                                   ORDER BY updated DESC
-                                   LIMIT 1)
-                                   AS JOB ON TRUE
-              WHERE dataset.public = 't'
-                and job.status = %s
-           ORDER BY dataset.created DESC
-           OFFSET %s LIMIT %s
-                 """
-            result = connection.execute(query, (status_value, offset, limit))
+          OFFSET :off LIMIT :lim
+             """)
+        res = connection.execute(query, {"status": statuses, "off": offset, "lim": limit})
         valid_datasets = []
-        for row in result:
+        for row in res:
             valid_datasets.append(dict(row))
         return valid_datasets
 

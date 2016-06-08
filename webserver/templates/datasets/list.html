@@ -4,35 +4,29 @@
 {% block title %}Public datasets{% endblock %}
 
 {% block content %}
-    <h3>Public datasets</h3>
-    <form method="POST" class="form-horizontal" role="form">
-    {{ form.hidden_tag() }}
-    <fieldset>
-      <div class="form-group">
-        <label class="col-sm-2 control-label">{{ form.filter_type.label.text }}</label>
-        <div class="col-sm-4">{{ form.filter_type(class="form-control", required="required") }}</div>
-      </div>
-      <div class="form-group">
-        <div class="col-sm-offset-2 col-sm-4">
-          <div class="checkbox">
-            <label id="agreement">
-            </label>
-          </div>
-        </div>
-      </div>
-    </fieldset>
-    <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-4">
-        <button type="submit" class="btn btn-primary">Search</button>
-      </div>
-    </div>
-    </form>
+    <h2 class="page-title">Public datasets</h2>
+    Filter by evaluation status:
+    {% if status == 'all' %}All{% else %}
+    <a href="{{url_for('.list_datasets', status='all')}}">All</a>
+    {% endif %} |
+    {% if status == 'pending' %}Pending{% else %}
+    <a href="{{url_for('.list_datasets', status='pending')}}">Pending</a>
+    {% endif %} |
+    {% if status == 'running' %}Running{% else %}
+    <a href="{{url_for('.list_datasets', status='running')}}">Running</a>
+    {% endif %} |
+    {% if status == 'done' %}Done{% else %}
+    <a href="{{url_for('.list_datasets', status='done')}}">Done</a>
+    {% endif %} |
+    {% if status == 'failed' %}Failed{% else %}
+    <a href="{{url_for('.list_datasets', status='failed')}}">Failed</a>
+    {% endif %}
     <table class="table">
         <tr>
-            <th>author</th>
-            <th>dataset</th>
-            <th>created</th>
-            <th>evaluation status</th>
+            <th>Author</th>
+            <th>Dataset</th>
+            <th>Created</th>
+            <th>Evaluation status</th>
         </tr>
         {% for ds in datasets %}
         <tr>
@@ -45,17 +39,17 @@
                     {{ ds["name"] }}
                 </a>
             </td>
-            <td>{{ ds["created"] }}</td>
+            <td>{{ ds["created"]|datetime }}</td>
             <td>{{ ds["status"]  }}</td>
         </tr>
         {% endfor %}
     </table>
     <div class="col-sm-offset-2 col-sm-4">
-        <a href="{{ url_for('datasets.list_datasets', status_value=status, offset=offset+20, limit=limit)}}">
+        <a href="{{ url_for('datasets.list_datasets', status=status, offset=offset, limit=limit)}}">
         NEXT
     </div>
     <div class="col-sm-offset-2 col-sm-4">
-        <a href="{{ url_for('datasets.list_datasets', status_value=status, offset=offset-20, limit=limit)}}">
+        <a href="{{ url_for('datasets.list_datasets', status=status, offset=offset, limit=limit)}}">
         PREVIOUS
     </div>
 {% endblock %}

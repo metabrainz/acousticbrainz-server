@@ -15,17 +15,19 @@ import six
 
 datasets_bp = Blueprint("datasets", __name__)
 
-@datasets_bp.route("/", defaults={'status_value': "running", 'offset': 0, 'limit': 20}, methods=["GET", "POST"])
-@datasets_bp.route("/<status_value>/", defaults={'offset': 0, 'limit': 20}, methods=["GET", "POST"])
-@datasets_bp.route("/<status_value>/<int:offset>/<int:limit>", methods=["GET", "POST"])
-def list_datasets(status_value, offset, limit):
-    form = forms.DatasetListForm()
-    if form.validate_on_submit():
-        status_value = form.filter_type.data
-        redirect_url = "datasets/"+ status_value + "/"
-        return redirect(url_for(".list_datasets", status_value=status_value, offset=0, limit=20))
-    datasets = db.dataset.get_public_datasets(status_value, offset, limit)
-    return render_template("datasets/list.html", datasets=datasets, form=form, status=status_value, offset=offset, limit=limit)
+@datasets_bp.route("/list",  defaults={"status": "all"})
+@datasets_bp.route("/list/<status>")
+def list_datasets(status):
+    limit = request.args.get("limit")
+    offset = request.args.get("offset")
+
+    datasets = db.dataset.get_public_datasets(status, offset, limit)
+
+    return render_template("datasets/list.html",
+            datasets=datasets,
+            status=status,
+            offset=offset,
+            limit=limit)
 
 
 @datasets_bp.route("/<uuid:id>")
@@ -36,11 +38,6 @@ def view(id):
         dataset=ds,
         author=db.user.get(ds["author"]),
     )
-
-
-@datasets_bp.route("/")
-def index():
-    return render_template("datasets/index.html")
 
 
 @datasets_bp.route("/accuracy")

@@ -20,6 +20,12 @@
         <label class="col-sm-2 control-label">{{ form.filter_type.label.text }}</label>
         <div class="col-sm-4">{{ form.filter_type(class="form-control", required="required") }}</div>
       </div>
+      {% if config.get('FEATURE_EVAL_LOCATION') %}
+      <div class="form-group">
+        <label class="col-sm-2 control-label">{{ form.evaluation_location.label.text }}</label>
+        <div class="col-sm-4">{{ form.evaluation_location(class="form-control", required="required") }}</div>
+      </div>
+      {% endif %}
       <div class="form-group">
         <div class="col-sm-offset-2 col-sm-4">
           <div class="checkbox">

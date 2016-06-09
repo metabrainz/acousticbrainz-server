@@ -112,6 +112,7 @@ def evaluate(dataset_id):
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
+                eval_location=form.evaluation_location.data,
                 filter_type=form.filter_type.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])

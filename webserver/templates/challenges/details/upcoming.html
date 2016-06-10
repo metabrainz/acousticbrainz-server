@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from 'datasets/macros.html' import render_challenge_class_list %}
+
+{% block title %}{{ challenge["name"] }} - Challenges - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2 class="page-title">{{ challenge["name"] }}</h2>
+  <h3 class="page-subtitle">Dataset creation challenge</h3>
+
+  <div class="alert alert-info" role="alert">
+    This challenge will start on <strong>{{ challenge['start_time']|datetime }}</strong> and
+    end on <strong>{{ challenge['end_time']|datetime }}</strong>.
+  </div>
+
+  <p>
+    Challenge ID: <code>{{ challenge['id'] }}</code>
+    <br/>Organizer ID: <code>{{ challenge['creator'] }}</code> (created on {{ challenge['created']|datetime }})
+  </p>
+
+  <h4>Classes</h4>
+  {{ render_challenge_class_list(challenge['classes']) }}
+{% endblock %}

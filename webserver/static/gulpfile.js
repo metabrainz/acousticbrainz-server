@@ -101,6 +101,8 @@ function buildScripts() {
   });
   var statsBundle = runYarb('stats.js');
   var homepageBundle = runYarb('homepage.js');
+  var evalAddBundle = runYarb('eval-add.js');
+  var adminChallengesAddBundle = runYarb('admin/challenges-add.js');
   var profileBundle = runYarb('profile.js');
 
   return Q.all([
@@ -108,6 +110,8 @@ function buildScripts() {
     writeScript(datasetsBundle, 'datasets.js'),
     writeScript(statsBundle, 'stats.js'),
     writeScript(homepageBundle, 'homepage.js'),
+    writeScript(evalAddBundle, 'eval-add.js'),
+    writeScript(adminChallengesAddBundle, 'admin/challenges-add.js'),
     writeScript(profileBundle, 'profile.js'),
   ]).then(writeManifest);
 }

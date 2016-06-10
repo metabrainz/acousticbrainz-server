@@ -66,3 +66,9 @@
     <span class="label">status</span>
   {% endif %}
 {% endmacro %}
+
+{% macro render_challenge_class_list(classes) %}
+  {% for cls in classes %}
+    <span class="label label-primary">{{ cls }}</span>
+  {% endfor %}
+{% endmacro %}

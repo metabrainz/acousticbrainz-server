@@ -1,0 +1,27 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+  <h1>Challenges</h1>
+  <h2>Create a new challenge</h2>
+
+  {% for field in form.errors %}
+    {% for error in form.errors[field] %}
+      <div class="alert alert-danger">{{ field }}: {{ error }}</div>
+    {% endfor %}
+  {% endfor %}
+
+  <form class="form-horizontal" role="form" method="POST">
+    {{ form.csrf_token }}
+
+    {{ form.name.label }}{{ form.name(required=true) }}
+    {{ form.classes.label }}{{ form.classes(id='input-classes', required=true) }}
+    {{ form.validation_dataset_id.label }}{{ form.validation_dataset_id(id='input-val-dataset', required=true) }}
+    {{ form.start_time.label }}{{ form.start_time(required=true) }}
+    {{ form.end_time.label }}{{ form.end_time(required=true) }}
+
+    <div style="margin-top: 20px;">
+      <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+  </form>
+
+  <script src="{{ get_static_path('admin/challenges-add.js') }}"></script>
+{% endblock %}

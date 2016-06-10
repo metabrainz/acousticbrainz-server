@@ -172,6 +172,7 @@ def evaluate(dataset_id):
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
                 filter_type=form.filter_type.data,
+                challenge_id=form.challenge_id.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException as e:

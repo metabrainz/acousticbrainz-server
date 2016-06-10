@@ -1,16 +1,9 @@
 from flask import request, url_for, redirect
 from flask_admin import expose
-from webserver.admin import AdminIndexView, AdminBaseView, forms
+from webserver.admin import AdminBaseView, forms
 from webserver import flash
 import db.user
 import db.exceptions
-
-
-class HomeView(AdminIndexView):
-
-    @expose("/")
-    def index(self):
-        return self.render("admin/home.html")
 
 
 class AdminsView(AdminBaseView):

@@ -1,4 +1,10 @@
 {% extends admin_base_template %}
+
+{% block head_css %}
+  {{ super() }}
+  <link href="{{ get_static_path('admin.css') }}" rel="stylesheet" media="screen" />
+{% endblock %}
+
 {% block brand %}
   <span class="brand">
     <a href="/">AcousticBrainz</a>

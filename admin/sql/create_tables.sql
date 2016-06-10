@@ -95,6 +95,13 @@ CREATE TABLE dataset_class_member (
   mbid  UUID
 );
 
+CREATE TABLE dataset_snapshot (
+  id         UUID, -- PK
+  dataset_id UUID, -- FK to dataset
+  data       JSONB                    NOT NULL,
+  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE dataset_eval_jobs (
   id                UUID,
   snapshot_id       UUID                     NOT NULL, -- FK to snapshot
@@ -113,11 +120,22 @@ CREATE TABLE dataset_eval_sets (
   data JSONB NOT NULL
 );
 
-CREATE TABLE dataset_snapshot (
-  id         UUID, -- PK
-  dataset_id UUID, -- FK to dataset
-  data       JSONB                    NOT NULL,
-  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE challenge (
+  id                  UUID,
+  name                TEXT                     NOT NULL,
+  validation_snapshot UUID                     NOT NULL, -- FK to dataset_snapshot
+  creator             INTEGER                  NOT NULL, -- FK to user
+  created             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  start_time          TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time            TIMESTAMP WITH TIME ZONE NOT NULL,
+  classes             TEXT                     NOT NULL,
+  concluded           BOOLEAN                  NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE dataset_eval_challenge (
+  dataset_eval_job UUID, -- PK, FK to dataset_eval_jobs
+  challenge_id     UUID, -- PK, FK to challenge
+  result           JSONB
 );
 
 CREATE TABLE api_key (

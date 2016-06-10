@@ -82,6 +82,27 @@ ALTER TABLE dataset_snapshot
   REFERENCES dataset (id);
 
 
+ALTER TABLE challenge
+  ADD CONSTRAINT challenge_fk_dataset_snapshot
+  FOREIGN KEY (validation_snapshot)
+  REFERENCES dataset_snapshot (id);
+
+ALTER TABLE challenge
+  ADD CONSTRAINT challenge_fk_user
+  FOREIGN KEY (creator)
+  REFERENCES "user" (id);
+
+ALTER TABLE dataset_eval_challenge
+  ADD CONSTRAINT dataset_eval_challenge_fk_dataset_eval_job
+  FOREIGN KEY (dataset_eval_job)
+  REFERENCES dataset_eval_jobs (id);
+
+ALTER TABLE dataset_eval_challenge
+  ADD CONSTRAINT dataset_eval_challenge_fk_challenge
+  FOREIGN KEY (challenge_id)
+  REFERENCES challenge (id);
+
+
 ALTER TABLE api_key
   ADD CONSTRAINT api_key_fk_user
 FOREIGN KEY (owner)

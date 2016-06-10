@@ -54,6 +54,8 @@ class DatabaseTestCase(unittest.TestCase):
             connection.execute('DROP TABLE IF EXISTS dataset_eval_sets    CASCADE;')
             connection.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
             connection.execute('DROP TABLE IF EXISTS api_key              CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS challenge            CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS dataset_eval_challenge CASCADE;')
 
     def drop_types(self):
         with db.engine.connect() as connection:

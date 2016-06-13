@@ -10,6 +10,19 @@ import json
 bp_core = Blueprint('api_v1_core', __name__)
 
 
+@bp_core.route("/datasets", methods=["POST"])
+@crossdomain()
+def submit_dataset():
+    raw_data = request.get_data()
+    print(raw_data)
+    try:
+        datasetjson = json.dumps(raw_data)
+        return jsonify({'submitted': 'OK'})
+    except ValueError:
+        raise "Input data format not correct"
+        return jsonify({'submitted': 'KO'})
+
+
 @bp_core.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
 def count(mbid):

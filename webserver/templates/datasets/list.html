@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'macros.html' import pager %}
 
 
 {% block title %}Public datasets{% endblock %}
@@ -44,12 +45,5 @@
         </tr>
         {% endfor %}
     </table>
-    <div class="col-sm-offset-2 col-sm-4">
-        <a href="{{ url_for('datasets.list_datasets', status=status, offset=offset, limit=limit)}}">
-        NEXT
-    </div>
-    <div class="col-sm-offset-2 col-sm-4">
-        <a href="{{ url_for('datasets.list_datasets', status=status, offset=offset, limit=limit)}}">
-        PREVIOUS
-    </div>
+    {{ pager(pages, prevpage, page, total_pages, nextpage) }}
 {% endblock %}

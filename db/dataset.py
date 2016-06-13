@@ -105,13 +105,13 @@ def get(id):
             return None
 
 
-def get_public_datasets(status, offset, limit):
+def get_public_datasets(status):
     if status == "all":
         statuses = db.dataset_eval.VALID_STATUSES
     elif status in db.dataset_eval.VALID_STATUSES:
         statuses = [status]
     else:
-        raise Exception("Unknown status")
+        raise ValueError("Unknown status")
 
     with db.engine.connect() as connection:
         query = text("""
@@ -133,13 +133,13 @@ def get_public_datasets(status, offset, limit):
           WHERE dataset.public = 't'
             AND job.status = ANY((:status)::eval_job_status[])
        ORDER BY dataset.created DESC
-          OFFSET :off LIMIT :lim
              """)
-        res = connection.execute(query, {"status": statuses, "off": offset, "lim": limit})
-        valid_datasets = []
+        res = connection.execute(query, {"status": statuses})
+        datasets = []
         for row in res:
-            valid_datasets.append(dict(row))
-        return valid_datasets
+            datasets.append(dict(row))
+
+        return datasets
 
 
 def _get_classes(dataset_id):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
@@ -11,23 +12,71 @@ import db.dataset
 import db.dataset_eval
 import db.user
 import csv
+import math
 import six
 
 datasets_bp = Blueprint("datasets", __name__)
 
+def _pagenum_to_offset(pagenum, limit):
+    # Page number and limit to list elements
+    # 3, 5 -> list[10:15]
+    if pagenum < 1:
+        return 0, limit
+
+    start = (pagenum-1) * limit
+    end = start + limit
+
+    return start, end
+
+def _make_pager(data, page, url, urlargs):
+    DEFAULT_LIMIT = 10
+
+    total = len(data)
+    total_pages = int(math.ceil(total/DEFAULT_LIMIT))
+
+    if page > total_pages:
+        page = total_pages
+
+    start, end = _pagenum_to_offset(page, DEFAULT_LIMIT)
+    dataview = data[start:end]
+
+    pages = []
+    for p in range(1, total_pages+1):
+        pages.append( (p, "%s?page=%s" % (url_for(url, **urlargs), p)) )
+
+    prevpage = None
+    if page > 1:
+        prevpage = "%s?page=%s" % (url_for(url, **urlargs), page-1)
+    nextpage = None
+    if page < total_pages:
+        nextpage = "%s?page=%s" % (url_for(url, **urlargs), page+1)
+
+    return dataview, page, total_pages, prevpage, pages, nextpage
+
 @datasets_bp.route("/list",  defaults={"status": "all"})
 @datasets_bp.route("/list/<status>")
 def list_datasets(status):
-    limit = request.args.get("limit")
-    offset = request.args.get("offset")
+    if status != "all" and status not in db.dataset_eval.VALID_STATUSES:
+        status = "all"
 
-    datasets = db.dataset.get_public_datasets(status, offset, limit)
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+    except ValueError:
+        page = 1
+
+    alldatasets = db.dataset.get_public_datasets(status)
+    datasets, page, total_pages, prevpage, pages, nextpage = _make_pager(alldatasets,
+            page, ".list_datasets", {"status": status})
 
     return render_template("datasets/list.html",
             datasets=datasets,
             status=status,
-            offset=offset,
-            limit=limit)
+            page=page,
+            pages=pages,
+            total_pages=total_pages,
+            prevpage=prevpage,
+            nextpage=nextpage)
 
 
 @datasets_bp.route("/<uuid:id>")

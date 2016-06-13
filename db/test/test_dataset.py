@@ -195,7 +195,7 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         dataset2_id = self._create_dataset(user2_id, "test dataset2")
         self._create_dataset_job(dataset2_id, "running")
 
-        datasets = dataset.get_public_datasets("all", 0, 10)
+        datasets = dataset.get_public_datasets("all")
         self.assertEqual(2, len(datasets))
 
 
@@ -206,7 +206,7 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         dataset1_id = self._create_dataset(user1_id, "unsubmitted dataset")
         dataset2_id = self._create_dataset(user1_id, "submitted dataset")
         self._create_dataset_job(dataset2_id, "pending")
-        datasets = dataset.get_public_datasets("all", 0, 10)
+        datasets = dataset.get_public_datasets("all")
 
         self.assertEqual(1, len(datasets))
         self.assertEqual("submitted dataset", datasets[0]["name"])
@@ -220,7 +220,7 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         dataset1_id = self._create_dataset(user1_id, "private dataset", public=False)
         self._create_dataset_job(dataset1_id, "pending")
 
-        datasets = dataset.get_public_datasets("all", 0, 10)
+        datasets = dataset.get_public_datasets("all")
         self.assertEqual(0, len(datasets))
 
 
@@ -233,7 +233,7 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         self._create_dataset_job(dataset1_id, "done")
         self._create_dataset_job(dataset1_id, "pending")
 
-        datasets = dataset.get_public_datasets("all", 0, 10)
+        datasets = dataset.get_public_datasets("all")
         self.assertEqual(1, len(datasets))
         self.assertEqual("pending", datasets[0]["status"])
 
@@ -251,48 +251,26 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         dataset4_id = self._create_dataset(user1_id, "dataset4")
         self._create_dataset_job(dataset4_id, "failed")
 
-        datasets = dataset.get_public_datasets("all", 0, 10)
+        datasets = dataset.get_public_datasets("all")
         self.assertEqual(4, len(datasets))
 
-        datasets = dataset.get_public_datasets("pending", 0, 10)
+        datasets = dataset.get_public_datasets("pending")
         self.assertEqual(1, len(datasets))
         self.assertEqual("dataset1", datasets[0]["name"])
 
-        datasets = dataset.get_public_datasets("running", 0, 10)
+        datasets = dataset.get_public_datasets("running")
         self.assertEqual(1, len(datasets))
         self.assertEqual("dataset2", datasets[0]["name"])
 
-        datasets = dataset.get_public_datasets("done", 0, 10)
+        datasets = dataset.get_public_datasets("done")
         self.assertEqual(1, len(datasets))
         self.assertEqual("dataset3", datasets[0]["name"])
 
-        datasets = dataset.get_public_datasets("failed", 0, 10)
+        datasets = dataset.get_public_datasets("failed")
         self.assertEqual(1, len(datasets))
         self.assertEqual("dataset4", datasets[0]["name"])
 
+    def test_invalid_status(self):
+        with self.assertRaises(ValueError):
+            datasets = dataset.get_public_datasets("not_a_status")
 
-    def test_get_datasets_offset(self):
-        """ Offset/limit in dataset lists. Items are listed in reverse
-            chronological order."""
-
-        user1_id = self._create_user("myuser1")
-        dataset1_id = self._create_dataset(user1_id, "dataset1")
-        self._create_dataset_job(dataset1_id, "pending")
-        dataset2_id = self._create_dataset(user1_id, "dataset2")
-        self._create_dataset_job(dataset2_id, "running")
-        dataset3_id = self._create_dataset(user1_id, "dataset3")
-        self._create_dataset_job(dataset3_id, "done")
-        dataset4_id = self._create_dataset(user1_id, "dataset4")
-        self._create_dataset_job(dataset4_id, "failed")
-
-        # Offset 0 limit 2 should be 2 newest
-        datasets = dataset.get_public_datasets("all", 0, 2)
-        self.assertEqual(2, len(datasets))
-        self.assertEqual("dataset4", datasets[0]["name"])
-        self.assertEqual("dataset3", datasets[1]["name"])
-
-        # Oldest ones
-        datasets = dataset.get_public_datasets("all", 2, 10)
-        self.assertEqual(2, len(datasets))
-        self.assertEqual("dataset2", datasets[0]["name"])
-        self.assertEqual("dataset1", datasets[1]["name"])

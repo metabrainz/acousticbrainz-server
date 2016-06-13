@@ -474,12 +474,11 @@ def find_md5_duplicates(md5):
         None if the md5 is not found
     """
 
-    query = text("""
-                 SELECT lowlevel.mbid
-                 FROM lowlevel, lowlevel_json
-                 WHERE lowlevel_json.data#> '{metadata,audio_properties,md5_encoded}' ? :md5
-                 AND lowlevel.id = lowlevel_json.id
-                 """)
+    query = text(
+            """SELECT lowlevel.mbid
+                 FROM lowlevel
+                 JOIN lowlevel_json USING (id)
+                WHERE lowlevel_json.data#> '{metadata,audio_properties,md5_encoded}' ? :md5""")
     with db.engine.begin() as connection:
         result = connection.execute(query, {"md5": md5})
         row = result.fetchone()

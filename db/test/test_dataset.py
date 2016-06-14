@@ -1,4 +1,5 @@
 import db
+import db.exceptions
 from db.testing import DatabaseTestCase
 import unittest
 import db
@@ -124,7 +125,8 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertIsNotNone(dataset.get(id))
 
         dataset.delete(id)
-        self.assertIsNone(dataset.get(id))
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            dataset.get(id)
 
     def test_last_edited(self):
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)

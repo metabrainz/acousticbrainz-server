@@ -2,6 +2,7 @@ import db
 import db.dataset_eval
 from utils import dataset_validator
 
+from db import exceptions
 import re
 from sqlalchemy import text
 import unicodedata
@@ -97,12 +98,11 @@ def get(id):
             "WHERE id = %s",
             (str(id),)
         )
-        if result.rowcount > 0:
-            row = dict(result.fetchone())
-            row["classes"] = _get_classes(row["id"])
-            return row
-        else:
-            return None
+        if result.rowcount < 1:
+            raise exceptions.NoDataFoundException("Can't find dataset with a specified ID.")
+        row = dict(result.fetchone())
+        row["classes"] = _get_classes(row["id"])
+        return row
 
 
 def get_public_datasets(status):

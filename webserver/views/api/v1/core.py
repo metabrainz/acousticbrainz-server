@@ -1,11 +1,14 @@
 from __future__ import absolute_import
+
+import json
+
 from flask import Blueprint, request, jsonify
-from db.data import submit_low_level_data, count_lowlevel
+
 import db.data
+import webserver.views.api.exceptions
+from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
-import webserver.exceptions
-import json
 
 bp_core = Blueprint('api_v1_core', __name__)
 
@@ -44,7 +47,7 @@ def get_low_level(mbid):
     try:
         return jsonify(db.data.load_low_level(str(mbid), offset))
     except NoDataFoundException:
-        raise webserver.exceptions.APINotFound("Not found")
+        raise webserver.views.api.exceptions.APINotFound("Not found")
 
 
 @bp_core.route("/<uuid:mbid>/high-level", methods=["GET"])
@@ -68,7 +71,7 @@ def get_high_level(mbid):
     try:
         return jsonify(db.data.load_high_level(str(mbid), offset))
     except NoDataFoundException:
-        raise webserver.exceptions.APINotFound("Not found")
+        raise webserver.views.api.exceptions.APINotFound("Not found")
 
 
 @bp_core.route("/<uuid:mbid>/low-level", methods=["POST"])
@@ -83,12 +86,12 @@ def submit_low_level(mbid):
     try:
         data = json.loads(raw_data.decode("utf-8"))
     except ValueError as e:
-        raise webserver.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
+        raise webserver.views.api.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
     try:
         submit_low_level_data(str(mbid), data)
     except BadDataException as e:
-        raise webserver.exceptions.APIBadRequest("%s" % e)
+        raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
 
 
@@ -102,7 +105,7 @@ def _validate_offset(offset):
         try:
             offset = int(offset)
         except ValueError:
-            raise webserver.exceptions.APIBadRequest("Offset must be an integer value")
+            raise webserver.views.api.exceptions.APIBadRequest("Offset must be an integer value")
     else:
         offset = 0
     return offset

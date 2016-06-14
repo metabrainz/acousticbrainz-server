@@ -15,6 +15,10 @@ class APINotFound(APIError):
     def __init__(self, message, payload=None):
         super(APINotFound, self).__init__(message, 404, payload)
 
+class APIUnauthorized(APIError):
+    def __init__(self, message, payload=None):
+        super(APIUnauthorized, self).__init__(message, 401, payload)
+
 class APIBadRequest(APIError):
     def __init__(self, message, payload=None):
         super(APIBadRequest, self).__init__(message, 400, payload)

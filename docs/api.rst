@@ -16,3 +16,10 @@ Core data
    :include-empty-docstring:
    :undoc-static:
 
+Datasets
+^^^^^^^^
+
+.. autoflask:: webserver:create_app_sphinx()
+   :blueprints: api_v1_datasets
+   :include-empty-docstring:
+   :undoc-static:

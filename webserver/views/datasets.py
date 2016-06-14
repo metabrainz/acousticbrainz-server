@@ -308,7 +308,11 @@ def edit(dataset_id):
 def delete(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
-        raise Unauthorized("You can't delete this dataset.")
+        return jsonify(
+            error=True,
+            description="You can't delete this dataset.",
+        ), 401  # Unauthorized
+
     if request.method == "POST":
         db.dataset.delete(ds["id"])
         flash.success("Dataset has been deleted.")
@@ -339,12 +343,15 @@ def get_dataset(dataset_id):
     * Specified dataset exists.
     * Current user is allowed to access this dataset.
     """
-    ds = db.dataset.get(dataset_id)
-    if ds:
-        if ds["public"] or (current_user.is_authenticated and
-                            ds["author"] == current_user.id):
-            return ds
-    raise NotFound("Can't find this dataset.")
+    try:
+        ds = db.dataset.get(dataset_id)
+    except db.exceptions.NoDataFoundException as e:
+        raise NotFound("Can't find this dataset.")
+    if ds["public"] or (current_user.is_authenticated and
+                        ds["author"] == current_user.id):
+        return ds
+    else:
+        raise NotFound("Can't find this dataset.")
 
 
 def prepare_table_from_cm(confusion_matrix):

@@ -60,6 +60,12 @@ def create_app():
 
     _register_blueprints(app)
 
+    # Admin section
+    from flask_admin import Admin
+    from webserver.admin import views as admin_views
+    admin = Admin(app, index_view=admin_views.HomeView(name='Admin'))
+    admin.add_view(admin_views.AdminsView(name='Admins'))
+
     return app
 
 

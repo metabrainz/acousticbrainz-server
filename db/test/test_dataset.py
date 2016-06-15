@@ -1,7 +1,11 @@
 import db
 from db.testing import DatabaseTestCase
+import unittest
+import db
 from db import dataset, user
 from utils import dataset_validator
+from sqlalchemy import text
+import uuid
 import copy
 
 class DatasetTestCase(DatabaseTestCase):
@@ -134,3 +138,139 @@ class DatasetTestCase(DatabaseTestCase):
         dataset.update(id, self.test_data, author_id=self.test_user_id)
         ds_updated = dataset.get(id)
         self.assertTrue(ds_updated['last_edited'] > ds['last_edited'])
+
+class GetPublicDatasetsTestCase(DatabaseTestCase):
+    """A whole testcase because there are lots of cases to test"""
+
+    def setUp(self):
+        super(GetPublicDatasetsTestCase, self).setUp()
+
+    def _create_user(self, name):
+        """Creates a user with a given name and returns its id"""
+        query = text("""insert into "user" (musicbrainz_id) values (:name) returning id""")
+        with db.engine.connect() as connection:
+            res = connection.execute(query, {"name": name})
+            return res.fetchone()[0]
+
+    def _create_dataset(self, author_id, name, desc=None, public=True):
+        """Creates a dataset for an author with a name and returns its id"""
+
+        dataset_id = str(uuid.uuid4())
+        query = text("""insert into dataset (id, name, description, author, public) values
+            (:id, :name, :desc, :author, :public) returning id""")
+        with db.engine.connect() as connection:
+            res = connection.execute(query, {"id": dataset_id, "name": name,
+                 "desc": desc, "author": author_id, "public": public})
+            return res.fetchone()[0]
+
+    def _create_dataset_job(self, dataset_id, status):
+        """Create a job for a dataset with a given status"""
+
+        dataset_job_id = str(uuid.uuid4())
+        query = text("""insert into dataset_eval_jobs (id, dataset_id, status)
+            values (:id, :dataset_id, :status) returning id""")
+        with db.engine.connect() as connection:
+            res = connection.execute(query, {"id": dataset_job_id,
+                "dataset_id": dataset_id, "status": status})
+            return res.fetchone()[0]
+
+    def _update_dataset_job(self, dataset_job_id, status, updated=None):
+        """Update a job to a given status. If a time is provided,
+        change updated to that time"""
+
+        query = text("""update dataset_eval_jobs set status=:status
+                where id = :id""")
+        with db.engine.connect() as connection:
+            connection.execute(query, {"id": dataset_job_id,
+                 "status": status})
+
+    #####
+
+    def test_get_datasets(self):
+        user1_id = self._create_user("myuser1")
+        dataset1_id = self._create_dataset(user1_id, "test dataset1")
+        self._create_dataset_job(dataset1_id, "pending")
+
+        user2_id = self._create_user("myuser2")
+        dataset2_id = self._create_dataset(user2_id, "test dataset2")
+        self._create_dataset_job(dataset2_id, "running")
+
+        datasets = dataset.get_public_datasets("all")
+        self.assertEqual(2, len(datasets))
+
+
+    def test_get_datasets_not_submitted(self):
+        """ If a dataset has no jobs submitted, it should not show up"""
+
+        user1_id = self._create_user("myuser1")
+        dataset1_id = self._create_dataset(user1_id, "unsubmitted dataset")
+        dataset2_id = self._create_dataset(user1_id, "submitted dataset")
+        self._create_dataset_job(dataset2_id, "pending")
+        datasets = dataset.get_public_datasets("all")
+
+        self.assertEqual(1, len(datasets))
+        self.assertEqual("submitted dataset", datasets[0]["name"])
+
+
+    def test_get_datasets_not_public(self):
+        """ If a dataset is not public, even if it has a job, it shouldn't
+            show up."""
+
+        user1_id = self._create_user("myuser1")
+        dataset1_id = self._create_dataset(user1_id, "private dataset", public=False)
+        self._create_dataset_job(dataset1_id, "pending")
+
+        datasets = dataset.get_public_datasets("all")
+        self.assertEqual(0, len(datasets))
+
+
+    def test_get_datasets_submitted_multiple(self):
+        """ If a dataset has been submitted many times, only the most recent submission
+            status should show up"""
+
+        user1_id = self._create_user("myuser1")
+        dataset1_id = self._create_dataset(user1_id, "dataset")
+        self._create_dataset_job(dataset1_id, "done")
+        self._create_dataset_job(dataset1_id, "pending")
+
+        datasets = dataset.get_public_datasets("all")
+        self.assertEqual(1, len(datasets))
+        self.assertEqual("pending", datasets[0]["status"])
+
+
+    def test_get_datasets_filter_status(self):
+        """ Filter datasets by the status of their jobs """
+
+        user1_id = self._create_user("myuser1")
+        dataset1_id = self._create_dataset(user1_id, "dataset1")
+        self._create_dataset_job(dataset1_id, "pending")
+        dataset2_id = self._create_dataset(user1_id, "dataset2")
+        self._create_dataset_job(dataset2_id, "running")
+        dataset3_id = self._create_dataset(user1_id, "dataset3")
+        self._create_dataset_job(dataset3_id, "done")
+        dataset4_id = self._create_dataset(user1_id, "dataset4")
+        self._create_dataset_job(dataset4_id, "failed")
+
+        datasets = dataset.get_public_datasets("all")
+        self.assertEqual(4, len(datasets))
+
+        datasets = dataset.get_public_datasets("pending")
+        self.assertEqual(1, len(datasets))
+        self.assertEqual("dataset1", datasets[0]["name"])
+
+        datasets = dataset.get_public_datasets("running")
+        self.assertEqual(1, len(datasets))
+        self.assertEqual("dataset2", datasets[0]["name"])
+
+        datasets = dataset.get_public_datasets("done")
+        self.assertEqual(1, len(datasets))
+        self.assertEqual("dataset3", datasets[0]["name"])
+
+        datasets = dataset.get_public_datasets("failed")
+        self.assertEqual(1, len(datasets))
+        self.assertEqual("dataset4", datasets[0]["name"])
+
+    def test_invalid_status(self):
+        with self.assertRaises(ValueError):
+            datasets = dataset.get_public_datasets("not_a_status")
+

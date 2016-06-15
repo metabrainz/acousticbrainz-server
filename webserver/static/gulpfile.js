@@ -120,14 +120,7 @@ gulp.task('scripts', buildScripts);
 gulp.task('watch', ['styles', 'scripts'], function () {
   let watch = require('gulp-watch');
 
-  watch(path.resolve(STATIC_DIR, '**/*.less'), function () {
-    process.stdout.write('Rebuilding styles ... ');
-
-    buildStyles(function () {
-      writeManifest();
-      process.stdout.write('done.\n');
-    });
-  });
+  gulp.watch(path.resolve(STATIC_DIR, '**/*.less'), ['styles']);
 
   function rebundle(b, resourceName, file) {
     var rebuild = false;

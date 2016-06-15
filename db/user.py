@@ -2,7 +2,7 @@ import db
 import db.exceptions
 import sqlalchemy
 
-ALL_COLUMNS = ", ".join(["id", "created", "musicbrainz_id", "admin"])
+ALL_USER_COLUMNS = ", ".join(["id", "created", "musicbrainz_id", "admin"])
 
 
 def create(musicbrainz_id):
@@ -22,7 +22,7 @@ def get(id):
             SELECT %s
               FROM "user"
              WHERE id = :id
-        """ % ALL_COLUMNS), {"id": id})
+        """ % ALL_USER_COLUMNS), {"id": id})
         row = result.fetchone()
         return dict(row) if row else None
 
@@ -36,7 +36,7 @@ def get_by_mb_id(musicbrainz_id):
             SELECT %s
               FROM "user"
              WHERE LOWER(musicbrainz_id) = LOWER(:musicbrainz_id)
-        """ % ALL_COLUMNS), {"musicbrainz_id": musicbrainz_id})
+        """ % ALL_USER_COLUMNS), {"musicbrainz_id": musicbrainz_id})
         row = result.fetchone()
         return dict(row) if row else None
 
@@ -58,7 +58,7 @@ def get_admins():
             SELECT %s
               FROM "user"
              WHERE admin = TRUE
-        """ % ALL_COLUMNS)
+        """ % ALL_USER_COLUMNS)
         return [dict(r) for r in result.fetchall()]
 
 

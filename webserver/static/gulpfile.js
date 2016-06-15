@@ -118,7 +118,6 @@ gulp.task('styles', function () {
 gulp.task('scripts', buildScripts);
 
 gulp.task('watch', ['styles', 'scripts'], function () {
-  let watch = require('gulp-watch');
 
   gulp.watch(path.resolve(STATIC_DIR, '**/*.less'), ['styles']);
 
@@ -144,8 +143,9 @@ gulp.task('watch', ['styles', 'scripts'], function () {
     }
   }
 
+  let watch = require('gulp-watch');
   watch(path.resolve(SCRIPTS_DIR, '**/*.js'), function (file) {
-    _.each(CACHED_BUNDLES, function (bundle, resourceName) {
+    CACHED_BUNDLES.forEach(function (bundle, resourceName) {
       rebundle(bundle, resourceName, file);
     });
   });

@@ -1,6 +1,5 @@
 import db
 import copy
-import jsonschema
 from db import exceptions
 import re
 import unicodedata

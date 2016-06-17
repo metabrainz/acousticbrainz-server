@@ -10,21 +10,9 @@ from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
 
+import logging
+
 bp_core = Blueprint('api_v1_core', __name__)
-
-
-@bp_core.route("/datasets", methods=["POST"])
-@crossdomain()
-def submit_dataset():
-    raw_data = request.get_data()
-    print(raw_data)
-    try:
-        datasetjson = json.dumps(raw_data)
-        return jsonify({'submitted': 'OK'})
-    except ValueError:
-        raise "Input data format not correct"
-        return jsonify({'submitted': 'KO'})
-
 
 @bp_core.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
@@ -122,3 +110,43 @@ def _validate_offset(offset):
     else:
         offset = 0
     return offset
+
+@bp_core.route("/low-level", methods=["POST"])
+def submit_low_level_nombid():
+    """Submit low-level data to AcousticBrainz without MBID
+
+    :reqheader Content-Type: *application/json*
+
+    :resheader Content-Type: *application/json*
+    """
+    raw_data = request.get_data()
+    try:
+        data = json.loads(raw_data.decode("utf-8"))
+    except ValueError as e:
+        raise webserver.views.api.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
+    
+    if 'musicbrainz_recordingid' in data['metadata']['tags'].keys():
+        mbid = data['metadata']['tags']['musicbrainz_recordingid']
+        #check the mbid as in standard submissions
+    elif 'md5_encoded' in data['metadata']['audio_properties'].keys():
+        md5encoded = data['metadata']['audio_properties']['md5_encoded']
+        retrievedid = db.data.find_md5_duplicates(md5encoded)
+        if retrievedid is not None:
+            # return the id end discard data
+            logging.warn('### md5 found')
+            return jsonify({"message": "OK", "itemuuid": retrievedid})
+        else:
+            # generate the UUIDv4 and insert data into the db(TODO)
+            logging.warn('### md5 not found')
+            mbid = db.data.generate_datasetitem_uuidv4()
+    else:
+        # implement an exception for this
+        logging.warn('###no mbid nor md5!')
+    
+    # TODO - add the generated MBID to the data dictionary before submitting
+    try:
+        submit_low_level_data(str(mbid), data)
+    except BadDataException as e:
+        raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
+    outputmsg = {"message": "ok", "itemuuid": mbid}
+    return jsonify(outputmsg)

@@ -495,8 +495,4 @@ def generate_datasetitem_uuidv4():
         itemuuid: The generated random UUIDv4 assigned to a specific dataset item
     """
     itemuuid = uuid4()
-    
-    if itemuuid:
-        return str(itemuuid)
-    else:
-        return None
+    return str(itemuuid)

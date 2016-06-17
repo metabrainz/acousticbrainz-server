@@ -3,12 +3,9 @@ from __future__ import absolute_import
 import json
 
 from flask import Blueprint, request, jsonify
-<<<<<<< HEAD
-
 import webserver.views.api.exceptions
 from db.data import submit_low_level_data
 from db.exceptions import BadDataException
-=======
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
@@ -16,10 +13,8 @@ import webserver.exceptions
 import db.data
 import json
 import uuid
->>>>>>> 6675565... Add old API endpoints back for now
 
 api_legacy_bp = Blueprint('api', __name__)
-
 
 @api_legacy_bp.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()

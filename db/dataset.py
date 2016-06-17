@@ -1,11 +1,7 @@
 import db
-<<<<<<< HEAD
 import copy
 import jsonschema
 from db import exceptions
-import unicodedata
-=======
->>>>>>> 3cc7570... Replace jsonschema with new validator.
 import re
 import unicodedata
 from utils import dataset_validator

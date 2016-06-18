@@ -5,6 +5,7 @@ import db.exceptions
 import mock
 import uuid
 import os
+import json
 
 
 class CoreViewsTestCase(ServerTestCase):
@@ -32,10 +33,21 @@ class CoreViewsTestCase(ServerTestCase):
                                        data=json_file.read(),
                                        content_type="application/json")
                 self.assertEqual(sub_resp.status_code, 200)
-
+                
         resp = self.client.get("/api/v1/%s/low-level" % mbid)
         self.assertEqual(resp.status_code, 200)
-
+    
+    def test_submit_low_level_nombid(self):
+        md5 = "335679c30222c2b482337ef4570fe758"
+        
+        with open(os.path.join(TEST_DATA_PATH, md5 + ".json")) as json_file:
+            with self.app.test_client() as client:
+                resp = client.post("/api/v1/low-level",
+                                   data=json_file.read(),
+                                   content_type="application/json")
+                self.assertEqual(resp.status_code, 200)
+                jsondata = json.dumps(resp.data)
+                
     def test_cors_headers(self):
         mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
         self.load_low_level_data(mbid)

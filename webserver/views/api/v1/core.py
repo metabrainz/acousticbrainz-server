@@ -127,26 +127,29 @@ def submit_low_level_nombid():
     
     if 'musicbrainz_recordingid' in data['metadata']['tags'].keys():
         mbid = data['metadata']['tags']['musicbrainz_recordingid']
-        #check the mbid as in standard submissions
+    elif 'musicbrainz_trackid' in data['metadata']['tags'].keys():
+        mbid = data['metadata']['tags']['musicbrainz_trackid']
     elif 'md5_encoded' in data['metadata']['audio_properties'].keys():
         md5encoded = data['metadata']['audio_properties']['md5_encoded']
-        retrievedid = db.data.find_md5_duplicates(md5encoded)
-        if retrievedid is not None:
-            # return the id end discard data
-            logging.warn('### md5 found')
-            return jsonify({"message": "OK", "itemuuid": retrievedid})
+        mbid = db.data.find_md5_duplicates(md5encoded)
+        if mbid is not None:
+            action = "md5_duplicate"
+            return jsonify({"status": "OK", "itemuuid": str(mbid), "action": action})
         else:
-            # generate the UUIDv4 and insert data into the db(TODO)
-            logging.warn('### md5 not found')
             mbid = db.data.generate_datasetitem_uuidv4()
+            data['metadata']['tags']['musicbrainz_trackid'] = [mbid]
+            action = "uuidV4_generate"
     else:
-        # implement an exception for this
-        logging.warn('###no mbid nor md5!')
+        raise webserver.views.api.exceptions.APIBadRequest('### Bad data format: no mbid nor md5!')
     
     # TODO - add the generated MBID to the data dictionary before submitting
-    try:
-        submit_low_level_data(str(mbid), data)
-    except BadDataException as e:
-        raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
-    outputmsg = {"message": "ok", "itemuuid": mbid}
+    if mbid is not None:
+        try:
+            submit_low_level_data(mbid, data)
+        except BadDataException as e:
+            logging.warn(str(e))
+            raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
+        status = "OK"
+            
+    outputmsg = {"status": status, "itemuuid": mbid, "action": action}
     return jsonify(outputmsg)

@@ -60,7 +60,7 @@ def migrate_low_level(connection, old_ll_row):
     version_id = insert_version(connection, ll_version, VERSION_TYPE_LOWLEVEL)
 
     connection.execute(
-        "INSERT INTO lowlevel (id, mbid, build_sha1, lossless, submitted)"
+        "INSERT INTO lowlevel (id, gid, build_sha1, lossless, submitted)"
         "VALUES (%s, %s, %s, %s, %s)",
         (id, mbid, build_sha1, lossless, submitted)
     )
@@ -102,7 +102,7 @@ def migrate_high_level(connection, hl_row):
     hl_json = hl_row["hlj_data"]
 
     hl_query = text(
-        """INSERT INTO highlevel (id, mbid, build_sha1, submitted)
+        """INSERT INTO highlevel (id, gid, build_sha1, submitted)
                 VALUES (:id, :mbid, :build_sha1, :submitted)""")
     connection.execute(hl_query, {"id": highlevel_id, "mbid": mbid,
         "build_sha1": build_sha1, "submitted": submitted})

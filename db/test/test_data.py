@@ -1,4 +1,4 @@
-from db.testing import DatabaseTestCase, TEST_DATA_PATH
+from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
 import db.exceptions
 import db.data
 import os.path
@@ -24,8 +24,8 @@ class DataDBTestCase(DatabaseTestCase):
         clean.side_effect = lambda x: x
         sanity.return_value = None
 
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
-        write.assert_called_with(self.test_mbid, self.test_lowlevel_data)
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        write.assert_called_with(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
 
     @mock.patch("db.data.sanity_check_data")
     @mock.patch("db.data.write_low_level")
@@ -38,8 +38,12 @@ class DataDBTestCase(DatabaseTestCase):
         input = {"metadata": {"tags": {"musicbrainz_trackid": [self.test_mbid]}, "audio_properties": {"lossless": 1}}}
         output = {"metadata": {"tags": {"musicbrainz_recordingid": [self.test_mbid]}, "audio_properties": {"lossless": True}}}
 
-        db.data.submit_low_level_data(self.test_mbid, input)
-        write.assert_called_with(self.test_mbid, output)
+        db.data.submit_low_level_data(self.test_mbid, input, gid_types.GID_TYPE_MBID)
+        write.assert_called_with(self.test_mbid, output, gid_types.GID_TYPE_MBID)
+        
+        input = {"metadata": {"tags": {"musicbrainz_trackid": [self.test_mbid]}, "audio_properties": {"lossless": 1}}}
+        db.data.submit_low_level_data(self.test_mbid, input, gid_types.GID_TYPE_MSID)
+        write.assert_called_with(self.test_mbid, output, gid_types.GID_TYPE_MSID)
 
 
     @mock.patch("db.data.sanity_check_data")
@@ -53,7 +57,7 @@ class DataDBTestCase(DatabaseTestCase):
         input = {"metadata": {"tags": {"musicbrainz_recordingid": ["not-the-recording-mbid"]}, "audio_properties": {"lossless": False}}}
 
         with self.assertRaises(db.exceptions.BadDataException):
-            db.data.submit_low_level_data(self.test_mbid, input)
+            db.data.submit_low_level_data(self.test_mbid, input, gid_types.GID_TYPE_MBID)
 
 
     @mock.patch("db.data.sanity_check_data")
@@ -65,13 +69,13 @@ class DataDBTestCase(DatabaseTestCase):
         sanity.return_value = ["missing", "key"]
 
         with self.assertRaises(db.exceptions.BadDataException):
-            db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
+            db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
 
 
     def test_write_load_low_level(self):
         """Writing and loading a dict returns the same data"""
         one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        db.data.write_low_level(self.test_mbid, one)
+        db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
         self.assertEqual(one, db.data.load_low_level(self.test_mbid))
 
 
@@ -80,15 +84,15 @@ class DataDBTestCase(DatabaseTestCase):
         one = {"data": u"\uc544\uc774\uc720 (IU)\udc93", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
 
         with self.assertRaises(db.exceptions.BadDataException):
-            db.data.write_low_level(self.test_mbid, one)
+            db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
 
 
     def test_load_low_level_offset(self):
         """If two items with the same mbid are added, you can select between them with offset"""
         one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
         two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        db.data.write_low_level(self.test_mbid, one)
-        db.data.write_low_level(self.test_mbid, two)
+        db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
+        db.data.write_low_level(self.test_mbid, two, gid_types.GID_TYPE_MBID)
 
         self.assertEqual(one, db.data.load_low_level(self.test_mbid))
         self.assertEqual(one, db.data.load_low_level(self.test_mbid, 0))
@@ -101,7 +105,7 @@ class DataDBTestCase(DatabaseTestCase):
             db.data.load_low_level(self.test_mbid)
 
         one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        db.data.write_low_level(self.test_mbid, one)
+        db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.data.load_low_level(self.test_mbid, 1)
 
@@ -109,7 +113,7 @@ class DataDBTestCase(DatabaseTestCase):
     def _get_ll_id_from_mbid(self, mbid):
         with db.engine.connect() as connection:
             ret = []
-            result = connection.execute("select id from lowlevel where mbid = %s", (mbid, ))
+            result = connection.execute("select id from lowlevel where gid = %s", (mbid, ))
             for row in result:
                 ret.append(row[0])
             return ret
@@ -129,7 +133,7 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.add_model("model2", "v1", "show")
 
         build_sha = "test"
-        db.data.write_low_level(self.test_mbid, ll)
+        db.data.write_low_level(self.test_mbid, ll, gid_types.GID_TYPE_MBID)
         ll_id = self._get_ll_id_from_mbid(self.test_mbid)[0]
         db.data.write_high_level(self.test_mbid, ll_id, hl, build_sha)
 
@@ -164,8 +168,8 @@ class DataDBTestCase(DatabaseTestCase):
         second_data = copy.deepcopy(self.test_lowlevel_data)
         second_data["metadata"]["tags"]["album"] = ["Another album"]
 
-        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
-        db.data.write_low_level(self.test_mbid, second_data)
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.data.write_low_level(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
 
         db.data.add_model("model1", "v1", "show")
@@ -209,8 +213,8 @@ class DataDBTestCase(DatabaseTestCase):
         second_data = copy.deepcopy(self.test_lowlevel_data)
         second_data["metadata"]["tags"]["album"] = ["Another album"]
 
-        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
-        db.data.write_low_level(self.test_mbid, second_data)
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.data.write_low_level(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         ll_id1, ll_id2 = self._get_ll_id_from_mbid(self.test_mbid)
 
         db.data.add_model("model1", "v1", "show")
@@ -249,7 +253,7 @@ class DataDBTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.data.load_high_level(self.test_mbid, offset=0)
 
-        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data)
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
 
         db.data.add_model("model1", "1.0", "show")
@@ -318,16 +322,16 @@ class DataDBTestCase(DatabaseTestCase):
 
 
     def test_count_lowlevel(self):
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(1, db.data.count_lowlevel(self.test_mbid))
         # Exact same data is deduplicated
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(1, db.data.count_lowlevel(self.test_mbid))
 
         # make a copy of the data and change it
         second_data = copy.deepcopy(self.test_lowlevel_data)
         second_data["metadata"]["tags"]["album"] = ["Another album"]
-        db.data.submit_low_level_data(self.test_mbid, second_data)
+        db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(2, db.data.count_lowlevel(self.test_mbid))
 
     def test_add_get_model(self):

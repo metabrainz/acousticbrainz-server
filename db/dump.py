@@ -36,10 +36,11 @@ _TABLES = {
     ),
     "lowlevel": (
         "id",
-        "mbid",
+        "gid",
         "build_sha1",
         "lossless",
         "submitted",
+        "gid_type",
     ),
     "lowlevel_json": (
         "id",
@@ -309,10 +310,10 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
             # Need to count how many duplicate MBIDs are there before start_time
             if start_time:
                 cursor.execute("""
-                    SELECT mbid, count(id)
+                    SELECT gid, count(id)
                     FROM lowlevel
                     WHERE submitted <= %s
-                    GROUP BY mbid
+                    GROUP BY gid
                     """, (start_time,))
                 counts = cursor.fetchall()
                 for mbid, count in counts:
@@ -327,7 +328,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     where = "WHERE %s%s" % (start_cond, end_cond)
             else:
                 where = ""
-            cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY mbid" % where)
+            cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY gid" % where)
 
             cursor_inner = connection.cursor()
 
@@ -342,7 +343,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 id_list = tuple([i[0] for i in id_list])
 
                 query = text("""
-                   SELECT mbid::text
+                   SELECT gid::text
                         , llj.data::text
                      FROM lowlevel ll
                      JOIN lowlevel_json llj

@@ -1,11 +1,12 @@
 BEGIN;
 
 CREATE TABLE lowlevel (
-  id          SERIAL,
-  mbid        UUID NOT NULL,
-  build_sha1  TEXT NOT NULL,
-  lossless    BOOLEAN                  DEFAULT 'n',
-  submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id         SERIAL,
+  gid        UUID      NOT NULL,
+  build_sha1 TEXT      NOT NULL,
+  lossless   BOOLEAN                  DEFAULT 'n',
+  submitted  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  gid_type   gid_type  NOT NULL
 );
 
 CREATE TABLE lowlevel_json (

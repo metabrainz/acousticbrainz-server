@@ -44,7 +44,7 @@ def migrate_rows(oldengine, newconn, id_list):
 
     q = text(
         """SELECT ll.id AS id
-                , ll.mbid AS mbid
+                , ll.gid AS gid
                 , ll.submitted AS ll_submitted
                 , ll.build_sha1 AS ll_build_sha1
                 , ll.lossless AS ll_lossless

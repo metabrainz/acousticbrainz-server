@@ -48,12 +48,12 @@ You can start the web server (will be available at http://127.0.0.1:8080/):
 
 or high-level data extractor:
 
-    $ cd acousticbraiz-server/hl_extractor
+    $ cd acousticbrainz-server/hl_extractor
     $ python hl_calc.py
 
 or dataset evaluator:
 
-    $ cd acousticbraiz-server/dataset_eval
+    $ cd acousticbrainz-server/dataset_eval
     $ python evaluate.py
 
 There are some shortcuts defined using fabric to perform commonly used

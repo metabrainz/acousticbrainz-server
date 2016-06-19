@@ -50,7 +50,7 @@ function writeResource(stream) {
   return deferred.promise;
 }
 
-function buildStyles() {
+function buildStyles(callback) {
   return writeResource(
     gulp.src(path.resolve(STYLES_DIR, '*.less'))
     .pipe(less({
@@ -60,8 +60,7 @@ function buildStyles() {
         new (require('less-plugin-clean-css'))({compatibility: 'ie8'})
       ]
     }))
-  )
-      .done(writeManifest);
+  ).done(callback);
 }
 
 function transformBundle(bundle) {
@@ -113,13 +112,14 @@ function buildScripts() {
   ]).then(writeManifest);
 }
 
-gulp.task('styles', buildStyles);
+gulp.task('styles', function () {
+  return buildStyles(writeManifest);
+});
 gulp.task('scripts', buildScripts);
 
 gulp.task('watch', ['styles', 'scripts'], function () {
-  let watch = require('gulp-watch');
 
-  watch(path.resolve(STATIC_DIR, '**/*.less'), buildStyles);
+  gulp.watch(path.resolve(STATIC_DIR, '**/*.less'), ['styles']);
 
   function rebundle(b, resourceName, file) {
     var rebuild = false;
@@ -135,12 +135,17 @@ gulp.task('watch', ['styles', 'scripts'], function () {
     }
 
     if (rebuild) {
-      writeScript(b, resourceName).done(writeManifest);
+      process.stdout.write(`Rebuilding ${resourceName} (${file.event}: ${file.path}) ... `);
+      writeScript(b, resourceName).done(function () {
+        writeManifest();
+        process.stdout.write('done.\n');
+      });
     }
   }
 
+  let watch = require('gulp-watch');
   watch(path.resolve(SCRIPTS_DIR, '**/*.js'), function (file) {
-    _.each(CACHED_BUNDLES, function (bundle, resourceName) {
+    CACHED_BUNDLES.forEach(function (bundle, resourceName) {
       rebundle(bundle, resourceName, file);
     });
   });

@@ -1,0 +1,24 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+  <h1>Admins</h1>
+  <h2>Add an admin</h2>
+
+  {% for field in form.errors %}
+    {% for error in form.errors[field] %}
+      <div class="alert alert-danger">{{ field }}: {{ error }}</div>
+    {% endfor %}
+  {% endfor %}
+
+  <form class="form-horizontal" role="form" method="POST">
+    {{ form.csrf_token }}
+    {{ form.musicbrainz_id(class="form-control",
+                           placeholder=form.musicbrainz_id.label.text) }}
+    <div class="checkbox">
+      <label>
+        {{ form.force(label="test") }}
+        {{ form.force.label }}
+      </label>
+    </div>
+    <button type="submit" class="btn btn-primary">Add</button>
+  </form>
+{% endblock %}

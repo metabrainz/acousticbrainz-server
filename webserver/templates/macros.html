@@ -11,3 +11,40 @@
 
   <div class="alert {{ alert_class }}">{{ message }}</div>
 {% endmacro %}
+
+{% macro pager(links, prevpage, current_page, last_page, nextpage) %}
+	<nav>
+	  <ul class="pagination">
+		{% if current_page == 1 %}
+		<li class="disabled">
+        <span aria-hidden="true">&laquo;</span>
+		{% else %}
+		<li>
+          <a href="{{prevpage}}" aria-label="Previous">
+			<span aria-hidden="true">&laquo;</span>
+		  </a>
+		{% endif %}
+		</li>
+		{% for number, link in links %}
+			{% if current_page == number %}
+			<li class="active">
+			{% else %}
+            <li>
+                {% endif %}
+            <a href="{{link}}">{{number}}</a>
+		</li>
+		{% endfor %}
+		<li>
+		{% if current_page == last_page %}
+		<li class="disabled">
+	      <span aria-hidden="true">&raquo;</span>
+		{% else %}
+		<li>
+          <a href="{{nextpage}}" aria-label="Next">
+			<span aria-hidden="true">&raquo;</span>
+		  </a>
+		{% endif %}
+		</li>
+	  </ul>
+	</nav>
+{% endmacro %}

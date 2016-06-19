@@ -6,7 +6,10 @@ from db import dataset_eval
 
 
 DATASET_EVAL_NO_FILTER = "no_filtering"
-
+DATASET_PENDING = "pending"
+DATASET_RUNNING = "running"
+DATASET_DONE = "done"
+DATASET_ALL = "all"
 
 class DatasetCSVImportForm(Form):
     name = StringField("Name", validators=[DataRequired("Dataset name is required!")])
@@ -23,3 +26,12 @@ class DatasetEvaluationForm(Form):
         (dataset_eval.FILTER_ARTIST, "By Artist"),
     ])
     normalize = BooleanField("Normalize classes")
+
+class DatasetListForm(Form):
+    filter_type = SelectField("Dataset Evaluation Status", choices=[
+        (DATASET_PENDING, "Pending"),
+        (DATASET_RUNNING, "Running"),
+        (DATASET_DONE, "Done"),
+        (DATASET_ALL, "All"),
+    ])
+

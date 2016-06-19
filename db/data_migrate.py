@@ -1,5 +1,5 @@
 import db
-import json
+import ujson
 from hashlib import sha256
 from sqlalchemy import text
 
@@ -10,7 +10,7 @@ version_cache = {}
 
 def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id
-    norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    norm_data = ujson.dumps(data, sort_keys=True)
     sha = sha256(norm_data).hexdigest()
     if sha in version_cache:
         return version_cache[sha]
@@ -51,11 +51,9 @@ def migrate_low_level(connection, old_ll_row):
     submitted = old_ll_row["ll_submitted"]
     data = old_ll_row["ll_data"]
 
-    norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    norm_data = ujson.dumps(data, sort_keys=True)
     sha = sha256(norm_data).hexdigest()
 
-    if sha != data_sha256:
-        raise Exception("Stored sha should be the same as computed sha, but isn't")
     ll_version = data["metadata"]["version"]
     version_id = insert_version(connection, ll_version, VERSION_TYPE_LOWLEVEL)
 
@@ -68,7 +66,7 @@ def migrate_low_level(connection, old_ll_row):
     connection.execute(
         """INSERT INTO lowlevel_json (id, data_sha256, data, version)
            VALUES (%s, %s, %s, %s)""",
-        (id, data_sha256, norm_data, version_id)
+        (id, sha, norm_data, version_id)
     )
 
 def _get_model_id(name):
@@ -115,7 +113,7 @@ def migrate_high_level(connection, hl_row):
     json_meta = hl_json["metadata"]
     json_high = hl_json["highlevel"]
 
-    meta_norm_data = json.dumps(json_meta, sort_keys=True, separators=(',', ':'))
+    meta_norm_data = ujson.dumps(json_meta, sort_keys=True)
     sha = sha256(meta_norm_data).hexdigest()
     hl_meta = text(
         """INSERT INTO highlevel_meta (id, data, data_sha256)
@@ -125,7 +123,7 @@ def migrate_high_level(connection, hl_row):
     version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
 
     for name, data in json_high.items():
-        item_norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
+        item_norm_data = ujson.dumps(data, sort_keys=True)
         item_sha = sha256(item_norm_data).hexdigest()
 
         # For a migration we know the existing models, this is faster

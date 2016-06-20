@@ -5,6 +5,7 @@ import sqlalchemy
 ALL_USER_COLUMNS = ", ".join(["id", "created", "musicbrainz_id", "admin"])
 
 
+
 def create(musicbrainz_id):
     with db.engine.connect() as connection:
         result = connection.execute(

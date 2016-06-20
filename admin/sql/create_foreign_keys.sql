@@ -78,4 +78,10 @@ ALTER TABLE dataset_eval_jobs
   ON UPDATE CASCADE
   ON DELETE CASCADE;
 
+
+ALTER TABLE api_key
+  ADD CONSTRAINT api_key_fk_user
+  FOREIGN KEY (owner)
+  REFERENCES "user" (id);
+
 COMMIT;

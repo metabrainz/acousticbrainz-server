@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template, jsonify
-from flask_login import current_user
+from flask_login import current_user, login_required
 from werkzeug.exceptions import NotFound
 import db.user
 import db.dataset
+import db.api_key
 
 user_bp = Blueprint("user", __name__)
 
@@ -13,15 +14,32 @@ def profile(musicbrainz_id):
     own_page = current_user.is_authenticated and \
                current_user.musicbrainz_id.lower() == musicbrainz_id.lower()
     if own_page:
-        user = current_user
-        datasets = db.dataset.get_by_user_id(user.id, public_only=False)
+        api_keys = db.api_key.get_active(current_user.id)
+        args = {
+            "own_page": True,
+            "user": current_user,
+            "datasets": db.dataset.get_by_user_id(current_user.id, public_only=False),
+            "api_key": api_keys[-1] if api_keys else None,
+        }
     else:
         user = db.user.get_by_mb_id(musicbrainz_id)
         if user is None:
             raise NotFound("Can't find this user.")
-        datasets = db.dataset.get_by_user_id(user["id"])
+        args = {
+            "own_page": False,
+            "user": user,
+            "datasets": db.dataset.get_by_user_id(user["id"]),
+        }
 
-    return render_template("user/profile.html", own_page=own_page, user=user, datasets=datasets)
+    return render_template("user/profile.html", **args)
+
+
+@user_bp.route("/user/generate-api-key", methods=['POST'])
+@login_required
+def generate_api_key():
+    """This endpoint revokes all keys owned by current user and generates a new one."""
+    db.api_key.revoke_all(current_user.id)
+    return jsonify({'key': db.api_key.generate(current_user.id)})
 
 
 @user_bp.route("/user-info")

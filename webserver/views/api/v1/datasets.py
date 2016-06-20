@@ -68,6 +68,10 @@ def create_dataset():
     if not dataset_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
     # TODO(roman): Catch validation error from the next call
+    if "public" not in dataset_dict:
+        dataset_dict["public"] = True
+    if "classes" not in dataset_dict:
+        dataset_dict["classes"] = []
     dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
     return jsonify(
         success=True,

@@ -1,12 +1,14 @@
 Installing AcousticBrainz Server
 ================================
 
-AcousticBrainz Server consists of two parts: web server that powers
-acousticbrainz.org website and high-level data extractor that processes
-incoming low-level information about recordings.
+AcousticBrainz Server consists of two core components: a web server that powers
+acousticbrainz.org website and a number of background processes which perform
+tasks for the website:
 
-Prerequisites
--------------
+ * A high-level data extractor that processes incoming low-level information about recordings.
+ * A tool to build models based on datasets created on the website
+
+## Prerequisites
 
 * [Python](https://www.python.org/) 2.7.x
 * [PostgreSQL](http://www.postgresql.org/) >=9.4 (needs the JSONB data type)
@@ -21,8 +23,7 @@ For example in the latest Ubuntu, this command will install pre-requisites:
         postgresql-9.4 postgresql-client-9.4 postgresql-server-dev-9.4
 
 
-Web Server
-----------
+## Web Server
 
 It is recommended, although optional, to first set up a virtual environment and
 activate it:
@@ -34,56 +35,34 @@ activate it:
 
 Then use `pip` to install the required Python dependencies:
 
-    $ pip install -r requirements.txt
+    $ pip install -r requirements_development.txt
 
 ### Configuration
 
-Copy over `config.py.sample` to `config.py` and edit its content to fit your
+Copy `config.py.sample` to `config.py` and edit its content to fit your
 environment.
-
-#### Configuring MusicBrainz OAuth
-
-You need to create [a new application](https://musicbrainz.org/account/applications)
-and set two variables: `MUSICBRAINZ_CLIENT_ID` and `MUSICBRAINZ_CLIENT_SECRET`.
-On MusicBrainz set Callback URL to `http://<host>/login/musicbrainz/post`.
 
 ### Creating the database
 
-After you tweak configuration file, database needs to be created:
+After you tweak configuration file, the database needs to be created:
 
     $ python manage.py init_db
 
 *Optional:* You might want to create a database that will be used by tests:
 
     $ python manage.py init_test_db
-    
+
 ### Node.js dependencies
 
-Node.js dependencies are managed using `npm`. To install these dependencies run
-the following command:
+Node.js dependencies are managed using `npm`. To install these dependencies run:
 
     $ npm install
-    
-### Building static files
 
-We use Gulp as our JavaScript/CSS build system. It should be installed with
-node.js dependencies. Calling `gulp` on its own will build everything necessary
-to access the server in a web browser:
+### Configuring and running the server
 
-    ./node_modules/.bin/gulp
-    
-*Keep in mind that you'll need to rebuild static files after you modify
-JavaScript or CSS.*
+Continue from the configuration section in README.md
 
-### Starting the server
-
-After all this, you can run the site/server using `./server.py`.
-Use `./server.py -h` to get a list of command-line switches
-to further suit your local environment (e.g., port, listening address, ...).
-
-
-High-level Data Extractor
--------------------------
+## High-level Data Extractor
 
 To run high-level data extractor you'll need two things:
 
@@ -112,8 +91,3 @@ directory into *./hl_extractor/* in the project root.
 Download archive from http://essentia.upf.edu/documentation/svm_models/, extract
 it, and move contents of *svm_models* directory into */hl_extractor/svm_models*
 in the project root.
-
-### Starting the extractor
-
-    $ cd high-level
-    $ python hl_calc.py

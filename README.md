@@ -33,28 +33,6 @@ provisioning of the virtual machine.
  * `AB_NOHL`: If set, don't compile the highlevel calculation tools
               (not needed for regular server development)
 
-Before starting the server you will need to build static files:
-
-    $ cd acousticbrainz-server
-    $ fab build_static
-
-*Keep in mind that you'll need to rebuild static files after you modify
-JavaScript or CSS.*
-
-You can start the web server (will be available at http://127.0.0.1:8080/):
-
-    $ cd acousticbrainz-server
-    $ python manage.py runserver
-
-or high-level data extractor:
-
-    $ cd acousticbrainz-server/hl_extractor
-    $ python hl_calc.py
-
-or dataset evaluator:
-
-    $ cd acousticbrainz-server/dataset_eval
-    $ python evaluate.py
 
 There are some shortcuts defined using fabric to perform commonly used
 commands:
@@ -63,9 +41,71 @@ commands:
  * `fab vssh`: Connect to the VM more efficiently, saving the settings
                so that you don't need to run vagrant each time you ssh.
 
-### The Usual Way
+### Manually
 
-Full installation instructions are available in [INSTALL.md](https://github.com/metabrainz/acousticbrainz-server/blob/master/INSTALL.md) file.
+Full installation instructions are available in [INSTALL.md](https://github.com/metabrainz/acousticbrainz-server/blob/master/INSTALL.md) file. After installing, continue the following steps.
+
+## Configuration and development
+
+### Building static files
+
+We use Gulp as our JavaScript/CSS build system.
+node.js dependencies. Calling `gulp` on its own will build everything necessary
+to access the server in a web browser:
+
+    ./node_modules/.bin/gulp
+
+*Keep in mind that you'll need to rebuild static files after you modify
+JavaScript or CSS.*
+
+### Login
+
+To use the dataset tools you need to configure OAuth with MusicBrainz.
+Log in to your MusicBrainz account (or create one if needed) and create
+[a new application](https://musicbrainz.org/account/applications).
+
+Choose a name (for example, "AcousticBrainz development"), set Type to "Web Application"
+and set the Callback URL to http://localhost:8080/login/musicbrainz/post
+
+Copy the OAuth Client ID and OAuth Client Secret values to
+`config.py` as `MUSICBRAINZ_CLIENT_ID` and `MUSICBRAINZ_CLIENT_SECRET`.
+
+You should now be able to use the menu in the top corner of your AcousticBrainz server
+to log in.
+
+### Admin interface
+
+Once you have logged in, you can make your user an admin, by running
+
+    python manage.py add_admin <your user>
+
+You should now be able to access the admin section at http://localhost:8080/admin
+
+
+## Running
+
+Before starting the server you will need to build static files:
+
+    $ cd acousticbrainz-server
+    $ fab build_static
+
+*Keep in mind that you'll need to rebuild static files after you modify
+JavaScript or CSS.*
+
+You can start the web server (will be available at http://localhost:8080/):
+
+    $ cd acousticbrainz-server
+    $ python manage.py runserver
+
+the high-level data extractor:
+
+    $ cd acousticbrainz-server/hl_extractor
+    $ python hl_calc.py
+
+the dataset evaluator:
+
+    $ cd acousticbrainz-server/dataset_eval
+    $ python evaluate.py
 
 
 ## Working with data

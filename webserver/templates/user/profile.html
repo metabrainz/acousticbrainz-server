@@ -5,7 +5,21 @@
 {% block content %}
   <h2 class="page-title">{{ user.musicbrainz_id }}</h2>
   {% if own_page %}
-     <p class="text-muted"><em>This is you!</em></p>
+    <p class="text-muted"><em>This is you!</em></p>
+
+    <h3>API key</h3>
+    <p>
+      <code id="api-key" style="margin-right:4px; {{ 'display:none;' if not api_key }}">{{ api_key }}</code>
+      <a id="btn-generate-api-key" class="btn btn-default btn-xs" href="#" role="button">Generate new key</a>
+    </p>
+    <p class="text-muted">
+      <em>
+        This key should be considered private. Don't check it into any publicly
+        visible version control systems and similar places. If API key has been
+        exposed, you should immediately generate a new one! When you generate a
+        new key, current one is revoked.
+      </em>
+    </p>
   {% endif %}
 
   <h3>Datasets</h3>
@@ -53,4 +67,9 @@
   {% else %}
     <p class="text-muted"><em>No datasets.</em></p>
   {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ get_static_path('profile.js') }}"></script>
 {% endblock %}

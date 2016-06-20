@@ -96,19 +96,19 @@ function writeScript(b, resourceName) {
 
 function buildScripts() {
   var commonBundle = runYarb('common.js');
-
   var datasetsBundle = runYarb('datasets.js', function (b) {
     b.external(commonBundle);
   });
-
   var statsBundle = runYarb('stats.js');
   var homepageBundle = runYarb('homepage.js');
+  var profileBundle = runYarb('profile.js');
 
   return Q.all([
     writeScript(commonBundle, 'common.js'),
     writeScript(datasetsBundle, 'datasets.js'),
     writeScript(statsBundle, 'stats.js'),
     writeScript(homepageBundle, 'homepage.js'),
+    writeScript(profileBundle, 'profile.js'),
   ]).then(writeManifest);
 }
 

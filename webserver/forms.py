@@ -27,11 +27,3 @@ class DatasetEvaluationForm(Form):
     ])
     normalize = BooleanField("Normalize classes")
 
-class DatasetListForm(Form):
-    filter_type = SelectField("Dataset Evaluation Status", choices=[
-        (DATASET_PENDING, "Pending"),
-        (DATASET_RUNNING, "Running"),
-        (DATASET_DONE, "Done"),
-        (DATASET_ALL, "All"),
-    ])
-

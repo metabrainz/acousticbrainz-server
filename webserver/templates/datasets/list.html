@@ -31,6 +31,7 @@
             <td>
                 <a href="{{ url_for('user.profile', musicbrainz_id=ds['author_name']) }}">
                     {{ ds["author_name"] }}
+                </a>
             </td>
             <td>
                 <a href="{{ url_for('datasets.view', id=ds['id']) }}">

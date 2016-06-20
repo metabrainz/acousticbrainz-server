@@ -12,39 +12,32 @@
   <div class="alert {{ alert_class }}">{{ message }}</div>
 {% endmacro %}
 
-{% macro pager(links, prevpage, current_page, last_page, nextpage) %}
-	<nav>
-	  <ul class="pagination">
-		{% if current_page == 1 %}
-		<li class="disabled">
+{% macro pager(links, prev_page, current_page, last_page, next_page) %}
+  <nav>
+    <ul class="pagination">
+      <li class="{{'disabled' if current_page == 1}}">
+      {% if current_page == 1 %}
         <span aria-hidden="true">&laquo;</span>
-		{% else %}
-		<li>
-          <a href="{{prevpage}}" aria-label="Previous">
-			<span aria-hidden="true">&laquo;</span>
-		  </a>
-		{% endif %}
-		</li>
-		{% for number, link in links %}
-			{% if current_page == number %}
-			<li class="active">
-			{% else %}
-            <li>
-                {% endif %}
-            <a href="{{link}}">{{number}}</a>
-		</li>
-		{% endfor %}
-		<li>
-		{% if current_page == last_page %}
-		<li class="disabled">
-	      <span aria-hidden="true">&raquo;</span>
-		{% else %}
-		<li>
-          <a href="{{nextpage}}" aria-label="Next">
-			<span aria-hidden="true">&raquo;</span>
-		  </a>
-		{% endif %}
-		</li>
-	  </ul>
-	</nav>
+      {% else %}
+        <a href="{{prev_page}}" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      {% endif %}
+      </li>
+      {% for number, link in links %}
+        <li class="{{'active' if current_page == number }}">
+          <a href="{{link}}">{{number}}</a>
+        </li>
+      {% endfor %}
+      <li class="{{'disabled' if current_page == last_page}}">
+      {% if current_page == last_page %}
+        <span aria-hidden="true">&raquo;</span>
+      {% else %}
+        <a href="{{next_page}}" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      {% endif %}
+      </li>
+    </ul>
+  </nav>
 {% endmacro %}

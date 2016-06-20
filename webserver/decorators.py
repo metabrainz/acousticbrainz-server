@@ -9,11 +9,7 @@ from six import string_types
 def auth_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        api_key = request.args.get('key')
-        # TODO(roman): Add support for API keys when this is merged:
-        # https://github.com/metabrainz/acousticbrainz-server/pull/181
-        valid_key = False
-        if current_user.is_authenticated or valid_key:
+        if current_user.is_authenticated:
             return f(*args, **kwargs)
         else:
             raise Unauthorized

@@ -267,16 +267,9 @@ class DataDBTestCase(DatabaseTestCase):
         pass
     
     def test_find_md5_duplicates(self):
-        
-        self.assertEqual(db.data.find_md5_duplicates(self.test_md5), None)
         self.assertIsNone(db.data.find_md5_duplicates(self.test_md5))
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
-        self.assertEqual(str(db.data.find_md5_duplicates(self.test_md5)), self.test_mbid)
-        
-    def test_generate_datasetitem_uuidv4(self):
-        
-        self.assertTrue(db.data.generate_datasetitem_uuidv4())
-        self.assertNotEqual(db.data.generate_datasetitem_uuidv4(), None)
+        self.assertEqual(db.data.find_md5_duplicates(self.test_md5), self.test_mbid)
 
 class DataUtilTestCase(DatabaseTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """
@@ -341,6 +334,3 @@ class DataUtilTestCase(DatabaseTestCase):
         db.data.clean_metadata(d)
         self.assertFalse('unknown_tag' in d['metadata']['tags'])
         self.assertTrue('file_name' in d['metadata']['tags'])
-
-
-

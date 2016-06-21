@@ -11,6 +11,7 @@ from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
 
 import logging
+import uuid
 
 bp_core = Blueprint('api_v1_core', __name__)
 
@@ -134,9 +135,9 @@ def submit_low_level_nombid():
         mbid = db.data.find_md5_duplicates(md5encoded)
         if mbid is not None:
             action = "md5_duplicate"
-            return jsonify({"status": "OK", "itemuuid": str(mbid), "action": action})
+            return jsonify({"status": "OK", "itemuuid": mbid, "action": action})
         else:
-            mbid = db.data.generate_datasetitem_uuidv4()
+            mbid = str(uuid.uuid4())
             data['metadata']['tags']['musicbrainz_trackid'] = [mbid]
             action = "uuidV4_generate"
     else:

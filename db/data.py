@@ -475,7 +475,7 @@ def find_md5_duplicates(md5):
     """
 
     query = text(
-            """SELECT lowlevel.mbid
+            """SELECT lowlevel.mbid::text
                  FROM lowlevel
                  JOIN lowlevel_json USING (id)
                 WHERE lowlevel_json.data#> '{metadata,audio_properties,md5_encoded}' ? :md5""")
@@ -483,16 +483,6 @@ def find_md5_duplicates(md5):
         result = connection.execute(query, {"md5": md5})
         row = result.fetchone()
         if row:
-            # returns the retrieved mbid
             return row[0]
         else:
             return None
-
-def generate_datasetitem_uuidv4():
-    """Generate a random UUIDv4 for dataset items that are not present in the DB as recordings
-    
-    Returns: 
-        itemuuid: The generated random UUIDv4 assigned to a specific dataset item
-    """
-    itemuuid = uuid4()
-    return str(itemuuid)

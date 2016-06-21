@@ -1,7 +1,7 @@
 Web API
 =======
 
-AcousticBrianz server provides a Web API for getting and submitting data.
+The AcousticBrainz server provides a Web API for getting and submitting data.
 
 **Base URL**: ``https://acousticbrainz.org``
 

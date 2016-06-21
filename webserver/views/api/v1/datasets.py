@@ -46,7 +46,7 @@ def create_dataset():
     :reqheader Content-Type: *application/json*
     :<json string name: *Required.* Name of the dataset.
     :<json string description: *Optional.* Description of the dataset.
-    :<json boolean public: *Optional.* ``True`` to make dataset public, ``false`` to make it private. New datasets are
+    :<json boolean public: *Optional.* ``true`` to make dataset public, ``false`` to make it private. New datasets are
         public by default.
     :<json array classes: *Optional.* Array of objects containing information about classes to add into new dataset. For
         example:

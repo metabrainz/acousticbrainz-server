@@ -5,6 +5,7 @@ from webserver.decorators import auth_required
 from webserver.views.api import exceptions as api_exceptions
 import db.dataset
 import db.exceptions
+from utils import dataset_validator
 
 bp_datasets = Blueprint('api_v1_datasets', __name__)
 
@@ -67,12 +68,15 @@ def create_dataset():
     dataset_dict = request.get_json()
     if not dataset_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
-    # TODO(roman): Catch validation error from the next call
     if "public" not in dataset_dict:
         dataset_dict["public"] = True
     if "classes" not in dataset_dict:
         dataset_dict["classes"] = []
-    dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
+    try:
+        dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+
     return jsonify(
         success=True,
         dataset_id=dataset_id,

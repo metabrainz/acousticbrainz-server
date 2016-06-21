@@ -129,7 +129,8 @@ def get_public_datasets(status):
               ON "user".id = dataset.author
               LEFT JOIN LATERAL (SELECT dataset_eval_jobs.status
                                    FROM dataset_eval_jobs
-                                   JOIN dataset_snapshot ON dataset_snapshot.dataset_id = dataset_eval_jobs.snapshot_id
+                                   JOIN dataset_snapshot
+                                     ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                                   WHERE dataset.id = dataset_snapshot.dataset_id
                                ORDER BY dataset_eval_jobs.updated DESC
                                LIMIT 1)

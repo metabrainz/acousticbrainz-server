@@ -220,7 +220,8 @@ def set_job_status(job_id, status, status_msg=None):
 def delete_job(job_id):
     with db.engine.begin() as connection:
         result = connection.execute("""
-            SELECT status
+            SELECT snapshot_id::text
+                 , status
               FROM dataset_eval_jobs
              WHERE id = %s
         """, (job_id,))
@@ -235,6 +236,7 @@ def delete_job(job_id):
             "DELETE FROM dataset_eval_jobs WHERE id = %s",
             (job_id,)
         )
+        db.dataset.delete_snapshot(connection, row["snapshot_id"])
 
 
 def get_dataset_eval_set(id):

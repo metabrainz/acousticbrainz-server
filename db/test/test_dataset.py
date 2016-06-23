@@ -139,6 +139,34 @@ class DatasetTestCase(DatabaseTestCase):
         ds_updated = dataset.get(id)
         self.assertTrue(ds_updated['last_edited'] > ds['last_edited'])
 
+    def test_create_snapshot(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        snapshots = dataset.get_snapshots_for_dataset(id)
+        self.assertEqual(len(snapshots), 0)
+
+        snap_id = dataset.create_snapshot(id)
+        snapshots = dataset.get_snapshots_for_dataset(id)
+        self.assertEqual(len(snapshots), 1)
+        self.assertEqual(snapshots[0]["id"], snap_id)
+
+        snap = dataset.get_snapshot(snap_id)
+        self.assertEqual(snap["data"], self.test_data)
+
+    def test_delete_shapshot(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        snap_id = dataset.create_snapshot(id)
+        snapshots = dataset.get_snapshots_for_dataset(id)
+        self.assertEqual(len(snapshots), 1)
+
+        with db.engine.connect() as connection:
+            dataset.delete_snapshots_for_dataset(connection, id)
+        snapshots = dataset.get_snapshots_for_dataset(id)
+        self.assertEqual(len(snapshots), 0)
+
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            snap = dataset.get_snapshot(snap_id)
+
+
 class GetPublicDatasetsTestCase(DatabaseTestCase):
     """A whole testcase because there are lots of cases to test"""
 

@@ -128,8 +128,10 @@ def submit_low_level_nombid():
     
     if 'musicbrainz_recordingid' in data['metadata']['tags'].keys():
         mbid = data['metadata']['tags']['musicbrainz_recordingid']
+        action = "mbid_submitted"
     elif 'musicbrainz_trackid' in data['metadata']['tags'].keys():
         mbid = data['metadata']['tags']['musicbrainz_trackid']
+        action = "mbid_submitted"
     elif 'md5_encoded' in data['metadata']['audio_properties'].keys():
         md5encoded = data['metadata']['audio_properties']['md5_encoded']
         mbid = db.data.find_md5_duplicates(md5encoded)

@@ -224,13 +224,17 @@ def create_snapshot(dataset_id):
     snapshot = {
         "name": dataset["name"],
         "description": dataset["description"],
-        "classes": dataset["classes"],
+        "classes": [{
+            "name": c["name"],
+            "description": c["description"],
+            "recordings": c["recordings"],
+        } for c in dataset["classes"]],
     }
     with db.engine.connect() as connection:
         result = connection.execute(sqlalchemy.text("""
             INSERT INTO dataset_snapshot (id, dataset_id, data)
                  VALUES (uuid_generate_v4(), :dataset_id, :data)
-              RETURNING id
+              RETURNING id::text
         """), {
             "dataset_id": dataset_id,
             "data": json.dumps(snapshot),

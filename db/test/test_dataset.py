@@ -1,12 +1,11 @@
 import db
 from db.testing import DatabaseTestCase
-import unittest
-import db
 from db import dataset, user
 from utils import dataset_validator
 from sqlalchemy import text
 import uuid
 import copy
+
 
 class DatasetTestCase(DatabaseTestCase):
 
@@ -150,7 +149,9 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(snapshots[0]["id"], snap_id)
 
         snap = dataset.get_snapshot(snap_id)
-        self.assertEqual(snap["data"], self.test_data)
+        dataset_snap = copy.deepcopy(self.test_data)
+        del dataset_snap["public"]
+        self.assertDictEqual(snap["data"], dataset_snap)
 
     def test_delete_shapshot(self):
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
@@ -164,7 +165,7 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(len(snapshots), 0)
 
         with self.assertRaises(db.exceptions.NoDataFoundException):
-            snap = dataset.get_snapshot(snap_id)
+            dataset.get_snapshot(snap_id)
 
 
 class GetPublicDatasetsTestCase(DatabaseTestCase):

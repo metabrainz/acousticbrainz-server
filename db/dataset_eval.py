@@ -236,7 +236,7 @@ def delete_job(job_id):
             "DELETE FROM dataset_eval_jobs WHERE id = %s",
             (job_id,)
         )
-        db.dataset.delete_snapshot(connection, row["snapshot_id"])
+        db.dataset._delete_snapshot(connection, row["snapshot_id"])
 
 
 def get_dataset_eval_set(id):

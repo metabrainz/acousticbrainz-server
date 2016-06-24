@@ -159,7 +159,7 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(len(snapshots), 1)
 
         with db.engine.connect() as connection:
-            dataset.delete_snapshots_for_dataset(connection, id)
+            dataset._delete_snapshots_for_dataset(connection, id)
         snapshots = dataset.get_snapshots_for_dataset(id)
         self.assertEqual(len(snapshots), 0)
 

@@ -266,7 +266,8 @@ def get_snapshot(id):
             raise db.exceptions.NoDataFoundException("Can't find dataset snapshot with a specified ID.")
         return dict(row)
 
-def delete_snapshot(connection, snapshot_id):
+
+def _delete_snapshot(connection, snapshot_id):
     """Delete a snapshot.
 
     Args:
@@ -278,11 +279,15 @@ def delete_snapshot(connection, snapshot_id):
               WHERE id = :snapshot_id""")
     connection.execute(query, {"snapshot_id": snapshot_id})
 
+
 def get_snapshots_for_dataset(dataset_id):
     """Get all snapshots created for a dataset.
 
     Args:
         dataset_id (string/uuid): ID of a dataset.
+
+    Returns:
+        List of snapshots as dictionaries.
     """
     with db.engine.connect() as connection:
         result = connection.execute(sqlalchemy.text("""
@@ -295,7 +300,8 @@ def get_snapshots_for_dataset(dataset_id):
         """), {"dataset_id": dataset_id})
         return [dict(row) for row in result]
 
-def delete_snapshots_for_dataset(connection, dataset_id):
+
+def _delete_snapshots_for_dataset(connection, dataset_id):
     """Delete all snapshots of a dataset.
 
     Args:

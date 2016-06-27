@@ -21,7 +21,7 @@ def migrate_low_level(old_ll_row):
     with db.engine94.begin() as connection:
 
         connection.execute(
-            "INSERT INTO lowlevel (id, mbid, build_sha1, lossless)"
+            "INSERT INTO lowlevel (id, gid, build_sha1, lossless)"
             "VALUES (%s, %s, %s, %s)",
             (id, mbid, build_sha1, lossless)
         )

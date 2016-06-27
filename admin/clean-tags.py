@@ -20,7 +20,7 @@ def rewrite_lowlevel():
     cur2 = conn2.cursor()
     cur3 = conn3.cursor()
 
-    cur.execute("""SELECT id FROM lowlevel ll ORDER BY mbid""")
+    cur.execute("""SELECT id FROM lowlevel ll ORDER BY gid""")
     total = 0
     while True:
         id_list = cur.fetchmany(size = DUMP_CHUNK_SIZE)
@@ -29,7 +29,7 @@ def rewrite_lowlevel():
 
         id_list = tuple([ i[0] for i in id_list ])
 
-        cur2.execute("SELECT id, mbid, data FROM lowlevel WHERE id IN %s ORDER BY mbid", (id_list,))
+        cur2.execute("SELECT id, gid, data FROM lowlevel WHERE id IN %s ORDER BY gid", (id_list,))
         count = 0
         while True:
             row = cur2.fetchone()

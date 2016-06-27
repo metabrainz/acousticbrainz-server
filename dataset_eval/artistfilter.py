@@ -124,7 +124,7 @@ def recording_to_artist(mbid):
             FROM lowlevel ll
             JOIN lowlevel_json llj
            ON ll.id = llj.id
-           WHERE ll.mbid = :mbid""")
+           WHERE ll.gid = :mbid""")
     result = db.engine.execute(q, {"mbid": mbid})
     row = result.fetchone()
     if row and row[0]:
@@ -148,7 +148,7 @@ def recordings_to_artists_sub(mbids):
             FROM lowlevel ll
             JOIN lowlevel_json llj
               ON ll.id = llj.id
-           WHERE ll.mbid in :mbids""")
+           WHERE ll.gid in :mbids""")
     if notincache:
         result = db.engine.execute(q, {"mbids": tuple(notincache)})
         for row in result.fetchall():

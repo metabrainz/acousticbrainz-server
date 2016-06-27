@@ -109,7 +109,7 @@ class DataDBTestCase(DatabaseTestCase):
     def _get_ll_id_from_mbid(self, mbid):
         with db.engine.connect() as connection:
             ret = []
-            result = connection.execute("select id from lowlevel where mbid = %s", (mbid, ))
+            result = connection.execute("select id from lowlevel where gid = %s", (mbid, ))
             for row in result:
                 ret.append(row[0])
             return ret

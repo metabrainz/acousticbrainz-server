@@ -25,7 +25,7 @@ class DataDBTestCase(DatabaseTestCase):
         sanity.return_value = None
 
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
-        write.assert_called_with(self.test_mbid, self.test_lowlevel_data)
+        write.assert_called_with(self.test_mbid, self.test_lowlevel_data, True)
 
     @mock.patch("db.data.sanity_check_data")
     @mock.patch("db.data.write_low_level")
@@ -39,7 +39,11 @@ class DataDBTestCase(DatabaseTestCase):
         output = {"metadata": {"tags": {"musicbrainz_recordingid": [self.test_mbid]}, "audio_properties": {"lossless": True}}}
 
         db.data.submit_low_level_data(self.test_mbid, input)
-        write.assert_called_with(self.test_mbid, output)
+        write.assert_called_with(self.test_mbid, output, True)
+        
+        input = {"metadata": {"tags": {"musicbrainz_trackid": [self.test_mbid], "is_mbid": 'false'}, "audio_properties": {"lossless": 1}}}
+        db.data.submit_low_level_data(self.test_mbid, input)
+        write.assert_called_with(self.test_mbid, output, False)
 
 
     @mock.patch("db.data.sanity_check_data")

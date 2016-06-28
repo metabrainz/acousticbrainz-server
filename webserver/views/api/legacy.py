@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from flask import Blueprint, request, jsonify
-from db.data import submit_low_level_data, count_lowlevel
+from db.data import count_lowlevel, submit_low_level_data
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
-import webserver.exceptions
+from webserver.views.api import exceptions
 import db.data
 import json
 import uuid
@@ -32,7 +32,7 @@ def get_low_level(mbid):
     try:
         return jsonify(db.data.load_low_level(mbid, offset))
     except NoDataFoundException:
-        raise webserver.exceptions.APINotFound("Not found")
+        raise exceptions.APINotFound("Not found")
 
 
 @api_legacy_bp.route("/<string:mbid>/high-level", methods=["GET"])
@@ -47,7 +47,7 @@ def get_high_level(mbid):
     try:
         return jsonify(db.data.load_high_level(mbid, offset))
     except NoDataFoundException:
-        raise webserver.exceptions.APINotFound("Not found")
+        raise exceptions.APINotFound("Not found")
 
 
 @api_legacy_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
@@ -57,12 +57,12 @@ def submit_low_level(mbid):
     try:
         data = json.loads(raw_data.decode("utf-8"))
     except ValueError as e:
-        raise webserver.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
+        raise exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
     try:
         submit_low_level_data(mbid, data)
     except BadDataException as e:
-        raise webserver.exceptions.APIBadRequest("%s" % e)
+        raise exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
 
 
@@ -74,13 +74,13 @@ def _validate_data_arguments(mbid, offset):
         uuid.UUID(mbid)
     except ValueError:
         # an invalid uuid is 404
-        raise webserver.exceptions.APINotFound("Not found")
+        raise exceptions.APINotFound("Not found")
 
     if offset:
         try:
             offset = int(offset)
         except ValueError:
-            raise webserver.exceptions.APIBadRequest("Offset must be an integer value")
+            raise exceptions.APIBadRequest("Offset must be an integer value")
     else:
         offset = 0
 

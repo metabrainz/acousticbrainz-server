@@ -2,8 +2,8 @@ import db
 import db.exceptions
 import sqlalchemy
 
-ALL_USER_COLUMNS = ", ".join(["id", "created", "musicbrainz_id", "admin"])
-
+USER_COLUMNS = ["id", "created", "musicbrainz_id", "admin"]
+ALL_USER_COLUMNS = ", ".join(['"user".%s' % c for c in USER_COLUMNS])
 
 
 def create(musicbrainz_id):
@@ -24,6 +24,23 @@ def get(id):
               FROM "user"
              WHERE id = :id
         """ % ALL_USER_COLUMNS), {"id": id})
+        row = result.fetchone()
+        return dict(row) if row else None
+
+
+def get_by_api_key(apikey):
+    """Get the user with the specified active API key.
+       If the API key doesn't exist, or if it is inactive,
+       return None"""
+    with db.engine.connect() as connection:
+        query = sqlalchemy.text("""
+            SELECT %s
+              FROM "user"
+              JOIN api_key
+                ON api_key.owner = "user".id
+             WHERE api_key.is_active = 't'
+               AND value = :apikey""" % ALL_USER_COLUMNS)
+        result = connection.execute(query, {"apikey": apikey})
         row = result.fetchone()
         return dict(row) if row else None
 

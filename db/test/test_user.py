@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from db.testing import DatabaseTestCase
 import db.user
+import db.api_key
 import db.exceptions
 
 
@@ -29,6 +30,34 @@ class UserTestCase(DatabaseTestCase):
         user = db.user.get_by_mb_id(musicbrainz_id)
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
+
+    def test_get_by_api_key(self):
+        musicbrainz_id = "fuzzy_dunlop"
+        user_id = db.user.create(musicbrainz_id)
+
+        # No api key
+        user = db.user.get_by_api_key("not-an-api-key")
+        self.assertIsNone(user)
+
+        api_key = db.api_key.generate(user_id)
+        user = db.user.get_by_api_key(api_key)
+        self.assertIsNotNone(user)
+        self.assertEqual(user["id"], user_id)
+
+        # Create a new key, both are valid
+        api_key2 = db.api_key.generate(user_id)
+        user = db.user.get_by_api_key(api_key)
+        user2 = db.user.get_by_api_key(api_key2)
+
+        self.assertEqual(user["id"], user_id)
+        self.assertEqual(user2["id"], user_id)
+
+        # Revoke all, no key is invalid
+        db.api_key.revoke_all(user_id)
+        user = db.user.get_by_api_key(api_key)
+        user2 = db.user.get_by_api_key(api_key2)
+        self.assertIsNone(user)
+        self.assertIsNone(user2)
 
     def test_get_by_mb_id_lowercase(self):
         musicbrainz_id = "fuzzy_dunlop"

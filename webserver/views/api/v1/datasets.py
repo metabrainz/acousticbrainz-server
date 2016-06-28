@@ -22,10 +22,6 @@ def get_dataset(dataset_id):
 @bp_datasets.route("/", methods=["POST"])
 @auth_required
 def create_dataset():
-<<<<<<< HEAD
-    # TODO(roman): Document return values.
-=======
->>>>>>> metabrainz/master
     """Create a new dataset.
 
     **Example request**:

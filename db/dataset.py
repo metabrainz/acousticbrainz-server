@@ -1,10 +1,11 @@
 import db
 import db.dataset_eval
 from utils import dataset_validator
-
 import re
-from sqlalchemy import text
+import sqlalchemy
 import unicodedata
+from db import exceptions
+import json
 
 
 def _slugify(string):
@@ -113,7 +114,7 @@ def get_public_datasets(status):
         raise ValueError("Unknown status")
 
     with db.engine.connect() as connection:
-        query = text("""
+        query = sqlalchemy.text("""
             SELECT dataset.id::text
                  , dataset.name
                  , dataset.description

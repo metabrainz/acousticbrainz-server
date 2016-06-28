@@ -1,8 +1,6 @@
 from __future__ import absolute_import
-
-from __future__ import absolute_import
 from flask import Blueprint, request, jsonify
-from db.data import count_lowlevel, submit_low_level_data
+from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
 from webserver.views.api import exceptions
@@ -11,6 +9,7 @@ import json
 import uuid
 
 api_legacy_bp = Blueprint('api', __name__)
+
 
 @api_legacy_bp.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
@@ -58,12 +57,12 @@ def submit_low_level(mbid):
     try:
         data = json.loads(raw_data.decode("utf-8"))
     except ValueError as e:
-        raise webserver.views.api.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
+        raise exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
     try:
         submit_low_level_data(mbid, data)
     except BadDataException as e:
-        raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
+        raise exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
 
 

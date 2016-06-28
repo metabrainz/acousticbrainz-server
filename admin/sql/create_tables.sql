@@ -68,7 +68,8 @@ CREATE TABLE incremental_dumps (
 CREATE TABLE "user" (
   id             SERIAL,
   created        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  musicbrainz_id VARCHAR
+  musicbrainz_id VARCHAR,
+  admin          BOOLEAN NOT NULL         DEFAULT FALSE
 );
 ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id);
 
@@ -94,22 +95,54 @@ CREATE TABLE dataset_class_member (
   mbid  UUID
 );
 
+CREATE TABLE dataset_snapshot (
+  id         UUID, -- PK
+  dataset_id UUID, -- FK to dataset
+  data       JSONB                    NOT NULL,
+  created    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE dataset_eval_jobs (
   id                UUID,
-  dataset_id        UUID                     NOT NULL,
+  snapshot_id       UUID                     NOT NULL, -- FK to snapshot
   status            eval_job_status          NOT NULL DEFAULT 'pending',
   status_msg        VARCHAR,
   options           JSONB,
-  training_snapshot INT,                     -- FK to dataset_snapshot
-  testing_snapshot  INT,                     -- FK to dataset_snapshot
+  training_snapshot INT,                     -- FK to dataset_eval_sets
+  testing_snapshot  INT,                     -- FK to dataset_eval_sets
   created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   result            JSONB
 );
 
-CREATE TABLE dataset_snapshot (
+CREATE TABLE dataset_eval_sets (
   id   SERIAL,
   data JSONB NOT NULL
+);
+
+CREATE TABLE challenge (
+  id                  UUID,
+  name                TEXT                     NOT NULL,
+  validation_snapshot UUID                     NOT NULL, -- FK to dataset_snapshot
+  creator             INTEGER                  NOT NULL, -- FK to user
+  created             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  start_time          TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time            TIMESTAMP WITH TIME ZONE NOT NULL,
+  classes             TEXT                     NOT NULL,
+  concluded           BOOLEAN                  NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE dataset_eval_challenge (
+  dataset_eval_job UUID, -- PK, FK to dataset_eval_jobs
+  challenge_id     UUID, -- PK, FK to challenge
+  result           JSONB
+);
+
+CREATE TABLE api_key (
+  value     TEXT    NOT NULL,
+  is_active BOOLEAN NOT NULL         DEFAULT TRUE,
+  owner     INTEGER NOT NULL,
+  created   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 COMMIT;

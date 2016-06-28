@@ -78,6 +78,14 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(one, db.data.load_low_level(self.test_mbid))
 
 
+    def test_write_lowlevel_invalid_data(self):
+        """Trying to submit data with invalid utf8 sequences raises an error"""
+        one = {"data": u"\uc544\uc774\uc720 (IU)\udc93", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+
+        with self.assertRaises(db.exceptions.BadDataException):
+            db.data.write_low_level(self.test_mbid, one)
+
+
     def test_load_low_level_offset(self):
         """If two items with the same mbid are added, you can select between them with offset"""
         one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}

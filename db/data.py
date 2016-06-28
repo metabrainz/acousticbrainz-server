@@ -9,6 +9,7 @@ import db
 import db.exceptions
 
 from sqlalchemy import text
+import sqlalchemy.exc
 
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
@@ -153,32 +154,59 @@ def insert_version(connection, data, version_type):
 
 def write_low_level(mbid, data):
 
+    def _get_by_data_sha256(connection, data_sha256):
+        query = text("""
+            SELECT id
+              FROM lowlevel_json
+             WHERE data_sha256 = :data_sha256
+        """)
+        result = connection.execute(query, {"data_sha256": data_sha256})
+        return result.fetchone()
+
+    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit):
+        """ Insert metadata into the lowlevel table and return its id """
+        query = text("""
+            INSERT INTO lowlevel (mbid, build_sha1, lossless)
+                 VALUES (:mbid, :build_sha1, :lossless)
+              RETURNING id
+        """)
+        result = connection.execute(query, {"mbid": mbid,
+                                            "build_sha1": build_sha1,
+                                            "lossless": is_lossless_submit})
+        return result.fetchone()[0]
+
+    def _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id):
+        """ Insert the contents of the data file, with references to
+            the version and metadata"""
+        query = text("""
+          INSERT INTO lowlevel_json (id, data, data_sha256, version)
+               VALUES (:id, :data, :data_sha256, :version)
+        """)
+        connection.execute(query, {"id": ll_id,
+                                   "data": data_json,
+                                   "data_sha256": data_sha256,
+                                   "version": version_id})
+
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     version = data['metadata']['version']
     build_sha1 = version['essentia_build_sha']
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
     data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
     with db.engine.begin() as connection:
-        # Checking to see if we already have this data
-        result = connection.execute("SELECT id FROM lowlevel_json WHERE data_sha256  = %s", (data_sha256, ))
-
-        if result.fetchone() is None:
-            logging.info("Saved %s" % mbid)
-            query = text("""
-                INSERT INTO lowlevel (mbid, build_sha1, lossless)
-                     VALUES (:mbid, :build_sha1, :lossless)
-                  RETURNING id
-            """)
-            result = connection.execute(query, {"mbid": mbid, "build_sha1": build_sha1, "lossless": is_lossless_submit})
-            ll_id = result.fetchone()[0]
-            version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
-            query = text("""
-              INSERT INTO lowlevel_json (id, data, data_sha256, version)
-                   VALUES (:id, :data, :data_sha256, :version)
-            """)
-            connection.execute(query, {"id": ll_id, "data": data_json, "data_sha256": data_sha256, "version": version_id})
-        else:
+        # See if we already have this data
+        existing = _get_by_data_sha256(connection, data_sha256)
+        if existing:
             logging.info("Already have %s" % data_sha256)
+            return
+
+        try:
+            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit)
+            version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
+            _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id)
+            logging.info("Saved %s" % mbid)
+        except sqlalchemy.exc.DataError as e:
+            raise db.exceptions.BadDataException(
+                    "data is badly formed")
 
 def add_model(model_name, model_version, model_status=STATUS_HIDDEN):
     if model_status not in MODEL_STATUSES:

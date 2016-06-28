@@ -1,0 +1,28 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+  <h1>Admins</h1>
+  <p><em>These users have access to admin section of the website.</em></p>
+  <p>
+    <a href="{{ url_for('adminsview.add') }}"
+       class="btn btn-small btn-primary">+ Add admin</a>
+  </p>
+  <table class="table table-striped">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>MusicBrainz Username</th>
+      <th>{# Controls #}</th>
+    </tr>
+    </thead>
+    {% for user in admins %}
+      <tr>
+        <td style="width: 1%">{{ user.id }}</td>
+        <td><strong>{{ user.musicbrainz_id }}</strong></td>
+        <td>
+          <a href="{{ url_for('adminsview.remove', musicbrainz_id=user.musicbrainz_id) }}"
+             class="btn btn-mini btn-danger" role="button">Remove</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

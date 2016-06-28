@@ -44,10 +44,10 @@ def evaluate_dataset(eval_job):
     temp_dir = tempfile.mkdtemp()
 
     try:
-        dataset = db.dataset.get(eval_job["dataset_id"])
+        snapshot = db.dataset.get_snapshot(eval_job["snapshot_id"])
 
-        train, test = artistfilter.filter(eval_job["dataset_id"], eval_job["options"])
-        db.dataset_eval.add_datasets_to_job(eval_job["id"], train, test)
+        train, test = artistfilter.filter(eval_job["snapshot_id"], eval_job["options"])
+        db.dataset_eval.add_sets_to_job(eval_job["id"], train, test)
 
         logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
         filelist_path = os.path.join(temp_dir, "filelist.yaml")
@@ -58,7 +58,7 @@ def evaluate_dataset(eval_job):
         logging.info("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(temp_dir, "groundtruth.yaml")
         with open(groundtruth_path, "w") as f:
-            yaml.dump(create_groundtruth_dict(dataset["name"], train), f)
+            yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
         logging.info("Training model...")
         results = gaia_wrapper.train_model(
@@ -104,6 +104,7 @@ def create_groundtruth_dict(name, datadict):
         groundtruth["groundTruth"][r] = cls.encode("UTF-8")
 
     return groundtruth
+
 
 def create_groundtruth(dataset):
     groundtruth = {

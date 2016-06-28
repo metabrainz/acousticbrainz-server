@@ -130,6 +130,10 @@ class DatasetEvalTestCase(DatabaseTestCase):
             dataset_eval.delete_job(self.test_uuid)
 
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True)
+        snapshots = dataset.get_snapshots_for_dataset(self.test_dataset_id)
+        self.assertEqual(len(snapshots), 1)
         self.assertIsNotNone(dataset_eval.get_job(job_id))
         dataset_eval.delete_job(job_id)
+        snapshots = dataset.get_snapshots_for_dataset(self.test_dataset_id)
+        self.assertEqual(len(snapshots), 0)
         self.assertIsNone(dataset_eval.get_job(job_id))

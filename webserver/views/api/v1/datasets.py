@@ -5,6 +5,7 @@ from webserver.decorators import auth_required
 from webserver.views.api import exceptions as api_exceptions
 import db.dataset
 import db.exceptions
+from utils import dataset_validator
 
 bp_datasets = Blueprint('api_v1_datasets', __name__)
 
@@ -21,7 +22,10 @@ def get_dataset(dataset_id):
 @bp_datasets.route("/", methods=["POST"])
 @auth_required
 def create_dataset():
+<<<<<<< HEAD
     # TODO(roman): Document return values.
+=======
+>>>>>>> metabrainz/master
     """Create a new dataset.
 
     **Example request**:
@@ -47,7 +51,7 @@ def create_dataset():
     :reqheader Content-Type: *application/json*
     :<json string name: *Required.* Name of the dataset.
     :<json string description: *Optional.* Description of the dataset.
-    :<json boolean public: *Optional.* ``True`` to make dataset public, ``false`` to make it private. New datasets are
+    :<json boolean public: *Optional.* ``true`` to make dataset public, ``false`` to make it private. New datasets are
         public by default.
     :<json array classes: *Optional.* Array of objects containing information about classes to add into new dataset. For
         example:
@@ -62,12 +66,21 @@ def create_dataset():
 
 
     :resheader Content-Type: *application/json*
+    :>json boolean success: ``True`` on successful creation.
+    :>json string dataset_id: ID (UUID) of newly created dataset.
     """
     dataset_dict = request.get_json()
     if not dataset_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
-    # TODO: MUST CATCH VALIDATION ERRORS HERE!!! MERGE CHANGES TO VALIDATOR FIRST.
-    dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
+    if "public" not in dataset_dict:
+        dataset_dict["public"] = True
+    if "classes" not in dataset_dict:
+        dataset_dict["classes"] = []
+    try:
+        dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+
     return jsonify(
         success=True,
         dataset_id=dataset_id,

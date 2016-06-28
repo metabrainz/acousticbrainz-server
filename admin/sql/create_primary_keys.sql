@@ -14,6 +14,10 @@ ALTER TABLE dataset ADD CONSTRAINT dataset_pkey PRIMARY KEY (id);
 ALTER TABLE dataset_class ADD CONSTRAINT dataset_class_pkey PRIMARY KEY (id);
 ALTER TABLE dataset_class_member ADD CONSTRAINT dataset_class_member_pkey PRIMARY KEY (class, mbid);
 ALTER TABLE dataset_eval_jobs ADD CONSTRAINT dataset_eval_jobs_pkey PRIMARY KEY (id);
+ALTER TABLE dataset_eval_sets ADD CONSTRAINT dataset_eval_sets_pkey PRIMARY KEY (id);
 ALTER TABLE dataset_snapshot ADD CONSTRAINT dataset_snapshot_pkey PRIMARY KEY (id);
+ALTER TABLE challenge ADD CONSTRAINT challenge_pkey PRIMARY KEY (id);
+ALTER TABLE dataset_eval_challenge ADD CONSTRAINT dataset_eval_challenge_pkey PRIMARY KEY (dataset_eval_job, challenge_id);
+ALTER TABLE api_key ADD CONSTRAINT api_key_pkey PRIMARY KEY (value);
 
 COMMIT;

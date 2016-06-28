@@ -1,4 +1,3 @@
 Sphinx == 1.4
 Pygments == 2.1.3
 sphinxcontrib-httpdomain == 1.4.0
--r ../requirements.txt

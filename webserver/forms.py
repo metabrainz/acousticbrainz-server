@@ -24,8 +24,8 @@ class DatasetEvaluationForm(Form):
         (DATASET_EVAL_NO_FILTER, "Don't filter"),
         (dataset_eval.FILTER_ARTIST, "By Artist"),
     ])
-    evaluation_location = SelectField("Evaluation Type", choices=[
-        (DATASET_EVAL_LOCAL, "Evaluate on our server"),
+    evaluation_location = SelectField("Evaluation location", choices=[
+        (DATASET_EVAL_LOCAL, "Evaluate on acousticbrainz.org"),
         (DATASET_EVAL_REMOTE, "Evaluate on your own machine")],
         default = DATASET_EVAL_LOCAL
     )

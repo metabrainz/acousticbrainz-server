@@ -125,6 +125,17 @@ class DatasetEvalTestCase(DatabaseTestCase):
         next_pending = dataset_eval.get_next_pending_job()
         self.assertEqual(job2, next_pending)
 
+    def test_get_next_pending_job_remote(self):
+        # If we have a remote pending job with the most recent timestamp, skip it
+        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE)
+        job1 = dataset_eval.get_job(job1_id)
+
+        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job2 = dataset_eval.get_job(job2_id)
+
+        next_pending = dataset_eval.get_next_pending_job()
+        self.assertEqual(job2, next_pending)
+
     def test_delete_job(self):
         with self.assertRaises(dataset_eval.JobNotFoundException):
             dataset_eval.delete_job(self.test_uuid)

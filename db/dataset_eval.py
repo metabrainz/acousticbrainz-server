@@ -112,6 +112,7 @@ def get_next_pending_job():
             """SELECT id::text
                  FROM dataset_eval_jobs
                 WHERE status = :status
+                  AND eval_location = 'local'
              ORDER BY created ASC
                 LIMIT 1""")
         result = connection.execute(query, {"status": STATUS_PENDING})

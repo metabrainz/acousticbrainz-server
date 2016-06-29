@@ -112,7 +112,8 @@ CREATE TABLE dataset_eval_jobs (
   testing_snapshot  INT,                     -- FK to dataset_eval_sets
   created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  result            JSONB
+  result            JSONB,
+  eval_location     eval_location_type       NOT NULL DEFAULT 'local'
 );
 
 CREATE TABLE dataset_eval_sets (

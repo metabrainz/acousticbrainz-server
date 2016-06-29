@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from webserver.testing import ServerTestCase
 from db import dataset, dataset_eval, user
 from db.testing import TEST_DATA_PATH
+import webserver.forms as forms
 from flask import url_for
 import os.path
 import json
@@ -65,7 +66,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.view_json", id=dataset_id))
         self.assert200(resp)
 
-        dataset_eval.evaluate_dataset(dataset_id, False)
+        dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL)
 
         self.temporary_login(self.test_user_id)
 
@@ -78,7 +79,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.delete("/datasets/%s/%s" % (dataset_id, self.test_uuid))
         self.assert404(resp)
 
-        job_id = dataset_eval.evaluate_dataset(dataset_id, False)
+        job_id = dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL)
 
         resp = self.client.delete("/datasets/%s/%s" % (dataset_id, job_id))
         self.assert401(resp)
@@ -203,6 +204,19 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assert200(resp)
         resp = self.client.get(url_for("datasets.recording_info", mbid=self.test_uuid))
         self.assert404(resp)
+
+    def test_evaluate_location_options(self):
+        self.temporary_login(self.test_user_id)
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        resp = self.client.get(url_for("datasets.evaluate", dataset_id=dataset_id))
+        self.assertStatus(resp, 200)
+
+        evaluate_form = forms.DatasetEvaluationForm()
+        evaluate_form.filter_type.data = forms.DATASET_EVAL_NO_FILTER
+        evaluate_form.evaluation_location.data = forms.DATASET_EVAL_REMOTE
+        evaluate_form.normalize.data = True
+        resp = self.client.post(url_for("datasets.evaluate", dataset_id=dataset_id, form=evaluate_form))
+        self.assertStatus(resp, 200)
 
 class DatasetsListTestCase(ServerTestCase):
 

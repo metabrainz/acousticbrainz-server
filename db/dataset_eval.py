@@ -14,11 +14,16 @@ STATUS_FAILED = "failed"
 
 VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
 
+# Location to run an evaluation (on the AB server of the user's local server),
+# defined in postgres type 'eval_location_type'
+EVAL_LOCAL = "local"
+EVAL_REMOTE = "remote"
+
 # Filter types are defined in `eval_filter_type` type. See schema definition.
 FILTER_ARTIST = "artist"
 
 
-def evaluate_dataset(dataset_id, normalize, filter_type=None):
+def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
     """Add dataset into evaluation queue.
 
     Args:
@@ -27,6 +32,9 @@ def evaluate_dataset(dataset_id, normalize, filter_type=None):
         normalize: Dataset will be "randomly" normalized if set to True.
             Normalization is reducing each class to have the same number of
             recordings.
+        eval_location: The user should choose to evaluate on his own machine
+            or on the AB server. 'local' is for AB server and 'remote' is for
+            user's machine.
         filter_type: Optional filtering that will be applied to the dataset.
             See FILTER_* variables in this module for a list of existing
             filters.
@@ -38,7 +46,7 @@ def evaluate_dataset(dataset_id, normalize, filter_type=None):
         if _job_exists(connection, dataset_id):
             raise JobExistsException
         validate_dataset(db.dataset.get(dataset_id))
-        return _create_job(connection, dataset_id, normalize, filter_type)
+        return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
 
 
 def job_exists(dataset_id):
@@ -111,6 +119,7 @@ def get_next_pending_job():
             """SELECT id::text
                  FROM dataset_eval_jobs
                 WHERE status = :status
+                  AND eval_location = 'local'
              ORDER BY created ASC
                 LIMIT 1""")
         result = connection.execute(query, {"status": STATUS_PENDING})
@@ -132,6 +141,7 @@ def get_job(job_id):
                     , dataset_eval_jobs.testing_snapshot
                     , dataset_eval_jobs.created
                     , dataset_eval_jobs.updated
+                    , dataset_eval_jobs.eval_location
                  FROM dataset_eval_jobs
                  JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE dataset_eval_jobs.id = :id""")
@@ -261,7 +271,7 @@ def add_dataset_eval_set(connection, data):
     return snapshot_id
 
 
-def _create_job(connection, dataset_id, normalize, filter_type=None):
+def _create_job(connection, dataset_id, normalize, eval_location, filter_type=None):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -269,8 +279,8 @@ def _create_job(connection, dataset_id, normalize, filter_type=None):
             raise ValueError("Incorrect 'filter_type'. See module documentation.")
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
-                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options)
-                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options)
+                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location)
+                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options, :eval_location)
                   RETURNING id
             """)
     result = connection.execute(query, {
@@ -280,6 +290,7 @@ def _create_job(connection, dataset_id, normalize, filter_type=None):
             "normalize": normalize,
             "filter_type": filter_type,
         }),
+        "eval_location": eval_location
     })
     job_id = result.fetchone()[0]
     return job_id

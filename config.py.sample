@@ -57,3 +57,6 @@ MEMCACHED_NAMESPACE = "AB"
 #MAIL_FROM_DOMAIN = "acousticbrainz.org"
 
 FILE_STORAGE_DIR = "./files"
+
+# Feature Flags
+FEATURE_EVAL_LOCATION = False

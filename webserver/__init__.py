@@ -8,6 +8,8 @@ def create_app():
 
     # Configuration
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+    import default_config
+    app.config.from_object(default_config)
     import config
     app.config.from_object(config)
 

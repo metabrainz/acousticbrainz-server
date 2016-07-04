@@ -71,6 +71,11 @@ class DatasetEvalTestCase(DatabaseTestCase):
         with self.assertRaises(ValueError):
             job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, "test")
 
+    def test_create_job_badlocation(self):
+        # an invalid eval_location
+        with self.assertRaises(ValueError):
+            job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, "not_a_location")
+
     def test_get_job(self):
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
         random_id = "f47ac10b-58cc-4372-a567-0e02b2c3d479"

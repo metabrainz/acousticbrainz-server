@@ -18,6 +18,7 @@ VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
 # defined in postgres type 'eval_location_type'
 EVAL_LOCAL = "local"
 EVAL_REMOTE = "remote"
+VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
 
 # Filter types are defined in `eval_filter_type` type. See schema definition.
 FILTER_ARTIST = "artist"
@@ -277,6 +278,8 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
     if filter_type is not None:
         if filter_type not in [FILTER_ARTIST]:
             raise ValueError("Incorrect 'filter_type'. See module documentation.")
+    if eval_location not in VALID_EVAL_LOCATION:
+        raise ValueError("Incorrect 'eval_location'. Must be one of %s" % VALID_EVAL_LOCATION)
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
                 INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location)

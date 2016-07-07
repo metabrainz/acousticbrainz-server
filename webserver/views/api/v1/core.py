@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 
 import json
+import sys
 
 from flask import Blueprint, request, jsonify
 
 import db.data
+import db.dataset_eval
 import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
@@ -109,3 +111,20 @@ def _validate_offset(offset):
     else:
         offset = 0
     return offset
+
+@bp_core.route("/<user_api_key>/get_pending_jobs", methods=["GET"])
+def get_pending_jobs(user_api_key):
+    """ Return the pending jobs for a user.
+
+    Retrieve the Job Ids for the pending jobs for the user whose
+    user id is given as an argument and return that.
+    """
+    final_result = {}
+    try:
+        pending_jobs = db.dataset_eval.get_user_pending_jobs(user_api_key)
+        for i in range(len(pending_jobs)):
+            final_result[i+1] = str(pending_jobs[i][0])
+    except:
+        e = sys.exc_info()[0]
+        raise webserver.exceptions.APIBadRequest("%s" % e)
+    return jsonify(final_result)

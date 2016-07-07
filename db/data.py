@@ -362,11 +362,13 @@ def load_high_level(mbid, offset=0):
     with db.engine.connect() as connection:
         # Metadata
         result = connection.execute(
-            """SELECT hlm.id
+            """SELECT hl.id
                     , hlm.data
-                 FROM highlevel_meta hlm
+                 FROM highlevel hl
+            LEFT JOIN highlevel_meta hlm
+                   ON hl.id = hlm.id
                  JOIN lowlevel ll
-                   ON ll.id = hlm.id
+                   ON ll.id = hl.id
                 WHERE ll.mbid = %s
              ORDER BY ll.submitted
                OFFSET %s""",
@@ -378,6 +380,12 @@ def load_high_level(mbid, offset=0):
 
         hlid = metarow[0]
         metadata = metarow[1]
+
+        # If we have a `highlevel` row but not a `highlevel_meta` row it means that
+        # the hl calculation failed and we added a placeholder row. There is a
+        # database row, but the metadata is blank
+        if metadata is None:
+            raise db.exceptions.NoDataFoundException
 
         # model data
         query = text(

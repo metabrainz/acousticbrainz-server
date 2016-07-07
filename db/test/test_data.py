@@ -242,7 +242,8 @@ class DataDBTestCase(DatabaseTestCase):
 
 
     def test_load_high_level_none(self):
-        """If no highlevel data is loaded, or offset is too high, an exception is raised"""
+        """If no highlevel data has been calculated, or offset is too high,
+        an exception is raised"""
 
         # no data
         with self.assertRaises(db.exceptions.NoDataFoundException):
@@ -265,6 +266,55 @@ class DataDBTestCase(DatabaseTestCase):
 
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.data.load_high_level(self.test_mbid, offset=1)
+
+
+    def test_load_high_level_missing_offset(self):
+        """If the highlevel for a submission failed to compute, it doesn't exist
+        and a subsequent duplicate submission continues the offsets.
+
+        For example, if for the same mbid we have 3 submissions, -0, -1, -2
+        and highlevel for -1 fails to compute, we should still be able to access
+        hl offset -2, which is the match to ll-2"""
+
+        first_data = self.test_lowlevel_data
+        second_data = copy.deepcopy(first_data)
+        second_data["metadata"]["tags"]["album"] = ["Another album"]
+        third_data = copy.deepcopy(first_data)
+        third_data["metadata"]["tags"]["album"] = ["Final album"]
+
+        db.data.write_low_level(self.test_mbid, first_data)
+        db.data.write_low_level(self.test_mbid, second_data)
+        db.data.write_low_level(self.test_mbid, third_data)
+        ll_id1, ll_id2, ll_id3  = self._get_ll_id_from_mbid(self.test_mbid)
+
+        db.data.add_model("model1", "v1", "show")
+
+        build_sha = "sha"
+        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
+        hl1 = {"highlevel": {"model1": {"x": "y"}},
+               "metadata": {"meta": "here",
+                           "version": {"highlevel": ver}
+                          }
+               }
+        hl3 = {"highlevel": {"model1": {"1": "2"}},
+               "metadata": {"meta": "for hl3",
+                           "version": {"highlevel": ver}
+                          }
+               }
+        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+        db.data.write_high_level(self.test_mbid, ll_id2, {}, build_sha)
+        db.data.write_high_level(self.test_mbid, ll_id3, hl3, build_sha)
+
+        hl1_expected = copy.deepcopy(hl1)
+        hl3_expected = copy.deepcopy(hl3)
+        hl1_expected["highlevel"]["model1"]["version"] = ver
+        hl3_expected["highlevel"]["model1"]["version"] = ver
+        self.assertDictEqual(hl1_expected, db.data.load_high_level(self.test_mbid, offset=0))
+
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.data.load_high_level(self.test_mbid, offset=1)
+
+        self.assertDictEqual(hl3_expected, db.data.load_high_level(self.test_mbid, offset=2))
 
 
     def test_count_lowlevel(self):

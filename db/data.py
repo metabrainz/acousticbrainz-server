@@ -297,31 +297,40 @@ def write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta):
                 VALUES (:id, :mbid, :build_sha1)""")
     connection.execute(hl_query, {"id": ll_id, "mbid": mbid, "build_sha1": build_sha1})
 
-    meta_norm_data = json.dumps(json_meta, sort_keys=True, separators=(',', ':'))
-    sha = sha256(meta_norm_data).hexdigest()
-    hl_meta = text(
-        """INSERT INTO highlevel_meta (id, data, data_sha256)
-                VALUES (:id, :data, :data_sha256)""")
-    connection.execute(hl_meta, {"id": ll_id, "data": meta_norm_data, "data_sha256": sha})
+    if json_meta:
+        meta_norm_data = json.dumps(json_meta, sort_keys=True, separators=(',', ':'))
+        sha = sha256(meta_norm_data).hexdigest()
+        hl_meta = text(
+            """INSERT INTO highlevel_meta (id, data, data_sha256)
+                    VALUES (:id, :data, :data_sha256)""")
+        connection.execute(hl_meta, {"id": ll_id, "data": meta_norm_data, "data_sha256": sha})
 
 
 def write_high_level(mbid, ll_id, data, build_sha1):
-    # If the hl runner failed to run, its output is {}
-    if not data:
-        return
+    """Write highlevel data to the database.
 
+    This includes entries in the
+      highlevel
+      version
+      highlevel_model
+    tables. If the exact version already exists it will be reused.
+
+    If `data` is an empty dictionary, a highlevel table entry is still recorded
+    so that this submission is no longer processed by the highlevel runner
+    """
     with db.engine.begin() as connection:
-        json_meta = data["metadata"]
-        json_high = data["highlevel"]
+        json_meta = data.get("metadata", {})
+        json_high = data.get("highlevel", {})
 
         write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta)
 
-        hl_version = json_meta["version"]["highlevel"]
-        version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
-        model_version = hl_version["models_essentia_git_sha"]
+        if json_meta and json_high:
+            hl_version = json_meta["version"]["highlevel"]
+            version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
+            model_version = hl_version["models_essentia_git_sha"]
 
-        for model_name, data in json_high.items():
-            write_high_level_item(connection, model_name, model_version, ll_id, version_id, data)
+            for model_name, data in json_high.items():
+                write_high_level_item(connection, model_name, model_version, ll_id, version_id, data)
 
 def load_low_level(mbid, offset=0):
     """Load lowlevel data with the given mbid as a dictionary.

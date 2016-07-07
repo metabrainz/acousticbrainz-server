@@ -140,6 +140,25 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(hl_expected, db.data.load_high_level(self.test_mbid))
 
 
+    def test_write_high_level_no_data(self):
+        # an empty highlevel block should write an entry to the `highlevel` table
+
+        build_sha = "test"
+        ll = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        db.data.write_low_level(self.test_mbid, ll)
+        ll_id = self._get_ll_id_from_mbid(self.test_mbid)[0]
+        db.data.write_high_level(self.test_mbid, ll_id, {}, build_sha)
+
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            # Because we have no metadata, load_high_level won't return anything
+            db.data.load_high_level(self.test_mbid)
+
+        # However, it should still exist
+        with db.engine.connect() as connection:
+            result = connection.execute("select id from highlevel where mbid = %s", (self.test_mbid, ))
+            self.assertEqual(result.rowcount, 1)
+
+
     def test_load_high_level_offset(self):
         # If there are two lowlevel items, but only one highlevel, we should raise NoDataFound
         second_data = copy.deepcopy(self.test_lowlevel_data)

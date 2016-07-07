@@ -296,6 +296,28 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
     return job_id
 
 
+def get_user_pending_jobs(user_api_key):
+    with db.engine.connect() as connection:
+        query = sqlalchemy.text("""
+                    SELECT dataset_eval_jobs.id
+                    FROM   dataset_eval_jobs, dataset_snapshot, dataset, api_key
+                    WHERE  dataset.id = dataset_snapshot.dataset_id
+                    AND    dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+                    AND    api_key.value = :author_api_key
+                    AND    status = :status
+                    AND    eval_location = :eval_location
+                    AND    author = api_key.owner
+                    ORDER BY dataset_eval_jobs.created ASC
+                """)
+        result = connection.execute(query, {
+        "status": STATUS_PENDING,
+        "eval_location": EVAL_REMOTE,
+        "author_api_key": user_api_key
+        })
+        job_ids = result.fetchall()
+        return job_ids
+
+
 class IncompleteDatasetException(db.exceptions.DatabaseException):
     pass
 

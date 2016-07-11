@@ -162,3 +162,27 @@ class DatasetEvalTestCase(DatabaseTestCase):
         job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, None)
         job2 = dataset_eval.get_job(job2_id)
         self.assertEqual(job2["eval_location"], dataset_eval.EVAL_LOCAL)
+
+    def test_get_remote_pending_jobs_for_user(self):
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+        job_details = db.dataset_eval.get_job(job_id)
+
+        response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
+        expected_response = {
+            'username': self.test_user_mb_name,
+            'jobs': [{
+                'job_id' : str(job_id),
+                'dataset_name' : self.test_data['name'],
+                'job_created' : job_details['created']
+                }]
+            }
+        self.assertEqual(response, expected_response)
+
+        db.dataset_eval.set_job_status(job_id, db.dataset_eval.STATUS_DONE)
+        response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
+
+        expected_response = {
+            'username': self.test_user_mb_name,
+            'jobs': []
+            }
+        self.assertEqual(response, expected_response)

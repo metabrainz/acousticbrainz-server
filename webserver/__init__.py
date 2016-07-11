@@ -103,8 +103,10 @@ def _register_blueprints(app):
         v1_prefix = '/api/v1'
         from webserver.views.api.v1.core import bp_core
         from webserver.views.api.v1.datasets import bp_datasets
+        from webserver.views.api.v1.dataset_eval import bp_dataset_eval
         app.register_blueprint(bp_core, url_prefix=v1_prefix)
         app.register_blueprint(bp_datasets, url_prefix=v1_prefix + '/datasets')
+        app.register_blueprint(bp_dataset_eval, url_prefix=v1_prefix + '/datasets/evaluation')
 
         from webserver.views.api.legacy import api_legacy_bp
         app.register_blueprint(api_legacy_bp)

@@ -2,6 +2,7 @@ import db
 import db.exceptions
 import db.dataset
 import db.data
+import db.user
 import json
 import sqlalchemy
 from sqlalchemy import text
@@ -297,6 +298,36 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
     })
     job_id = result.fetchone()[0]
     return job_id
+
+def get_remote_pending_jobs_for_user(user_id):
+    with db.engine.connect() as connection:
+        query = sqlalchemy.text("""
+                     SELECT dataset_eval_jobs.id::text,
+                            dataset.name,
+                            dataset_eval_jobs.created
+                       FROM dataset_eval_jobs
+                       JOIN dataset_snapshot
+                         ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+                       JOIN dataset
+                         ON dataset.id = dataset_snapshot.dataset_id
+                      WHERE status = :status
+                        AND eval_location = :eval_location
+                        AND author = :user_id
+                   ORDER BY dataset_eval_jobs.created ASC
+            """)
+        result = connection.execute(query, {
+            "status": STATUS_PENDING,
+            "eval_location": EVAL_REMOTE,
+            "user_id": user_id
+        })
+        jobs_list = []
+        for row in result.fetchall():
+            jobs_list.append({
+                "job_id": row[0],
+                "dataset_name": row[1],
+                "job_created": row[2]
+                })
+        return {"username": db.user.get(user_id)["musicbrainz_id"], "jobs": jobs_list}
 
 
 class IncompleteDatasetException(db.exceptions.DatabaseException):

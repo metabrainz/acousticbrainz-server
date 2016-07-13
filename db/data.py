@@ -106,6 +106,15 @@ def submit_low_level_data(mbid, data):
         else:
             data['metadata']['audio_properties']['lossless'] = False
 
+        if 'is_mbid' in data['metadata']['tags']:
+            if str(data['metadata']['tags']['is_mbid']).lower() == 'true':
+                is_mbid = True
+            else:
+                is_mbid = False
+            del data['metadata']['tags']['is_mbid']
+        else:
+            is_mbid = True
+
     except KeyError:
         pass
 
@@ -125,7 +134,7 @@ def submit_low_level_data(mbid, data):
         )
 
     # The data looks good, lets see about saving it
-    write_low_level(mbid, data)
+    write_low_level(mbid, data, is_mbid)
 
 def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id
@@ -150,7 +159,7 @@ def insert_version(connection, data, version_type):
     row = result.fetchone()
     return row[0]
 
-def write_low_level(mbid, data):
+def write_low_level(mbid, data, is_mbid=True):
 
     def _get_by_data_sha256(connection, data_sha256):
         query = text("""
@@ -161,16 +170,17 @@ def write_low_level(mbid, data):
         result = connection.execute(query, {"data_sha256": data_sha256})
         return result.fetchone()
 
-    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit):
+    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid):
         """ Insert metadata into the lowlevel table and return its id """
         query = text("""
-            INSERT INTO lowlevel (mbid, build_sha1, lossless)
-                 VALUES (:mbid, :build_sha1, :lossless)
+            INSERT INTO lowlevel (gid, build_sha1, lossless, is_mbid)
+                 VALUES (:mbid, :build_sha1, :lossless, :is_mbid)
               RETURNING id
         """)
         result = connection.execute(query, {"mbid": mbid,
                                             "build_sha1": build_sha1,
-                                            "lossless": is_lossless_submit})
+                                            "lossless": is_lossless_submit,
+                                            "is_mbid": is_mbid})
         return result.fetchone()[0]
 
     def _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id):
@@ -198,7 +208,7 @@ def write_low_level(mbid, data):
             return
 
         try:
-            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit)
+            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid)
             version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
             _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id)
             logging.info("Saved %s" % mbid)
@@ -336,7 +346,7 @@ def load_low_level(mbid, offset=0):
                  FROM lowlevel ll
                  JOIN lowlevel_json llj
                    ON ll.id = llj.id
-                WHERE ll.mbid = %s
+                WHERE ll.gid = %s
              ORDER BY ll.submitted
                OFFSET %s""",
             (str(mbid), offset)
@@ -358,7 +368,7 @@ def load_high_level(mbid, offset=0):
                  FROM highlevel_meta hlm
                  JOIN lowlevel ll
                    ON ll.id = hlm.id
-                WHERE ll.mbid = %s
+                WHERE ll.gid = %s
              ORDER BY ll.submitted
                OFFSET %s""",
             (str(mbid), offset)
@@ -399,7 +409,7 @@ def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT count(*) FROM lowlevel WHERE mbid = %s",
+            "SELECT count(*) FROM lowlevel WHERE gid = %s",
             (str(mbid),)
         )
         return result.fetchone()[0]
@@ -414,7 +424,7 @@ def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
         within_query = "AND ll.mbid IN :within"
     with db.engine.connect() as connection:
         query = text(
-            """SELECT ll.mbid::text
+            """SELECT ll.gid::text
                     , llj.data::text
                     , ll.id
                  FROM lowlevel AS ll
@@ -438,7 +448,7 @@ def get_unprocessed_highlevel_documents():
     """Fetch up to 100 low-level documents which have no associated high level data."""
     with db.engine.connect() as connection:
         query = text(
-                """SELECT ll.mbid::text
+                """SELECT ll.gid::text
                     , llj.data::text
                     , ll.id
                  FROM lowlevel AS ll

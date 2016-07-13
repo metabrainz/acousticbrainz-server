@@ -1,47 +1,52 @@
 {% extends 'base.html' %}
 {% from 'macros.html' import pager %}
+{% from 'datasets/macros.html' import render_job_status %}
 
 {% block title %}Public datasets{% endblock %}
 
 {% block content %}
   <h2 class="page-title">Public datasets</h2>
 
-  <ul class="nav nav-pills">
-    {% if status == 'all' %}<li class="active">{% else %}<li>{% endif %}
-    <a href="{{url_for('.list_datasets', status='all')}}">All</a></li>
-    {% if status == 'pending' %}<li class="active">{% else %}<li>{% endif %}
-    <a href="{{url_for('.list_datasets', status='pending')}}">Pending</a></li>
-    {% if status == 'running' %}<li class="active">{% else %}<li>{% endif %}
-    <a href="{{url_for('.list_datasets', status='running')}}">Running</a></li>
-    {% if status == 'done' %}<li class="active">{% else %}<li>{% endif %}
-    <a href="{{url_for('.list_datasets', status='done')}}">Done</a></li>
-    {% if status == 'failed' %}<li class="active">{% else %}<li>{% endif %}
-    <a href="{{url_for('.list_datasets', status='failed')}}">Failed</a></li>
-  </ul>
+  <p>
+    <ul class="nav nav-pills">
+      {% if status == 'all' %}<li class="active">{% else %}<li>{% endif %}
+      <a href="{{url_for('.list_datasets', status='all')}}">All</a></li>
+      {% if status == 'pending' %}<li class="active">{% else %}<li>{% endif %}
+      <a href="{{url_for('.list_datasets', status='pending')}}">Pending</a></li>
+      {% if status == 'running' %}<li class="active">{% else %}<li>{% endif %}
+      <a href="{{url_for('.list_datasets', status='running')}}">Running</a></li>
+      {% if status == 'done' %}<li class="active">{% else %}<li>{% endif %}
+      <a href="{{url_for('.list_datasets', status='done')}}">Done</a></li>
+      {% if status == 'failed' %}<li class="active">{% else %}<li>{% endif %}
+      <a href="{{url_for('.list_datasets', status='failed')}}">Failed</a></li>
+    </ul>
+  </p>
 
-  <table class="table">
+  <table class="table table-striped">
+    <thead>
     <tr>
       <th>Author</th>
       <th>Dataset</th>
       <th>Created</th>
       <th>Evaluation status</th>
     </tr>
+    </thead>
+    <tbody>
     {% for ds in datasets %}
       <tr>
         <td>
           <a href="{{ url_for('user.profile', musicbrainz_id=ds['author_name']) }}">
-            {{ ds["author_name"] }}
+            {{ ds['author_name'] }}
           </a>
         </td>
         <td>
-          <a href="{{ url_for('datasets.view', id=ds['id']) }}">
-            {{ ds["name"] }}
-          </a>
+          <a href="{{ url_for('datasets.view', id=ds['id']) }}">{{ ds['name'] }}</a>
         </td>
-        <td>{{ ds["created"]|datetime }}</td>
-        <td>{{ ds["status"]  }}</td>
+        <td>{{ ds['created']|datetime }}</td>
+        <td>{{ render_job_status(ds['status']) }}</td>
       </tr>
     {% endfor %}
+    </tbody>
   </table>
 
   {{ pager(pages, prevpage, page, total_pages, nextpage) }}

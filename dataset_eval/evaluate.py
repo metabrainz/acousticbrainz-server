@@ -41,7 +41,8 @@ def main():
 def evaluate_dataset(eval_job):
     db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_RUNNING)
 
-    temp_dir = tempfile.mkdtemp()
+    eval_location = os.path.join(os.path.abspath(config.DATASET_DIR), eval_job["id"])
+    utils.path.create_path(eval_location)
 
     try:
         snapshot = db.dataset.get_snapshot(eval_job["snapshot_id"])
@@ -50,25 +51,27 @@ def evaluate_dataset(eval_job):
         db.dataset_eval.add_sets_to_job(eval_job["id"], train, test)
 
         logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
-        filelist_path = os.path.join(temp_dir, "filelist.yaml")
-        filelist = dump_lowlevel_data(train.keys(), os.path.join(temp_dir, "data"))
+        filelist_path = os.path.join(eval_location, "filelist.yaml")
+        data_dir = os.path.join(eval_location, "data")
+        filelist = dump_lowlevel_data(train.keys(), data_dir)
         with open(filelist_path, "w") as f:
             yaml.dump(filelist, f)
 
         logging.info("Generating groundtruth.yaml...")
-        groundtruth_path = os.path.join(temp_dir, "groundtruth.yaml")
+        groundtruth_path = os.path.join(eval_location, "groundtruth.yaml")
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
         logging.info("Training model...")
         results = gaia_wrapper.train_model(
+            project_dir=eval_location,
             groundtruth_file=groundtruth_path,
             filelist_file=filelist_path,
-            project_dir=temp_dir,
         )
         logging.info("Saving results...")
         save_history_file(results["history_path"], eval_job["id"])
         db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
+            "project_path": eval_location,
             "parameters": results["parameters"],
             "accuracy": results["accuracy"],
             "confusion_matrix": results["confusion_matrix"],
@@ -88,7 +91,10 @@ def evaluate_dataset(eval_job):
         logging.info(e)
 
     finally:
-        shutil.rmtree(temp_dir)  # Cleanup
+        # Clean up the source files used to generate this model.
+        # We can recreate them from the database if we need them
+        # at a later stage.
+        shutil.rmtree(data_dir)
 
 
 def create_groundtruth_dict(name, datadict):
@@ -166,7 +172,7 @@ def extract_recordings(dataset):
 def save_history_file(history_file_path, job_id):
     directory = os.path.join(HISTORY_STORAGE_DIR, job_id[0:1], job_id[0:2])
     utils.path.create_path(directory)
-    destination = os.path.join(directory, job_id)
+    destination = os.path.join(directory, "%s.history" % job_id)
     shutil.copyfile(history_file_path, destination)
     return destination
 

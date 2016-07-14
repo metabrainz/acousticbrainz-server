@@ -66,6 +66,7 @@ def select_best_model(project_dir):
     with open(os.path.join(project_dir, PROJECT_FILE_NAME)) as project_file:
         project = yaml.load(project_file)
 
+    classifierName = project["className"]
     results = ClassificationResults()
     results.readResults(project["resultsDirectory"])
     best_accuracy, best_result_file, best_params = results.best(1, None)[0]
@@ -78,7 +79,7 @@ def select_best_model(project_dir):
         for predicted_key, predicted_val in val.items():
             simplified_cm[key][predicted_key] = len(predicted_val)
 
-    history_file_path = os.path.join(project_dir, "history")
+    history_file_path = os.path.join(project_dir, "%s.history" % classifierName)
     train_svm_history(project, best_params, history_file_path)
 
     return {
@@ -104,7 +105,7 @@ def train_svm_history(project, params, output_file_path):
     gt.className = "highlevel." + project["className"]
 
     history = train_svm(ds, gt, **params_model)  # doing the whole training
-    history.save(output_file_path)
+    history.save(str(output_file_path))
 
 
 class GaiaWrapperException(Exception):

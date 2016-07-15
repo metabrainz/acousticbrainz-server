@@ -42,8 +42,8 @@ class DataDBTestCase(DatabaseTestCase):
         write.assert_called_with(self.test_mbid, output, 'mbid')
         
         input = {"metadata": {"tags": {"musicbrainz_trackid": [self.test_mbid]}, "audio_properties": {"lossless": 1}}}
-        db.data.submit_low_level_data(self.test_mbid, input, 'mesbid')
-        write.assert_called_with(self.test_mbid, output, 'mesbid')
+        db.data.submit_low_level_data(self.test_mbid, input, 'msid')
+        write.assert_called_with(self.test_mbid, output, 'msid')
 
 
     @mock.patch("db.data.sanity_check_data")

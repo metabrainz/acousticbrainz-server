@@ -162,17 +162,17 @@ def write_low_level(mbid, data, is_mbid):
         result = connection.execute(query, {"data_sha256": data_sha256})
         return result.fetchone()
 
-    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid):
+    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, gid_type):
         """ Insert metadata into the lowlevel table and return its id """
         query = text("""
-            INSERT INTO lowlevel (gid, build_sha1, lossless, is_mbid)
-                 VALUES (:mbid, :build_sha1, :lossless, :is_mbid)
+            INSERT INTO lowlevel (gid, build_sha1, lossless, gid_type)
+                 VALUES (:mbid, :build_sha1, :lossless, :gid_type)
               RETURNING id
         """)
         result = connection.execute(query, {"mbid": mbid,
                                             "build_sha1": build_sha1,
                                             "lossless": is_lossless_submit,
-                                            "is_mbid": is_mbid})
+                                            "gid_type": gid_type})
         return result.fetchone()[0]
 
     def _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id):

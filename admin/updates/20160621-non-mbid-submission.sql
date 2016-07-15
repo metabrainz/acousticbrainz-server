@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TYPE id_type AS ENUM ('mbid', 'mesbid');
+CREATE TYPE id_type AS ENUM ('mbid', 'msid');
 ALTER TABLE "lowlevel" RENAME COLUMN mbid TO gid;
 ALTER TABLE "lowlevel" ADD COLUMN is_mbid id_type;
 UPDATE "lowlevel" SET is_mbid = 'mbid';

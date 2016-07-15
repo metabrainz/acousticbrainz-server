@@ -272,17 +272,17 @@ def add_empty_lowlevel(mbid, lossless, date):
     data_sha256 = str(lossless) + str(mbid) + str(date)
     data_sha256 = data_sha256[:64]
     data_json = "{}"
-    is_mbid = 'mesbid' # messy brainz id
+    gid_type = 'msid'
     with db.engine.connect() as connection:
         query = text("""
-            INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, is_mbid)
-                 VALUES (:mbid, :build_sha1, :lossless, :submitted, :is_mbid)
+            INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, gid_type)
+                 VALUES (:mbid, :build_sha1, :lossless, :submitted, :gid_type)
               RETURNING id
         """)
         result = connection.execute(query,
                 {"mbid": mbid, "build_sha1": build_sha1,
                  "lossless": lossless, "submitted": date,
-                 "is_mbid": is_mbid})
+                 "gid_type": gid_type})
         id = result.fetchone()[0]
 
         version_id = db.data.insert_version(connection, {}, db.data.VERSION_TYPE_LOWLEVEL)

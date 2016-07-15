@@ -1,7 +1,7 @@
 BEGIN;
 
 CREATE INDEX gid_ndx_lowlevel ON lowlevel (gid);
-CREATE INDEX is_mbid_ndx_lowlevel ON lowlevel (is_mbid);
+CREATE INDEX gid_type_ndx_lowlevel ON lowlevel (gid_type);
 CREATE INDEX build_sha1_ndx_lowlevel ON lowlevel (build_sha1);
 CREATE INDEX submitted_ndx_lowlevel ON lowlevel (submitted);
 CREATE INDEX lossless_ndx_lowlevel ON lowlevel (lossless);

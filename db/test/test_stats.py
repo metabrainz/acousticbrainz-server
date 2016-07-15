@@ -42,7 +42,7 @@ class StatsTestCase(unittest.TestCase):
                     "version": {"essentia_build_sha": "sha"},
                 },
             }
-            db.data.write_low_level(rand_mbid, data)
+            db.data.write_low_level(rand_mbid, data, 'mbid')
         last = db.stats.get_last_submitted_recordings()
         dbget.assert_called_with("last-submitted-recordings")
 

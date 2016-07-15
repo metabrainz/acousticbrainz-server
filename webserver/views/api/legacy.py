@@ -60,7 +60,7 @@ def submit_low_level(mbid):
         raise webserver.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
     try:
-        submit_low_level_data(mbid, data)
+        submit_low_level_data(mbid, data, 'mbid')
     except BadDataException as e:
         raise webserver.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})

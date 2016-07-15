@@ -69,5 +69,5 @@ class DatabaseTestCase(unittest.TestCase):
         the database.
         """
         with open(self.data_filename(mbid)) as json_file:
-            db.data.submit_low_level_data(mbid, json.loads(json_file.read()))
+            db.data.submit_low_level_data(mbid, json.loads(json_file.read()), 'mbid')
 

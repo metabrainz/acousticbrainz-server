@@ -272,7 +272,7 @@ def add_empty_lowlevel(mbid, lossless, date):
     data_sha256 = str(lossless) + str(mbid) + str(date)
     data_sha256 = data_sha256[:64]
     data_json = "{}"
-    is_mbid = False
+    is_mbid = 'mesbid' # messy brainz id
     with db.engine.connect() as connection:
         query = text("""
             INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, is_mbid)

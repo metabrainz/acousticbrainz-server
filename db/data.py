@@ -107,13 +107,13 @@ def submit_low_level_data(mbid, data):
             data['metadata']['audio_properties']['lossless'] = False
 
         if 'is_mbid' in data['metadata']['tags']:
-            if str(data['metadata']['tags']['is_mbid']).lower() == 'true':
-                is_mbid = True
+            if str(data['metadata']['tags']['is_mbid']).lower() == 'mbid':
+                is_mbid = 'mbid'
             else:
-                is_mbid = False
+                is_mbid = 'mesbid'
             del data['metadata']['tags']['is_mbid']
         else:
-            is_mbid = True
+            is_mbid = 'mbid'
 
     except KeyError:
         pass
@@ -159,7 +159,7 @@ def insert_version(connection, data, version_type):
     row = result.fetchone()
     return row[0]
 
-def write_low_level(mbid, data, is_mbid=True):
+def write_low_level(mbid, data, is_mbid='mbid'):
 
     def _get_by_data_sha256(connection, data_sha256):
         query = text("""

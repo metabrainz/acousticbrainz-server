@@ -42,7 +42,7 @@ class CoreViewsTestCase(ServerTestCase):
         
         with open(os.path.join(TEST_DATA_PATH, md5 + ".json")) as json_file:
             with self.app.test_client() as client:
-                resp = client.post("/api/v1/low-level",
+                resp = client.post("/api/v1/low-level-nombid",
                                    data=json_file.read(),
                                    content_type="application/json")
                 self.assertEqual(resp.status_code, 200)

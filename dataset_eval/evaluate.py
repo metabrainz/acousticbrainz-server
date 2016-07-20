@@ -43,6 +43,7 @@ def evaluate_dataset(eval_job):
 
     eval_location = os.path.join(os.path.abspath(config.DATASET_DIR), eval_job["id"])
     utils.path.create_path(eval_location)
+    temp_dir = tempfile.mkdtemp()
 
     try:
         snapshot = db.dataset.get_snapshot(eval_job["snapshot_id"])
@@ -52,8 +53,7 @@ def evaluate_dataset(eval_job):
 
         logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
         filelist_path = os.path.join(eval_location, "filelist.yaml")
-        data_dir = os.path.join(eval_location, "data")
-        filelist = dump_lowlevel_data(train.keys(), data_dir)
+        filelist = dump_lowlevel_data(train.keys(), temp_dir)
         with open(filelist_path, "w") as f:
             yaml.dump(filelist, f)
 
@@ -94,7 +94,7 @@ def evaluate_dataset(eval_job):
         # Clean up the source files used to generate this model.
         # We can recreate them from the database if we need them
         # at a later stage.
-        shutil.rmtree(data_dir)
+        shutil.rmtree(temp_dir)
 
 
 def create_groundtruth_dict(name, datadict):

@@ -105,7 +105,9 @@ def train_svm_history(project, params, output_file_path):
     gt.className = "highlevel." + project["className"]
 
     history = train_svm(ds, gt, **params_model)  # doing the whole training
-    history.save(str(output_file_path))
+    if isinstance(output_file_path, unicode):
+        output_file_path = output_file_path.encode("utf-8")
+    history.save(output_file_path)
 
 
 class GaiaWrapperException(Exception):

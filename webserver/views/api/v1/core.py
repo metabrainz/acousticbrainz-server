@@ -144,18 +144,19 @@ def submit_low_level_nombid():
                 title = data['metadata']['tags']['title']
                 if isinstance(title, list):
                     title = title[0]
-                artist_data = [{'artist': artist, 'title': title}]
-                mbid = messybrainz.get_messybrainz_id(artist_data)
-                if mbid is not None:
+                artist_data = {'artist': artist, 'title': title}
+                gid, id_type = messybrainz.get_messybrainz_id(artist_data)
+                # [TODO] pass the id_type to the submit_low_level (once merged with
+                if gid is not None:
                     action = "messybrainz_id"
                     try:
-                        data['metadata']['tags']['musicbrainz_trackid'] = [mbid]
-                        submit_low_level_data(mbid, data)
+                        data['metadata']['tags']['musicbrainz_trackid'] = [gid]
+                        submit_low_level_data(gid, data)
                     except BadDataException as e:
                         logging.warn(str(e))
                         raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
                     status = "OK"
-                    outputmsg = {"status": status, "itemuuid": mbid, "action": action}
+                    outputmsg = {"status": status, "itemuuid": gid, "action": action}
                     return jsonify(outputmsg), 201
                 else:
                     # this should refer to an exeption for external data not local data

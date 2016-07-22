@@ -500,7 +500,9 @@
         "md5_encoded": "335679c30222c2b482337ef4570fe758"
     },
     "tags": {
-        "file_name": "violin_31_sol3.wav"
+        "file_name": "violin_31_sol3.wav",
+        "artist": "test_artist",
+        "title": "test_title"
     },
     "version": {
         "essentia": "2.1-dev",

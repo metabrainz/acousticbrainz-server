@@ -5,7 +5,7 @@ import db.exceptions
 import mock
 import uuid
 import os
-import json
+from webserver.views.api.v1 import core
 
 
 class CoreViewsTestCase(ServerTestCase):
@@ -36,17 +36,18 @@ class CoreViewsTestCase(ServerTestCase):
                 
         resp = self.client.get("/api/v1/%s/low-level" % mbid)
         self.assertEqual(resp.status_code, 200)
-    
-    def test_submit_low_level_nombid(self):
+
+    @mock.patch("webserver.external.messybrainz.get_messybrainz_id")
+    def test_submit_low_level_nombid(self, mb):
         md5 = "335679c30222c2b482337ef4570fe758"
-        
+        mb.return_value = '4a069392-d880-4498-b80f-f4c86a1d7dc0', 'msid'
         with open(os.path.join(TEST_DATA_PATH, md5 + ".json")) as json_file:
             with self.app.test_client() as client:
                 resp = client.post("/api/v1/low-level-nombid",
                                    data=json_file.read(),
                                    content_type="application/json")
-                self.assertEqual(resp.status_code, 200)
-                jsondata = json.dumps(resp.data)
+                self.assertEqual(resp.status_code, 201)
+
                 
     def test_cors_headers(self):
         mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"

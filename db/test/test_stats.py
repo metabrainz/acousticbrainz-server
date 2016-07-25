@@ -8,9 +8,8 @@ import mock
 import datetime
 import pytz
 from sqlalchemy import text
+from db import gid_types
 
-
-GID_TYPE_MBID = 'mbid'
 
 class StatsTestCase(unittest.TestCase):
     """Statistics methods which use mocked database methods for testing"""
@@ -44,7 +43,7 @@ class StatsTestCase(unittest.TestCase):
                     "version": {"essentia_build_sha": "sha"},
                 },
             }
-            db.data.write_low_level(rand_mbid, data, GID_TYPE_MBID)
+            db.data.write_low_level(rand_mbid, data, gid_types.GID_TYPE_MBID)
         last = db.stats.get_last_submitted_recordings()
         dbget.assert_called_with("last-submitted-recordings")
 
@@ -274,7 +273,7 @@ def add_empty_lowlevel(mbid, lossless, date):
     data_sha256 = str(lossless) + str(mbid) + str(date)
     data_sha256 = data_sha256[:64]
     data_json = "{}"
-    gid_type = 'msid'
+    gid_type = gid_types.GID_TYPE_MSID
     with db.engine.connect() as connection:
         query = text("""
             INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, gid_type)
@@ -284,7 +283,7 @@ def add_empty_lowlevel(mbid, lossless, date):
         result = connection.execute(query,
                 {"mbid": mbid, "build_sha1": build_sha1,
                  "lossless": lossless, "submitted": date,
-                 "gid_type": gid_type})
+                 "gid_type": gid_types.GID_TYPE_MSID})
         id = result.fetchone()[0]
 
         version_id = db.data.insert_version(connection, {}, db.data.VERSION_TYPE_LOWLEVEL)

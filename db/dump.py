@@ -40,7 +40,7 @@ _TABLES = {
         "build_sha1",
         "lossless",
         "submitted",
-        "gid_type"
+        "gid_type",
     ),
     "lowlevel_json": (
         "id",

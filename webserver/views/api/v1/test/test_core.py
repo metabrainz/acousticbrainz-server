@@ -5,6 +5,7 @@ import db.exceptions
 import mock
 import uuid
 import os
+import json
 
 
 class CoreViewsTestCase(ServerTestCase):
@@ -12,6 +13,14 @@ class CoreViewsTestCase(ServerTestCase):
     def setUp(self):
         super(CoreViewsTestCase, self).setUp()
         self.uuid = str(uuid.uuid4())
+
+        self.test_recording1_mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
+        self.test_recording1_data_json = open(os.path.join(TEST_DATA_PATH, self.test_recording1_mbid + '.json')).read()
+        self.test_recording1_data = json.loads(self.test_recording1_data_json)
+
+        self.test_recording2_mbid = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
+        self.test_recording2_data_json = open(os.path.join(TEST_DATA_PATH, self.test_recording2_mbid + '.json')).read()
+        self.test_recording2_data = json.loads(self.test_recording2_data_json)
         
     def test_get_low_level(self):
         mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
@@ -82,3 +91,37 @@ class CoreViewsTestCase(ServerTestCase):
         resp = self.client.get("/api/v1/%s/high-level?n=3" % self.uuid)
         self.assertEqual(200, resp.status_code)
         hl.assert_called_with(self.uuid, 3)
+
+    @mock.patch('db.data.load_low_level')
+    def test_get_recordings(self, load_low_level):
+        recordings_url = self.test_recording1_mbid + ':0'
+        load_low_level.return_value = self.test_recording1_data
+        resp = self.client.get('api/v1/recordings?ids=' + recordings_url)
+        self.assertEqual(resp.status_code, 200)
+
+        expected_result = {
+            self.test_recording1_mbid : {'0': self.test_recording1_data}
+            }
+        self.assertEqual(resp.json, expected_result)
+
+        recordings_url = recordings_url + ";" + self.test_recording2_mbid
+        resp = self.client.get('api/v1/recordings?ids=' + recordings_url)
+        self.assertEqual(resp.status_code, 200)
+
+        expected_result = {
+            self.test_recording1_mbid : {'0': self.test_recording1_data},
+            self.test_recording2_mbid : {'0': self.test_recording1_data}
+            }
+        self.assertEqual(resp.json, expected_result)
+
+        limit_exceed_url = ";" + self.test_recording1_mbid
+        limit_exceed_url = limit_exceed_url * 205
+        resp = self.client.get('api/v1/recordings?ids=' + recordings_url + limit_exceed_url)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
+
+        recordings_url = 'something_bad'
+        resp = self.client.get('api/v1/recordings?ids=' + recordings_url)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual('One or more recording ids invalid', resp.json['message'])
+

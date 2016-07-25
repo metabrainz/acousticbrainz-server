@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import json
+import uuid
 
 from flask import Blueprint, request, jsonify
 
@@ -109,3 +110,37 @@ def _validate_offset(offset):
     else:
         offset = 0
     return offset
+
+
+@bp_core.route("/recordings", methods=["GET"])
+def get_recordings():
+    """Returns the low level details for all the recording-ids
+       mentioned in the request with their offset. Offsets are
+       optional. If no offset is given then a default value of
+       0 is used.
+    """
+    recording_ids = request.args.get("ids")
+    recordings = recording_ids.split(";")
+    recording_details = {}
+    if len(recordings) > 200:
+        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
+    for recording in recordings:
+        recording = str(recording).split(":")
+        recording_id = recording[0]
+        try:
+            uuid.UUID(recording_id)
+        except ValueError:
+            raise webserver.views.api.exceptions.APIBadRequest("One or more recording ids invalid")
+        offset = 0
+        if len(recording) == 2:
+            try:
+                offset = int(recording[1])
+            except ValueError:
+                offset = 0
+        if recording_details.has_key(recording_id):
+            recording_details[recording_id][offset] = db.data.load_low_level(recording_id, offset)
+        else:
+            recording_details[recording_id] = {}
+            recording_details[recording_id][offset] = db.data.load_low_level(recording_id, offset)
+    return jsonify(recording_details)
+

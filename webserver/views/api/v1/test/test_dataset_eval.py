@@ -66,3 +66,4 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
 
         resp = self.client.get('/api/v1/datasets/evaluation/jobs?status=pending&location=remot')
         self.assertEqual(resp.status_code, 400)
+

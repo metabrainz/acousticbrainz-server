@@ -21,6 +21,55 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
         self.test_user_id = db.user.create(self.test_user_mb_name)
         self.test_user = db.user.get(self.test_user_id)
 
+        self.test_dataset = {
+            'author': 1,
+            'classes': [
+                {
+                    'description': 'null',
+                    'id': '141',
+                    'name': 'Class2',
+                    'recordings': [
+                        'd08ab44b-94c8-482b-a67f-a683a30fbe5a',
+                        '2618cb1d-8699-49df-93f7-a8afea6c914f'
+                    ]
+                },
+                {
+                    'description': 'null',
+                    'id': '142',
+                    'name': 'Class1',
+                    'recordings': [
+                        '5251c17c-c161-4e73-8b1c-4231e8e39095',
+                        'c0dccd50-f9dc-476c-b1f1-84f00adeab51'
+                    ]
+                 }
+            ],
+            'created': 'Mon, 02 May 2016 16:41:08 GMT',
+            'description': '',
+            'id': '5375e0ff-a6d0-44a3-bee1-05d46fbe6bd5',
+            'last_edited': 'Mon, 02 May 2016 16:41:08 GMT',
+            'name': 'test4',
+            'public': True
+        }
+
+        self.test_job_details = {
+            'created': 'Tue, 07 Jun 2016 22:12:32 GMT',
+            'dataset_id': '5375e0ff-a6d0-44a3-bee1-05d46fbe6bd5',
+            'eval_location': 'local',
+            'id': '7804abe5-58be-4c9c-a787-22b91d031489',
+            'options': {
+                'filter_type': 'null',
+                'normalize': False
+            },
+            'result': 'null',
+            'snapshot_id': '2d51df50-6b71-410e-bf9a-7e877fc9c6c0',
+            'status': 'pending',
+            'status_msg': 'null',
+            'testing_snapshot': 'null',
+            'training_snapshot': 'null',
+            'updated': 'Tue, 07 Jun 2016 22:12:32 GMT'
+        }
+
+
 
     @mock.patch('db.dataset_eval.get_remote_pending_jobs_for_user')
     def test_get_pending_jobs_for_user(self, get_remote_pending_jobs_for_user):
@@ -66,3 +115,17 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
 
         resp = self.client.get('/api/v1/datasets/evaluation/jobs?status=pending&location=remot')
         self.assertEqual(resp.status_code, 400)
+
+    @mock.patch('db.dataset_eval.get_job')
+    @mock.patch('db.dataset.get')
+    def test_get_job_details(self, get, get_job):
+        self.temporary_login(self.test_user_id)
+
+        get_job.return_value = self.test_job_details
+        get.return_value = self.test_dataset
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs/7804abe5-58be-4c9c-a787-22b91d031489', content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        expected_job_details = self.test_job_details
+        expected_job_details['dataset'] = self.test_dataset
+        self.assertEqual(resp.json, expected_job_details)
+

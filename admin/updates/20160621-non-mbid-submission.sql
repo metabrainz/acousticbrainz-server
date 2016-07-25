@@ -1,10 +1,10 @@
 BEGIN;
 
-CREATE TYPE id_type AS ENUM ('mbid', 'msid');
+CREATE TYPE gid_type AS ENUM ('mbid', 'msid');
 ALTER TABLE "lowlevel" RENAME COLUMN mbid TO gid;
-ALTER TABLE "lowlevel" ADD COLUMN is_mbid id_type;
-UPDATE "lowlevel" SET is_mbid = 'mbid';
-ALTER TABLE "lowlevel" ALTER COLUMN is_mbid SET NOT NULL;
-CREATE INDEX is_mbid_ndx_lowlevel ON lowlevel (is_mbid);
+ALTER TABLE "lowlevel" ADD COLUMN gid_type gid_type;
+UPDATE "lowlevel" SET gid_type = 'mbid';
+ALTER TABLE "lowlevel" ALTER COLUMN gid_type SET NOT NULL;
+CREATE INDEX gid_type_ndx_lowlevel ON lowlevel (gid_type);
 
 COMMIT;

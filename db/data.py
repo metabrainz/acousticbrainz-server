@@ -83,14 +83,14 @@ def clean_metadata(data):
     return data
 
 
-def submit_low_level_data(mbid, data, is_mbid):
+def submit_low_level_data(mbid, data, gid_type):
     """Function for submitting low-level data.
 
     Args:
         mbid: MusicBrainz ID of the recording that corresponds to the data
             that is being submitted.
         data: Low-level data about the recording.
-        is_mbid: the ID type [musicbrainzid or messibrainzid]
+        gid_type: the ID type [musicbrainzid(mbid) or messybrainzid(msid)]
     """
     mbid = str(mbid)
     data = clean_metadata(data)
@@ -126,7 +126,7 @@ def submit_low_level_data(mbid, data, is_mbid):
         )
 
     # The data looks good, lets see about saving it
-    write_low_level(mbid, data, is_mbid)
+    write_low_level(mbid, data, gid_type)
 
 def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id

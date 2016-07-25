@@ -11,7 +11,7 @@ import config
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'admin', 'sql')
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_data')
-
+GID_TYPE_MBID = 'mbid'
 
 class DatabaseTestCase(unittest.TestCase):
 
@@ -69,5 +69,5 @@ class DatabaseTestCase(unittest.TestCase):
         the database.
         """
         with open(self.data_filename(mbid)) as json_file:
-            db.data.submit_low_level_data(mbid, json.loads(json_file.read()), 'mbid')
+            db.data.submit_low_level_data(mbid, json.loads(json_file.read()), GID_TYPE_MBID)
 

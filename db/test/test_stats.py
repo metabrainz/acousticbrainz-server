@@ -10,6 +10,8 @@ import pytz
 from sqlalchemy import text
 
 
+GID_TYPE_MBID = 'mbid'
+
 class StatsTestCase(unittest.TestCase):
     """Statistics methods which use mocked database methods for testing"""
 
@@ -42,7 +44,7 @@ class StatsTestCase(unittest.TestCase):
                     "version": {"essentia_build_sha": "sha"},
                 },
             }
-            db.data.write_low_level(rand_mbid, data, 'mbid')
+            db.data.write_low_level(rand_mbid, data, GID_TYPE_MBID)
         last = db.stats.get_last_submitted_recordings()
         dbget.assert_called_with("last-submitted-recordings")
 

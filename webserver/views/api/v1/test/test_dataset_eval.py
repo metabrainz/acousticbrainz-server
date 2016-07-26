@@ -26,25 +26,43 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
     def test_get_pending_jobs_for_user(self, get_remote_pending_jobs_for_user):
         self.temporary_login(self.test_user_id)
 
-        time = datetime.datetime
-        get_remote_pending_jobs_for_user.return_value = {
-            'username': 'tester',
-            'jobs': [{
-                'job_id': '7804abe5-58be-4c9c-a787-22b91d031489',
-                'dataset_name' : 'test',
-                'job_created' : str(time)
-                }]
-            }
-        submit = json.dumps({})
-        resp = self.client.get('/api/v1/datasets/evaluation/pending-jobs', content_type='application/json')
+        get_remote_pending_jobs_for_user.return_value = [{
+            'job_id': '7804abe5-58be-4c9c-a787-22b91d031489',
+            'dataset_name': 'test',
+            'job_created': '2016-07-26T18:20:57'
+        }]
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs?status=pending&location=remote')
         self.assertEqual(resp.status_code, 200)
+        get_remote_pending_jobs_for_user.assert_called_once_with(self.test_user_id)
 
         expected = {
-            'success': True,
             'jobs': [{
                 'job_id': '7804abe5-58be-4c9c-a787-22b91d031489',
-                'dataset_name' : 'test',
-                'job_created' : str(time)
+                'dataset_name': 'test',
+                'job_created': '2016-07-26T18:20:57'
                 }],
             'username': 'tester'}
         self.assertEqual(resp.json, expected)
+
+    @mock.patch('db.dataset_eval.get_remote_pending_jobs_for_user')
+    def test_get_pending_jobs_not_logged_in(self, get_remote_pending_jobs_for_user):
+        """ Check that a user must be logged in """
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs?status=pending&location=remote')
+        self.assertEqual(resp.status_code, 401)
+
+    @mock.patch('db.dataset_eval.get_remote_pending_jobs_for_user')
+    def test_get_pending_jobs_invalid_parameters(self, get_remote_pending_jobs_for_user):
+        """ Endpoint requires a valid status and location parameter """
+        self.temporary_login(self.test_user_id)
+
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs?status=pending')
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs?location=remote')
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs?status=pendin&location=remote')
+        self.assertEqual(resp.status_code, 400)
+
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs?status=pending&location=remot')
+        self.assertEqual(resp.status_code, 400)

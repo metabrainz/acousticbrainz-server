@@ -300,6 +300,13 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
     return job_id
 
 def get_remote_pending_jobs_for_user(user_id):
+    """ Get all jobs for a user which have been created to
+        be evaluated on a remote server.
+
+    Args:
+      user_id: the id of the user to get the jobs for
+    """
+
     with db.engine.connect() as connection:
         query = sqlalchemy.text("""
                      SELECT dataset_eval_jobs.id::text,
@@ -320,14 +327,14 @@ def get_remote_pending_jobs_for_user(user_id):
             "eval_location": EVAL_REMOTE,
             "user_id": user_id
         })
-        jobs_list = []
+        jobs = []
         for row in result.fetchall():
-            jobs_list.append({
+            jobs.append({
                 "job_id": row[0],
                 "dataset_name": row[1],
-                "job_created": row[2]
+                "created": row[2]
                 })
-        return {"username": db.user.get(user_id)["musicbrainz_id"], "jobs": jobs_list}
+        return jobs
 
 
 class IncompleteDatasetException(db.exceptions.DatabaseException):

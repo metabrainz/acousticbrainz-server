@@ -162,3 +162,45 @@ class DatasetEvalTestCase(DatabaseTestCase):
         job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, None)
         job2 = dataset_eval.get_job(job2_id)
         self.assertEqual(job2["eval_location"], dataset_eval.EVAL_LOCAL)
+
+
+    def test_get_remote_pending_jobs_for_user(self):
+        """ Check that we get remote pending jobs for a user """
+
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+        job_details = db.dataset_eval.get_job(job_id)
+
+        response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
+        expected_response = [{
+                'job_id' : str(job_id),
+                'dataset_name' : self.test_data['name'],
+                'created' : job_details['created']
+                }]
+        self.assertEqual(response, expected_response)
+
+
+    def test_get_pending_jobs_for_user_local(self):
+        """ Check that a local eval dataset for this user doesn't show """
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, None)
+        job_details = db.dataset_eval.get_job(job_id)
+
+        response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
+        self.assertEqual(response, [])
+
+    def test_get_pending_jobs_for_user_other_user(self):
+        """ Check that a remote eval job for another user doesn't show """
+
+        another_user_id = user.create("another user")
+        another_dataset_id = dataset.create_from_dict(self.test_data, author_id=another_user_id)
+        job_id = dataset_eval._create_job(self.conn, another_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+
+        response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
+        self.assertEqual(response, [])
+
+    def test_get_pending_jobs_for_user_done(self):
+        """ Check that a remote eval job with a done status doesn't show """
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+        db.dataset_eval.set_job_status(job_id, db.dataset_eval.STATUS_DONE)
+
+        response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
+        self.assertEqual(response, [])

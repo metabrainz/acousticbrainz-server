@@ -1,5 +1,5 @@
 import requests
-import config
+from flask import current_app
 
 def get_messybrainz_id(querydata):
     """
@@ -12,23 +12,23 @@ def get_messybrainz_id(querydata):
         msid: string messybrainz id -> if it is found in the messybrainz database
         None: if no reference is fount in messybrainz database
     """
-    msurl = config.MESSYBRAINZ_URL+'submit'
     if isinstance(querydata, dict):
         if 'artist' in querydata and 'title' in querydata:
-            r = requests.post(msurl, json=[querydata])
+            r = requests.post(current_app.config['MESSYBRAINZ_URL']+'submit', json=[querydata])
             r.raise_for_status()
             responsedata = r.json()
-            if 'recording_mbid' in responsedata['payload'][0]['ids'] and 'recording_msid' in responsedata['payload'][0]['ids']:
-                if responsedata['payload'][0]['ids']['recording_mbid'] != '':
-                    msid = responsedata['payload'][0]['ids']['recording_mbid']
+            ids = responsedata['payload'][0]['ids']
+            if 'recording_mbid' in ids and 'recording_msid' in ids:
+                if ids['recording_mbid'] != '':
+                    msid = ids['recording_mbid']
                     id_type = 'mbid'
-                elif responsedata['payload'][0]['ids']['recording_msid'] != '':
-                    msid = responsedata['payload'][0]['ids']['recording_msid']
+                elif ids['recording_msid'] != '':
+                    msid = ids['recording_msid']
                     id_type = 'msid'
                 else:
                     msid = None
             return msid, id_type
         else:
-            raise TypeError('Bad Request Data')
+            raise ValueError('Incomplete Data: artist/title not present in input data')
     else:
         raise TypeError('Input data is not a dictionary')

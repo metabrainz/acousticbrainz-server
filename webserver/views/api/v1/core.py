@@ -137,16 +137,15 @@ def submit_low_level_nombid():
             outputmsg = {"status": "OK", "itemuuid": mbid, "action": action}
             return jsonify(outputmsg), 200
         else:
-            if 'artist' in data['metadata']['tags'].keys() and 'title' in data['metadata']['tags'].keys():
+            if 'artist' in data['metadata']['tags'] and 'title' in data['metadata']['tags']:
                 artist = data['metadata']['tags']['artist']
                 if isinstance(artist, list):
                     artist = artist[0]
                 title = data['metadata']['tags']['title']
-                if isinstance(title, list):
-                    title = title[0]
+                title = title
                 artist_data = {'artist': artist, 'title': title}
                 gid, id_type = messybrainz.get_messybrainz_id(artist_data)
-                # [TODO] pass the id_type to the submit_low_level (once merged with
+                # [TODO] pass the id_type to the submit_low_level (once merged with PR195)
                 if gid is not None:
                     action = "messybrainz_id"
                     try:
@@ -160,9 +159,8 @@ def submit_low_level_nombid():
                     return jsonify(outputmsg), 201
                 else:
                     # this should refer to an exeption for external data not local data
-                    raise NoDataFoundException
+                    return "KO: error calling Messybrainz", 503
             else:
-                raise BadDataException
-
+                raise webserver.views.api.exceptions.APIBadRequest("Submitted Data is not in the correct format: missing artist and title")
     else:
         raise webserver.views.api.exceptions.APIBadRequest('### Bad data format: no mbid nor md5!')

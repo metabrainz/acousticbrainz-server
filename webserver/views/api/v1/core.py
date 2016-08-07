@@ -158,9 +158,8 @@ def submit_low_level_nombid():
                     outputmsg = {"status": status, "itemuuid": gid, "action": action}
                     return jsonify(outputmsg), 201
                 else:
-                    # this should refer to an exeption for external data not local data
                     return "KO: error calling Messybrainz", 503
             else:
-                raise webserver.views.api.exceptions.APIBadRequest("Submitted Data is not in the correct format: missing artist and title")
+                raise webserver.views.api.exceptions.APIBadRequest("### Bad data format: no artist nor title")
     else:
         raise webserver.views.api.exceptions.APIBadRequest('### Bad data format: no mbid nor md5!')

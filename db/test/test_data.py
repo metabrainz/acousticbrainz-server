@@ -149,7 +149,7 @@ class DataDBTestCase(DatabaseTestCase):
 
         build_sha = "test"
         ll = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        db.data.write_low_level(self.test_mbid, ll)
+        db.data.write_low_level(self.test_mbid, ll, gid_types.GID_TYPE_MBID)
         ll_id = self._get_ll_id_from_mbid(self.test_mbid)[0]
         db.data.write_high_level(self.test_mbid, ll_id, {}, build_sha)
 
@@ -286,9 +286,9 @@ class DataDBTestCase(DatabaseTestCase):
         third_data = copy.deepcopy(first_data)
         third_data["metadata"]["tags"]["album"] = ["Final album"]
 
-        db.data.write_low_level(self.test_mbid, first_data)
-        db.data.write_low_level(self.test_mbid, second_data)
-        db.data.write_low_level(self.test_mbid, third_data)
+        db.data.write_low_level(self.test_mbid, first_data, gid_types.GID_TYPE_MBID)
+        db.data.write_low_level(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
+        db.data.write_low_level(self.test_mbid, third_data, gid_types.GID_TYPE_MBID)
         ll_id1, ll_id2, ll_id3  = self._get_ll_id_from_mbid(self.test_mbid)
 
         db.data.add_model("model1", "v1", "show")

@@ -284,6 +284,37 @@ def delete(id):
         """), {"id": id})
 
 
+def get_next_eval_task():
+    with db.engine.connect() as connection:
+        result = connection.execute("""
+            SELECT dataset_eval_challenge.dataset_eval_job::text as job_id,
+                   dataset_eval_challenge.challenge_id::text as challenge_id,
+                   challenge.validation_snapshot::text as validation_snapshot_id
+              FROM dataset_eval_challenge
+              JOIN dataset_eval_jobs ON dataset_eval_challenge.dataset_eval_job = dataset_eval_jobs.id
+              JOIN challenge ON dataset_eval_challenge.challenge_id = challenge.id
+             WHERE dataset_eval_challenge.result IS NULL
+               AND dataset_eval_jobs.status = 'done'
+        """)
+        result = result.fetchone()
+        if not result:
+            return None
+        return dict(result)
+
+
+def set_submission_result(eval_job_id, challenge_id, result):
+    with db.engine.connect() as connection:
+        connection.execute(sqlalchemy.text("""
+            UPDATE dataset_eval_challenge
+               SET result = :result
+             WHERE dataset_eval_job = :dataset_eval_job AND challenge_id = :challenge_id
+        """), {
+            "result": json.dumps(result),
+            "dataset_eval_job": eval_job_id,
+            "challenge_id": challenge_id,
+        })
+
+
 def _prep_full_row_out(row):
     row = dict(row)
     row["classes"] = row["classes"].split(",")

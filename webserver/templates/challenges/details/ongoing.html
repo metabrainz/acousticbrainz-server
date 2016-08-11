@@ -36,6 +36,7 @@
       <th>Submission time</th>
       <th>Job ID</th>
       <th>Job status</th>
+      <th>Result</th>
     </tr>
     </thead>
     <tbody>
@@ -50,6 +51,15 @@
         <td>{{ s["eval_job"]["created"]|datetime }}</td>
         <td>{{ s["eval_job"]["id"] }}</td>
         <td>{{ render_job_status(s["eval_job"]["status"]) }}</td>
+        <td>
+          <strong>
+          {% if s["challenge_result"] %}
+            {{ (s["challenge_result"]["correct"] * 100 / s["challenge_result"]["total"]) | round(2) }}%
+          {% else %}
+            -
+          {% endif %}
+          </strong>
+        </td>
       </tr>
     {% endfor %}
     </tbody>

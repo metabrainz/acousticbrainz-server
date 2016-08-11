@@ -121,7 +121,8 @@ def get_submissions(challenge_id, order=None):
     # TODO: Allow to specify offset and limit
 
     query = """
-        SELECT dataset_eval_jobs.id AS job_id,
+        SELECT dataset_eval_challenge.result AS challenge_result,
+               dataset_eval_jobs.id AS job_id,
                dataset_eval_jobs.snapshot_id AS job_snapshot_id,
                dataset_eval_jobs.status AS job_status,
                dataset_eval_jobs.created AS job_created,
@@ -144,7 +145,7 @@ def get_submissions(challenge_id, order=None):
     if order == "submission":
         query += "ORDER BY dataset_eval_jobs.created DESC"
     elif order == "accuracy":
-        query += "ORDER BY dataset_eval_jobs.result->>'accuracy' DESC"
+        query += "ORDER BY dataset_eval_challenge.result->>'correct' DESC"
 
     with db.engine.connect() as connection:
         result = connection.execute(sqlalchemy.text(query), {"challenge_id": challenge_id})
@@ -167,6 +168,7 @@ def get_submissions(challenge_id, order=None):
                     },
                 },
             },
+            "challenge_result": row["challenge_result"],
         } for row in result.fetchall()]
 
 

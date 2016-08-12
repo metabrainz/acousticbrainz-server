@@ -113,10 +113,10 @@ def get_submissions(challenge_id, order=None):
     Args:
         challenge_id: ID of a challenge.
         order: Optional sort order of results. Can be one of: `submission`, `accuracy`.
-            `submission` - sort by evaluation job creation time.
+            `time` - sort by evaluation job creation time.
             `accuracy` - sort by accuracy in a evaluation results (only for completed jobs).
     """
-    if order not in ["submission", "accuracy"]:
+    if order not in ["time", "accuracy"]:
         raise ValueError("Incorrect order argument.")
     # TODO: Allow to specify offset and limit
 
@@ -142,7 +142,7 @@ def get_submissions(challenge_id, order=None):
           JOIN "user" ON "user".id = dataset.author
          WHERE dataset_eval_challenge.challenge_id = :challenge_id
     """
-    if order == "submission":
+    if order == "time":
         query += "ORDER BY dataset_eval_jobs.created DESC"
     elif order == "accuracy":
         query += "ORDER BY dataset_eval_challenge.result->>'correct' DESC NULLS LAST"

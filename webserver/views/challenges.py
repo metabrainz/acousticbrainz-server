@@ -66,10 +66,13 @@ def details(id):
                                challenge=challenge)
     elif not challenge["concluded"]:
         # Challenge is still ongoing (either deadline hasn't passed yet or there are unevaluated submissions).
-        # TODO(roman): Add a way to sort by both accuracy and submission time
+        submission_order = request.args.get("submission_order", "time")
+        if submission_order not in ["time", "accuracy"]:
+            raise BadRequest("Unsupported sort order for submissions. Use `time` or `accuracy`.")
         return render_template("challenges/details/ongoing.html",
                                challenge=challenge,
-                               submissions=db.challenge.get_submissions(challenge["id"], order="submission"),
+                               submissions=db.challenge.get_submissions(challenge["id"], order=submission_order),
+                               submission_order=submission_order,
                                past_deadline=challenge["end_time"] < datetime.now(pytz.utc))
     else:
         # Challenge has concluded.

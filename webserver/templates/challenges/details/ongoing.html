@@ -28,6 +28,18 @@
   {% endif %}
 
   <h3>Submissions</h3>
+
+  <p>
+    <ul class="nav nav-pills">
+      <li role="presentation" {{ 'class=active' if submission_order == 'time' }}>
+        <a href="{{ url_for('challenges.details', id=challenge['id'], submission_order='time') }}">By submission time</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if submission_order == 'accuracy' }}>
+        <a href="{{ url_for('challenges.details', id=challenge['id'], submission_order='accuracy') }}">By accuracy</a>
+      </li>
+    </ul>
+  </p>
+
   <table class="table table-striped">
     <thead>
     <tr>

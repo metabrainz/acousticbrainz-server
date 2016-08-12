@@ -68,7 +68,7 @@ def details(id):
         # Challenge is still ongoing (either deadline hasn't passed yet or there are unevaluated submissions).
         return render_template("challenges/details/ongoing.html",
                                challenge=challenge,
-                               submissions=db.challenge.get_submissions(challenge["id"], order="submission"),
+                               submissions=db.challenge.get_submissions(challenge["id"], order="accuracy"),
                                past_deadline=challenge["end_time"] < datetime.now(pytz.utc))
     else:
         # Challenge has concluded.

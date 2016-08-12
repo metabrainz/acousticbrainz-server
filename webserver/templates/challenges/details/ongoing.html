@@ -27,12 +27,12 @@
     </div>
   {% endif %}
 
-  <h3>Submissions</h3>
+  <h3>Current submissions</h3>
 
   <p>
     <ul class="nav nav-pills">
       <li role="presentation" {{ 'class=active' if submission_order == 'time' }}>
-        <a href="{{ url_for('challenges.details', id=challenge['id'], submission_order='time') }}">By submission time</a>
+        <a href="{{ url_for('challenges.details', id=challenge['id'], submission_order='time') }}">By time</a>
       </li>
       <li role="presentation" {{ 'class=active' if submission_order == 'accuracy' }}>
         <a href="{{ url_for('challenges.details', id=challenge['id'], submission_order='accuracy') }}">By accuracy</a>
@@ -43,11 +43,11 @@
   <table class="table table-striped">
     <thead>
     <tr>
-      <th>Submitted by</th>
-      <th>Submission time</th>
+      <th>User</th>
+      <th>Time</th>
       <th>Job ID</th>
       <th>Job status</th>
-      <th>Result</th>
+      <th>Accuracy</th>
     </tr>
     </thead>
     <tbody>

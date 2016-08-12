@@ -145,7 +145,7 @@ def get_submissions(challenge_id, order=None):
     if order == "submission":
         query += "ORDER BY dataset_eval_jobs.created DESC"
     elif order == "accuracy":
-        query += "ORDER BY dataset_eval_challenge.result->>'correct' DESC"
+        query += "ORDER BY dataset_eval_challenge.result->>'correct' DESC NULLS LAST"
 
     with db.engine.connect() as connection:
         result = connection.execute(sqlalchemy.text(query), {"challenge_id": challenge_id})

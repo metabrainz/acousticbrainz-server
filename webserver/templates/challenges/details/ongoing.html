@@ -31,7 +31,6 @@
   <table class="table table-striped">
     <thead>
     <tr>
-      <th>#</th>
       <th>Submitted by</th>
       <th>Submission time</th>
       <th>Job ID</th>
@@ -42,7 +41,6 @@
     <tbody>
     {% for s in submissions %}
       <tr>
-        <td>{{ loop.index }}</td>
         <td>
           <a href="{{ url_for('user.profile', musicbrainz_id=s["eval_job"]["dataset"]["author"]["musicbrainz_id"]) }}">
             {{ s["eval_job"]["dataset"]["author"]["musicbrainz_id"] }}

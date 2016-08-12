@@ -147,4 +147,11 @@ CREATE TABLE api_key (
   created   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE feedback (
+  user_id            INTEGER, -- PK, FK to user
+  highlevel_model_id INTEGER, -- PK, FK to highlevel_model
+  correct            BOOLEAN NOT NULL,
+  suggestion         TEXT
+);
+
 COMMIT;

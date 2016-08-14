@@ -96,6 +96,9 @@ function writeScript(b, resourceName) {
 
 function buildScripts() {
   var commonBundle = runYarb('common.js');
+  var dataBundle = runYarb('data.js', function (b) {
+    b.external(commonBundle);
+  });
   var datasetsBundle = runYarb('datasets.js', function (b) {
     b.external(commonBundle);
   });
@@ -107,6 +110,7 @@ function buildScripts() {
 
   return Q.all([
     writeScript(commonBundle, 'common.js'),
+    writeScript(dataBundle, 'data.js'),
     writeScript(datasetsBundle, 'datasets.js'),
     writeScript(statsBundle, 'stats.js'),
     writeScript(homepageBundle, 'homepage.js'),

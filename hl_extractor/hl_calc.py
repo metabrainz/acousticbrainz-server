@@ -3,7 +3,6 @@ from __future__ import print_function
 from hashlib import sha256, sha1
 from threading import Thread
 from time import sleep
-import utils.hl_calc
 import subprocess
 import tempfile
 import argparse
@@ -16,6 +15,8 @@ from setproctitle import setproctitle
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
+
+import utils.hl_calc
 import db.data
 import db
 import config
@@ -64,7 +65,8 @@ class HighLevel(Thread):
         try:
             subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY),
                                    name, out_file, PROFILE_CONF],
-                                  stdout=fnull, stderr=fnull)
+                                  #stdout=fnull, stderr=fnull
+                                  )
         except (subprocess.CalledProcessError, OSError):
             print("Cannot call high-level extractor")
             # If we return early, make sure we remove the temp

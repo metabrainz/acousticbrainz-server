@@ -365,10 +365,10 @@ def load_high_level(mbid, offset=0):
         # Metadata
         result = connection.execute(
             """SELECT hl.id
-                    , hlm.data
+                    , highlevel_meta.data
                  FROM highlevel hl
-            LEFT JOIN highlevel_meta hlm
-                   ON hl.id = hlm.id
+            LEFT JOIN highlevel_meta
+                   ON hl.id = highlevel_meta.id
                  JOIN lowlevel ll
                    ON ll.id = hl.id
                 WHERE ll.gid = %s
@@ -392,6 +392,7 @@ def load_high_level(mbid, offset=0):
         # model data
         query = text(
             """select m.model
+                    , hlmo.id
                     , hlmo.data
                     , version.data as version
                  FROM highlevel_model hlmo
@@ -406,12 +407,15 @@ def load_high_level(mbid, offset=0):
         highlevel = {}
         for row in result.fetchall():
             model = row[0]
-            data = row[1]
-            version = row[2]
-            data["version"] = version
+            data = row[2]
+            data["highlevel_model_id"] = row[1]
+            data["version"] = row[3]
             highlevel[model] = data
 
-        return {"metadata": metadata, "highlevel": highlevel}
+        return {
+            "metadata": metadata,
+            "highlevel": highlevel,
+        }
 
 
 def count_lowlevel(mbid):

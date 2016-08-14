@@ -46,7 +46,15 @@
             {{ s["eval_job"]["dataset"]["author"]["musicbrainz_id"] }}
           </a>
         </td>
-        <td><strong>{{ s["eval_job"]["job_result"]["accuracy"] }}</strong></td>
+        <td>
+          <strong>
+            {% if s["challenge_result"] %}
+              {{ (s["challenge_result"]["correct"] * 100 / s["challenge_result"]["total"]) | round(2) }}%
+            {% else %}
+              -
+            {% endif %}
+          </strong>
+        </td>
         <td>{{ s["eval_job"]["created"]|datetime }}</td>
         <td>{{ s["eval_job"]["snapshot_id"] }}</td>
         <td>{{ s["eval_job"]["id"] }}</td>

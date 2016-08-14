@@ -175,30 +175,38 @@ def get_submissions(challenge_id, order=None):
 def get_results(challenge_id):
     # TODO: Allow to specify offset and limit
     query = """
-        SELECT DISTINCT ON ("user".id)
-               dataset_eval_challenge.result AS challenge_result,
-               dataset_eval_jobs.id AS job_id,
-               dataset_eval_jobs.snapshot_id AS job_snapshot_id,
-               dataset_eval_jobs.status AS job_status,
-               dataset_eval_jobs.created AS job_created,
-               dataset_eval_jobs.result AS job_result,
-               dataset.id AS dataset_id,
-               dataset.name AS dataset_name,
-               dataset.description AS dataset_description,
-               dataset.public AS dataset_public,
-               dataset.created AS dataset_created,
-               dataset.last_edited AS dataset_public,
-               "user".id AS user_id,
-               "user".musicbrainz_id AS user_musicbrainz_id
-          FROM dataset_eval_challenge
-          JOIN dataset_eval_jobs ON dataset_eval_jobs.id = dataset_eval_challenge.dataset_eval_job
-          JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-          JOIN dataset ON dataset.id = dataset_snapshot.dataset_id
-          JOIN "user" ON "user".id = dataset.author
-         WHERE dataset_eval_challenge.challenge_id = :challenge_id
-      ORDER BY "user".id,
-               dataset_eval_challenge.result->>'correct' DESC NULLS LAST,
-               dataset_eval_jobs.created ASC
+        WITH results AS (
+            SELECT dataset_eval_challenge.result AS challenge_result,
+                   dataset_eval_jobs.id AS job_id,
+                   dataset_eval_jobs.snapshot_id AS job_snapshot_id,
+                   dataset_eval_jobs.status AS job_status,
+                   dataset_eval_jobs.created AS job_created,
+                   dataset_eval_jobs.result AS job_result,
+                   dataset.id AS dataset_id,
+                   dataset.name AS dataset_name,
+                   dataset.description AS dataset_description,
+                   dataset.public AS dataset_public,
+                   dataset.created AS dataset_created,
+                   dataset.last_edited AS dataset_public,
+                   "user".id AS user_id,
+                   "user".musicbrainz_id AS user_musicbrainz_id,
+                   ROW_NUMBER() OVER(
+                      PARTITION BY "user".id
+                      ORDER BY dataset_eval_challenge.result->>'correct' DESC NULLS LAST,
+                               dataset_eval_jobs.created ASC
+                   ) AS rk
+              FROM dataset_eval_challenge
+              JOIN dataset_eval_jobs ON dataset_eval_jobs.id = dataset_eval_challenge.dataset_eval_job
+              JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+              JOIN dataset ON dataset.id = dataset_snapshot.dataset_id
+              JOIN "user" ON "user".id = dataset.author
+             WHERE dataset_eval_challenge.challenge_id = :challenge_id
+        )
+      SELECT results.*
+        FROM results
+       WHERE results.rk = 1
+    ORDER BY results.challenge_result->>'correct' DESC NULLS LAST,
+             results.job_created ASC
     """
     with db.engine.connect() as connection:
         result = connection.execute(sqlalchemy.text(query), {"challenge_id": challenge_id})

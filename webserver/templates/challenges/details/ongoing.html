@@ -63,11 +63,11 @@
         <td>{{ render_job_status(s["eval_job"]["status"]) }}</td>
         <td>
           <strong>
-          {% if s["challenge_result"] %}
-            {{ (s["challenge_result"]["correct"] * 100 / s["challenge_result"]["total"]) | round(2) }}%
-          {% else %}
-            -
-          {% endif %}
+            {% if s["challenge_result"] %}
+              {{ (s["challenge_result"]["correct"] * 100 / s["challenge_result"]["total"]) | round(2) }}%
+            {% else %}
+              -
+            {% endif %}
           </strong>
         </td>
       </tr>

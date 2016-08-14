@@ -79,4 +79,4 @@ def details(id):
         # TODO: Get all submissions and sort them by accuracy.
         return render_template("challenges/details/concluded.html",
                                challenge=challenge,
-                               submissions=db.challenge.get_submissions(challenge["id"], order="accuracy"))
+                               submissions=db.challenge.get_results(challenge["id"]))

@@ -374,6 +374,8 @@ def _submit_for_challenge(connection, challenge_id, dataset_id, job_id, snapshot
     validation dataset from a submission. This is a mandatory step, which updates snapshot that
     was created for evaluation job.
     """
+    if not db.challenge.is_ongoing(challenge_id):
+        raise db.exceptions.DatabaseException("Can only submit dataset for an ongoing challenge.")
     recordings_to_remove = set()
     validation_snapshot = db.dataset.get_snapshot(db.challenge.get(challenge_id)["validation_snapshot"])["data"]
     for cls in validation_snapshot["classes"]:

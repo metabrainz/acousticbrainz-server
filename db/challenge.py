@@ -107,6 +107,28 @@ def get(id):
         return _prep_full_row_out(row)
 
 
+def is_ongoing(challenge_id):
+    """Check if challenge is ongoing (evaluation jobs can be submitted as a part of that challenge).
+
+    Args:
+        challenge_id: Identifier of a challenge that needs to be checked.
+
+    Returns:
+        True if it's ongoing, False if it's not.
+    """
+    with db.engine.connect() as connection:
+        result = connection.execute(sqlalchemy.text("""
+            SELECT start_time, end_time, concluded
+              FROM challenge
+             WHERE id = :id
+        """), {"id": challenge_id})
+        row = result.fetchone()
+        if not row:
+            raise db.exceptions.NoDataFoundException("Can't find challenge with a specified ID.")
+        current_t = datetime.now(pytz.utc)
+        return not (row["concluded"] or (row["end_time"] < current_t < row["start_time"]))
+
+
 def get_submissions(challenge_id, order=None):
     """Get evaluation jobs submitted for a challenge and related information.
 

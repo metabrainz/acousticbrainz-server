@@ -5,14 +5,15 @@
  to be specified on container element. When Dataset component is mounted, it
  fetches existing dataset from the server.
  */
-var React = require('react');
-var ReactDOM = require('react-dom');
+const $ = require("jquery");
+const React = require('react');
+const ReactDOM = require('react-dom');
 
-var CONTAINER_ELEMENT_ID = "dataset-class-viewer";
-var container = document.getElementById(CONTAINER_ELEMENT_ID);
+const CONTAINER_ELEMENT_ID = "dataset-class-viewer";
+let container = document.getElementById(CONTAINER_ELEMENT_ID);
 
-var SECTION_DATASET_DETAILS = "dataset_details";
-var SECTION_CLASS_DETAILS = "class_details";
+const SECTION_DATASET_DETAILS = "dataset_details";
+const SECTION_CLASS_DETAILS = "class_details";
 
 /*
  Dataset is the primary class in the dataset viewer. Its state contains
@@ -45,14 +46,25 @@ var Dataset = React.createClass({
         // Do not confuse property called "dataset" with our own datasets. See
         // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
         // for more info about it.
-        if (!container.dataset.datasetId) {
-            console.error("ID of existing dataset needs to be specified" +
-            "in data-dataset-id property.");
+        if (container.dataset.datasetId) {
+            $.get("/datasets/" + container.dataset.datasetId + "/json", function (result) {
+                if (this.isMounted()) {
+                    this.setState({data: result});
+                }
+            }.bind(this));
+        } else if (container.dataset.snapshotId) {
+            $.get("/datasets/snapshot/" + container.dataset.snapshotId + "/json", function (result) {
+                if (this.isMounted()) {
+                    this.setState({data: result["data"]});
+                }
+            }.bind(this));
+        } else {
+            console.error(
+                "ID of existing dataset/snapshot needs to be specified" +
+                "in data-dataset-id/data-snapshot-id property."
+            );
             return;
         }
-        $.get("/datasets/" + container.dataset.datasetId + "/json", function(result) {
-            if (this.isMounted()) { this.setState({data: result}); }
-        }.bind(this));
     },
     handleViewDetails: function (index) {
         this.setState({

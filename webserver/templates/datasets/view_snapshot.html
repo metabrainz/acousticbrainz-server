@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Snapshot "{{ snapshot['id'] }}" - Datasets - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <div id="dataset-viewer">
+    <strong>Dataset:</strong>
+    <a href="{{ url_for('datasets.view', id=snapshot['dataset_id']) }}">
+      {{ snapshot['dataset_id'] }}
+    </a>
+    <br/><strong>Creation time:</strong>
+    {{ snapshot['created']|datetime }}
+
+    <div id="dataset-class-viewer" data-snapshot-id="{{ snapshot['id'] }}"></div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ get_static_path('datasets.js') }}"></script>
+{% endblock %}

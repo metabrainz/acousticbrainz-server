@@ -1,4 +1,5 @@
 from hashlib import sha256
+from uuid import uuid3, uuid4, NAMESPACE_URL
 import logging
 import copy
 import time
@@ -22,6 +23,7 @@ SANITY_CHECK_KEYS = [
     ['metadata', 'audio_properties', 'bit_rate'],
     ['metadata', 'audio_properties', 'codec'],
     ['metadata', 'audio_properties', 'lossless'],
+    ['metadata', 'audio_properties', 'md5_encoded'],
     ['metadata', 'tags', 'file_name'],
     ['metadata', 'tags', 'musicbrainz_recordingid'],
     ['lowlevel'],
@@ -507,3 +509,27 @@ def get_summary_data(mbid, offset=0):
         pass
 
     return summary
+
+def find_md5_duplicates(md5):
+    """Check if data comes from an audio file with the same md5 (Uses data->md5_encoded)
+        
+    Args: 
+        md5: The md5_encoded from the low-level data to check
+    
+    Returns:
+        The retrieved mbid if the md5 already exists
+        None if the md5 is not found
+    """
+
+    query = text(
+            """SELECT lowlevel.mbid::text
+                 FROM lowlevel
+                 JOIN lowlevel_json USING (id)
+                WHERE lowlevel_json.data#> '{metadata,audio_properties,md5_encoded}' ? :md5""")
+    with db.engine.begin() as connection:
+        result = connection.execute(query, {"md5": md5})
+        row = result.fetchone()
+        if row:
+            return row[0]
+        else:
+            return None

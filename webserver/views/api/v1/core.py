@@ -9,9 +9,12 @@ import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
+from webserver.external import messybrainz
+
+import logging
+import uuid
 
 bp_core = Blueprint('api_v1_core', __name__)
-
 
 @bp_core.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
@@ -109,3 +112,54 @@ def _validate_offset(offset):
     else:
         offset = 0
     return offset
+
+@bp_core.route("/low-level-nombid", methods=["POST"])
+def submit_low_level_nombid():
+    """Submit low-level data to AcousticBrainz without MBID
+
+    :reqheader Content-Type: *application/json*
+
+    :resheader Content-Type: *application/json*
+    """
+    raw_data = request.get_data()
+    try:
+        data = json.loads(raw_data.decode("utf-8"))
+    except ValueError as e:
+        raise webserver.views.api.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
+    
+    if 'musicbrainz_recordingid' in data['metadata']['tags'].keys() or 'musicbrainz_trackid' in data['metadata']['tags'].keys():
+        raise webserver.views.api.exceptions.APIBadRequest('### The data files contains an ID this endopoint only accept nonmbid submissions!')
+    elif 'md5_encoded' in data['metadata']['audio_properties'].keys():
+        md5encoded = data['metadata']['audio_properties']['md5_encoded']
+        mbid = db.data.find_md5_duplicates(md5encoded)
+        if mbid is not None:
+            action = "md5_duplicate"
+            outputmsg = {"status": "OK", "itemuuid": mbid, "action": action}
+            return jsonify(outputmsg), 200
+        else:
+            if 'artist' in data['metadata']['tags'] and 'title' in data['metadata']['tags']:
+                artist = data['metadata']['tags']['artist']
+                if isinstance(artist, list):
+                    artist = artist[0]
+                title = data['metadata']['tags']['title']
+                title = title
+                artist_data = {'artist': artist, 'title': title}
+                gid, id_type = messybrainz.get_messybrainz_id(artist_data)
+                # [TODO] pass the id_type to the submit_low_level (once merged with PR195)
+                if gid is not None:
+                    action = "messybrainz_id"
+                    try:
+                        data['metadata']['tags']['musicbrainz_trackid'] = [gid]
+                        submit_low_level_data(gid, data)
+                    except BadDataException as e:
+                        logging.warn(str(e))
+                        raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
+                    status = "OK"
+                    outputmsg = {"status": status, "itemuuid": gid, "action": action}
+                    return jsonify(outputmsg), 201
+                else:
+                    return "KO: error calling Messybrainz", 503
+            else:
+                raise webserver.views.api.exceptions.APIBadRequest("### Bad data format: no artist nor title")
+    else:
+        raise webserver.views.api.exceptions.APIBadRequest('### Bad data format: no mbid nor md5!')

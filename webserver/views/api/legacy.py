@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, request, jsonify
-from db.data import count_lowlevel, submit_low_level_data
+from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
 from webserver.views.api import exceptions

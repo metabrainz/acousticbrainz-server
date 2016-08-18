@@ -5,6 +5,7 @@ import os.path
 import json
 import mock
 import copy
+import unittest
 
 
 class DataDBTestCase(DatabaseTestCase):
@@ -12,8 +13,10 @@ class DataDBTestCase(DatabaseTestCase):
     def setUp(self):
         super(DataDBTestCase, self).setUp()
         self.test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
+        self.test_md5 = "19967dc1f0699ba7c63660c0f1c4125f"
         self.test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '.json')).read()
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
+        self.test_lowlevel_data_uuidv3 = '7b199968-d177-3da4-b86c-94cb439fb750'
 
 
     @mock.patch("db.data.sanity_check_data")
@@ -341,9 +344,13 @@ class DataDBTestCase(DatabaseTestCase):
         get_id = db.data._get_model_id("modelname", "v1")
         self.assertEqual(modelid, get_id)
 
-
     def test_get_summary_data(self):
         pass
+    
+    def test_find_md5_duplicates(self):
+        self.assertIsNone(db.data.find_md5_duplicates(self.test_md5))
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data)
+        self.assertEqual(db.data.find_md5_duplicates(self.test_md5), self.test_mbid)
 
 class DataUtilTestCase(DatabaseTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """
@@ -374,6 +381,7 @@ class DataUtilTestCase(DatabaseTestCase):
                     "codec": "mp3",
                     "length": 280.685699463,
                     "lossless": False,
+                    "md5_encoded": "a7c9979494e9efd6e208aeaa9376484e",
                 },
                 "tags": {
                     "file_name": "example.mp3",

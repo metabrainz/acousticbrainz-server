@@ -23,4 +23,7 @@ CREATE INDEX highlevel_ndx_highlevel_model ON highlevel_model (highlevel);
 
 CREATE UNIQUE INDEX lower_musicbrainz_id_ndx_user ON "user" (lower(musicbrainz_id));
 
+CREATE INDEX data_metadata_audio_properties_md5_encoded_idx_lowlevel_json 
+    ON lowlevel_json USING gin ((data#>'{metadata,audio_properties,md5_encoded}'));
+
 COMMIT;

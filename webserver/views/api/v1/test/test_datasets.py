@@ -1,13 +1,9 @@
 from __future__ import absolute_import
 from webserver.testing import ServerTestCase
-from db.testing import TEST_DATA_PATH
-import db.exceptions
 from utils import dataset_validator
-
+import db
 import json
 import mock
-import os
-import uuid
 
 
 class APIDatasetViewsTestCase(ServerTestCase):

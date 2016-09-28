@@ -5,6 +5,7 @@ from webserver.decorators import auth_required
 from webserver.views.api import exceptions
 import db.dataset_eval
 import db.dataset
+from webserver.views.api.v1 import datasets
 
 bp_dataset_eval = Blueprint('api_v1_dataset_eval', __name__)
 
@@ -108,6 +109,9 @@ def job_details(job_id):
     }
     """
     job = db.dataset_eval.get_job(job_id)
-    job['dataset'] = db.dataset.get(job['dataset_id'])
+    if not job:
+        raise exceptions.APINotFound('No such job')
+
+    job['dataset'] = datasets.get_check_dataset(job['dataset_id'])
     return jsonify(job)
 

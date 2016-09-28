@@ -1,7 +1,11 @@
 from __future__ import absolute_import
+from flask_login import login_user
+from webserver.login import User
 from webserver.testing import ServerTestCase
 from db.testing import TEST_DATA_PATH
 import db.exceptions
+import webserver.views.api.exceptions
+import webserver.views.api.v1.datasets
 from utils import dataset_validator
 
 import json
@@ -79,3 +83,46 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "dataset_id": "6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0"}
         self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_not_exists(self, get):
+        # Dataset doesn't exist
+        get.side_effect = db.exceptions.NoDataFoundException()
+        with self.assertRaises(webserver.views.api.exceptions.APINotFound):
+            webserver.views.api.v1.datasets.get_check_dataset("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+        get.assert_called_once_with("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_public(self, get):
+        # You can access a public dataset
+        dataset = {"test": "dataset", "public": True}
+        get.return_value = dataset
+
+        res = webserver.views.api.v1.datasets.get_check_dataset("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+        self.assertEqual(res, dataset)
+        get.assert_called_once_with("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_yours(self, get):
+        # You can access your private dataset
+        login_user(User.from_dbrow(self.test_user))
+        dataset = {"test": "dataset", "public": False, "author": self.test_user_id}
+        get.return_value = dataset
+
+        res = webserver.views.api.v1.datasets.get_check_dataset("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+        self.assertEqual(res, dataset)
+        get.assert_called_once_with("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_private(self, get):
+        # You can't access someone else's private dataset
+
+        login_user(User.from_dbrow(self.test_user))
+        # Dataset with a different author to the logged in user
+        dataset = {"test": "dataset", "public": False, "author": (self.test_user_id+1)}
+        get.return_value = dataset
+
+        with self.assertRaises(webserver.views.api.exceptions.APINotFound):
+            webserver.views.api.v1.datasets.get_check_dataset("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+        get.assert_called_once_with("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+

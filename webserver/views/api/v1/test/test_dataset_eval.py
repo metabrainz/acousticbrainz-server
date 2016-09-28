@@ -5,6 +5,7 @@ import db.exceptions
 import db.dataset
 import db.dataset_eval
 import db.api_key
+import webserver.views.api.exceptions
 import datetime
 from utils import dataset_validator
 
@@ -128,4 +129,25 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
         expected_job_details = self.test_job_details
         expected_job_details['dataset'] = self.test_dataset
         self.assertEqual(resp.json, expected_job_details)
+
+    @mock.patch('db.dataset_eval.get_job')
+    @mock.patch('webserver.views.api.v1.datasets.get_check_dataset')
+    def test_get_job_details_no_such_job(self, get_check_dataset, get_job):
+        self.temporary_login(self.test_user_id)
+
+        get_job.return_value = None
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs/7804abe5-58be-4c9c-a787-22b91d031489', content_type='application/json')
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(json.loads(resp.data), {"message": "No such job"})
+
+    @mock.patch('db.dataset_eval.get_job')
+    @mock.patch('webserver.views.api.v1.datasets.get_check_dataset')
+    def test_get_job_details_not_public(self, get_check_dataset, get_job):
+        self.temporary_login(self.test_user_id)
+
+        get_job.return_value = self.test_job_details
+        get_check_dataset.side_effect = webserver.views.api.exceptions.APINotFound('No such job')
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs/7804abe5-58be-4c9c-a787-22b91d031489', content_type='application/json')
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(json.loads(resp.data), {"message": "No such job"})
 

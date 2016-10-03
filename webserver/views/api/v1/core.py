@@ -112,35 +112,88 @@ def _validate_offset(offset):
     return offset
 
 
-@bp_core.route("/recordings", methods=["GET"])
-def get_recordings():
-    """Returns the low level details for all the recording-ids
-       mentioned in the request with their offset. Offsets are
-       optional. If no offset is given then a default value of
-       0 is used.
+def _valididate_bulk_params(params):
+    """Validate a bulk query parameter string.
+
+    A valid parameter string takes the form
+      mbid[:offset];mbid[:offset];...
+    Where offset is a number >=0. Offsets are optional.
+    mbid must be a UUID.
+
+    If an offset is not specified or is invalid, 0 is used as a default.
+    If an mbid is not valid, an APIBadRequest Exception is
+    raised listing the bad MBID and no further processing is done.
+
+    Returns a list of tuples (mbid, offset)
     """
-    recording_ids = request.args.get("ids")
-    recordings = recording_ids.split(";")
-    recording_details = {}
-    if len(recordings) > 200:
-        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
+
+    ret = []
+    recordings = params.split(";")
+
     for recording in recordings:
-        recording = str(recording).split(":")
-        recording_id = recording[0]
+        parts = str(recording).split(":")
+        recording_id = parts[0]
         try:
             uuid.UUID(recording_id)
         except ValueError:
-            raise webserver.views.api.exceptions.APIBadRequest("One or more recording ids invalid")
-        offset = 0
-        if len(recording) == 2:
+            raise webserver.views.api.exceptions.APIBadRequest("'%s' is not a valid UUID" % recording_id)
+        if len(parts) > 2:
+            raise webserver.views.api.exceptions.APIBadRequest("More than 1 : in '%s'" % recording)
+        elif len(parts) == 2:
             try:
-                offset = int(recording[1])
+                offset = int(parts[1])
+                # Don't allow negative offsets
+                offset = max(offset, 0)
             except ValueError:
                 offset = 0
-        if recording_details.has_key(recording_id):
-            recording_details[recording_id][offset] = db.data.load_low_level(recording_id, offset)
         else:
-            recording_details[recording_id] = {}
-            recording_details[recording_id][offset] = db.data.load_low_level(recording_id, offset)
+            offset = 0
+
+        ret.append((recording_id, offset))
+
+    # Remove duplicates, preserving order
+    seen = set()
+    return [x for x in ret if not (x in seen or seen.add(x))]
+
+
+@bp_core.route("/low-level", methods=["GET"])
+def get_many_lowlevel():
+    """Get low-level data for many recordings at once.
+
+    **Example response**:
+
+    .. sourcecode:: json
+
+       {"mbid1": {"offset1": {document},
+                  "offset2": {document}},
+        "mbid2": {"offset1": {document}}
+       }
+
+    Offset keys are returned as strings, as per JSON encoding rultes.
+    If an offset was not specified in the request for an mbid, the offset
+    will be 0.
+
+    :query recording_ids: *Required.* A list of recording MBIDs to retrieve
+
+      Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
+      be >= 0
+
+    :resheader Content-Type: *application/json*
+    """
+    recording_ids = request.args.get("recording_ids")
+
+    if not recording_ids:
+        raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
+
+    recordings = _valididate_bulk_params(recording_ids)
+    if len(recordings) > 200:
+        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
+
+    recording_details = {}
+
+    # TODO: This should use a bulk get method for speed
+    for recording_id, offset in recordings:
+        recording_details.setdefault(recording_id, {})[offset] = db.data.load_low_level(recording_id, offset)
+
     return jsonify(recording_details)
 

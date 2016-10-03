@@ -1,5 +1,8 @@
 from __future__ import absolute_import
+import unittest
 from webserver.testing import ServerTestCase
+from webserver.views.api.v1 import core
+import webserver.views.api.exceptions
 from db.testing import TEST_DATA_PATH
 import db.exceptions
 import mock
@@ -21,7 +24,7 @@ class CoreViewsTestCase(ServerTestCase):
         self.test_recording2_mbid = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
         self.test_recording2_data_json = open(os.path.join(TEST_DATA_PATH, self.test_recording2_mbid + '.json')).read()
         self.test_recording2_data = json.loads(self.test_recording2_data_json)
-        
+
     def test_get_low_level(self):
         mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
         resp = self.client.get("/api/v1/%s/low-level" % mbid)
@@ -93,35 +96,89 @@ class CoreViewsTestCase(ServerTestCase):
         hl.assert_called_with(self.uuid, 3)
 
     @mock.patch('db.data.load_low_level')
-    def test_get_recordings(self, load_low_level):
-        recordings_url = self.test_recording1_mbid + ':0'
-        load_low_level.return_value = self.test_recording1_data
-        resp = self.client.get('api/v1/recordings?ids=' + recordings_url)
+    def test_get_bulk_ll_no_param(self, load_low_level):
+        # No parameter in bulk lookup results in an error
+        resp = self.client.get('api/v1/low-level')
+        self.assertEqual(resp.status_code, 400)
+
+
+    @mock.patch('db.data.load_low_level')
+    def test_get_bulk_ll(self, load_low_level):
+        # Check that many items are returned, including two offsets of the
+        # same mbid
+
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
+
+        rec_c5 = {"recording": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"}
+        rec_7f = {"recording": "7f27d7a9-27f0-4663-9d20-2c9c40200e6d"}
+        rec_40_2 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"}
+        rec_40_3 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"}
+
+        load_low_level.side_effect = [rec_c5, rec_7f, rec_40_2, rec_40_3]
+
+        resp = self.client.get('api/v1/low-level?recording_ids=' + params)
         self.assertEqual(resp.status_code, 200)
 
         expected_result = {
-            self.test_recording1_mbid : {'0': self.test_recording1_data}
-            }
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": rec_7f},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3}
+        }
         self.assertEqual(resp.json, expected_result)
 
-        recordings_url = recordings_url + ";" + self.test_recording2_mbid
-        resp = self.client.get('api/v1/recordings?ids=' + recordings_url)
-        self.assertEqual(resp.status_code, 200)
+        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
+                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
+        load_low_level.assert_has_calls(calls)
 
-        expected_result = {
-            self.test_recording1_mbid : {'0': self.test_recording1_data},
-            self.test_recording2_mbid : {'0': self.test_recording1_data}
-            }
-        self.assertEqual(resp.json, expected_result)
 
-        limit_exceed_url = ";" + self.test_recording1_mbid
-        limit_exceed_url = limit_exceed_url * 205
-        resp = self.client.get('api/v1/recordings?ids=' + recordings_url + limit_exceed_url)
+    def test_get_bulk_ll_more_than_200(self):
+        # Create many random uuids, because of parameter deduplication
+        manyids = [str(uuid.uuid4()) for i in range(205)]
+        limit_exceed_url = ";".join(manyids)
+        resp = self.client.get('api/v1/low-level?recording_ids=' + limit_exceed_url)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
 
-        recordings_url = 'something_bad'
-        resp = self.client.get('api/v1/recordings?ids=' + recordings_url)
-        self.assertEqual(resp.status_code, 400)
-        self.assertEqual('One or more recording ids invalid', resp.json['message'])
 
+class GetBulkValidationTest(unittest.TestCase):
+    # Validation methods don't need to spin up test server
+    # or reset database each test
+
+    def test_validate_bulk_params(self):
+        # Validate MBIDs, convert offsets to integers, and add offset-0 if not provided
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
+        validated = core._valididate_bulk_params(params)
+
+        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3), ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
+        self.assertEqual(expected, validated)
+
+
+    def test_validate_bulk_params_bad_offset(self):
+        # If a parameter is <0 or not an integer, replace it with 0
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:foo"
+        validated = core._valididate_bulk_params(params)
+        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 0)]
+        self.assertEqual(expected, validated)
+
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another"
+        with self.assertRaises(webserver.views.api.exceptions.APIBadRequest) as ex:
+            validated = core._valididate_bulk_params(params)
+        self.assertEquals(ex.exception.message, "More than 1 : in 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another'")
+
+    def test_validate_bulk_params_bad_mbid(self):
+        # Return an error if an MBID is invalid
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376xxxx:1"
+        with self.assertRaises(webserver.views.api.exceptions.APIBadRequest) as ex:
+            validated = core._valididate_bulk_params(params)
+        self.assertEquals(ex.exception.message, "'c5f4909e-1d7b-4f15-a6f6-1af376xxxx' is not a valid UUID")
+
+    def test_validate_bulk_params_deduplicate(self):
+        # If the same mbid:offset is provided more than once, only return one
+
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:1;c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:0"
+        validated = core._valididate_bulk_params(params)
+
+        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 1)]
+        self.assertEqual(expected, validated)

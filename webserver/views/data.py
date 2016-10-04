@@ -1,9 +1,12 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify
+from flask_login import login_required, current_user
+from webserver.views.api import exceptions as api_exceptions
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
 import db.data
+import db.feedback
 import db.exceptions
 import json
 import time
@@ -123,6 +126,21 @@ def summary(mbid):
     else:  # Recording doesn't exist in MusicBrainz
         raise NotFound("MusicBrainz does not have data for this track.")
 
+
+@data_bp.route("/feedback", methods=["POST"])
+@login_required
+def feedback():
+    request_data = request.get_json()
+    if not request_data:
+        raise api_exceptions.APIBadRequest("Missing data")
+    db.feedback.submit(
+        hl_model_id=request_data.get("row_id"),
+        user_id=current_user.id,
+        is_correct=request_data.get("is_correct"),
+    )
+    return jsonify({"success": True})
+
+
 def _get_youtube_query(metadata):
     """Generates a query string to search youtube for this song
 
@@ -193,11 +211,8 @@ def _get_recording_info(mbid, metadata):
 
 def _interpret_high_level(hl):
 
-    def interpret(text, data, threshold=.6):
-        if data['probability'] >= threshold:
-            return text, data['value'].replace("_", " "), "%.3f" % data['probability']
-        else:
-            return text, "unsure", "%.3f" % data['probability']
+    def interpret(text, data):
+        return text, data['value'].replace("_", " "), "%.3f" % data['probability'], data
 
     genres = []
     tzan = hl['highlevel'].get('genre_tzanetakis')
@@ -245,6 +260,7 @@ def _interpret_high_level(hl):
         other.append(interpret("Voice", voice))
     gender = hl['highlevel'].get('gender')
     if gender:
+        print(gender)
         other.append(interpret("Gender", gender))
     dance = hl['highlevel'].get('danceability')
     if dance:

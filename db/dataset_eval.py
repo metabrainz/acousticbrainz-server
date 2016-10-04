@@ -1,5 +1,6 @@
 import db
 import db.exceptions
+import db.challenge
 import db.dataset
 import db.data
 import db.user
@@ -25,7 +26,7 @@ VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
 FILTER_ARTIST = "artist"
 
 
-def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
+def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None, challenge_id=None):
     """Add dataset into evaluation queue.
 
     Args:
@@ -40,6 +41,8 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
         filter_type: Optional filtering that will be applied to the dataset.
             See FILTER_* variables in this module for a list of existing
             filters.
+        challenge_id: Optional UUID of a challenge. If specified, evaluation
+            job will be submitted as a part of that challenge.
 
     Returns:
         ID of the newly created evaluation job.
@@ -48,7 +51,14 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
         if _job_exists(connection, dataset_id):
             raise JobExistsException
         validate_dataset(db.dataset.get(dataset_id))
-        return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
+        return _create_job(
+            connection=connection,
+            dataset_id=dataset_id,
+            normalize=normalize,
+            eval_location=eval_location,
+            filter_type=filter_type,
+            challenge_id=challenge_id,
+        )
 
 
 def job_exists(dataset_id):
@@ -174,6 +184,18 @@ def get_jobs_for_dataset(dataset_id):
         return [dict(j) for j in result.fetchall()]
 
 
+def get_jobs_in_challenge(challenge_id):
+    """Get jobs that were submitted for a specific challenge."""
+    with db.engine.connect() as connection:
+        result = connection.execute(sqlalchemy.text("""
+            SELECT dataset_eval_jobs.*
+              FROM dataset_eval_challenge
+              JOIN dataset_eval_jobs ON dataset_eval_jobs.id = dataset_eval_challenge.dataset_eval_job
+             WHERE dataset_eval_challenge.challenge_id = :challenge_id
+        """), {"challenge_id": challenge_id})
+        return [dict(j) for j in result.fetchall()]
+
+
 def set_job_result(job_id, result):
     with db.engine.begin() as connection:
         connection.execute(
@@ -273,7 +295,7 @@ def add_dataset_eval_set(connection, data):
     return snapshot_id
 
 
-def _create_job(connection, dataset_id, normalize, eval_location, filter_type=None):
+def _create_job(connection, dataset_id, normalize, eval_location, filter_type=None, challenge_id=None):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -297,6 +319,14 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
         "eval_location": eval_location
     })
     job_id = result.fetchone()[0]
+    if challenge_id:
+        _submit_for_challenge(
+            connection=connection,
+            challenge_id=challenge_id,
+            dataset_id=dataset_id,
+            job_id=job_id,
+            snapshot_id=snapshot_id,
+        )
     return job_id
 
 def get_remote_pending_jobs_for_user(user_id):
@@ -335,6 +365,40 @@ def get_remote_pending_jobs_for_user(user_id):
                 "created": row[2]
                 })
         return jobs
+
+
+def _submit_for_challenge(connection, challenge_id, dataset_id, job_id, snapshot_id):
+    """Submit existing dataset for a challenge.
+
+    This function also performs recording filtering (removes recordings that are present in a
+    validation dataset from a submission. This is a mandatory step, which updates snapshot that
+    was created for evaluation job.
+    """
+    if not db.challenge.is_ongoing(challenge_id):
+        raise db.exceptions.DatabaseException("Can only submit dataset for an ongoing challenge.")
+    recordings_to_remove = set()
+    validation_snapshot = db.dataset.get_snapshot(db.challenge.get(challenge_id)["validation_snapshot"])["data"]
+    for cls in validation_snapshot["classes"]:
+        for rec in cls["recordings"]:
+            recordings_to_remove.add(rec)
+    filtered_ds = _filter_recordings(recordings_to_remove, db.dataset.get(dataset_id))
+    db.dataset.replace_snapshot(snapshot_id, filtered_ds)
+    db.challenge._submit_eval_job(connection, challenge_id, dataset_id, job_id)
+
+
+def _filter_recordings(recordings, dataset):
+    """This function performs recording filtering in a dataset.
+
+    Args:
+        recordings (set): Set of recording IDs (strings) that need to be removed.
+        dataset (dict): Dataset to be filtered.
+
+    Returns:
+        Dataset with recording filtering applied.
+    """
+    for cls in dataset["classes"]:
+        cls["recordings"] = [r for r in cls["recordings"] if r not in recordings]
+    return dataset
 
 
 class IncompleteDatasetException(db.exceptions.DatabaseException):

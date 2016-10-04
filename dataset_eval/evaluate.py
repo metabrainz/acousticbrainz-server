@@ -14,6 +14,7 @@ import db.dataset
 import db.dataset_eval
 import db.exceptions
 import utils.path
+import utils.models
 import tempfile
 import logging
 import shutil
@@ -170,9 +171,7 @@ def extract_recordings(dataset):
 
 
 def save_history_file(history_file_path, job_id):
-    directory = os.path.join(HISTORY_STORAGE_DIR, job_id[0:1], job_id[0:2])
-    utils.path.create_path(directory)
-    destination = os.path.join(directory, "%s.history" % job_id)
+    destination = utils.models.get_model_file_path(job_id, create_dir=True)
     shutil.copyfile(history_file_path, destination)
     return destination
 

@@ -89,6 +89,23 @@ def view(id):
     )
 
 
+@datasets_bp.route("/snapshot/<uuid:snapshot_id>")
+def view_snapshot(snapshot_id):
+    try:
+        snapshot = db.dataset.get_snapshot(snapshot_id)
+    except db.exceptions.NoDataFoundException as e:
+        raise NotFound("Can't find this dataset.")
+    return render_template("datasets/view_snapshot.html", snapshot=snapshot)
+
+
+@datasets_bp.route("/snapshot/<uuid:snapshot_id>/json")
+def view_snapshot_json(snapshot_id):
+    try:
+        return jsonify(db.dataset.get_snapshot(snapshot_id))
+    except db.exceptions.NoDataFoundException as e:
+        raise NotFound("Can't find this dataset.")
+
+
 @datasets_bp.route("/accuracy")
 def accuracy():
     return render_template("datasets/accuracy.html")
@@ -172,6 +189,7 @@ def evaluate(dataset_id):
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
                 filter_type=form.filter_type.data,
+                challenge_id=form.challenge_id.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException as e:

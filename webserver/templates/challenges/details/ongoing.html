@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% from 'datasets/macros.html' import render_job_status, render_challenge_class_list %}
+
+{% block title %}{{ challenge["name"] }} - Challenges - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2 class="page-title">{{ challenge["name"] }}</h2>
+  <h3 class="page-subtitle">Dataset creation challenge</h3>
+
+  <div class="alert alert-info" role="alert">
+    This challenge has started on <strong>{{ challenge['start_time']|datetime }}</strong> and
+    {{ 'ended' if past_deadline else 'will end' }} on <strong>{{ challenge['end_time']|datetime }}</strong>.
+  </div>
+  <p>
+    Challenge ID: <code>{{ challenge['id'] }}</code>
+    <br/>Organizer ID: <code>{{ challenge['creator'] }}</code> (created on {{ challenge['created']|datetime }})
+  </p>
+
+  <h4>Classes</h4>
+  {{ render_challenge_class_list(challenge['classes']) }}
+
+  {% if past_deadline %}
+    <div class="alert alert-info" role="alert">
+      <strong>This challenge hasn't concluded yet.</strong>
+      Some of the submitted datasets still need to be evaluated.
+      Please, look at the table below for additional information.
+    </div>
+  {% endif %}
+
+  <h3>Current submissions</h3>
+
+  <p>
+    <ul class="nav nav-pills">
+      <li role="presentation" {{ 'class=active' if submission_order == 'time' }}>
+        <a href="{{ url_for('challenges.details', id=challenge['id'], submission_order='time') }}">By time</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if submission_order == 'accuracy' }}>
+        <a href="{{ url_for('challenges.details', id=challenge['id'], submission_order='accuracy') }}">By accuracy</a>
+      </li>
+    </ul>
+  </p>
+
+  <table class="table table-striped">
+    <thead>
+    <tr>
+      <th>User</th>
+      <th>Time</th>
+      <th>Job ID</th>
+      <th>Job status</th>
+      <th>Accuracy</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for s in submissions %}
+      <tr>
+        <td>
+          <a href="{{ url_for('user.profile', musicbrainz_id=s["eval_job"]["dataset"]["author"]["musicbrainz_id"]) }}">
+            {{ s["eval_job"]["dataset"]["author"]["musicbrainz_id"] }}
+          </a>
+        </td>
+        <td>{{ s["eval_job"]["created"]|datetime }}</td>
+        <td>{{ s["eval_job"]["id"] }}</td>
+        <td>{{ render_job_status(s["eval_job"]["status"]) }}</td>
+        <td>
+          <strong>
+            {% if s["challenge_result"] %}
+              {{ (s["challenge_result"]["correct"] * 100 / s["challenge_result"]["total"]) | round(2) }}%
+            {% else %}
+              -
+            {% endif %}
+          </strong>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

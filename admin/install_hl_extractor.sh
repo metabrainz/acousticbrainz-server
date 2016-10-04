@@ -25,6 +25,7 @@ cd /tmp/gaia
 # See http://essentia.upf.edu/documentation/installing.html
 git clone https://github.com/MTG/essentia.git /tmp/essentia
 cd /tmp/essentia
+git checkout v2.1_beta2
 ./waf configure --mode=release --with-gaia --with-example=streaming_extractor_music_svm
 ./waf
 cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm \

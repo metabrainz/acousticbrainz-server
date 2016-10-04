@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset creation challenges - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2 class="page-title">Dataset creation challenges</h2>
+
+  <p>
+    <ul class="nav nav-pills">
+      <li role="presentation" {{ 'class=active' if content_filter == 'all' }}>
+        <a href="{{ url_for('challenges.index', content_filter='all') }}">All</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if content_filter == 'active' }}>
+        <a href="{{ url_for('challenges.index', content_filter='active') }}">Active</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if content_filter == 'upcoming' }}>
+        <a href="{{ url_for('challenges.index', content_filter='upcoming') }}">Upcoming</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if content_filter == 'ended' }}>
+        <a href="{{ url_for('challenges.index', content_filter='ended') }}">Ended</a>
+      </li>
+    </ul>
+  </p>
+
+  <table class="table table-hover">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Start time</th>
+      <th>End time</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for challenge in challenges %}
+      <tr>
+        <td>
+          <a href="{{ url_for('challenges.details', id=challenge['id']) }}">
+            {{ challenge['name'] }}
+          </a>
+        </td>
+        <td>{{ challenge['start_time'] }}</td>
+        <td>{{ challenge['end_time'] }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% if (page - 4) > 0 %}
+    {% set start = page - 4 %}
+  {% else %}
+    {% set start = 1 %}
+  {% endif %}
+  {% if last_page > 0 %}
+    <ul class="pagination">
+      <li {{ 'class=disabled' if page == 1 }}>
+        <a href="{{ url_for('challenges.index', content_filter=content_filter, page=1) if page != 1 else '#' }}">
+          <span aria-hidden="true">&laquo;</span><span class="sr-only">First</span>
+        </a>
+      </li>
+      <li {{ 'class=disabled' if page == 1 }}>
+        <a href="{{ url_for('challenges.index', content_filter=content_filter, page=page-1) if page != 1 else '#' }}">
+          <span aria-hidden="true">&lsaquo;</span><span class="sr-only">Previous</span>
+        </a>
+      </li>
+
+      {% for cur_page in range(start, last_page+1) %}
+        {% if loop.index < 9 %}
+          <li {{ 'class=active' if cur_page == page }}>
+            <a href="{{ url_for('challenges.index', content_filter=content_filter, page=cur_page) }}">{{ cur_page }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      <li {{ 'class=disabled' if page == last_page }}>
+        <a href="{{ url_for('challenges.index', content_filter=content_filter, page=page+1) if page != last_page else '#' }}">
+          <span aria-hidden="true">&rsaquo;</span><span class="sr-only">Next</span>
+        </a>
+      </li>
+      <li {{ 'class=disabled' if page == last_page }}>
+        <a href="{{ url_for('challenges.index', content_filter=content_filter, page=last_page) if page != last_page else '#' }}">
+          <span aria-hidden="true">&raquo;</span><span class="sr-only">Last</span>
+        </a>
+      </li>
+    </ul>
+  {% endif %}
+{% endblock %}

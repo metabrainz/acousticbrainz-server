@@ -1,5 +1,5 @@
 from wtforms import BooleanField, SelectField, StringField, TextAreaField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, UUID
 from flask_wtf import Form
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from db import dataset_eval
@@ -13,6 +13,22 @@ DATASET_PENDING = "pending"
 DATASET_RUNNING = "running"
 DATASET_DONE = "done"
 DATASET_ALL = "all"
+
+class DynamicSelectField(SelectField):
+    """Select field for use with dynamic loader."""
+    def pre_validate(self, form):
+        pass
+
+
+class _OptionalUUID(UUID):
+    def __call__(self, form, field):
+        if not field.data:
+            return True
+        message = self.message
+        if message is None:
+            message = field.gettext('Invalid UUID.')
+        super(UUID, self).__call__(form, field, message)
+
 
 class DatasetCSVImportForm(Form):
     name = StringField("Name", validators=[DataRequired("Dataset name is required!")])
@@ -34,4 +50,6 @@ class DatasetEvaluationForm(Form):
         default = DATASET_EVAL_LOCAL
     )
     normalize = BooleanField("Normalize classes")
+    challenge_id = DynamicSelectField("Challenge", choices=[],
+                                      validators=[_OptionalUUID("Incorrect challenge ID!")])
 

@@ -96,18 +96,26 @@ function writeScript(b, resourceName) {
 
 function buildScripts() {
   var commonBundle = runYarb('common.js');
+  var dataBundle = runYarb('data.js', function (b) {
+    b.external(commonBundle);
+  });
   var datasetsBundle = runYarb('datasets.js', function (b) {
     b.external(commonBundle);
   });
   var statsBundle = runYarb('stats.js');
   var homepageBundle = runYarb('homepage.js');
+  var evalAddBundle = runYarb('eval-add.js');
+  var adminChallengesAddBundle = runYarb('admin/challenges-add.js');
   var profileBundle = runYarb('profile.js');
 
   return Q.all([
     writeScript(commonBundle, 'common.js'),
+    writeScript(dataBundle, 'data.js'),
     writeScript(datasetsBundle, 'datasets.js'),
     writeScript(statsBundle, 'stats.js'),
     writeScript(homepageBundle, 'homepage.js'),
+    writeScript(evalAddBundle, 'eval-add.js'),
+    writeScript(adminChallengesAddBundle, 'admin/challenges-add.js'),
     writeScript(profileBundle, 'profile.js'),
   ]).then(writeManifest);
 }

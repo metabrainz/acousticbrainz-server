@@ -3,46 +3,64 @@
 {% block title %}Evaluate dataset "{{ dataset['name'] }}" - AcousticBrainz{% endblock %}
 
 {% block content %}
-  <h2 class="page-title">Evaluate dataset "{{ dataset['name'] }}"</h2>
-  <hr />
+  <div id="dataset-eval-submit">
+    <h2 class="page-title">Evaluate dataset "{{ dataset['name'] }}"</h2>
+    <hr />
 
-  {% for field in form.errors %}
-    {% for error in form.errors[field] %}
-      <div class="alert alert-danger">{{ field }}: {{ error }}</div>
+    {% for field in form.errors %}
+      {% for error in form.errors[field] %}
+        <div class="alert alert-danger">{{ field }}: {{ error }}</div>
+      {% endfor %}
     {% endfor %}
-  {% endfor %}
 
-  {# TODO(roman): Add some information about options presented on this page. #}
-  <form method="POST" class="form-horizontal" role="form">
-    {{ form.hidden_tag() }}
-    <fieldset>
-      <div class="form-group">
-        <label class="col-sm-2 control-label">{{ form.filter_type.label.text }}</label>
-        <div class="col-sm-4">{{ form.filter_type(class="form-control", required="required") }}</div>
-      </div>
-      <div class="form-group">
-        <div class="col-sm-offset-2 col-sm-4">
-          <div class="checkbox">
-            <label id="agreement">
-              {{ form.normalize }}
-              {{ form.normalize.label.text }}
-            </label>
+    {# TODO(roman): Add some information about options presented on this page. #}
+    <form method="POST" class="form-horizontal" role="form">
+      {{ form.hidden_tag() }}
+      <fieldset>
+        <div class="form-group">
+          <label class="col-sm-2 control-label">{{ form.filter_type.label.text }}</label>
+          <div class="col-sm-4">{{ form.filter_type(class="form-control", required="required") }}</div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label">{{ form.challenge_id.label.text }}</label>
+          <div class="col-sm-4">{{ form.challenge_id(id="challenge-id", class="form-control") }}</div>
+          <div class="col-sm-offset-2 col-sm-10">
+            <em class="text-muted">
+              If you submit dataset for a challenge, recording filtering will be applied to it.
+              It removes all the recordings that are present in a validation dataset. This may
+              significantly reduce contents of your dataset.
+            </em>
           </div>
         </div>
-      </div>
-    </fieldset>
-    <fieldset>
-      {% if config.get('FEATURE_EVAL_LOCATION') %}
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-4">
+            <div class="checkbox">
+              <label id="agreement">
+                {{ form.normalize }}
+                {{ form.normalize.label.text }}
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset>
+        {% if config.get('FEATURE_EVAL_LOCATION') %}
+          <div class="form-group">
+            <label class="col-sm-2 control-label">{{ form.evaluation_location.label.text }}</label>
+            <div class="col-sm-4">{{ form.evaluation_location(class="form-control", required="required") }}</div>
+          </div>
+        {% endif %}
+      </fieldset>
       <div class="form-group">
-        <label class="col-sm-2 control-label">{{ form.evaluation_location.label.text }}</label>
-        <div class="col-sm-4">{{ form.evaluation_location(class="form-control", required="required") }}</div>
+        <div class="col-sm-offset-2 col-sm-4">
+          <button type="submit" class="btn btn-primary">Evaluate</button>
+        </div>
       </div>
-      {% endif %}
-    </fieldset>
-    <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-4">
-        <button type="submit" class="btn btn-primary">Evaluate</button>
-      </div>
-    </div>
-  </form>
+    </form>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ get_static_path('eval-add.js') }}"></script>
 {% endblock %}

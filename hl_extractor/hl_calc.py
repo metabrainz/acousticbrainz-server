@@ -15,6 +15,8 @@ from setproctitle import setproctitle
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
+
+import utils.hl_calc
 import db.data
 import db
 import config
@@ -63,7 +65,8 @@ class HighLevel(Thread):
         try:
             subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY),
                                    name, out_file, PROFILE_CONF],
-                                  stdout=fnull, stderr=fnull)
+                                  #stdout=fnull, stderr=fnull
+                                  )
         except (subprocess.CalledProcessError, OSError):
             print("Cannot call high-level extractor")
             # If we return early, make sure we remove the temp
@@ -98,56 +101,11 @@ class HighLevel(Thread):
         self.hl_data = self._calculate()
 
 
-def create_profile(in_file, out_file, sha1):
-    """Prepare a profile file for use with essentia. Sanity check to make sure
-    important values are present.
-    """
-
-    try:
-        with open(in_file, 'r') as f:
-            doc = yaml.load(f)
-    except IOError as e:
-        print("Cannot read profile %s: %s" % (in_file, e))
-        sys.exit(-1)
-
-    try:
-        models_ver = doc['mergeValues']['metadata']['version']['highlevel']['models_essentia_git_sha']
-    except KeyError:
-        models_ver = None
-
-    if not models_ver:
-        print("profile.conf.in needs to have 'metadata : version : highlevel :"
-              " models_essentia_git_sha' defined.")
-        sys.exit(-1)
-
-    doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
-
-    try:
-        with open(out_file, 'w') as yaml_file:
-            yaml_file.write( yaml.dump(doc, default_flow_style=False))
-    except IOError as e:
-        print("Cannot write profile %s: %s" % (out_file, e))
-        sys.exit(-1)
-
-
-def get_build_sha1(binary):
-    """Calculate the SHA1 of the binary we're using."""
-    try:
-        f = open(binary, "r")
-        bin = f.read()
-        f.close()
-    except IOError as e:
-        print("Cannot calculate the SHA1 of the high-level extractor binary: %s" % e)
-        sys.exit(-1)
-
-    return sha1(bin).hexdigest()
-
-
 def main(num_threads):
     print("High-level extractor daemon starting with %d threads" % num_threads)
     sys.stdout.flush()
-    build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
-    create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
+    build_sha1 = utils.hl_calc.get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
+    utils.hl_calc.create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
     db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
 
     num_processed = 0

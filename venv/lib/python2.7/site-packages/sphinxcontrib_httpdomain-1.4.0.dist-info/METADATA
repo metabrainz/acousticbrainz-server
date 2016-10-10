@@ -1,0 +1,30 @@
+Metadata-Version: 2.0
+Name: sphinxcontrib-httpdomain
+Version: 1.4.0
+Summary: Sphinx domain for HTTP APIs
+Home-page: http://bitbucket.org/birkenfeld/sphinx-contrib
+Author: Hong Minhee
+Author-email: minhee@dahlia.kr
+License: BSD
+Download-URL: http://pypi.python.org/pypi/sphinxcontrib-httpdomain
+Platform: any
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Documentation
+Classifier: Topic :: Utilities
+Requires-Dist: Sphinx (>=1.0)
+Requires-Dist: six
+
+This contrib extension, sphinxcontrib.httpdomain provides a Sphinx
+domain for describing RESTful HTTP APIs.
+
+You can find the documentation from the following URL:
+
+http://pythonhosted.org/sphinxcontrib-httpdomain/
+
+

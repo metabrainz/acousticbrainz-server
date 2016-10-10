@@ -7,6 +7,7 @@ import sqlalchemy
 from db import exceptions
 import re
 from sqlalchemy import text
+import uuid
 import unicodedata
 
 
@@ -55,6 +56,30 @@ def create_from_dict(dictionary, author_id):
                                (cls_id, recording_mbid))
 
     return dataset_id
+
+def add_recordings(dataset):
+    """Adds new recordings to a class in a dataset"""
+
+    with db.engine.begin() as connection:
+
+        for mbid in dataset["recordings"]:
+
+            result = connection.execute("""SELECT id FROM dataset_class WHERE name = %s""",dataset["class_name"])
+            clsid =result.fetchone()
+
+            connection.execute("""INSERT INTO dataset_class_member (class, mbid) VALUES (%s,%s)""", (clsid[0],mbid))
+
+
+def delete_recordings(dataset):
+    """Delete all recordings from the list of IDs"""
+
+    with db.engine.begin() as connection:
+
+        for mbid in dataset["recordings"]:
+            connection.execute("""DELETE FROM dataset_class_member WHERE mbid = %s""",(mbid))
+
+
+
 
 
 def update(dataset_id, dictionary, author_id):
@@ -315,3 +340,4 @@ def _delete_snapshots_for_dataset(connection, dataset_id):
         DELETE FROM dataset_snapshot
               WHERE dataset_id = :dataset_id""")
     connection.execute(query, {"dataset_id": dataset_id})
+

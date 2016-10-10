@@ -21,7 +21,7 @@ class DatasetTestCase(DatabaseTestCase):
             "description": "",
             "classes": [
                 {
-                    "name": "Class #1",
+                    "name": "Class1",
                     "description": "This is a description of class #1!",
                     "recordings": [
                         "0dad432b-16cc-4bf0-8961-fd31d124b01b",
@@ -29,8 +29,8 @@ class DatasetTestCase(DatabaseTestCase):
                     ]
                 },
                 {
-                    "name": "Class #2",
-                    "description": "",
+                    "name": "Class2",
+                    "description": "This is a description of class #2!",
                     "recordings": [
                         "fd528ddb-411c-47bc-a383-1f8a222ed213",
                         "96888f9e-c268-4db2-bc13-e29f8b317c20",
@@ -39,6 +39,10 @@ class DatasetTestCase(DatabaseTestCase):
                 },
             ],
             "public": True,
+        }
+        self.test_data_recordings = {
+            "class_name": "Class1",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
 
     def test_create_from_dict(self):
@@ -118,6 +122,22 @@ class DatasetTestCase(DatabaseTestCase):
 
         datasets = dataset.get_by_user_id(self.test_user_id, public_only=False)
         self.assertEqual(len(datasets), 2)
+
+    def test_add_recordings(self):
+
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        ds = dataset.get(id)
+
+        dataset.add_recordings(self.test_data_recordings)
+
+    def test_delete_recordings(self):
+
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        ds = dataset.get(id)
+
+        for cls in ds["classes"]:
+            dataset.delete_recordings(cls)
+
 
     def test_delete(self):
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)

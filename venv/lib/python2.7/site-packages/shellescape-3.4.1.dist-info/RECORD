@@ -1,0 +1,13 @@
+shellescape/__init__.py,sha256=J9YVVI_M1jo_ZSqrPd7v379OhwJdfj65HyyrDTIGwAU,71
+shellescape/main.py,sha256=lye2s6O1vNxsip3XQjL2Gm77P4yBxWLEiyVor08jgVM,445
+shellescape/settings.py,sha256=mFMflcPTepXT-K4i1KHvLcuqb8l7kxcPHk6gGLXjBAs,494
+shellescape-3.4.1.dist-info/DESCRIPTION.rst,sha256=aB9VBOy7sf9eMyrs4sg5c5uNPJmb49BcSd-n1jJwWeo,2068
+shellescape-3.4.1.dist-info/METADATA,sha256=noDkRegp4dg9nDBZNeFKVfnWGaxg8Hq1tk-5Ry5O1S0,3001
+shellescape-3.4.1.dist-info/pydist.json,sha256=4sXXfmbxvZraNOnVXGGwo8XXQmVfNIcXUsd-1oHKF6M,1029
+shellescape-3.4.1.dist-info/RECORD,,
+shellescape-3.4.1.dist-info/top_level.txt,sha256=1nR_M9ikLI5pRQ3rfRuYjdDB9AjP3V9GAQITd5ohg98,12
+shellescape-3.4.1.dist-info/WHEEL,sha256=SXYYsi-y-rEGIva8sB8iKF6bAFD6YDhmqHX5hI3fc0o,110
+shellescape-3.4.1.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+shellescape/settings.pyc,,
+shellescape/main.pyc,,
+shellescape/__init__.pyc,,

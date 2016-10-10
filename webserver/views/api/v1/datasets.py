@@ -217,7 +217,15 @@ def add_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+
+    #The json in this method's example request is given to be 'class_name' instead of 'name' which is in other json requests.
+
+    ds = get_dataset(dataset_id)
+    db.dataset.add_recordings(ds)
+    return jsonify(
+        success=True,
+        message="Recording(s) added."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["DELETE"])
@@ -240,7 +248,12 @@ def delete_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_dataset(dataset_id)
+    db.dataset.delete_recordings(ds)
+    return jsonify(
+        success=True,
+        message="Recording(s) deleted."
+    )
 
 
 def get_check_dataset(dataset_id):

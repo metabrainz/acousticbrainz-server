@@ -18,6 +18,34 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.test_user_mb_name = "tester"
         self.test_user_id = db.user.create(self.test_user_mb_name)
         self.test_user = db.user.get(self.test_user_id)
+        self.test_data = {
+            "name": "Test",
+            "description": "",
+            "classes": [
+                {
+                    "name": "Class1",
+                    "description": "This is a description of class #1!",
+                    "recordings": [
+                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
+                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
+                    ]
+                },
+                {
+                    "name": "Class2",
+                    "description": "This is a description of class #2!",
+                    "recordings": [
+                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
+                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
+                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
+                    ]
+                },
+            ],
+            "public": True,
+        }
+        self.test_data_recordings = {
+            "class_name": "Class1",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+        }
 
 
     def test_create_dataset_forbidden(self):
@@ -78,4 +106,36 @@ class APIDatasetViewsTestCase(ServerTestCase):
         resp = self.client.post("/api/v1/datasets/", data=submit, content_type='application/json')
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "dataset_id": "6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0"}
+        print resp.json
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.add_recordings")
+    def test_add_recordings(self, add_recordings):
+        """Successfully add recordings. """
+        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        ds = db.dataset.get(id)
+        self.temporary_login(self.test_user_id)
+        submit = json.dumps({"class_name": "Class1",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+        })
+        url = '/api/v1/datasets/%s/recordings' %(str(id))
+        resp = self.client.put(url, data=submit, content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Recording(s) added."}
+        print resp.json
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.delete_recordings")
+    def test_delete_recordings(self, delete_recordings):
+        """Successfully delete recordings. """
+        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        ds = db.dataset.get(id)
+        self.temporary_login(self.test_user_id)
+        submit = json.dumps({"class_name": "Class1",
+                             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+                             })
+        url = '/api/v1/datasets/%s/recordings' % (str(id))
+        resp = self.client.delete(url, data=submit, content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Recording(s) deleted."}
         self.assertEqual(resp.json, expected)

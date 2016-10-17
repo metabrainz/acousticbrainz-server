@@ -143,13 +143,13 @@ class CoreViewsTestCase(ServerTestCase):
 
 
 class GetBulkValidationTest(unittest.TestCase):
-    # Validation methods don't need to spin up test server
+    # Validation/parse methods don't need to spin up test server
     # or reset database each test
 
     def test_validate_bulk_params(self):
         # Validate MBIDs, convert offsets to integers, and add offset-0 if not provided
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
-        validated = core._valididate_bulk_params(params)
+        validated = core._parse_bulk_params(params)
 
         expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3), ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
         self.assertEqual(expected, validated)
@@ -158,27 +158,27 @@ class GetBulkValidationTest(unittest.TestCase):
     def test_validate_bulk_params_bad_offset(self):
         # If a parameter is <0 or not an integer, replace it with 0
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:foo"
-        validated = core._valididate_bulk_params(params)
+        validated = core._parse_bulk_params(params)
         expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 0)]
         self.assertEqual(expected, validated)
 
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another"
         with self.assertRaises(webserver.views.api.exceptions.APIBadRequest) as ex:
-            validated = core._valididate_bulk_params(params)
+            validated = core._parse_bulk_params(params)
         self.assertEquals(ex.exception.message, "More than 1 : in 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another'")
 
     def test_validate_bulk_params_bad_mbid(self):
         # Return an error if an MBID is invalid
         params = "c5f4909e-1d7b-4f15-a6f6-1af376xxxx:1"
         with self.assertRaises(webserver.views.api.exceptions.APIBadRequest) as ex:
-            validated = core._valididate_bulk_params(params)
+            validated = core._parse_bulk_params(params)
         self.assertEquals(ex.exception.message, "'c5f4909e-1d7b-4f15-a6f6-1af376xxxx' is not a valid UUID")
 
     def test_validate_bulk_params_deduplicate(self):
         # If the same mbid:offset is provided more than once, only return one
 
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:1;c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:0"
-        validated = core._valididate_bulk_params(params)
+        validated = core._parse_bulk_params(params)
 
         expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 1)]
         self.assertEqual(expected, validated)

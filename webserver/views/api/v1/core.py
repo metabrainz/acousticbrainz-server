@@ -112,8 +112,8 @@ def _validate_offset(offset):
     return offset
 
 
-def _valididate_bulk_params(params):
-    """Validate a bulk query parameter string.
+def _parse_bulk_params(params):
+    """Validate and parse a bulk query parameter string.
 
     A valid parameter string takes the form
       mbid[:offset];mbid[:offset];...
@@ -128,9 +128,8 @@ def _valididate_bulk_params(params):
     """
 
     ret = []
-    recordings = params.split(";")
 
-    for recording in recordings:
+    for recording in params.split(";"):
         parts = str(recording).split(":")
         recording_id = parts[0]
         try:
@@ -185,7 +184,7 @@ def get_many_lowlevel():
     if not recording_ids:
         raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
 
-    recordings = _valididate_bulk_params(recording_ids)
+    recordings = _parse_bulk_params(recording_ids)
     if len(recordings) > 200:
         raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
 

@@ -12,7 +12,7 @@ tasks for the website:
 
 * [Python](https://www.python.org/) 2.7.x
 * [PostgreSQL](http://www.postgresql.org/) >=9.4 (needs the JSONB data type)
-* [Node.js](http://memcached.org/)
+* [Node.js](https://nodejs.org/en/) >6.0
 * [memcached](http://memcached.org/)
 * [pxz](http://manpages.ubuntu.com/manpages/trusty/man1/pxz.1.html) for
 exporting and importing the data
@@ -22,6 +22,7 @@ For example in the latest Ubuntu, this command will install pre-requisites:
     $ sudo apt-get install python-dev python-virtualenv memcached pxz \
         postgresql-9.4 postgresql-client-9.4 postgresql-server-dev-9.4
 
+See https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions for instructions on how to install a recent version of node.js
 
 ## Web Server
 

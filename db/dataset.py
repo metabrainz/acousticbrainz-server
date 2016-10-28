@@ -315,3 +315,27 @@ def _delete_snapshots_for_dataset(connection, dataset_id):
         DELETE FROM dataset_snapshot
               WHERE dataset_id = :dataset_id""")
     connection.execute(query, {"dataset_id": dataset_id})
+
+
+def add_recordings(dataset, dataset_id):
+    """Adds new recordings to a class in a dataset"""
+
+    with db.engine.begin() as connection:
+        result = connection.execute("""SELECT id FROM dataset_class WHERE name = %s and dataset = %s""",
+                                    (dataset["class_name"], dataset_id))
+        clsid = result.fetchone()
+
+        for mbid in dataset["recordings"]:
+            connection.execute("""INSERT INTO dataset_class_member (class, mbid) VALUES (%s,%s)""", (clsid[0],mbid))
+
+
+def delete_recordings(dataset, dataset_id):
+    """Delete all recordings from the list of IDs"""
+
+    with db.engine.begin() as connection:
+        result = connection.execute("""SELECT id FROM dataset_class WHERE name = %s and dataset = %s""",
+                                    (dataset["class_name"], dataset_id))
+        clsid = result.fetchone()
+
+        for mbid in dataset["recordings"]:
+            connection.execute("""DELETE FROM dataset_class_member WHERE class = %s and mbid = %s""", (clsid[0], mbid))

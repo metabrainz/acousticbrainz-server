@@ -217,7 +217,18 @@ def add_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    class_dict = request.get_json()
+    if not class_dict:
+        raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
+    try:
+        db.dataset.add_recordings(class_dict, dataset_id)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+
+    return jsonify(
+        success=True,
+        message="Recording(s) added."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["DELETE"])
@@ -240,7 +251,18 @@ def delete_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    class_dict = request.get_json()
+    if not class_dict:
+        raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
+    try:
+        db.dataset.delete_recordings(class_dict, dataset_id)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+
+    return jsonify(
+        success=True,
+        message="Recording(s) deleted."
+    )
 
 
 def get_check_dataset(dataset_id):

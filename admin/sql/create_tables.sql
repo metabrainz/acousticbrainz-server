@@ -154,4 +154,12 @@ CREATE TABLE feedback (
   suggestion         TEXT
 );
 
+CREATE TABLE bigquery_lowlevel (
+  lowlevel        INTEGER -- FK to lowlevel.id
+);
+
+CREATE TABLE bigquery_highlevel (
+  highlevel_model      INTEGER -- FK to highlevel_model.id
+);
+
 COMMIT;

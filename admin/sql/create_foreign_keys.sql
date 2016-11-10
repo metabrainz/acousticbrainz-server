@@ -115,4 +115,14 @@ ALTER TABLE feedback
   FOREIGN KEY (user_id)
   REFERENCES "user" (id);
 
+ALTER TABLE bigquery_lowlevel
+  ADD CONSTRAINT lowlevel_fk_lowlevel
+  FOREIGN KEY (lowlevel)
+  REFERENCES lowlevel (id);
+
+ALTER TABLE bigquery_highlevel
+  ADD CONSTRAINT highlevel_model_fk_highlevel_model
+  FOREIGN KEY (highlevel_model)
+  REFERENCES highlevel_model (id);
+
 COMMIT;

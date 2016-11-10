@@ -23,4 +23,7 @@ CREATE INDEX highlevel_ndx_highlevel_model ON highlevel_model (highlevel);
 
 CREATE UNIQUE INDEX lower_musicbrainz_id_ndx_user ON "user" (lower(musicbrainz_id));
 
+CREATE UNIQUE INDEX lowlevel_ndx_bigquery_lowlevel ON bigquery_lowlevel (lowlevel);
+CREATE UNIQUE INDEX highlevel_model_ndx_bigquery_highlevel ON bigquery_highlevel (highlevel_model);
+
 COMMIT;

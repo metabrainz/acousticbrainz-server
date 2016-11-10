@@ -27,6 +27,8 @@ git clone https://github.com/MTG/essentia.git /tmp/essentia
 cd /tmp/essentia
 ./waf configure --mode=release --with-gaia --with-example=streaming_extractor_music_svm
 ./waf
+./waf install
+ldconfig
 cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm \
     $APP_DIR/hl_extractor/streaming_extractor_music_svm
 

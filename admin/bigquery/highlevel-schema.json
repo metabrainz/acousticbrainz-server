@@ -1,0 +1,704 @@
+[
+  {
+    "name": "meta",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "gid",
+        "type": "STRING"
+      }, 
+      {
+        "name": "offset",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "name": "highlevel",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "model",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "results",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "value",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "probability",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "probability",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "value",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "version",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "essentia",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "essentia_build_sha",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "essentia_git_sha",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "extractor",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "gaia",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "gaia_git_sha",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "models_essentia_git_sha",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "metadata",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "audio_properties",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "analysis_sample_rate",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "bit_rate",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "codec",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "downmix",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "equal_loudness",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "length",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "lossless",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "md5_encoded",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "replay_gain",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "sample_rate",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "tags",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "type": "STRING",
+            "name": "acoustid_fingerprint",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "acoustid_id",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "album",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "albumartist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "albumartistsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "albumsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "arranger",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "artist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "artistsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "artistwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "asin",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "audiosourcewebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "barcode",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "bpm",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "catalognumber",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "compilation",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "composer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "composersort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "conductor",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "contentgroup",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "copyright",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "copyrighturl",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "date",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "discnumber",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "discsubtitle",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "disctotal",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "djmixer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encodedby",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encodersettings",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encoding",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encodingtime",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "engineer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "filetype",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "file_name"
+          },
+          {
+            "type": "STRING",
+            "name": "filewebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "genre",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "grouping",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "initialkey",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "isrc",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "label",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "language",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "length",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "license",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "lyricist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "media",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "mixer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "mood",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_albumartistid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_albumid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_artistid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_discid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_releasegroupid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_releasetrackid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_recordingid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_trackid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_trmid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_workid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicip_puid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalalbum",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalartist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originaldate",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalfilename",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originallyricist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalyear",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "owner",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "paymentwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "performer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "playlistdelay",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "producednotice",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "producer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "publisherwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "radiostation",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "radiostationowner",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "radiostationwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasecountry",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasedate",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasestatus",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasetype",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "remixer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "script",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "showsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "subtitle",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "taggingdate",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "title",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "titlesort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "totaldiscs",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "totaltracks",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "tracknumber",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "tracktotal",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "website",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "work",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "writer",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "version",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "highlevel",
+            "type": "RECORD",
+            "mode": "NULLABLE",
+            "fields": [
+              {
+                "name": "essentia",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "essentia_build_sha",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "essentia_git_sha",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "extractor",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "gaia",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "gaia_git_sha",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "models_essentia_git_sha",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              }
+            ]
+          },
+          {
+            "name": "lowlevel",
+            "type": "RECORD",
+            "mode": "NULLABLE",
+            "fields": [
+              {
+                "name": "essentia",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "essentia_build_sha",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "essentia_git_sha",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "extractor",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

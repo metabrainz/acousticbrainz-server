@@ -1,0 +1,3595 @@
+[
+  {
+    "name": "meta",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "gid",
+        "type": "STRING"
+      }, 
+      {
+        "name": "offset",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "name": "lowlevel",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "spectral_complexity",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "silence_rate_20dB",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "average_loudness",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "erbbands_spread",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_kurtosis",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "barkbands_kurtosis",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_strongpeak",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_spread",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_rms",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "dynamic_complexity",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "erbbands",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "spectral_contrast_coeffs",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "dissonance",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_energyband_high",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "gfcc",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "icov",
+            "type": "RECORD",
+            "mode": "REPEATED",
+            "fields": [
+              {
+                "name": "dimension",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "values",
+                "type": "FLOAT",
+                "mode": "REPEATED"
+              }
+            ]
+          },
+          {
+            "name": "cov",
+            "type": "RECORD",
+            "mode": "REPEATED",
+            "fields": [
+              {
+                "name": "dimension",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "values",
+                "type": "FLOAT",
+                "mode": "REPEATED"
+              }
+            ]
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "spectral_flux",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "silence_rate_30dB",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_energyband_middle_high",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "barkbands_spread",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_centroid",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "pitch_salience",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "erbbands_skewness",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "erbbands_crest",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "melbands",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "barkbands_skewness",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_entropy",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_rolloff",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "barkbands",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "melbands_flatness_db",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "melbands_skewness",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "silence_rate_60dB",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_energyband_low",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_energyband_middle_low",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "melbands_kurtosis",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_decrease",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "erbbands_kurtosis",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "melbands_crest",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "mfcc",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          {
+            "name": "icov",
+            "type": "RECORD",
+            "mode": "REPEATED",
+            "fields": [
+              {
+                "name": "dimension",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "values",
+                "type": "FLOAT",
+                "mode": "REPEATED"
+              }
+            ]
+          },
+          {
+            "name": "cov",
+            "type": "RECORD",
+            "mode": "REPEATED",
+            "fields": [
+              {
+                "name": "dimension",
+                "type": "STRING",
+                "mode": "NULLABLE"
+              },
+              {
+                "name": "values",
+                "type": "FLOAT",
+                "mode": "REPEATED"
+              }
+            ]
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "spectral_energy",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "melbands_spread",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "erbbands_flatness_db",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_contrast_valleys",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "barkbands_flatness_db",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "zerocrossingrate",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "spectral_skewness",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "hfc",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "barkbands_crest",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "tonal",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "thpcp",
+        "type": "FLOAT",
+        "mode": "REPEATED"
+      },
+      {
+        "name": "hpcp",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "chords_scale",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "key_strength",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "hpcp_entropy",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "chords_number_rate",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "key_scale",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "chords_strength",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "key_key",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "chords_changes_rate",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "tuning_nontempered_energy_ratio",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "tuning_equal_tempered_deviation",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "chords_histogram",
+        "type": "FLOAT",
+        "mode": "REPEATED"
+      },
+      {
+        "name": "chords_key",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "tuning_frequency",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "tuning_diatonic_strength",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      }
+    ]
+  },
+  {
+    "name": "rhythm",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "bpm_histogram_first_peak_spread",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "bpm_histogram_second_peak_spread",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "beats_count",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "beats_loudness",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "bpm",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "bpm_histogram_second_peak_bpm",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "danceability",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "bpm_histogram_first_peak_weight",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "beats_loudness_band_ratio",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "REPEATED"
+          }
+        ]
+      },
+      {
+        "name": "onset_rate",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "beats_position",
+        "type": "FLOAT",
+        "mode": "REPEATED"
+      },
+      {
+        "name": "bpm_histogram_second_peak_weight",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "bpm_histogram_first_peak_bpm",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "min",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "max",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "median",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean2",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dmean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "var",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "dvar",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "mean",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "metadata",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      {
+        "name": "audio_properties",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "analysis_sample_rate",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "bit_rate",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "downmix",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "length",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "codec",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "md5_encoded",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "equal_loudness",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "sample_rate",
+            "type": "INTEGER",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "replay_gain",
+            "type": "FLOAT",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "lossless",
+            "type": "BOOLEAN",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "version",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "name": "essentia",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "extractor",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "essentia_build_sha",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "essentia_git_sha",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          }
+        ]
+      },
+      {
+        "name": "tags",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          {
+            "type": "STRING",
+            "name": "acoustid_fingerprint",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "acoustid_id",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "album",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "albumartist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "albumartistsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "albumsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "arranger",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "artist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "artistsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "artistwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "asin",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "audiosourcewebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "barcode",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "bpm",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "catalognumber",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "compilation",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "composer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "composersort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "conductor",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "contentgroup",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "copyright",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "copyrighturl",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "date",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "discnumber",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "discsubtitle",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "disctotal",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "djmixer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encodedby",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encodersettings",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encoding",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "encodingtime",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "engineer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "filetype",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "file_name"
+          },
+          {
+            "type": "STRING",
+            "name": "filewebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "genre",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "grouping",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "initialkey",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "isrc",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "label",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "language",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "length",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "license",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "lyricist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "media",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "mixer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "mood",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_albumartistid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_albumid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_artistid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_discid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_releasegroupid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_releasetrackid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_recordingid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_trackid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_trmid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicbrainz_workid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "musicip_puid",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalalbum",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalartist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originaldate",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalfilename",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originallyricist",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "originalyear",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "owner",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "paymentwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "performer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "playlistdelay",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "producednotice",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "producer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "publisherwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "radiostation",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "radiostationowner",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "radiostationwebpage",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasecountry",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasedate",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasestatus",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "releasetype",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "remixer",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "script",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "showsort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "subtitle",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "taggingdate",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "title",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "titlesort",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "totaldiscs",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "totaltracks",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "tracknumber",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "tracktotal",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "website",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "work",
+            "mode": "REPEATED"
+          },
+          {
+            "type": "STRING",
+            "name": "writer",
+            "mode": "REPEATED"
+          }
+        ]
+      }
+    ]
+  }
+]

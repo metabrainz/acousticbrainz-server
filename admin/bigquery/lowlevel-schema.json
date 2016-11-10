@@ -654,52 +654,6 @@
         ]
       },
       {
-        "name": "gfcc",
-        "type": "RECORD",
-        "mode": "REPEATED",
-        "fields": [
-          {
-            "name": "icov",
-            "type": "RECORD",
-            "mode": "REPEATED",
-            "fields": [
-              {
-                "name": "dimension",
-                "type": "STRING",
-                "mode": "NULLABLE"
-              },
-              {
-                "name": "values",
-                "type": "FLOAT",
-                "mode": "REPEATED"
-              }
-            ]
-          },
-          {
-            "name": "cov",
-            "type": "RECORD",
-            "mode": "REPEATED",
-            "fields": [
-              {
-                "name": "dimension",
-                "type": "STRING",
-                "mode": "NULLABLE"
-              },
-              {
-                "name": "values",
-                "type": "FLOAT",
-                "mode": "REPEATED"
-              }
-            ]
-          },
-          {
-            "name": "mean",
-            "type": "FLOAT",
-            "mode": "REPEATED"
-          }
-        ]
-      },
-      {
         "name": "spectral_flux",
         "type": "RECORD",
         "mode": "NULLABLE",
@@ -1840,52 +1794,6 @@
             "name": "mean",
             "type": "FLOAT",
             "mode": "NULLABLE"
-          }
-        ]
-      },
-      {
-        "name": "mfcc",
-        "type": "RECORD",
-        "mode": "REPEATED",
-        "fields": [
-          {
-            "name": "icov",
-            "type": "RECORD",
-            "mode": "REPEATED",
-            "fields": [
-              {
-                "name": "dimension",
-                "type": "STRING",
-                "mode": "NULLABLE"
-              },
-              {
-                "name": "values",
-                "type": "FLOAT",
-                "mode": "REPEATED"
-              }
-            ]
-          },
-          {
-            "name": "cov",
-            "type": "RECORD",
-            "mode": "REPEATED",
-            "fields": [
-              {
-                "name": "dimension",
-                "type": "STRING",
-                "mode": "NULLABLE"
-              },
-              {
-                "name": "values",
-                "type": "FLOAT",
-                "mode": "REPEATED"
-              }
-            ]
-          },
-          {
-            "name": "mean",
-            "type": "FLOAT",
-            "mode": "REPEATED"
           }
         ]
       },

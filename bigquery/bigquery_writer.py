@@ -82,10 +82,12 @@ def translate_lowlevel(gid, offset, data):
         return [{"dimension": "%s" % dim, "values": vals} for dim, vals in enumerate(data, 1)]
 
     data["meta"] = {"gid": gid, "offset": "%s" % offset}
-    data["lowlevel"]["mfcc"]["cov"] = _transform(data["lowlevel"]["mfcc"]["cov"])
-    data["lowlevel"]["mfcc"]["icov"] = _transform(data["lowlevel"]["mfcc"]["icov"])
-    data["lowlevel"]["gfcc"]["cov"] = _transform(data["lowlevel"]["gfcc"]["cov"])
-    data["lowlevel"]["gfcc"]["icov"] = _transform(data["lowlevel"]["gfcc"]["icov"])
+    del data["lowlevel"]["mfcc"]
+    del data["lowlevel"]["gfcc"]
+    #data["lowlevel"]["mfcc"]["cov"] = _transform(data["lowlevel"]["mfcc"]["cov"])
+    #data["lowlevel"]["mfcc"]["icov"] = _transform(data["lowlevel"]["mfcc"]["icov"])
+    #data["lowlevel"]["gfcc"]["cov"] = _transform(data["lowlevel"]["gfcc"]["cov"])
+    #data["lowlevel"]["gfcc"]["icov"] = _transform(data["lowlevel"]["gfcc"]["icov"])
 
     for t, v in data["metadata"]["tags"].items():
         if " " in t:

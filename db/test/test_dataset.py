@@ -178,8 +178,11 @@ class DatasetTestCase(DatabaseTestCase):
         originaldataset = dataset.get(id)
         dataset.add_recordings(test_data_recordings, id)
         updateddataset = dataset.get(id)
-        self.assertDictEqual(originaldataset["classes"][1],updateddataset["classes"][1])
-        self.assertEqual(len(originaldataset["classes"][0]["recordings"])+1,len(updateddataset["classes"][0]["recordings"]))
+        self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
+        self.assertEqual(len(originaldataset["classes"][0]["recordings"])+1, len(updateddataset["classes"][0]["recordings"]))
+        for mbid in updateddataset["classes"][0]["recordings"]:
+            if mbid not in originaldataset["classes"][0]["recordings"]:
+                self.assertEqual(mbid, test_data_recordings["recordings"][0])
 
     def test_delete_recordings(self):
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)

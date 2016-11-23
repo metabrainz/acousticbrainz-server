@@ -6,6 +6,7 @@ from webserver.views.api import exceptions as api_exceptions
 import db.dataset
 import db.exceptions
 from utils import dataset_validator
+from uuid import UUID
 
 bp_datasets = Blueprint('api_v1_datasets', __name__)
 
@@ -217,14 +218,34 @@ def add_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
+    ds = get_check_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise api_exceptions.APIUnauthorized("You can't add the recording(s).")
     class_dict = request.get_json()
+    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
+        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
     if not class_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
+    if "class_name" not in class_dict:
+        raise api_exceptions.APIBadRequest("class_name key missing in JSON request.")
+    if "recordings" not in class_dict:
+        raise api_exceptions.APIBadRequest("recordings key missing in JSON request.")
+    for mbid in class_dict["recordings"]:
+        try:
+            UUID(mbid, version=4)
+        except ValueError:
+            raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid, ))
+    for classes in ds["classes"]:
+        if classes["name"] == class_dict["class_name"]:
+            for mbid in class_dict["recordings"]:
+                if mbid in (classes["recordings"]):
+                    del class_dict["recordings"][class_dict["recordings"].index(mbid)]
+    unique_mbids = list(set(class_dict["recordings"]))
+    class_dict["recordings"] = unique_mbids
     try:
         db.dataset.add_recordings(class_dict, dataset_id)
-    except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
-
+    except db.exceptions.NoDataFoundException as e:
+        raise api_exceptions.APINotFound(e.message)
     return jsonify(
         success=True,
         message="Recording(s) added."
@@ -251,14 +272,37 @@ def delete_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
+    #ds = get_check_dataset(dataset_id)
+    #if ds["author"] != current_user.id:
+     #   raise api_exceptions.APIUnauthorized("You can't delete the recording(s).")
+    ds = get_check_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise api_exceptions.APIUnauthorized("You can't delete the recording(s).")
     class_dict = request.get_json()
+    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
+        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
     if not class_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
+    if "class_name" not in class_dict:
+        raise api_exceptions.APIBadRequest("class_name key missing in JSON request.")
+    if "recordings" not in class_dict:
+        raise api_exceptions.APIBadRequest("recordings key missing in JSON request.")
+    for mbid in class_dict["recordings"]:
+        try:
+            UUID(mbid, version=4)
+        except ValueError:
+            raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid, ))
+    for classes in ds["classes"]:
+        if classes["name"] == class_dict["class_name"]:
+            for mbid in class_dict["recordings"]:
+                if mbid not in (classes["recordings"]):
+                    del class_dict["recordings"][class_dict["recordings"].index(mbid)]
+    unique_mbids = list(set(class_dict["recordings"]))
+    class_dict["recordings"] = unique_mbids
     try:
         db.dataset.delete_recordings(class_dict, dataset_id)
-    except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
-
+    except db.exceptions.NoDataFoundException as e:
+        raise api_exceptions.APINotFound(e.message)
     return jsonify(
         success=True,
         message="Recording(s) deleted."

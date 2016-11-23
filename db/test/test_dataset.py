@@ -169,6 +169,32 @@ class DatasetTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             dataset.get_snapshot(snap_id)
 
+    def test_add_recordings(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data_recordings = {
+            "class_name": "Class #1",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+        }
+        originaldataset = dataset.get(id)
+        dataset.add_recordings(test_data_recordings, id)
+        updateddataset = dataset.get(id)
+        self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
+        self.assertEqual(len(originaldataset["classes"][0]["recordings"])+1, len(updateddataset["classes"][0]["recordings"]))
+        for mbid in updateddataset["classes"][0]["recordings"]:
+            if mbid not in originaldataset["classes"][0]["recordings"]:
+                self.assertEqual(mbid, test_data_recordings["recordings"][0])
+
+    def test_delete_recordings(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data_recordings = {
+            "class_name": "Class #1",
+            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
+        }
+        originaldataset = dataset.get(id)
+        dataset.add_recordings(test_data_recordings, id)
+        dataset.delete_recordings(test_data_recordings, id)
+        updateddataset = dataset.get(id)
+        self.assertDictEqual(originaldataset, updateddataset)
 
 class GetPublicDatasetsTestCase(DatabaseTestCase):
     """A whole testcase because there are lots of cases to test"""

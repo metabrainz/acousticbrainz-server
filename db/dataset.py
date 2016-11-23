@@ -336,8 +336,8 @@ def delete_recordings(dataset, dataset_id):
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("""SELECT id FROM dataset_class WHERE name = :name and dataset = :dataset_id"""),
                                     {"name": dataset["class_name"], "dataset_id": dataset_id})
+        if result.rowcount < 1:
+            raise exceptions.NoDataFoundException("No such class exists.")
         clsid = result.fetchone()
-        if not clsid:
-            raise db.exceptions.NoDataFoundException("No such class exists.")
         for mbid in dataset["recordings"]:
             connection.execute("""DELETE FROM dataset_class_member WHERE class = %s and mbid = %s""", (clsid[0], mbid))

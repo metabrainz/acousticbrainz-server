@@ -196,6 +196,35 @@ class DatasetTestCase(DatabaseTestCase):
         updateddataset = dataset.get(id)
         self.assertDictEqual(originaldataset, updateddataset)
 
+    def test_add_class(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data = {
+            "name": "Class #3",
+            "description": "This is description of class 3",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+
+        }
+        originaldataset = dataset.get(id)
+        dataset.add_class(test_data, id)
+        updateddataset = dataset.get(id)
+        self.assertDictEqual(originaldataset["classes"][0],updateddataset["classes"][0])
+        self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
+        self.assertEqual(len(originaldataset["classes"])+1, len(updateddataset["classes"]))
+        self.assertEqual(updateddataset["classes"][2]["name"],"Class #3")
+
+
+    def test_delete_class(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data = {
+            "name": "Class #2"
+        }
+        originaldataset = dataset.get(id)
+        dataset.delete_class(test_data, id)
+        updateddataset = dataset.get(id)
+        self.assertDictEqual(originaldataset["classes"][0],updateddataset["classes"][0])
+        self.assertEqual(len(originaldataset["classes"])-1,len(updateddataset["classes"]))
+
+
 class GetPublicDatasetsTestCase(DatabaseTestCase):
     """A whole testcase because there are lots of cases to test"""
 

@@ -137,18 +137,47 @@ def add_class(dataset_id):
         {
             "name": "Not Mood",
             "description": "Dataset for mood misclassification.",
+            "recordings": ["770cc467-8dde-4d22-bc4c-a42f91e"]
         }
 
     :reqheader Content-Type: *application/json*
     :<json string name: *Required.* Name of the class. Must be unique within a dataset.
     :<json string description: *Optional.* Description of the class.
-    :<json array public: *Optional.* Array of recording MBIDs (``string``) to add into that class. For example:
+    :<json array recordings: *Optional.* Array of recording MBIDs (``string``) to add into that class. For example:
         ``["770cc467-8dde-4d22-bc4c-a42f91e"]``.
 
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise api_exceptions.APIUnauthorized("You can't create this class.")
+    class_dict = request.get_json()
+    if not class_dict:
+        raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
+    if "name" not in class_dict:
+        raise api_exceptions.APIBadRequest("name key missing in JSON request.")
+    if class_dict["name"] in (classes["name"] for classes in ds["classes"]):
+        raise api_exceptions.APIBadRequest("Class already exists.")
+    if "recordings" in class_dict:
+        for mbid in class_dict["recordings"]:
+            try:
+                UUID(mbid, version=4)
+            except ValueError:
+                raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid,))
+        unique_mbids = list(set(class_dict["recordings"]))
+        class_dict["recordings"] = unique_mbids
+    try:
+        db.dataset.add_class(class_dict, dataset_id)
+    except db.exceptions.NoDataFoundException as e:
+        raise api_exceptions.APINotFound(e.message)
+    return jsonify(
+        success=True,
+        message="Class added."
+    )
+
+
+
 
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["PUT"])
@@ -195,7 +224,22 @@ def delete_class(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise api_exceptions.APIUnauthorized("You can't delete this class.")
+    class_dict = request.get_json()
+    if "name" not in class_dict:
+        raise api_exceptions.APIBadRequest("name key missing in JSON request.")
+    if class_dict["name"] not in (classes["name"] for classes in ds["classes"]):
+        raise api_exceptions.APIBadRequest("Class does not exists.")
+    try:
+        db.dataset.delete_class(class_dict, dataset_id)
+    except db.exceptions.NoDataFoundException as e:
+        raise api_exceptions.APINotFound(e.message)
+    return jsonify(
+        success=True,
+        message="Class deleted."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["PUT"])
@@ -222,12 +266,12 @@ def add_recordings(dataset_id):
     if ds["author"] != current_user.id:
         raise api_exceptions.APIUnauthorized("You can't add the recording(s).")
     class_dict = request.get_json()
-    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
-        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
     if not class_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
     if "class_name" not in class_dict:
         raise api_exceptions.APIBadRequest("class_name key missing in JSON request.")
+    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
+        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
     if "recordings" not in class_dict:
         raise api_exceptions.APIBadRequest("recordings key missing in JSON request.")
     for mbid in class_dict["recordings"]:
@@ -279,12 +323,12 @@ def delete_recordings(dataset_id):
     if ds["author"] != current_user.id:
         raise api_exceptions.APIUnauthorized("You can't delete the recording(s).")
     class_dict = request.get_json()
-    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
-        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
     if not class_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
     if "class_name" not in class_dict:
         raise api_exceptions.APIBadRequest("class_name key missing in JSON request.")
+    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
+        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
     if "recordings" not in class_dict:
         raise api_exceptions.APIBadRequest("recordings key missing in JSON request.")
     for mbid in class_dict["recordings"]:

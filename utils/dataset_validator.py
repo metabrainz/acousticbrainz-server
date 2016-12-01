@@ -69,7 +69,7 @@ def validate(dataset):
 
 def _validate_classes(classes):
     if not isinstance(classes, list):
-        raise ValidationException("Field `classes` must be a list of strings.")
+        raise ValidationException("Field `classes` must be a list of objects.")
     for idx, cls in enumerate(classes):
         _validate_class(cls, idx)
 
@@ -131,7 +131,6 @@ def _check_dict_structure(dictionary, keys, error_location):
     """
     allowed_keys = [v[0] for v in keys]
     dict_keys = dictionary.keys()
-    print(dict_keys)
     for k, req in keys:
         if req and k not in dict_keys:
             raise ValidationException("Field `%s` is missing from %s." % (k, error_location))

@@ -333,7 +333,9 @@ def add_recordings(dataset_id, class_name, recordings):
         for mbid in recordings:
             connection.execute(sqlalchemy.text("""
               INSERT INTO dataset_class_member (class, mbid)
-                  VALUES (:clsid, :mbid)
+                  SELECT :clsid, :mbid
+                      WHERE NOT EXISTS
+                          (select * from dataset_class_member d where d.class = :clsid and d.mbid = :mbid)
                       """),
                             {"clsid": clsid[0], "mbid": mbid})
 
@@ -366,7 +368,7 @@ def add_class(dict, dataset_id):
     with db.engine.begin() as connection:
         if "description" not in dict:
             dict["description"] = None
-        result = connection.execute(sqlalchemy.text("""
+        connection.execute(sqlalchemy.text("""
             INSERT INTO dataset_class (name, description, dataset)
                 SELECT :name, :description, :datasetid
                     WHERE NOT EXISTS

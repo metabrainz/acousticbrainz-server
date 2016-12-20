@@ -265,13 +265,6 @@ def add_recordings(dataset_id):
             UUID(mbid, version=4)
         except ValueError:
             raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid, ))
-    for classes in ds["classes"]:
-        if classes["name"] == class_dict["class_name"]:
-            for mbid in class_dict["recordings"]:
-                if mbid in (classes["recordings"]):
-                    del class_dict["recordings"][class_dict["recordings"].index(mbid)]
-    unique_mbids = list(set(class_dict["recordings"]))
-    class_dict["recordings"] = unique_mbids
     try:
         db.dataset.add_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
     except db.exceptions.NoDataFoundException as e:
@@ -317,13 +310,6 @@ def delete_recordings(dataset_id):
             UUID(mbid, version=4)
         except ValueError:
             raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid, ))
-    for classes in ds["classes"]:
-        if classes["name"] == class_dict["class_name"]:
-            for mbid in class_dict["recordings"]:
-                if mbid not in (classes["recordings"]):
-                    del class_dict["recordings"][class_dict["recordings"].index(mbid)]
-    unique_mbids = list(set(class_dict["recordings"]))
-    class_dict["recordings"] = unique_mbids
     try:
         db.dataset.delete_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
     except db.exceptions.NoDataFoundException as e:

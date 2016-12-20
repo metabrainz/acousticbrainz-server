@@ -565,9 +565,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         })
         url = '/api/v1/datasets/%s/classes' % (str(id))
         resp = self.client.post(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 400)
-        expected = {"message": "Class already exists."}
-        self.assertEqual(resp.json, expected)
+        self.assertEqual(resp.status_code, 200)
 
 
     def test_add_class_check_other_dataset(self):

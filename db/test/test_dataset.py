@@ -176,7 +176,7 @@ class DatasetTestCase(DatabaseTestCase):
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
         originaldataset = dataset.get(id)
-        dataset.add_recordings(test_data_recordings, id)
+        dataset.add_recordings(id, test_data_recordings["class_name"], test_data_recordings["recordings"])
         updateddataset = dataset.get(id)
         self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
         self.assertEqual(len(originaldataset["classes"][0]["recordings"])+1, len(updateddataset["classes"][0]["recordings"]))
@@ -191,8 +191,8 @@ class DatasetTestCase(DatabaseTestCase):
             "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
         }
         originaldataset = dataset.get(id)
-        dataset.add_recordings(test_data_recordings, id)
-        dataset.delete_recordings(test_data_recordings, id)
+        dataset.add_recordings(id, test_data_recordings["class_name"], test_data_recordings["recordings"])
+        dataset.delete_recordings(id, test_data_recordings["class_name"], test_data_recordings["recordings"])
         updateddataset = dataset.get(id)
         self.assertDictEqual(originaldataset, updateddataset)
 
@@ -211,6 +211,15 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
         self.assertEqual(len(originaldataset["classes"])+1, len(updateddataset["classes"]))
         self.assertEqual(updateddataset["classes"][2]["name"],"Class #3")
+
+    def test_duplicate_class(self):
+        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data = {
+            "name": "Class #1",
+            "description": "This is description of class duplicate",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+
+        }
 
 
     def test_delete_class(self):

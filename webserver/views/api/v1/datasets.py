@@ -149,16 +149,12 @@ def add_class(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    ds = get_check_dataset(dataset_id)
-    if ds["author"] != current_user.id:
-        raise api_exceptions.APIUnauthorized("You can't create this class.")
+    ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
     if not class_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
     if "name" not in class_dict:
-        raise api_exceptions.APIBadRequest("name key missing in JSON request.")
-    if class_dict["name"] in (classes["name"] for classes in ds["classes"]):
-        raise api_exceptions.APIBadRequest("Class already exists.")
+        raise api_exceptions.APIBadRequest("Name of the class to be added must be specified.")
     if "recordings" in class_dict:
         for mbid in class_dict["recordings"]:
             try:
@@ -167,10 +163,7 @@ def add_class(dataset_id):
                 raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid,))
         unique_mbids = list(set(class_dict["recordings"]))
         class_dict["recordings"] = unique_mbids
-    try:
-        db.dataset.add_class(class_dict, dataset_id)
-    except db.exceptions.NoDataFoundException as e:
-        raise api_exceptions.APINotFound(e.message)
+    db.dataset.add_class(class_dict, dataset_id)
     return jsonify(
         success=True,
         message="Class added."
@@ -210,7 +203,7 @@ def update_class(dataset_id):
 @auth_required
 def delete_class(dataset_id):
     """Delete class from a dataset.
-
+       Deletes the class members as well since we have ON DELETE CASCADE set in the database
     **Example request**:
 
     .. sourcecode:: json
@@ -224,18 +217,13 @@ def delete_class(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    ds = get_check_dataset(dataset_id)
-    if ds["author"] != current_user.id:
-        raise api_exceptions.APIUnauthorized("You can't delete this class.")
+    ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
     if "name" not in class_dict:
-        raise api_exceptions.APIBadRequest("name key missing in JSON request.")
+        raise api_exceptions.APIBadRequest("Name of the class to be deleted must be specified.")
     if class_dict["name"] not in (classes["name"] for classes in ds["classes"]):
         raise api_exceptions.APIBadRequest("Class does not exists.")
-    try:
-        db.dataset.delete_class(class_dict, dataset_id)
-    except db.exceptions.NoDataFoundException as e:
-        raise api_exceptions.APINotFound(e.message)
+    db.dataset.delete_class(class_dict, dataset_id)
     return jsonify(
         success=True,
         message="Class deleted."
@@ -262,9 +250,7 @@ def add_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    ds = get_check_dataset(dataset_id)
-    if ds["author"] != current_user.id:
-        raise api_exceptions.APIUnauthorized("You can't add the recording(s).")
+    ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
     if not class_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
@@ -287,7 +273,7 @@ def add_recordings(dataset_id):
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids
     try:
-        db.dataset.add_recordings(class_dict, dataset_id)
+        db.dataset.add_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
     except db.exceptions.NoDataFoundException as e:
         raise api_exceptions.APINotFound(e.message)
     return jsonify(
@@ -316,12 +302,7 @@ def delete_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    #ds = get_check_dataset(dataset_id)
-    #if ds["author"] != current_user.id:
-     #   raise api_exceptions.APIUnauthorized("You can't delete the recording(s).")
-    ds = get_check_dataset(dataset_id)
-    if ds["author"] != current_user.id:
-        raise api_exceptions.APIUnauthorized("You can't delete the recording(s).")
+    ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
     if not class_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
@@ -344,7 +325,7 @@ def delete_recordings(dataset_id):
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids
     try:
-        db.dataset.delete_recordings(class_dict, dataset_id)
+        db.dataset.delete_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
     except db.exceptions.NoDataFoundException as e:
         raise api_exceptions.APINotFound(e.message)
     return jsonify(
@@ -353,7 +334,7 @@ def delete_recordings(dataset_id):
     )
 
 
-def get_check_dataset(dataset_id):
+def get_check_dataset(dataset_id, write=False):
     """Wrapper for `dataset.get` function in `db` package. Meant for use with the API.
 
     Checks the following conditions and raises NotFound exception if they
@@ -365,8 +346,15 @@ def get_check_dataset(dataset_id):
         ds = db.dataset.get(dataset_id)
     except db.exceptions.NoDataFoundException as e:
         raise api_exceptions.APINotFound("Can't find this dataset.")
-    if ds["public"] or (current_user.is_authenticated and
-                        ds["author"] == current_user.id):
-        return ds
+    if(write==False):
+        if ds["public"] or (current_user.is_authenticated and
+                            ds["author"] == current_user.id):
+            return ds
+        else:
+            raise api_exceptions.APINotFound("Can't find this dataset.")
     else:
-        raise api_exceptions.APINotFound("Can't find this dataset.")
+        if (current_user.is_authenticated and
+                            ds["author"] == current_user.id):
+            return ds
+        else:
+            raise api_exceptions.APIUnauthorized("Only the author can modify the dataset.")

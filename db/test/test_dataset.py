@@ -180,6 +180,13 @@ class DatasetTestCase(DatabaseTestCase):
         updateddataset = dataset.get(id)
         self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
         self.assertEqual(len(originaldataset["classes"][0]["recordings"])+1, len(updateddataset["classes"][0]["recordings"]))
+        expected_recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b", "19e698e7-71df-48a9-930e-d4b1a2026c82",
+                               "1c085555-3805-428a-982f-e14e0a2b18e6"]
+        self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
+        expected_recordings = ["fd528ddb-411c-47bc-a383-1f8a222ed213",
+                                "96888f9e-c268-4db2-bc13-e29f8b317c20",
+                                "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
+        self.assertEqual(set(expected_recordings), set(updateddataset["classes"][1]["recordings"]))
         for mbid in updateddataset["classes"][0]["recordings"]:
             if mbid not in originaldataset["classes"][0]["recordings"]:
                 self.assertEqual(mbid, test_data_recordings["recordings"][0])

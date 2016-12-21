@@ -214,10 +214,12 @@ class DatasetTestCase(DatabaseTestCase):
         originaldataset = dataset.get(id)
         dataset.add_class(test_data, id)
         updateddataset = dataset.get(id)
-        self.assertDictEqual(originaldataset["classes"][0],updateddataset["classes"][0])
+        self.assertDictEqual(originaldataset["classes"][0], updateddataset["classes"][0])
         self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
-        self.assertEqual(len(originaldataset["classes"])+1, len(updateddataset["classes"]))
-        self.assertEqual(updateddataset["classes"][2]["name"],"Class #3")
+        self.assertEqual(3, len(updateddataset["classes"]))
+        self.assertEqual(updateddataset["classes"][2]["name"], "Class #3")
+        expected_recordings = ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+        self.assertEqual(expected_recordings, updateddataset["classes"][2]["recordings"])
 
     def test_duplicate_class(self):
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
@@ -237,8 +239,8 @@ class DatasetTestCase(DatabaseTestCase):
         originaldataset = dataset.get(id)
         dataset.delete_class(test_data, id)
         updateddataset = dataset.get(id)
-        self.assertDictEqual(originaldataset["classes"][0],updateddataset["classes"][0])
-        self.assertEqual(len(originaldataset["classes"])-1,len(updateddataset["classes"]))
+        self.assertDictEqual(originaldataset["classes"][0], updateddataset["classes"][0])
+        self.assertEqual(1, len(updateddataset["classes"]))
 
 
 class GetPublicDatasetsTestCase(DatabaseTestCase):

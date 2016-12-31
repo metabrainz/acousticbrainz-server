@@ -6,6 +6,7 @@ from webserver.views.api import exceptions as api_exceptions
 import db.dataset
 import db.exceptions
 from utils import dataset_validator
+from uuid import UUID
 
 bp_datasets = Blueprint('api_v1_datasets', __name__)
 
@@ -136,18 +137,35 @@ def add_class(dataset_id):
         {
             "name": "Not Mood",
             "description": "Dataset for mood misclassification.",
+            "recordings": ["770cc467-8dde-4d22-bc4c-a42f91e"]
         }
 
     :reqheader Content-Type: *application/json*
     :<json string name: *Required.* Name of the class. Must be unique within a dataset.
     :<json string description: *Optional.* Description of the class.
-    :<json array public: *Optional.* Array of recording MBIDs (``string``) to add into that class. For example:
+    :<json array recordings: *Optional.* Array of recording MBIDs (``string``) to add into that class. For example:
         ``["770cc467-8dde-4d22-bc4c-a42f91e"]``.
 
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id, write=True)
+    class_dict = request.get_json()
+    if "recordings" in class_dict:
+        unique_mbids = list(set(class_dict["recordings"]))
+        class_dict["recordings"] = unique_mbids
+    try:
+        dataset_validator.validate_class(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+    db.dataset.add_class(class_dict, dataset_id)
+    return jsonify(
+        success=True,
+        message="Class added."
+    )
+
+
+
 
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["PUT"])
@@ -180,7 +198,7 @@ def update_class(dataset_id):
 @auth_required
 def delete_class(dataset_id):
     """Delete class from a dataset.
-
+       Deletes the class members as well since we have ON DELETE CASCADE set in the database
     **Example request**:
 
     .. sourcecode:: json
@@ -194,7 +212,17 @@ def delete_class(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id, write=True)
+    class_dict = request.get_json()
+    try:
+        dataset_validator.validate_class(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+    db.dataset.delete_class(class_dict, dataset_id)
+    return jsonify(
+        success=True,
+        message="Class deleted."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["PUT"])
@@ -217,7 +245,20 @@ def add_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id, write=True)
+    class_dict = request.get_json()
+    try:
+        dataset_validator.validate_recordings(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+    try:
+        db.dataset.add_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
+    except db.exceptions.NoDataFoundException as e:
+        raise api_exceptions.APINotFound(e.message)
+    return jsonify(
+        success=True,
+        message="Recording(s) added."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["DELETE"])
@@ -240,10 +281,23 @@ def delete_recordings(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id, write=True)
+    class_dict = request.get_json()
+    try:
+        dataset_validator.validate_recordings(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+    try:
+        db.dataset.delete_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
+    except db.exceptions.NoDataFoundException as e:
+        raise api_exceptions.APINotFound(e.message)
+    return jsonify(
+        success=True,
+        message="Recording(s) deleted."
+    )
 
 
-def get_check_dataset(dataset_id):
+def get_check_dataset(dataset_id, write=False):
     """Wrapper for `dataset.get` function in `db` package. Meant for use with the API.
 
     Checks the following conditions and raises NotFound exception if they
@@ -255,8 +309,15 @@ def get_check_dataset(dataset_id):
         ds = db.dataset.get(dataset_id)
     except db.exceptions.NoDataFoundException as e:
         raise api_exceptions.APINotFound("Can't find this dataset.")
-    if ds["public"] or (current_user.is_authenticated and
-                        ds["author"] == current_user.id):
-        return ds
+    if(write==False):
+        if ds["public"] or (current_user.is_authenticated and
+                            ds["author"] == current_user.id):
+            return ds
+        else:
+            raise api_exceptions.APINotFound("Can't find this dataset.")
     else:
-        raise api_exceptions.APINotFound("Can't find this dataset.")
+        if (current_user.is_authenticated and
+                            ds["author"] == current_user.id):
+            return ds
+        else:
+            raise api_exceptions.APIUnauthorized("Only the author can modify the dataset.")

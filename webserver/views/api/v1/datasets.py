@@ -151,18 +151,13 @@ def add_class(dataset_id):
     """
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
-    if not class_dict:
-        raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
-    if "name" not in class_dict:
-        raise api_exceptions.APIBadRequest("Name of the class to be added must be specified.")
     if "recordings" in class_dict:
-        for mbid in class_dict["recordings"]:
-            try:
-                UUID(mbid, version=4)
-            except ValueError:
-                raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid,))
         unique_mbids = list(set(class_dict["recordings"]))
         class_dict["recordings"] = unique_mbids
+    try:
+        dataset_validator.validate_class(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
     db.dataset.add_class(class_dict, dataset_id)
     return jsonify(
         success=True,
@@ -219,10 +214,10 @@ def delete_class(dataset_id):
     """
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
-    if "name" not in class_dict:
-        raise api_exceptions.APIBadRequest("Name of the class to be deleted must be specified.")
-    if class_dict["name"] not in (classes["name"] for classes in ds["classes"]):
-        raise api_exceptions.APIBadRequest("Class does not exists.")
+    try:
+        dataset_validator.validate_class(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
     db.dataset.delete_class(class_dict, dataset_id)
     return jsonify(
         success=True,
@@ -252,19 +247,10 @@ def add_recordings(dataset_id):
     """
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
-    if not class_dict:
-        raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
-    if "class_name" not in class_dict:
-        raise api_exceptions.APIBadRequest("class_name key missing in JSON request.")
-    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
-        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
-    if "recordings" not in class_dict:
-        raise api_exceptions.APIBadRequest("recordings key missing in JSON request.")
-    for mbid in class_dict["recordings"]:
-        try:
-            UUID(mbid, version=4)
-        except ValueError:
-            raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid, ))
+    try:
+        dataset_validator.validate_recordings(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
     try:
         db.dataset.add_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
     except db.exceptions.NoDataFoundException as e:
@@ -297,19 +283,10 @@ def delete_recordings(dataset_id):
     """
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
-    if not class_dict:
-        raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
-    if "class_name" not in class_dict:
-        raise api_exceptions.APIBadRequest("class_name key missing in JSON request.")
-    if class_dict["class_name"] not in (classes["name"] for classes in ds["classes"]):
-        raise api_exceptions.APIBadRequest("Class not present in the dataset.")
-    if "recordings" not in class_dict:
-        raise api_exceptions.APIBadRequest("recordings key missing in JSON request.")
-    for mbid in class_dict["recordings"]:
-        try:
-            UUID(mbid, version=4)
-        except ValueError:
-            raise api_exceptions.APIBadRequest("MBID %s not a valid UUID" % (mbid, ))
+    try:
+        dataset_validator.validate_recordings(class_dict)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
     try:
         db.dataset.delete_recordings(dataset_id, class_dict["class_name"], class_dict["recordings"])
     except db.exceptions.NoDataFoundException as e:

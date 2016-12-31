@@ -74,7 +74,7 @@ def _validate_classes(classes):
         _validate_class(cls, idx)
 
 
-def _validate_class(cls, idx):
+def _validate_class(cls, idx, rec_required=True):
     if not isinstance(cls, dict):
         raise ValidationException("Class number %s is not stored in a dictionary. All classes "
                                   "must be dictionaries." % idx)
@@ -83,7 +83,7 @@ def _validate_class(cls, idx):
         [
             ("name", True),
             ("description", False),
-            ("recordings", True),
+            ("recordings", rec_required),
         ],
         "class number %s" % idx,
     )
@@ -103,7 +103,8 @@ def _validate_class(cls, idx):
                                       (cls["name"], idx))
 
     # Recordings
-    _validate_recordings(cls["recordings"], cls["name"], idx)
+    if "recordings" in cls:
+        _validate_recordings(cls["recordings"], cls["name"], idx)
 
 
 def _validate_recordings(recordings, cls_name, cls_index):
@@ -138,6 +139,26 @@ def _check_dict_structure(dictionary, keys, error_location):
     for key in dict_keys:
         if key not in allowed_keys:
             raise ValidationException("Unexpected field `%s` in %s." % (key, error_location))
+
+
+def validate_recordings(record_dict):
+    """Validate for add/delete recordings"""
+    if not isinstance(record_dict, dict):
+        raise ValidationException("Request must be a dictionary.")
+    _check_dict_structure(
+        record_dict,
+        [
+            ("class_name", True),
+            ("recordings", True),
+        ],
+        "recordings dictionary",
+    )
+    _validate_recordings(record_dict["recordings"], record_dict["class_name"], 0)
+
+
+def validate_class(class_dict):
+    """Validate for add/delete class"""
+    _validate_class(class_dict, 0, False)
 
 
 class ValidationException(Exception):

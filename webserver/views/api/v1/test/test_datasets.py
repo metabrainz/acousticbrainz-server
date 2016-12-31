@@ -80,7 +80,6 @@ class APIDatasetViewsTestCase(ServerTestCase):
         expected = {"success": True, "dataset_id": "6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0"}
         self.assertEqual(resp.json, expected)
 
-
     def test_add_recordings(self):
         """Successfully add recordings. """
         self.temporary_login(self.test_user_id)
@@ -194,7 +193,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/recordings' % (str(id))
         resp = self.client.put(url, data=submit, content_type='application/json')
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "MBID 1c085555-3805-428a-not-a-uuid not a valid UUID"}
+        expected = {"message": "\"1c085555-3805-428a-not-a-uuid\" is not a valid recording MBID in class \"Class #1\" (number 0)."}
         self.assertEqual(resp.json, expected)
 
 
@@ -233,7 +232,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/recordings' % (str(id))
         resp = self.client.delete(url, data=submit, content_type='application/json')
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "MBID 19e698e7-71df-48a9-930e-invalidUUID not a valid UUID"}
+        expected = {"message": "\"19e698e7-71df-48a9-930e-invalidUUID\" is not a valid recording MBID in class \"Class #2\" (number 0)."}
         self.assertEqual(resp.json, expected)
 
 
@@ -643,7 +642,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/classes' % (str(id))
         resp = self.client.post(url, data=submit, content_type='application/json')
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "MBID 1c085555-3805-428a-982f-wrong-UUID not a valid UUID"}
+        expected = {"message": "\"1c085555-3805-428a-982f-wrong-UUID\" is not a valid recording MBID in class \"Class #2\" (number 0)."}
         self.assertEqual(resp.json, expected)
 
 
@@ -671,9 +670,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         })
         url = '/api/v1/datasets/%s/classes' % (str(id))
         resp = self.client.delete(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 400)
-        expected = {"message": "Class does not exists."}
-        self.assertEqual(resp.json, expected)
+        self.assertEqual(resp.status_code, 200)
 
 
     def test_delete_class_check_other_dataset(self):

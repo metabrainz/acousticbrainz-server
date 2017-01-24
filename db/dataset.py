@@ -36,7 +36,7 @@ def create_from_dict(dictionary, author_id):
 
         result = connection.execute("""INSERT INTO dataset (id, name, description, public, author)
                           VALUES (uuid_generate_v4(), %s, %s, %s, %s) RETURNING id""",
-                       (dictionary["name"], dictionary["description"], dictionary["public"], author_id))
+                                    (dictionary["name"], dictionary["description"], dictionary["public"], author_id))
         dataset_id = result.fetchone()[0]
 
         for cls in dictionary["classes"]:
@@ -44,7 +44,7 @@ def create_from_dict(dictionary, author_id):
                 cls["description"] = None
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
-                           (cls["name"], cls["description"], dataset_id))
+                                        (cls["name"], cls["description"], dataset_id))
             cls_id = result.fetchone()[0]
 
             # Removing duplicate recordings
@@ -52,7 +52,7 @@ def create_from_dict(dictionary, author_id):
 
             for recording_mbid in cls["recordings"]:
                 connection.execute("INSERT INTO dataset_class_member (class, mbid) VALUES (%s, %s)",
-                               (cls_id, recording_mbid))
+                                   (cls_id, recording_mbid))
 
     return dataset_id
 
@@ -68,7 +68,7 @@ def update(dataset_id, dictionary, author_id):
         connection.execute("""UPDATE dataset
                           SET (name, description, public, author, last_edited) = (%s, %s, %s, %s, now())
                           WHERE id = %s""",
-                       (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
+                           (dictionary["name"], dictionary["description"], dictionary["public"], author_id, dataset_id))
 
         # Replacing old classes with new ones
         connection.execute("""DELETE FROM dataset_class WHERE dataset = %s""", (dataset_id,))
@@ -78,12 +78,12 @@ def update(dataset_id, dictionary, author_id):
                 cls["description"] = None
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
-                           (cls["name"], cls["description"], dataset_id))
+                                        (cls["name"], cls["description"], dataset_id))
             cls_id = result.fetchone()[0]
 
             for recording_mbid in cls["recordings"]:
                 connection.execute("INSERT INTO dataset_class_member (class, mbid) VALUES (%s, %s)",
-                               (cls_id, recording_mbid))
+                                   (cls_id, recording_mbid))
 
 
 def get(id):
@@ -144,12 +144,13 @@ def get_public_datasets(status):
 
 def _get_classes(dataset_id):
     with db.engine.connect() as connection:
-        result = connection.execute(
-            "SELECT id::text, name, description "
-            "FROM dataset_class "
-            "WHERE dataset = %s",
-            (dataset_id,)
-        )
+        query = text("""SELECT id::text
+                             , name
+                             , description
+                          FROM dataset_class
+                         WHERE dataset = :dataset_id
+        """)
+        result = connection.execute(query, {"dataset_id": dataset_id})
         rows = result.fetchall()
         classes = []
         for row in rows:
@@ -162,7 +163,7 @@ def _get_classes(dataset_id):
 def _get_recordings_in_class(class_id):
     with db.engine.connect() as connection:
         result = connection.execute("SELECT mbid::text FROM dataset_class_member WHERE class = %s",
-                       (class_id,))
+                                    (class_id,))
         recordings = []
         for row in result:
             recordings.append(row["mbid"])
@@ -180,8 +181,8 @@ def get_by_user_id(user_id, public_only=True):
         if public_only:
             where += " AND public = TRUE"
         result = connection.execute("SELECT id, name, description, author, created "
-                       "FROM dataset " + where,
-                       (user_id,))
+                                    "FROM dataset " + where,
+                                    (user_id,))
         datasets = []
         for row in result:
             datasets.append(dict(row))
@@ -224,10 +225,10 @@ def create_snapshot(dataset_id):
         "name": dataset["name"],
         "description": dataset["description"],
         "classes": [{
-            "name": c["name"],
-            "description": c["description"],
-            "recordings": c["recordings"],
-        } for c in dataset["classes"]],
+                        "name": c["name"],
+                        "description": c["description"],
+                        "recordings": c["recordings"],
+                    } for c in dataset["classes"]],
     }
     with db.engine.connect() as connection:
         result = connection.execute(sqlalchemy.text("""
@@ -318,36 +319,49 @@ def _delete_snapshots_for_dataset(connection, dataset_id):
 
 
 def add_recordings(dataset_id, class_name, recordings):
-    """Adds new recordings to a class in a dataset"""
+    """Adds new recordings to a class in a dataset.
+
+    If any given recording already exist in this class it is not added again.
+
+    Args:
+        dataset_id: the uuid of the dataset
+
+    Raises:
+        NoDataFoundException if the dataset doesn't exist or if the class doesn't exist in the dataset
+    """
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("""
-          SELECT id FROM dataset_class
-              WHERE name = :name
-                  and dataset = :dataset_id
-                      """),
-                            {"name": class_name, "dataset_id": dataset_id})
+        # TODO: refactor into `_get_class_for_ds`
+        query = sqlalchemy.text("""
+          SELECT id
+            FROM dataset_class
+           WHERE name = :name
+             AND dataset = :dataset_id""")
+        result = connection.execute(query, {"name": class_name, "dataset_id": dataset_id})
         if result.rowcount < 1:
             raise exceptions.NoDataFoundException("No such class exists.")
         clsid = result.fetchone()
         for mbid in recordings:
             connection.execute(sqlalchemy.text("""
               INSERT INTO dataset_class_member (class, mbid)
-                  SELECT :clsid, :mbid
-                      WHERE NOT EXISTS
-                          (select * from dataset_class_member d where d.class = :clsid and d.mbid = :mbid)
+                   SELECT :clsid, :mbid
+         WHERE NOT EXISTS (SELECT *
+                             FROM dataset_class_member d
+                            WHERE d.class = :clsid
+                              AND d.mbid = :mbid)
                       """),
-                            {"clsid": clsid[0], "mbid": mbid})
+                               {"clsid": clsid[0], "mbid": mbid})
 
 
 def delete_recordings(dataset_id, class_name, recordings):
-    """Delete all recordings from the list of IDs"""
+    """Delete recordings from a dataset class"""
 
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("""
-                    SELECT id FROM dataset_class
-                        WHERE name = :name
-                            and dataset = :dataset_id
+                    SELECT id
+                      FROM dataset_class
+                     WHERE name = :name
+                       AND dataset = :dataset_id
                                 """),
                                     {"name": class_name, "dataset_id": dataset_id})
         if result.rowcount < 1:
@@ -356,36 +370,56 @@ def delete_recordings(dataset_id, class_name, recordings):
         for mbid in recordings:
             connection.execute(sqlalchemy.text("""
                 DELETE FROM dataset_class_member
-                    WHERE class = :class_name
-                        and mbid = :mbid_num
+                      WHERE class = :class_name
+                        AND mbid = :mbid_num
                             """),
-                               {"class_name": clsid[0],"mbid_num": mbid})
+                               {"class_name": clsid[0], "mbid_num": mbid})
 
 
 def add_class(dict, dataset_id):
-    """Add a class to a dataset"""
+    """Add a class to a dataset
+
+    If the dict argument contains a key "recordings", add these recordings
+    to the class as well. See :func:`add_recordings`.
+    If the class already exists, do not add it again, but add recordings
+    to it if they are given.
+
+    Args:
+        dict: A dictionary representing the class to add:
+              {"name": "Classname", "description": "Class desc",
+               "recordings": [list of recording ids (optional)}
+        dataset_id: the UUID of the dataset to add this class to
+    """
 
     with db.engine.begin() as connection:
         if "description" not in dict:
             dict["description"] = None
         connection.execute(sqlalchemy.text("""
             INSERT INTO dataset_class (name, description, dataset)
-                SELECT :name, :description, :datasetid
-                    WHERE NOT EXISTS
-                        (select * from dataset_class d where d.name = :name and d.dataset = :datasetid)
+                 SELECT :name, :description, :datasetid
+       WHERE NOT EXISTS (SELECT *
+                           FROM dataset_class d
+                          WHERE d.name = :name
+                            AND d.dataset = :datasetid)
                     """),
-                        {"name": dict["name"], "description": dict["description"], "datasetid": dataset_id})
+                           {"name": dict["name"], "description": dict["description"], "datasetid": dataset_id})
     if "recordings" in dict:
         add_recordings(dataset_id, dict["name"], dict["recordings"])
 
 
 def delete_class(dict, dataset_id):
-    """Delete a class from a dataset"""
+    """Delete a class from a dataset
+
+    Args:
+        dict: A dictionary representing the class to delete:
+              {"name": "Classname"}
+        dataset_id: the UUID of the dataset to delete this class from
+    """
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("""
+        query = sqlalchemy.text("""
             DELETE FROM dataset_class
-                WHERE name = :class_name
-                    and dataset = :dataset_id
-                        """),
-                            {"class_name": dict["name"], "dataset_id": dataset_id})
+                  WHERE name = :class_name
+                    AND dataset = :dataset_id
+                        """)
+        connection.execute(query,  {"class_name": dict["name"], "dataset_id": dataset_id})

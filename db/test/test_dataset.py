@@ -6,6 +6,7 @@ from utils import dataset_validator
 from sqlalchemy import text
 import uuid
 import copy
+import mock
 
 
 class DatasetTestCase(DatabaseTestCase):
@@ -170,76 +171,139 @@ class DatasetTestCase(DatabaseTestCase):
             dataset.get_snapshot(snap_id)
 
     def test_add_recordings(self):
-        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        test_data_recordings = {
-            "class_name": "Class #1",
-            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
-        }
-        originaldataset = dataset.get(id)
-        dataset.add_recordings(id, test_data_recordings["class_name"], test_data_recordings["recordings"])
-        updateddataset = dataset.get(id)
-        self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
-        self.assertEqual(len(originaldataset["classes"][0]["recordings"])+1, len(updateddataset["classes"][0]["recordings"]))
-        expected_recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b", "19e698e7-71df-48a9-930e-d4b1a2026c82",
+        """ Add recordings to an existing class """
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        originaldataset = dataset.get(dsid)
+
+        class_name = "Class #1",
+        recordings = ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+        dataset.add_recordings(dsid, class_name, recordings)
+
+        updateddataset = dataset.get(dsid)
+
+        # Class 1 has been updated with the new recording id
+        self.assertEqual(2, len(originaldataset["classes"][0]["recordings"]))
+        expected_recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b",
+                               "19e698e7-71df-48a9-930e-d4b1a2026c82",
                                "1c085555-3805-428a-982f-e14e0a2b18e6"]
         self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
+
+        # Class #2 stays the same as `test_data`
         expected_recordings = ["fd528ddb-411c-47bc-a383-1f8a222ed213",
-                                "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                                "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
+                               "96888f9e-c268-4db2-bc13-e29f8b317c20",
+                               "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
         self.assertEqual(set(expected_recordings), set(updateddataset["classes"][1]["recordings"]))
-        for mbid in updateddataset["classes"][0]["recordings"]:
-            if mbid not in originaldataset["classes"][0]["recordings"]:
-                self.assertEqual(mbid, test_data_recordings["recordings"][0])
+
+    def test_add_recordings_duplicate(self):
+        """ A recording id which already exists is skipped """
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+
+        class_name = "Class #1",
+        recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b", "1c085555-3805-428a-982f-e14e0a2b18e6"]
+        dataset.add_recordings(dsid, class_name, recordings)
+
+        updateddataset = dataset.get(dsid)
+        expected_recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b",
+                               "19e698e7-71df-48a9-930e-d4b1a2026c82",
+                               "1c085555-3805-428a-982f-e14e0a2b18e6"]
+        self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
 
     def test_delete_recordings(self):
-        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        test_data_recordings = {
-            "class_name": "Class #1",
-            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
-        }
-        originaldataset = dataset.get(id)
-        dataset.add_recordings(id, test_data_recordings["class_name"], test_data_recordings["recordings"])
-        dataset.delete_recordings(id, test_data_recordings["class_name"], test_data_recordings["recordings"])
-        updateddataset = dataset.get(id)
-        self.assertDictEqual(originaldataset, updateddataset)
+        """ Delete recordings from a class """
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        originaldataset = dataset.get(dsid)
+
+        class_name = "Class #1",
+        recordings = ["19e698e7-71df-48a9-930e-d4b1a2026c82"]
+
+        dataset.delete_recordings(dsid, class_name, recordings)
+        updateddataset = dataset.get(dsid)
+
+        # Original dataset has the 2 recordings in Class #1, but the updated one only has 1 remaining
+        self.assertEqual(2, len(originaldataset["classes"][0]["recordings"]))
+        expected_recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b"]
+        self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
+
+    def test_delete_recordings_other_class(self):
+        """ If there are two datasets with the same class names, the correct one is deleted. """
+        ds1id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        ds2id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+
+        class_name = "Class #1",
+        recordings = ["19e698e7-71df-48a9-930e-d4b1a2026c82"]
+        dataset.delete_recordings(ds2id, class_name, recordings)
+
+        # Dataset 1 has both initial recordings, but it's been removed from dataset 2
+        ds1 = dataset.get(ds1id)
+        ds2 = dataset.get(ds2id)
+        self.assertEqual(2, len(ds1["classes"][0]["recordings"]))
+        self.assertEqual(1, len(ds2["classes"][0]["recordings"]))
 
     def test_add_class(self):
-        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        """ Add a class to a dataset """
+
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data = {
+            "name": "Class #3",
+            "description": "This is the description of class 3"
+        }
+
+        originaldataset = dataset.get(dsid)
+        dataset.add_class(test_data, dsid)
+        updateddataset = dataset.get(dsid)
+
+        self.assertEqual(2, len(originaldataset["classes"]))
+        self.assertEqual(3, len(updateddataset["classes"]))
+        expected = copy.deepcopy(test_data)
+        expected["recordings"] = []
+        expected["id"] = mock.ANY
+        self.assertDictEqual(expected, updateddataset["classes"][2])
+
+    def test_add_class_with_recordings(self):
+        """ Add a class to a dataset and also add some recordings to it """
+
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         test_data = {
             "name": "Class #3",
             "description": "This is description of class 3",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
-
         }
-        originaldataset = dataset.get(id)
-        dataset.add_class(test_data, id)
-        updateddataset = dataset.get(id)
-        self.assertDictEqual(originaldataset["classes"][0], updateddataset["classes"][0])
-        self.assertDictEqual(originaldataset["classes"][1], updateddataset["classes"][1])
-        self.assertEqual(3, len(updateddataset["classes"]))
-        self.assertEqual(updateddataset["classes"][2]["name"], "Class #3")
-        expected_recordings = ["1c085555-3805-428a-982f-e14e0a2b18e6"]
-        self.assertEqual(expected_recordings, updateddataset["classes"][2]["recordings"])
+        dataset.add_class(test_data, dsid)
+        updateddataset = dataset.get(dsid)
 
-    def test_duplicate_class(self):
-        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        # Check that both the class details and recordings are in the retrieved dataset
+        expected = copy.deepcopy(test_data)
+        expected["id"] = mock.ANY
+        self.assertDictEqual(expected, updateddataset["classes"][2])
+
+    def test_add_class_twice(self):
+        """ A class name which already exists is skipped. """
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         test_data = {
             "name": "Class #1",
-            "description": "This is description of class duplicate",
+            "description": "This is description of class 1",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
-
         }
+        dataset.add_class(test_data, dsid)
+        updateddataset = dataset.get(dsid)
 
+        # Class #1 is not added again, but the recording is added to it
+        self.assertEqual(2, len(updateddataset["classes"]))
+        expected_recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b",
+                               "19e698e7-71df-48a9-930e-d4b1a2026c82",
+                               "1c085555-3805-428a-982f-e14e0a2b18e6"]
+        self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
 
     def test_delete_class(self):
-        id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         test_data = {
             "name": "Class #2"
         }
-        originaldataset = dataset.get(id)
-        dataset.delete_class(test_data, id)
-        updateddataset = dataset.get(id)
-        self.assertDictEqual(originaldataset["classes"][0], updateddataset["classes"][0])
+        originaldataset = dataset.get(dsid)
+        dataset.delete_class(test_data, dsid)
+        updateddataset = dataset.get(dsid)
+
+        self.assertEqual(2, len(originaldataset["classes"]))
         self.assertEqual(1, len(updateddataset["classes"]))
 
 
@@ -307,7 +371,6 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         datasets = dataset.get_public_datasets("all")
         self.assertEqual(2, len(datasets))
 
-
     def test_get_datasets_not_submitted(self):
         """ If a dataset has no jobs submitted, it should not show up"""
 
@@ -320,7 +383,6 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         self.assertEqual(1, len(datasets))
         self.assertEqual("submitted dataset", datasets[0]["name"])
 
-
     def test_get_datasets_not_public(self):
         """ If a dataset is not public, even if it has a job, it shouldn't
             show up."""
@@ -331,7 +393,6 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
 
         datasets = dataset.get_public_datasets("all")
         self.assertEqual(0, len(datasets))
-
 
     def test_get_datasets_submitted_multiple(self):
         """ If a dataset has been submitted many times, only the most recent submission
@@ -345,7 +406,6 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
         datasets = dataset.get_public_datasets("all")
         self.assertEqual(1, len(datasets))
         self.assertEqual("pending", datasets[0]["status"])
-
 
     def test_get_datasets_filter_status(self):
         """ Filter datasets by the status of their jobs """

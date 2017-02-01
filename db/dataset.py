@@ -410,6 +410,8 @@ def add_class(dict, dataset_id):
 def delete_class(dict, dataset_id):
     """Delete a class from a dataset
 
+    Deletes the class members as well since we have ON DELETE CASCADE set in the database
+
     Args:
         dict: A dictionary representing the class to delete:
               {"name": "Classname"}

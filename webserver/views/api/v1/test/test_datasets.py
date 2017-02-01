@@ -19,12 +19,10 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.test_user_id = db.user.create(self.test_user_mb_name)
         self.test_user = db.user.get(self.test_user_id)
 
-
     def test_create_dataset_forbidden(self):
         """ Not logged in. """
         resp = self.client.post("/api/v1/datasets/")
         self.assertEqual(resp.status_code, 401)
-
 
     def test_create_dataset_no_data(self):
         """ No data or bad data POSTed. """
@@ -39,7 +37,6 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json, expected)
 
-
     @mock.patch("db.dataset.create_from_dict")
     def test_create_dataset_validation_error(self, create_from_dict):
         """ return an error if create_from_dict returns a validation error """
@@ -53,7 +50,6 @@ class APIDatasetViewsTestCase(ServerTestCase):
         expected = {"message": exception_error}
         self.assertEqual(resp.json, expected)
 
-
     @mock.patch("db.dataset.create_from_dict")
     def test_create_dataset_fields_added(self, create_from_dict):
         """ Fields are added to the dict before validation if they don't exist. """
@@ -66,7 +62,6 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
         # The `public` and `classes` fields are added
         create_from_dict.assert_called_once_with({"a": "thing", "public": True, "classes": []}, self.test_user["id"])
-
 
     @mock.patch("db.dataset.create_from_dict")
     def test_create_dataset(self, create_from_dict):
@@ -193,7 +188,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/recordings' % (str(id))
         resp = self.client.put(url, data=submit, content_type='application/json')
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "\"1c085555-3805-428a-not-a-uuid\" is not a valid recording MBID in class \"Class #1\" (number 0)."}
+        expected = {"message": "\"1c085555-3805-428a-not-a-uuid\" is not a valid recording MBID in class \"Class #1\"."}
         self.assertEqual(resp.json, expected)
 
 
@@ -232,7 +227,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/recordings' % (str(id))
         resp = self.client.delete(url, data=submit, content_type='application/json')
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "\"19e698e7-71df-48a9-930e-invalidUUID\" is not a valid recording MBID in class \"Class #2\" (number 0)."}
+        expected = {"message": "\"19e698e7-71df-48a9-930e-invalidUUID\" is not a valid recording MBID in class \"Class #2\"."}
         self.assertEqual(resp.json, expected)
 
 
@@ -507,9 +502,9 @@ class APIDatasetViewsTestCase(ServerTestCase):
         })
         url = '/api/v1/datasets/%s/classes' % (str(id))
         resp = self.client.delete(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Class deleted."}
         self.assertEqual(resp.json, expected)
+        self.assertEqual(resp.status_code, 200)
 
 
     def test_add_class_without_recordings(self):
@@ -642,7 +637,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/classes' % (str(id))
         resp = self.client.post(url, data=submit, content_type='application/json')
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "\"1c085555-3805-428a-982f-wrong-UUID\" is not a valid recording MBID in class \"Class #2\" (number 0)."}
+        expected = {"message": "\"1c085555-3805-428a-982f-wrong-UUID\" is not a valid recording MBID in class \"Class #2\"."}
         self.assertEqual(resp.json, expected)
 
 

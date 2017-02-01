@@ -67,54 +67,93 @@ def validate(dataset):
         raise ValidationException('Value of `public` must be a boolean.')
 
 
-def _validate_classes(classes):
-    if not isinstance(classes, list):
-        raise ValidationException("Field `classes` must be a list of strings.")
-    for idx, cls in enumerate(classes):
-        _validate_class(cls, idx)
+def validate_class(cls, idx=None, recordings_required=True):
+    """ Validate the contents of a class dictionary
 
+    :param cls: the class to check
+    :param idx: the index of this class if it is part of a list of classes,
+                otherwise None if it's a standalone class
+    :param recordings_required: True if this class must have a `recordings` element
+    :raises: `ValidationException` if the class definition has a problem
+    """
 
-def _validate_class(cls, idx, rec_required=True):
+    class_number_text = "" if idx is None else " number %s" % idx
+
     if not isinstance(cls, dict):
-        raise ValidationException("Class number %s is not stored in a dictionary. All classes "
-                                  "must be dictionaries." % idx)
+        raise ValidationException("Class%s is not a dictionary. All classes "
+                                  "must be dictionaries." % class_number_text)
     _check_dict_structure(
         cls,
         [
             ("name", True),
             ("description", False),
-            ("recordings", rec_required),
+            ("recordings", recordings_required),
         ],
-        "class number %s" % idx,
+        "class%s" % class_number_text,
     )
 
     # Name
     if not isinstance(cls["name"], string_types):
-        raise ValidationException("Field `name` of the class number %s is not a string." % idx)
+        raise ValidationException("Field `name` of class%s is not a string." % class_number_text)
     if not (CLASS_NAME_LEN_MIN < len(cls["name"]) < CLASS_NAME_LEN_MAX):
-        raise ValidationException("Length of the `name` filed in class number %s doesn't fit the limits. "
+        raise ValidationException("Length of the `name` field in class%s doesn't fit the limits. "
                                   "Class name must be between %s and %s characters" %
-                                  (idx, CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
+                                  (class_number_text, CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
 
     # Description (optional)
     if "description" in cls and cls["description"] is not None:
         if not isinstance(cls["description"], string_types):
-            raise ValidationException('Field `description` in class "%s" (number %s) is not a string.' %
-                                      (cls["name"], idx))
+            class_number_text = "" if not idx else " (number %s)" % idx
+            raise ValidationException('Field `description` in class "%s"%s is not a string.' %
+                                      (cls["name"], class_number_text))
 
-    # Recordings
+    # Recordings (optional if `recordings_required`=False, otherwise required)
     if "recordings" in cls:
         _validate_recordings(cls["recordings"], cls["name"], idx)
 
 
-def _validate_recordings(recordings, cls_name, cls_index):
+def validate_recordings_add_delete(record_dict):
+    """Validate for add/delete recordings"""
+    if not isinstance(record_dict, dict):
+        raise ValidationException("Request must be a dictionary.")
+    _check_dict_structure(
+        record_dict,
+        [
+            ("class_name", True),
+            ("recordings", True),
+        ],
+        "recordings dictionary",
+    )
+    _validate_recordings(record_dict["recordings"], record_dict["class_name"], None)
+
+
+def _validate_classes(classes):
+    if not isinstance(classes, list):
+        raise ValidationException("Field `classes` must be a list of strings.")
+    for idx, cls in enumerate(classes):
+        validate_class(cls, idx)
+
+
+def _validate_recordings(recordings, cls_name, cls_index=None):
+    """ Validate recordings
+
+    Args:
+        recordings: The recordings to validate
+        cls_name: The name of the class these recordings are part of (for use in error messages)
+        cls_index: A list index if these recordings are in a class which is part of a dataset
+                      or None if the class is standalone (for use in error messages)
+
+    Raises:
+        ValidationException if the recordings definition has a problem
+    """
+    class_number_text = "" if not cls_index else " (number %s)" % cls_index
     if not isinstance(recordings, list):
-        raise ValidationException('Field `recordings` in class "%s" (number %s) is not a list.'
-                                  % (cls_name, cls_index))
+        raise ValidationException('Field `recordings` in class "%s"%s is not a list.'
+                                  % (cls_name, class_number_text))
     for recording in recordings:
-        if not UUID_RE.match(recording):
-            raise ValidationException('"%s" is not a valid recording MBID in class "%s" (number %s).' %
-                                      (recording, cls_name, cls_index))
+        if not UUID_RE.match(str(recording)):
+            raise ValidationException('"%s" is not a valid recording MBID in class "%s"%s.' %
+                                      (recording, cls_name, class_number_text))
 
 
 def _check_dict_structure(dictionary, keys, error_location):
@@ -132,33 +171,12 @@ def _check_dict_structure(dictionary, keys, error_location):
     """
     allowed_keys = [v[0] for v in keys]
     dict_keys = dictionary.keys()
-    print(dict_keys)
     for k, req in keys:
         if req and k not in dict_keys:
             raise ValidationException("Field `%s` is missing from %s." % (k, error_location))
     for key in dict_keys:
         if key not in allowed_keys:
             raise ValidationException("Unexpected field `%s` in %s." % (key, error_location))
-
-
-def validate_recordings(record_dict):
-    """Validate for add/delete recordings"""
-    if not isinstance(record_dict, dict):
-        raise ValidationException("Request must be a dictionary.")
-    _check_dict_structure(
-        record_dict,
-        [
-            ("class_name", True),
-            ("recordings", True),
-        ],
-        "recordings dictionary",
-    )
-    _validate_recordings(record_dict["recordings"], record_dict["class_name"], 0)
-
-
-def validate_class(class_dict):
-    """Validate for add/delete class"""
-    _validate_class(class_dict, 0, False)
 
 
 class ValidationException(Exception):

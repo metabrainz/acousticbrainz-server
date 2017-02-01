@@ -6,7 +6,6 @@ from webserver.views.api import exceptions as api_exceptions
 import db.dataset
 import db.exceptions
 from utils import dataset_validator
-from uuid import UUID
 
 bp_datasets = Blueprint('api_v1_datasets', __name__)
 
@@ -118,7 +117,7 @@ def update_dataset_details(dataset_id):
     :reqheader Content-Type: *application/json*
     :<json string name: *Optional.* Name of the dataset.
     :<json string description: *Optional.* Description of the dataset.
-    :<json boolean public: *Optional.* ``True`` to make dataset public, ``false`` to make it private.
+    :<json boolean public: *Optional.* ``True`` to make dataset public, ``False`` to make it private.
 
     :resheader Content-Type: *application/json*
     """
@@ -128,7 +127,13 @@ def update_dataset_details(dataset_id):
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["POST"])
 @auth_required
 def add_class(dataset_id):
-    """Add class into a dataset.
+    """Add a class to a dataset.
+
+    The data can include an optional list of recording ids. If these are included,
+    the recordings are also added to the list. Duplicate recording ids are ignored.
+
+    If a class with the given name already exists, the recordings (if provided) will
+    be added to the existing class.
 
     **Example request**:
 
@@ -151,21 +156,21 @@ def add_class(dataset_id):
     """
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
+
+    try:
+        dataset_validator.validate_class(class_dict, recordings_required=False)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+
     if "recordings" in class_dict:
         unique_mbids = list(set(class_dict["recordings"]))
         class_dict["recordings"] = unique_mbids
-    try:
-        dataset_validator.validate_class(class_dict)
-    except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
-    db.dataset.add_class(class_dict, dataset_id)
+
+    db.dataset.add_class(class_dict, ds["id"])
     return jsonify(
         success=True,
         message="Class added."
     )
-
-
-
 
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["PUT"])
@@ -197,8 +202,8 @@ def update_class(dataset_id):
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["DELETE"])
 @auth_required
 def delete_class(dataset_id):
-    """Delete class from a dataset.
-       Deletes the class members as well since we have ON DELETE CASCADE set in the database
+    """Delete class and all of its recordings from a dataset.
+
     **Example request**:
 
     .. sourcecode:: json
@@ -214,11 +219,13 @@ def delete_class(dataset_id):
     """
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
+
     try:
-        dataset_validator.validate_class(class_dict)
+        dataset_validator.validate_class(class_dict, recordings_required=False)
     except dataset_validator.ValidationException as e:
         raise api_exceptions.APIBadRequest(e.message)
-    db.dataset.delete_class(class_dict, dataset_id)
+
+    db.dataset.delete_class(class_dict, ds["id"])
     return jsonify(
         success=True,
         message="Class deleted."
@@ -248,7 +255,7 @@ def add_recordings(dataset_id):
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
     try:
-        dataset_validator.validate_recordings(class_dict)
+        dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
         raise api_exceptions.APIBadRequest(e.message)
     try:
@@ -284,7 +291,7 @@ def delete_recordings(dataset_id):
     ds = get_check_dataset(dataset_id, write=True)
     class_dict = request.get_json()
     try:
-        dataset_validator.validate_recordings(class_dict)
+        dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
         raise api_exceptions.APIBadRequest(e.message)
     try:
@@ -309,7 +316,7 @@ def get_check_dataset(dataset_id, write=False):
         ds = db.dataset.get(dataset_id)
     except db.exceptions.NoDataFoundException as e:
         raise api_exceptions.APINotFound("Can't find this dataset.")
-    if(write==False):
+    if not write:
         if ds["public"] or (current_user.is_authenticated and
                             ds["author"] == current_user.id):
             return ds

@@ -295,6 +295,7 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
 
     def test_delete_class(self):
+        """ Delete a class from the dataset """
         dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         test_data = {
             "name": "Class #2"
@@ -305,6 +306,19 @@ class DatasetTestCase(DatabaseTestCase):
 
         self.assertEqual(2, len(originaldataset["classes"]))
         self.assertEqual(1, len(updateddataset["classes"]))
+
+    def test_delete_nonexistent_class(self):
+        """ Delete a class which doesn't exist in the dataset """
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data = {
+            "name": "Class #100"
+        }
+        originaldataset = dataset.get(dsid)
+        dataset.delete_class(test_data, dsid)
+        updateddataset = dataset.get(dsid)
+
+        self.assertEqual(2, len(originaldataset["classes"]))
+        self.assertEqual(2, len(updateddataset["classes"]))
 
 
 class GetPublicDatasetsTestCase(DatabaseTestCase):

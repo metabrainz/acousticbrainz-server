@@ -1,13 +1,100 @@
 from __future__ import absolute_import
 from webserver.testing import ServerTestCase
-from db.testing import TEST_DATA_PATH
+import webserver.views.api
 import db.exceptions
+import flask
 from utils import dataset_validator
+from contextlib import contextmanager
 
 import json
 import mock
-import os
-import uuid
+
+
+class GetCheckDatasetTestCase(ServerTestCase):
+
+    def setUp(self):
+        super(GetCheckDatasetTestCase, self).setUp()
+
+        self.test_user_mb_name = "tester"
+        self.test_user_id = db.user.create(self.test_user_mb_name)
+        self.test_user = db.user.get(self.test_user_id)
+
+    # In this test we don't have a webserver endpoint to access with the test client
+    # so we create an app_context instead. We have to duplicate the functionality of
+    # self.temporary_login, because we need the session data in the app context
+    # instead of in the test client context
+    @contextmanager
+    def context(self):
+        with self.create_app().app_context():
+            flask.session['user_id'] = self.test_user_id
+            flask.session['_fresh'] = True
+            yield
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_no_id(self, dataset_get):
+        """ Get a dataset if its id doesn't exist """
+
+        dataset_get.side_effect = db.exceptions.NoDataFoundException("Doesn't exist")
+        with self.assertRaises(webserver.views.api.exceptions.APINotFound):
+            webserver.views.api.v1.datasets.get_check_dataset("11111")
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_private(self, dataset_get):
+        """ If a dataset is private, only the owner can retrieve it """
+
+        def get(id):
+            return {"id": id, "public": False, "author": self.test_user_id}
+        dataset_get.side_effect = get
+
+        with self.context():
+            dataset = webserver.views.api.v1.datasets.get_check_dataset("d0d11ad2-df0d-4689-8b71-b041905d7893")
+            # OK, we got it
+            self.assertDictEqual(dataset, {"id": "d0d11ad2-df0d-4689-8b71-b041905d7893", "public": False, "author": 1})
+
+        # Different owner raises exception
+        def get(id):
+            return {"id": id, "public": False, "author": self.test_user_id + 1}
+        dataset_get.side_effect = get
+
+        with self.context():
+            try:
+                webserver.views.api.v1.datasets.get_check_dataset("d0d11ad2-df0d-4689-8b71-b041905d7893")
+                self.fail("Shouldn't get here")
+            except webserver.views.api.exceptions.APINotFound:
+                pass
+
+        # Different owner can get a public dataset
+        def get(id):
+            return {"id": id, "public": True, "author": self.test_user_id + 1}
+        dataset_get.side_effect = get
+        with self.context():
+            dataset = webserver.views.api.v1.datasets.get_check_dataset("d0d11ad2-df0d-4689-8b71-b041905d7893")
+            self.assertDictEqual(dataset, {"id": "d0d11ad2-df0d-4689-8b71-b041905d7893", "public": True, "author": 2})
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_write(self, dataset_get):
+        """ If we want write access, it must be owned by the current user """
+
+        # not owned by current user but we want to write
+        def get(id):
+            return {"id": id, "public": True, "author": self.test_user_id + 1}
+        dataset_get.side_effect = get
+
+        with self.context():
+            try:
+                webserver.views.api.v1.datasets.get_check_dataset("d0d11ad2-df0d-4689-8b71-b041905d7893", write=True)
+                self.fail("Shouldn't get here")
+            except webserver.views.api.exceptions.APIUnauthorized as e:
+                self.assertEqual(e.message, "Only the author can modify the dataset.")
+
+        # owned by current user + write
+        def get(id):
+            return {"id": id, "public": True, "author": self.test_user_id}
+        dataset_get.side_effect = get
+        with self.context():
+            dataset = webserver.views.api.v1.datasets.get_check_dataset("d0d11ad2-df0d-4689-8b71-b041905d7893", write=True)
+            self.assertDictEqual(dataset, {"id": "d0d11ad2-df0d-4689-8b71-b041905d7893", "public": True, "author": 1})
+
 
 
 class APIDatasetViewsTestCase(ServerTestCase):

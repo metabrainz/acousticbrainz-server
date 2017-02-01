@@ -162,6 +162,110 @@ class APIDatasetViewsTestCase(ServerTestCase):
         expected = {"success": True, "dataset_id": "6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0"}
         self.assertEqual(resp.json, expected)
 
+    @mock.patch("db.dataset.add_class")
+    @mock.patch("db.dataset.get")
+    def test_add_class(self, dataset_get, add_class):
+        """Add a class"""
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
+            "name": "Class #2",
+            "description": "This is class number 2",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6",]
+        }
+        url = '/api/v1/datasets/%s/classes' % (str(dsid))
+        resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
+
+        add_class.assert_called_with(submit, dsid)
+
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Class added."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_add_class_invalid_data(self, dataset_get):
+        """ An invalid submission results in HTTP 400 """
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        # We test if the dataset is valid before the submitted data
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+        submit = {
+            "name": "Class #2",
+            "invalid": "data"
+        }
+        url = '/api/v1/datasets/%s/classes' % (str(dsid))
+        resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
+
+        self.assertEqual(resp.status_code, 400)
+        expected = {"message": "Unexpected field `invalid` in class."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.add_class")
+    @mock.patch("db.dataset.get")
+    def test_add_class_unique_recordings(self, dataset_get, add_class):
+        """ If a UUID is duplicated in the recordings list, remove it before passing
+            to `add_class` """
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
+            "name": "Class #2",
+            "description": "This is class number 2",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6", "323565da-57b1-4eae-b3c4-cdf431061391", "1c085555-3805-428a-982f-e14e0a2b18e6"]
+        }
+        url = '/api/v1/datasets/%s/classes' % (str(dsid))
+        resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
+
+        expected = {
+            "name": "Class #2",
+            "description": "This is class number 2",
+            "recordings": ["323565da-57b1-4eae-b3c4-cdf431061391", "1c085555-3805-428a-982f-e14e0a2b18e6"]
+        }
+        add_class.assert_called_with(expected, dsid)
+
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Class added."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.delete_class")
+    @mock.patch("db.dataset.get")
+    def test_delete_class(self, dataset_get, delete_class):
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {"name": "rock"}
+        url = '/api/v1/datasets/%s/classes' % (str(dsid))
+        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        delete_class.assert_called_with(submit, dsid)
+
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Class deleted."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_delete_class_invalid_data(self, dataset_get):
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        # We test if the dataset is valid before the submitted data
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {"invalid": "data"}
+        url = '/api/v1/datasets/%s/classes' % (str(dsid))
+        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+
+        self.assertEqual(resp.status_code, 400)
+        expected = {"message": "Field `name` is missing from class."}
+        self.assertEqual(resp.json, expected)
+
     def test_add_recordings(self):
         """Successfully add recordings. """
         self.temporary_login(self.test_user_id)
@@ -532,272 +636,3 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.json, expected)
         updated_dataset2 = db.dataset.get(id2)
         self.assertDictEqual(original_dataset2, updated_dataset2)
-
-
-    def test_add_class(self):
-        """Add a class successfully"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "name": "Class #2",
-            "description": "This is class number 2",
-            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6",]
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id))
-        resp = self.client.post(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Class added."}
-        self.assertEqual(resp.json, expected)
-
-
-    def test_delete_class(self):
-        """Delete a class successfully"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "name": "Class #1",
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id))
-        resp = self.client.delete(url, data=submit, content_type='application/json')
-        expected = {"success": True, "message": "Class deleted."}
-        self.assertEqual(resp.json, expected)
-        self.assertEqual(resp.status_code, 200)
-
-
-    def test_add_class_without_recordings(self):
-        """Add a class without recordings and description successfully"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ],
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "name": "Class #2",
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id))
-        resp = self.client.post(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Class added."}
-        self.assertEqual(resp.json, expected)
-
-
-    def test_add_class_already_present(self):
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "name": "Class #1",
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id))
-        resp = self.client.post(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-
-
-    def test_add_class_check_other_dataset(self):
-        """Check another dataset after adding class to a dataset"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test1",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        self.test_data_another_dataset = {
-            "name": "Test2",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id1 = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        id2 = db.dataset.create_from_dict(self.test_data_another_dataset, author_id=self.test_user_id)
-        original = db.dataset.get(id2)
-        submit = json.dumps({
-            "name": "Class #2",
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id1))
-        resp = self.client.post(url, data=submit, content_type='application/json')
-        updated = db.dataset.get(id2)
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Class added."}
-        self.assertEqual(resp.json, expected)
-        self.assertDictEqual(original, updated)
-
-
-    def test_add_class_with_wrong_recordings(self):
-        """Add a class with recordings in wrong UUID format"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "name": "Class #2",
-            "description": "This is class number 2",
-            "recordings": ["1c085555-3805-428a-982f-wrong-UUID", ]
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id))
-        resp = self.client.post(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 400)
-        expected = {"message": "\"1c085555-3805-428a-982f-wrong-UUID\" is not a valid recording MBID in class \"Class #2\"."}
-        self.assertEqual(resp.json, expected)
-
-
-    def test_delete_class_not_present(self):
-        """Delete a class not present in the dataset"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "name": "Class #2",
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id))
-        resp = self.client.delete(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-
-
-    def test_delete_class_check_other_dataset(self):
-        """Check another dataset after deleted class from a dataset"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test1",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        self.test_data_another_dataset = {
-            "name": "Test2",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id1 = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        id2 = db.dataset.create_from_dict(self.test_data_another_dataset, author_id=self.test_user_id)
-        original = db.dataset.get(id2)
-        submit = json.dumps({
-            "name": "Class #1",
-        })
-        url = '/api/v1/datasets/%s/classes' % (str(id1))
-        resp = self.client.delete(url, data=submit, content_type='application/json')
-        updated = db.dataset.get(id2)
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Class deleted."}
-        self.assertEqual(resp.json, expected)
-        self.assertDictEqual(original, updated)

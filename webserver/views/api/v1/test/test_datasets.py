@@ -8,6 +8,7 @@ from contextlib import contextmanager
 
 import json
 import mock
+import uuid
 
 
 class GetCheckDatasetTestCase(ServerTestCase):
@@ -96,7 +97,6 @@ class GetCheckDatasetTestCase(ServerTestCase):
             self.assertDictEqual(dataset, {"id": "d0d11ad2-df0d-4689-8b71-b041905d7893", "public": True, "author": 1})
 
 
-
 class APIDatasetViewsTestCase(ServerTestCase):
 
     def setUp(self):
@@ -179,6 +179,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/classes' % (str(dsid))
         resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
 
+        dataset_get.assert_called_with(uuid.UUID(dsid))
         add_class.assert_called_with(submit, dsid)
 
         self.assertEqual(resp.status_code, 200)
@@ -200,6 +201,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/classes' % (str(dsid))
         resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
 
+        dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
         expected = {"message": "Unexpected field `invalid` in class."}
         self.assertEqual(resp.json, expected)
@@ -228,6 +230,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "recordings": ["323565da-57b1-4eae-b3c4-cdf431061391", "1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
         add_class.assert_called_with(expected, dsid)
+        dataset_get.assert_called_with(uuid.UUID(dsid))
 
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Class added."}
@@ -245,6 +248,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/classes' % (str(dsid))
         resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
         delete_class.assert_called_with(submit, dsid)
+        dataset_get.assert_called_with(uuid.UUID(dsid))
 
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Class deleted."}
@@ -262,377 +266,193 @@ class APIDatasetViewsTestCase(ServerTestCase):
         url = '/api/v1/datasets/%s/classes' % (str(dsid))
         resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
 
+        dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
         expected = {"message": "Field `name` is missing from class."}
         self.assertEqual(resp.json, expected)
 
-    def test_add_recordings(self):
+    @mock.patch("db.dataset.add_recordings")
+    @mock.patch("db.dataset.get")
+    def test_add_recordings(self, dataset_get, add_recordings):
         """Successfully add recordings. """
         self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
             "class_name": "Class #1",
-            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6",]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.put(url, data=submit, content_type='application/json')
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+        }
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        add_recordings.assert_called_with(dsid, "Class #1", ["1c085555-3805-428a-982f-e14e0a2b18e6"])
+
         self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Recording(s) added."}
+        expected = {"success": True, "message": "Recordings added."}
         self.assertEqual(resp.json, expected)
 
+    @mock.patch("db.dataset.add_recordings")
+    @mock.patch("db.dataset.get")
+    def test_add_recordings_unique_recordings(self, dataset_get, add_recordings):
+        """ If a UUID is duplicated in the recordings list, remove it before passing
+            to `add_recordings` """
+        self.temporary_login(self.test_user_id)
 
-    def test_delete_recordings(self):
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
+            "class_name": "Class #1",
+            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6", "1c085555-3805-428a-982f-e14e0a2b18e6",
+                           "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
+        }
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        add_recordings.assert_called_with(dsid, "Class #1", ["ed94c67d-bea8-4741-a3a6-593f20a22eb6",
+                                                             "1c085555-3805-428a-982f-e14e0a2b18e6"])
+
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Recordings added."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_add_recordings_invalid_data(self, dataset_get):
+        """ Invalid data results in a 400 and query is not made """
+
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        # We test if the dataset is valid before the submitted data
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
+            "class_name": "Class #1",
+            "invalid": "field"
+        }
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        self.assertEqual(resp.status_code, 400)
+        expected = {"message": "Field `recordings` is missing from recordings dictionary."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.add_recordings")
+    @mock.patch("db.dataset.get")
+    def test_add_recordings_no_such_class(self, dataset_get, add_recordings):
+        """ Try and add recordings to a dataset which exists, but no class with this name exists """
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        # We test if the dataset is valid before the submitted data
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        add_recordings.side_effect = db.exceptions.NoDataFoundException("No such class exists.")
+
+        submit = {
+            "class_name": "Class #1",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+        }
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        self.assertEqual(resp.status_code, 400)
+        expected = {"message": "No such class exists."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.delete_recordings")
+    @mock.patch("db.dataset.get")
+    def test_delete_recordings(self, dataset_get, delete_recordings):
         """Successfully delete recordings. """
         self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
             "class_name": "Class #2",
-            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6","19e698e7-71df-48a9-930e-d4b1a2026c82",]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.delete(url, data=submit, content_type='application/json')
+            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6", "19e698e7-71df-48a9-930e-d4b1a2026c82"]
+        }
+
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
         self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Recording(s) deleted."}
+
+        delete_recordings.assert_called_with(dsid, "Class #2", ["19e698e7-71df-48a9-930e-d4b1a2026c82",
+                                                                "ed94c67d-bea8-4741-a3a6-593f20a22eb6"])
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        expected = {"success": True, "message": "Recordings deleted."}
         self.assertEqual(resp.json, expected)
 
-
-    def test_add_invalid_recordings_(self):
-        """Test for adding invalid UUID format recordings. """
+    @mock.patch("db.dataset.delete_recordings")
+    @mock.patch("db.dataset.get")
+    def test_delete_recordings_unique_recordings(self, dataset_get, delete_recordings):
+        """ If a UUID is duplicated in the recordings list, remove it before passing
+            to `add_recordings` """
         self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
             "class_name": "Class #1",
-            "recordings": ["1c085555-3805-428a-not-a-uuid", ]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.put(url, data=submit, content_type='application/json')
+            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6", "1c085555-3805-428a-982f-e14e0a2b18e6",
+                           "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
+        }
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        delete_recordings.assert_called_with(dsid, "Class #1", ["ed94c67d-bea8-4741-a3a6-593f20a22eb6",
+                                                             "1c085555-3805-428a-982f-e14e0a2b18e6"])
+
+        expected = {"success": True, "message": "Recordings deleted."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_add_recordings_invalid_data(self, dataset_get):
+        """ Invalid data results in a 400 and query is not made """
+
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        # We test if the dataset is valid before the submitted data
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
+            "class_name": "Class #1",
+            "invalid": "field"
+        }
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "\"1c085555-3805-428a-not-a-uuid\" is not a valid recording MBID in class \"Class #1\"."}
+        expected = {"message": "Field `recordings` is missing from recordings dictionary."}
         self.assertEqual(resp.json, expected)
 
-
-    def test_delete_invalid_recordings(self):
-        """Test for deleting invalid UUID format recordings. """
+    @mock.patch("db.dataset.delete_recordings")
+    @mock.patch("db.dataset.get")
+    def test_delete_recordings_no_such_class(self, dataset_get, delete_recordings):
+        """ Try and add recordings to a dataset which exists, but no class with this name exists """
         self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        # We test if the dataset is valid before the submitted data
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        delete_recordings.side_effect = db.exceptions.NoDataFoundException("No such class exists.")
+
+        submit = {
+            "class_name": "Class #1",
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "class_name": "Class #2",
-            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6", "19e698e7-71df-48a9-930e-invalidUUID", ]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.delete(url, data=submit, content_type='application/json')
+        url = '/api/v1/datasets/%s/recordings' % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
-        expected = {"message": "\"19e698e7-71df-48a9-930e-invalidUUID\" is not a valid recording MBID in class \"Class #2\"."}
+        expected = {"message": "No such class exists."}
         self.assertEqual(resp.json, expected)
-
-
-    def test_add_duplicate_recordings(self):
-        """Test for adding duplicate recordings. """
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "class_name": "Class #1",
-            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6", "1c085555-3805-428a-982f-e14e0a2b18e6",]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.put(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Recording(s) added."}
-        self.assertEqual(resp.json, expected)
-
-
-    def test_delete_duplicate_recordings(self):
-        """Test for deleting duplicate recordings """
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        submit = json.dumps({
-            "class_name": "Class #2",
-            "recordings": [
-                "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                "19e698e7-71df-48a9-930e-d4b1a2026c82"
-            ]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.delete(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Recording(s) deleted."}
-        self.assertEqual(resp.json, expected)
-
-
-    def test_add_recordings_check_for_other_datasets(self):
-        """Check the recordings are not added to another dataset"""
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        self.test_data_another_dataset = {
-            "name": "Test2",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        id2 = db.dataset.create_from_dict(self.test_data_another_dataset, author_id=self.test_user_id)
-        original_dataset2 = db.dataset.get(id2)
-        submit = json.dumps({
-            "class_name": "Class #1",
-            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6",]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.put(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Recording(s) added."}
-        self.assertEqual(resp.json, expected)
-        updated_dataset2 = db.dataset.get(id2)
-        self.assertDictEqual(original_dataset2, updated_dataset2)
-
-
-    def test_delete_recordings_check_for_other_datasets(self):
-        """Check the recordings are not deleted from another dataset """
-        self.temporary_login(self.test_user_id)
-        self.test_data = {
-            "name": "Test",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        self.test_data_another_dataset = {
-            "name": "Test2",
-            "description": "",
-            "classes": [
-                {
-                    "name": "Class #1",
-                    "description": "This is a description of class #1!",
-                    "recordings": [
-                        "0dad432b-16cc-4bf0-8961-fd31d124b01b",
-                        "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
-                },
-                {
-                    "name": "Class #2",
-                    "description": "",
-                    "recordings": [
-                        "fd528ddb-411c-47bc-a383-1f8a222ed213",
-                        "96888f9e-c268-4db2-bc13-e29f8b317c20",
-                        "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
-                },
-            ],
-            "public": True,
-        }
-        id = db.dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        id2 = db.dataset.create_from_dict(self.test_data_another_dataset, author_id=self.test_user_id)
-        original_dataset2 = db.dataset.get(id2)
-        submit = json.dumps({
-            "class_name": "Class #2",
-            "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6","19e698e7-71df-48a9-930e-d4b1a2026c82",]
-        })
-        url = '/api/v1/datasets/%s/recordings' % (str(id))
-        resp = self.client.delete(url, data=submit, content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
-        expected = {"success": True, "message": "Recording(s) deleted."}
-        self.assertEqual(resp.json, expected)
-        updated_dataset2 = db.dataset.get(id2)
-        self.assertDictEqual(original_dataset2, updated_dataset2)

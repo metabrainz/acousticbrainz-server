@@ -27,8 +27,8 @@ class GetCheckDatasetTestCase(ServerTestCase):
     @contextmanager
     def context(self):
         with self.create_app().app_context():
-            flask.session['user_id'] = self.test_user_id
-            flask.session['_fresh'] = True
+            flask.session["user_id"] = self.test_user_id
+            flask.session["_fresh"] = True
             yield
 
     @mock.patch("db.dataset.get")
@@ -132,7 +132,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         exception_error = "data is not valid"
         create_from_dict.side_effect = dataset_validator.ValidationException(exception_error)
         submit = json.dumps({"a": "thing"})
-        resp = self.client.post("/api/v1/datasets/", data=submit, content_type='application/json')
+        resp = self.client.post("/api/v1/datasets/", data=submit, content_type="application/json")
         self.assertEqual(resp.status_code, 400)
         expected = {"message": exception_error}
         self.assertEqual(resp.json, expected)
@@ -145,7 +145,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         exception_error = "data is not valid"
         create_from_dict.side_effect = dataset_validator.ValidationException(exception_error)
         submit = json.dumps({"a": "thing"})
-        resp = self.client.post("/api/v1/datasets/", data=submit, content_type='application/json')
+        resp = self.client.post("/api/v1/datasets/", data=submit, content_type="application/json")
         self.assertEqual(resp.status_code, 400)
         # The `public` and `classes` fields are added
         create_from_dict.assert_called_once_with({"a": "thing", "public": True, "classes": []}, self.test_user["id"])
@@ -157,7 +157,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         create_from_dict.return_value = "6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0"
         # Json format doesn't matter as we mock the create response
         submit = json.dumps({"a": "thing"})
-        resp = self.client.post("/api/v1/datasets/", data=submit, content_type='application/json')
+        resp = self.client.post("/api/v1/datasets/", data=submit, content_type="application/json")
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "dataset_id": "6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0"}
         self.assertEqual(resp.json, expected)
@@ -171,8 +171,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
 
         submit = {"name": "new name"}
 
-        url = '/api/v1/datasets/%s' % (str(dsid))
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s" % (str(dsid))
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         update_dataset_meta.assert_called_with(dsid, submit)
@@ -189,8 +189,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
 
         submit = {"invalidfield": "data"}
 
-        url = '/api/v1/datasets/%s' % (str(dsid))
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s" % (str(dsid))
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         self.assertEqual(resp.status_code, 400)
         expected = {"message": "Unexpected field `invalidfield` in dataset dictionary."}
@@ -204,8 +204,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
         dataset_get.side_effect = db.exceptions.NoDataFoundException("Doesn't exist")
 
         submit = {}
-        url = '/api/v1/datasets/%s' % (str(dsid))
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s" % (str(dsid))
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         self.assertEqual(resp.status_code, 404)
         expected = {"message": "Can't find this dataset."}
@@ -225,8 +225,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "description": "This is class number 2",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6",]
         }
-        url = '/api/v1/datasets/%s/classes' % (str(dsid))
-        resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % (str(dsid))
+        resp = self.client.post(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         add_class.assert_called_with(submit, dsid)
@@ -247,8 +247,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "name": "Class #2",
             "invalid": "data"
         }
-        url = '/api/v1/datasets/%s/classes' % (str(dsid))
-        resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % (str(dsid))
+        resp = self.client.post(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
@@ -270,8 +270,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "description": "This is class number 2",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6", "323565da-57b1-4eae-b3c4-cdf431061391", "1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        url = '/api/v1/datasets/%s/classes' % (str(dsid))
-        resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % (str(dsid))
+        resp = self.client.post(url, data=json.dumps(submit), content_type="application/json")
 
         expected = {
             "name": "Class #2",
@@ -294,8 +294,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
         dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
 
         submit = {"name": "rock"}
-        url = '/api/v1/datasets/%s/classes' % (str(dsid))
-        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % (str(dsid))
+        resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
         delete_class.assert_called_with(submit, dsid)
         dataset_get.assert_called_with(uuid.UUID(dsid))
 
@@ -312,8 +312,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
         dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
 
         submit = {"invalid": "data"}
-        url = '/api/v1/datasets/%s/classes' % (str(dsid))
-        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % (str(dsid))
+        resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
@@ -332,8 +332,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "name": "Class #1",
             "new_name": "new class"
         }
-        url = '/api/v1/datasets/%s/classes' % dsid
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         update_class.assert_called_with(dsid, "Class #1", submit)
@@ -354,8 +354,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
         submit = {
             "new_name": "new class"
         }
-        url = '/api/v1/datasets/%s/classes' % dsid
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         update_class.assert_not_called()
@@ -378,8 +378,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "name": "Class #999",
             "new_name": "new class"
         }
-        url = '/api/v1/datasets/%s/classes' % dsid
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/classes" % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         update_class.assert_called_with(dsid, "Class #999", submit)
@@ -401,8 +401,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "class_name": "Class #1",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         add_recordings.assert_called_with(dsid, "Class #1", ["1c085555-3805-428a-982f-e14e0a2b18e6"])
@@ -426,8 +426,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6", "1c085555-3805-428a-982f-e14e0a2b18e6",
                            "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
         }
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         add_recordings.assert_called_with(dsid, "Class #1", ["ed94c67d-bea8-4741-a3a6-593f20a22eb6",
@@ -450,8 +450,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "class_name": "Class #1",
             "invalid": "field"
         }
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
@@ -473,8 +473,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "class_name": "Class #1",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
@@ -494,8 +494,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6", "19e698e7-71df-48a9-930e-d4b1a2026c82"]
         }
 
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
         self.assertEqual(resp.status_code, 200)
 
         delete_recordings.assert_called_with(dsid, "Class #2", ["19e698e7-71df-48a9-930e-d4b1a2026c82",
@@ -519,8 +519,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6", "1c085555-3805-428a-982f-e14e0a2b18e6",
                            "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
         }
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
         self.assertEqual(resp.status_code, 200)
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
@@ -543,8 +543,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "class_name": "Class #1",
             "invalid": "field"
         }
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
@@ -566,8 +566,8 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "class_name": "Class #1",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        url = '/api/v1/datasets/%s/recordings' % dsid
-        resp = self.client.delete(url, data=json.dumps(submit), content_type='application/json')
+        url = "/api/v1/datasets/%s/recordings" % dsid
+        resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)

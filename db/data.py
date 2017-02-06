@@ -83,13 +83,14 @@ def clean_metadata(data):
     return data
 
 
-def submit_low_level_data(mbid, data):
+def submit_low_level_data(mbid, data, gid_type):
     """Function for submitting low-level data.
 
     Args:
         mbid: MusicBrainz ID of the recording that corresponds to the data
             that is being submitted.
         data: Low-level data about the recording.
+        gid_type: the ID type [musicbrainzid(mbid) or messybrainzid(msid)]
     """
     mbid = str(mbid)
     data = clean_metadata(data)
@@ -125,7 +126,7 @@ def submit_low_level_data(mbid, data):
         )
 
     # The data looks good, lets see about saving it
-    write_low_level(mbid, data)
+    write_low_level(mbid, data, gid_type)
 
 def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id
@@ -150,7 +151,7 @@ def insert_version(connection, data, version_type):
     row = result.fetchone()
     return row[0]
 
-def write_low_level(mbid, data):
+def write_low_level(mbid, data, is_mbid):
 
     def _get_by_data_sha256(connection, data_sha256):
         query = text("""
@@ -161,16 +162,17 @@ def write_low_level(mbid, data):
         result = connection.execute(query, {"data_sha256": data_sha256})
         return result.fetchone()
 
-    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit):
+    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, gid_type):
         """ Insert metadata into the lowlevel table and return its id """
         query = text("""
-            INSERT INTO lowlevel (mbid, build_sha1, lossless)
-                 VALUES (:mbid, :build_sha1, :lossless)
+            INSERT INTO lowlevel (gid, build_sha1, lossless, gid_type)
+                 VALUES (:mbid, :build_sha1, :lossless, :gid_type)
               RETURNING id
         """)
         result = connection.execute(query, {"mbid": mbid,
                                             "build_sha1": build_sha1,
-                                            "lossless": is_lossless_submit})
+                                            "lossless": is_lossless_submit,
+                                            "gid_type": gid_type})
         return result.fetchone()[0]
 
     def _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id):
@@ -198,7 +200,7 @@ def write_low_level(mbid, data):
             return
 
         try:
-            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit)
+            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid)
             version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
             _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id)
             logging.info("Saved %s" % mbid)
@@ -297,31 +299,40 @@ def write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta):
                 VALUES (:id, :mbid, :build_sha1)""")
     connection.execute(hl_query, {"id": ll_id, "mbid": mbid, "build_sha1": build_sha1})
 
-    meta_norm_data = json.dumps(json_meta, sort_keys=True, separators=(',', ':'))
-    sha = sha256(meta_norm_data).hexdigest()
-    hl_meta = text(
-        """INSERT INTO highlevel_meta (id, data, data_sha256)
-                VALUES (:id, :data, :data_sha256)""")
-    connection.execute(hl_meta, {"id": ll_id, "data": meta_norm_data, "data_sha256": sha})
+    if json_meta:
+        meta_norm_data = json.dumps(json_meta, sort_keys=True, separators=(',', ':'))
+        sha = sha256(meta_norm_data).hexdigest()
+        hl_meta = text(
+            """INSERT INTO highlevel_meta (id, data, data_sha256)
+                    VALUES (:id, :data, :data_sha256)""")
+        connection.execute(hl_meta, {"id": ll_id, "data": meta_norm_data, "data_sha256": sha})
 
 
 def write_high_level(mbid, ll_id, data, build_sha1):
-    # If the hl runner failed to run, its output is {}
-    if not data:
-        return
+    """Write highlevel data to the database.
 
+    This includes entries in the
+      highlevel
+      version
+      highlevel_model
+    tables. If the exact version already exists it will be reused.
+
+    If `data` is an empty dictionary, a highlevel table entry is still recorded
+    so that this submission is no longer processed by the highlevel runner
+    """
     with db.engine.begin() as connection:
-        json_meta = data["metadata"]
-        json_high = data["highlevel"]
+        json_meta = data.get("metadata", {})
+        json_high = data.get("highlevel", {})
 
         write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta)
 
-        hl_version = json_meta["version"]["highlevel"]
-        version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
-        model_version = hl_version["models_essentia_git_sha"]
+        if json_meta and json_high:
+            hl_version = json_meta["version"]["highlevel"]
+            version_id = insert_version(connection, hl_version, VERSION_TYPE_HIGHLEVEL)
+            model_version = hl_version["models_essentia_git_sha"]
 
-        for model_name, data in json_high.items():
-            write_high_level_item(connection, model_name, model_version, ll_id, version_id, data)
+            for model_name, data in json_high.items():
+                write_high_level_item(connection, model_name, model_version, ll_id, version_id, data)
 
 def load_low_level(mbid, offset=0):
     """Load lowlevel data with the given mbid as a dictionary.
@@ -336,7 +347,7 @@ def load_low_level(mbid, offset=0):
                  FROM lowlevel ll
                  JOIN lowlevel_json llj
                    ON ll.id = llj.id
-                WHERE ll.mbid = %s
+                WHERE ll.gid = %s
              ORDER BY ll.submitted
                OFFSET %s""",
             (str(mbid), offset)
@@ -353,12 +364,14 @@ def load_high_level(mbid, offset=0):
     with db.engine.connect() as connection:
         # Metadata
         result = connection.execute(
-            """SELECT hlm.id
+            """SELECT hl.id
                     , hlm.data
-                 FROM highlevel_meta hlm
+                 FROM highlevel hl
+            LEFT JOIN highlevel_meta hlm
+                   ON hl.id = hlm.id
                  JOIN lowlevel ll
-                   ON ll.id = hlm.id
-                WHERE ll.mbid = %s
+                   ON ll.id = hl.id
+                WHERE ll.gid = %s
              ORDER BY ll.submitted
                OFFSET %s""",
             (str(mbid), offset)
@@ -369,6 +382,12 @@ def load_high_level(mbid, offset=0):
 
         hlid = metarow[0]
         metadata = metarow[1]
+
+        # If we have a `highlevel` row but not a `highlevel_meta` row it means that
+        # the hl calculation failed and we added a placeholder row. There is a
+        # database row, but the metadata is blank
+        if metadata is None:
+            raise db.exceptions.NoDataFoundException
 
         # model data
         query = text(
@@ -399,7 +418,7 @@ def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT count(*) FROM lowlevel WHERE mbid = %s",
+            "SELECT count(*) FROM lowlevel WHERE gid = %s",
             (str(mbid),)
         )
         return result.fetchone()[0]
@@ -414,7 +433,7 @@ def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
         within_query = "AND ll.mbid IN :within"
     with db.engine.connect() as connection:
         query = text(
-            """SELECT ll.mbid::text
+            """SELECT ll.gid::text
                     , llj.data::text
                     , ll.id
                  FROM lowlevel AS ll
@@ -438,7 +457,7 @@ def get_unprocessed_highlevel_documents():
     """Fetch up to 100 low-level documents which have no associated high level data."""
     with db.engine.connect() as connection:
         query = text(
-                """SELECT ll.mbid::text
+                """SELECT ll.gid::text
                     , llj.data::text
                     , ll.id
                  FROM lowlevel AS ll

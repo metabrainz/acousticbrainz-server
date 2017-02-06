@@ -6,6 +6,9 @@ from db import dataset_eval
 
 
 DATASET_EVAL_NO_FILTER = "no_filtering"
+DATASET_EVAL_LOCAL = "local"
+DATASET_EVAL_REMOTE = "remote"
+
 DATASET_PENDING = "pending"
 DATASET_RUNNING = "running"
 DATASET_DONE = "done"
@@ -25,5 +28,10 @@ class DatasetEvaluationForm(Form):
         (DATASET_EVAL_NO_FILTER, "Don't filter"),
         (dataset_eval.FILTER_ARTIST, "By Artist"),
     ])
+    evaluation_location = SelectField("Evaluation location", choices=[
+        (DATASET_EVAL_LOCAL, "Evaluate on acousticbrainz.org"),
+        (DATASET_EVAL_REMOTE, "Evaluate on your own machine")],
+        default = DATASET_EVAL_LOCAL
+    )
     normalize = BooleanField("Normalize classes")
 

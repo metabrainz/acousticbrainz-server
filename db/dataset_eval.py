@@ -2,6 +2,7 @@ import db
 import db.exceptions
 import db.dataset
 import db.data
+import db.user
 import json
 import sqlalchemy
 from sqlalchemy import text
@@ -14,11 +15,17 @@ STATUS_FAILED = "failed"
 
 VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
 
+# Location to run an evaluation (on the AB server of the user's local server),
+# defined in postgres type 'eval_location_type'
+EVAL_LOCAL = "local"
+EVAL_REMOTE = "remote"
+VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
+
 # Filter types are defined in `eval_filter_type` type. See schema definition.
 FILTER_ARTIST = "artist"
 
 
-def evaluate_dataset(dataset_id, normalize, filter_type=None):
+def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
     """Add dataset into evaluation queue.
 
     Args:
@@ -27,6 +34,9 @@ def evaluate_dataset(dataset_id, normalize, filter_type=None):
         normalize: Dataset will be "randomly" normalized if set to True.
             Normalization is reducing each class to have the same number of
             recordings.
+        eval_location: The user should choose to evaluate on his own machine
+            or on the AB server. 'local' is for AB server and 'remote' is for
+            user's machine.
         filter_type: Optional filtering that will be applied to the dataset.
             See FILTER_* variables in this module for a list of existing
             filters.
@@ -38,7 +48,7 @@ def evaluate_dataset(dataset_id, normalize, filter_type=None):
         if _job_exists(connection, dataset_id):
             raise JobExistsException
         validate_dataset(db.dataset.get(dataset_id))
-        return _create_job(connection, dataset_id, normalize, filter_type)
+        return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
 
 
 def job_exists(dataset_id):
@@ -111,6 +121,7 @@ def get_next_pending_job():
             """SELECT id::text
                  FROM dataset_eval_jobs
                 WHERE status = :status
+                  AND eval_location = 'local'
              ORDER BY created ASC
                 LIMIT 1""")
         result = connection.execute(query, {"status": STATUS_PENDING})
@@ -132,6 +143,7 @@ def get_job(job_id):
                     , dataset_eval_jobs.testing_snapshot
                     , dataset_eval_jobs.created
                     , dataset_eval_jobs.updated
+                    , dataset_eval_jobs.eval_location
                  FROM dataset_eval_jobs
                  JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE dataset_eval_jobs.id = :id""")
@@ -261,16 +273,18 @@ def add_dataset_eval_set(connection, data):
     return snapshot_id
 
 
-def _create_job(connection, dataset_id, normalize, filter_type=None):
+def _create_job(connection, dataset_id, normalize, eval_location, filter_type=None):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
         if filter_type not in [FILTER_ARTIST]:
             raise ValueError("Incorrect 'filter_type'. See module documentation.")
+    if eval_location not in VALID_EVAL_LOCATION:
+        raise ValueError("Incorrect 'eval_location'. Must be one of %s" % VALID_EVAL_LOCATION)
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
-                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options)
-                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options)
+                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location)
+                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options, :eval_location)
                   RETURNING id
             """)
     result = connection.execute(query, {
@@ -280,9 +294,47 @@ def _create_job(connection, dataset_id, normalize, filter_type=None):
             "normalize": normalize,
             "filter_type": filter_type,
         }),
+        "eval_location": eval_location
     })
     job_id = result.fetchone()[0]
     return job_id
+
+def get_remote_pending_jobs_for_user(user_id):
+    """ Get all jobs for a user which have been created to
+        be evaluated on a remote server.
+
+    Args:
+      user_id: the id of the user to get the jobs for
+    """
+
+    with db.engine.connect() as connection:
+        query = sqlalchemy.text("""
+                     SELECT dataset_eval_jobs.id::text,
+                            dataset.name,
+                            dataset_eval_jobs.created
+                       FROM dataset_eval_jobs
+                       JOIN dataset_snapshot
+                         ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+                       JOIN dataset
+                         ON dataset.id = dataset_snapshot.dataset_id
+                      WHERE status = :status
+                        AND eval_location = :eval_location
+                        AND author = :user_id
+                   ORDER BY dataset_eval_jobs.created ASC
+            """)
+        result = connection.execute(query, {
+            "status": STATUS_PENDING,
+            "eval_location": EVAL_REMOTE,
+            "user_id": user_id
+        })
+        jobs = []
+        for row in result.fetchall():
+            jobs.append({
+                "job_id": row[0],
+                "dataset_name": row[1],
+                "created": row[2]
+                })
+        return jobs
 
 
 class IncompleteDatasetException(db.exceptions.DatabaseException):

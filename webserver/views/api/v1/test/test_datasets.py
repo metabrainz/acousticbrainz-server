@@ -1,8 +1,12 @@
 from __future__ import absolute_import
+from flask_login import login_user
+from webserver.login import User
 from webserver.testing import ServerTestCase
 import webserver.views.api
 import db.exceptions
 import flask
+import webserver.views.api.exceptions
+import webserver.views.api.v1.datasets
 from utils import dataset_validator
 from contextlib import contextmanager
 
@@ -37,7 +41,18 @@ class GetCheckDatasetTestCase(ServerTestCase):
 
         dataset_get.side_effect = db.exceptions.NoDataFoundException("Doesn't exist")
         with self.assertRaises(webserver.views.api.exceptions.APINotFound):
-            webserver.views.api.v1.datasets.get_check_dataset("11111")
+            webserver.views.api.v1.datasets.get_check_dataset("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+        dataset_get.assert_called_once_with("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+
+    @mock.patch("db.dataset.get")
+    def test_get_check_dataset_public(self, dataset_get):
+        # You can access a public dataset
+        dataset = {"test": "dataset", "public": True}
+        dataset_get.return_value = dataset
+
+        res = webserver.views.api.v1.datasets.get_check_dataset("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
+        self.assertEqual(res, dataset)
+        dataset_get.assert_called_once_with("6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0")
 
     @mock.patch("db.dataset.get")
     def test_get_check_dataset_private(self, dataset_get):
@@ -575,3 +590,4 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
         expected = {"message": "No such class exists."}
         self.assertEqual(resp.json, expected)
+

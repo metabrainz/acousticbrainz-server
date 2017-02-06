@@ -51,7 +51,7 @@ def get_last_submitted_recordings():
             # We are getting results with of offset of 10 rows because we'd
             # prefer to show recordings for which we already calculated
             # high-level data. This might not be the best way to do that.
-            result = connection.execute("""SELECT ll.mbid,
+            result = connection.execute("""SELECT ll.gid,
                                      llj.data->'metadata'->'tags'->'artist'->>0,
                                      llj.data->'metadata'->'tags'->'title'->>0
                                 FROM lowlevel ll
@@ -242,7 +242,7 @@ def _count_submissions_to_date(connection, to_date):
     # Unique submissions, split by lossless, lossy
     query = text("""
         SELECT lossless
-             , count(distinct(mbid))
+             , count(distinct(gid))
           FROM lowlevel
          WHERE submitted < :submitted
       GROUP BY lossless
@@ -256,7 +256,7 @@ def _count_submissions_to_date(connection, to_date):
 
     # total number of unique submissions
     query = text("""
-        SELECT count(distinct(mbid))
+        SELECT count(distinct(gid))
           FROM lowlevel
          WHERE submitted < :submitted
     """)

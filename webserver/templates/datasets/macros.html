@@ -52,3 +52,17 @@
     </ul>
   </div>
 {% endmacro %}
+
+{% macro render_job_status(status) %}
+  {% if status == 'pending' %}
+    <span class="label label-info">In queue</span>
+  {% elif status == 'running' %}
+    <span class="label label-primary">Running</span>
+  {% elif status == 'failed' %}
+    <span class="label label-danger">Failed</span>
+  {% elif status == 'done' %}
+    <span class="label label-success">Done</span>
+  {% else %}
+    <span class="label">status</span>
+  {% endif %}
+{% endmacro %}

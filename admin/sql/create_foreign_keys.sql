@@ -35,7 +35,6 @@ ALTER TABLE highlevel_model
   FOREIGN KEY (model)
   REFERENCES model (id);
 
-
 ALTER TABLE dataset
   ADD CONSTRAINT dataset_fk_user
   FOREIGN KEY (author)
@@ -81,7 +80,6 @@ ALTER TABLE dataset_snapshot
   FOREIGN KEY (dataset_id)
   REFERENCES dataset (id);
 
-
 ALTER TABLE challenge
   ADD CONSTRAINT challenge_fk_dataset_snapshot
   FOREIGN KEY (validation_snapshot)
@@ -102,10 +100,19 @@ ALTER TABLE dataset_eval_challenge
   FOREIGN KEY (challenge_id)
   REFERENCES challenge (id);
 
-
 ALTER TABLE api_key
   ADD CONSTRAINT api_key_fk_user
-FOREIGN KEY (owner)
-REFERENCES "user" (id);
+  FOREIGN KEY (owner)
+  REFERENCES "user" (id);
+
+ALTER TABLE feedback
+  ADD CONSTRAINT feedback_fk_highlevel_model
+  FOREIGN KEY (highlevel_model_id)
+  REFERENCES highlevel_model (id);
+
+ALTER TABLE feedback
+  ADD CONSTRAINT feedback_fk_user
+  FOREIGN KEY (user_id)
+  REFERENCES "user" (id);
 
 COMMIT;

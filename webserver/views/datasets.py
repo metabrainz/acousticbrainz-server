@@ -170,14 +170,14 @@ def evaluate(dataset_id):
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
+                eval_location=form.evaluation_location.data,
                 filter_type=form.filter_type.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
-        except db.dataset_eval.IncompleteDatasetException:
-            # TODO(roman): Show more informative error message.
-            flash.error("Can't add this dataset into evaluation queue because it's incomplete.")
+        except db.dataset_eval.IncompleteDatasetException as e:
+            flash.error("Cannot add this dataset because of a validation error: %s" % e.message)
         except db.dataset_eval.JobExistsException:
-            flash.warn("Evaluation job for this dataset has been already created.")
+            flash.warn("An evaluation job for this dataset has been already created.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
 
     return render_template("datasets/evaluate.html", dataset=ds, form=form)

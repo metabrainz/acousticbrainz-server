@@ -3,6 +3,8 @@ import db.data
 import unittest
 import json
 import os
+from db import gid_types
+
 
 # Configuration
 import sys
@@ -11,7 +13,6 @@ import config
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'admin', 'sql')
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_data')
-
 
 class DatabaseTestCase(unittest.TestCase):
 
@@ -56,12 +57,15 @@ class DatabaseTestCase(unittest.TestCase):
             connection.execute('DROP TABLE IF EXISTS api_key              CASCADE;')
             connection.execute('DROP TABLE IF EXISTS challenge            CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_eval_challenge CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS feedback               CASCADE;')
 
     def drop_types(self):
         with db.engine.connect() as connection:
             connection.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
             connection.execute('DROP TYPE IF EXISTS model_status CASCADE;')
             connection.execute('DROP TYPE IF EXISTS version_type CASCADE;')
+            connection.execute('DROP TYPE IF EXISTS eval_location_type CASCADE;')
+            connection.execute('DROP TYPE IF EXISTS gid_type CASCADE;')
 
     def data_filename(self, mbid):
         """ Get the expected filename of a test datafile given its mbid """
@@ -72,5 +76,4 @@ class DatabaseTestCase(unittest.TestCase):
         the database.
         """
         with open(self.data_filename(mbid)) as json_file:
-            db.data.submit_low_level_data(mbid, json.loads(json_file.read()))
-
+            db.data.submit_low_level_data(mbid, json.loads(json_file.read()), gid_types.GID_TYPE_MBID)

@@ -1,11 +1,12 @@
 BEGIN;
 
 CREATE TABLE lowlevel (
-  id          SERIAL,
-  mbid        UUID NOT NULL,
-  build_sha1  TEXT NOT NULL,
-  lossless    BOOLEAN                  DEFAULT 'n',
-  submitted   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id         SERIAL,
+  gid        UUID      NOT NULL,
+  build_sha1 TEXT      NOT NULL,
+  lossless   BOOLEAN                  DEFAULT 'n',
+  submitted  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  gid_type   gid_type  NOT NULL
 );
 
 CREATE TABLE lowlevel_json (
@@ -112,7 +113,8 @@ CREATE TABLE dataset_eval_jobs (
   testing_snapshot  INT,                     -- FK to dataset_eval_sets
   created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  result            JSONB
+  result            JSONB,
+  eval_location     eval_location_type       NOT NULL DEFAULT 'local'
 );
 
 CREATE TABLE dataset_eval_sets (
@@ -143,6 +145,13 @@ CREATE TABLE api_key (
   is_active BOOLEAN NOT NULL         DEFAULT TRUE,
   owner     INTEGER NOT NULL,
   created   TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE feedback (
+  user_id            INTEGER, -- PK, FK to user
+  highlevel_model_id INTEGER, -- PK, FK to highlevel_model
+  correct            BOOLEAN NOT NULL,
+  suggestion         TEXT
 );
 
 COMMIT;

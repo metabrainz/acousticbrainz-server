@@ -263,7 +263,7 @@ class DatasetTestCase(DatabaseTestCase):
         }
 
         originaldataset = dataset.get(dsid)
-        dataset.add_class(test_data, dsid)
+        dataset.add_class(dsid, test_data)
         updateddataset = dataset.get(dsid)
 
         self.assertEqual(2, len(originaldataset["classes"]))
@@ -282,7 +282,7 @@ class DatasetTestCase(DatabaseTestCase):
             "description": "This is description of class 3",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        dataset.add_class(test_data, dsid)
+        dataset.add_class(dsid, test_data)
         updateddataset = dataset.get(dsid)
 
         # Check that both the class details and recordings are in the retrieved dataset
@@ -298,7 +298,7 @@ class DatasetTestCase(DatabaseTestCase):
             "description": "This is description of class 1",
             "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        dataset.add_class(test_data, dsid)
+        dataset.add_class(dsid, test_data)
         updateddataset = dataset.get(dsid)
 
         # Class #1 is not added again, but the recording is added to it
@@ -315,7 +315,7 @@ class DatasetTestCase(DatabaseTestCase):
             "name": "Class #2"
         }
         originaldataset = dataset.get(dsid)
-        dataset.delete_class(test_data, dsid)
+        dataset.delete_class(dsid, test_data)
         updateddataset = dataset.get(dsid)
 
         self.assertEqual(2, len(originaldataset["classes"]))
@@ -328,7 +328,7 @@ class DatasetTestCase(DatabaseTestCase):
             "name": "Class #100"
         }
         originaldataset = dataset.get(dsid)
-        dataset.delete_class(test_data, dsid)
+        dataset.delete_class(dsid, test_data)
         updateddataset = dataset.get(dsid)
 
         self.assertEqual(2, len(originaldataset["classes"]))

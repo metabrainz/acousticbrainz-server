@@ -229,7 +229,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         resp = self.client.post(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
-        add_class.assert_called_with(submit, dsid)
+        add_class.assert_called_with(dsid, submit)
 
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Class added."}
@@ -278,7 +278,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
             "description": "This is class number 2",
             "recordings": ["323565da-57b1-4eae-b3c4-cdf431061391", "1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        add_class.assert_called_with(expected, dsid)
+        add_class.assert_called_with(dsid, expected)
         dataset_get.assert_called_with(uuid.UUID(dsid))
 
         self.assertEqual(resp.status_code, 200)
@@ -296,15 +296,16 @@ class APIDatasetViewsTestCase(ServerTestCase):
         submit = {"name": "rock"}
         url = "/api/v1/datasets/%s/classes" % (str(dsid))
         resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
-        delete_class.assert_called_with(submit, dsid)
+        delete_class.assert_called_with(dsid, submit)
         dataset_get.assert_called_with(uuid.UUID(dsid))
 
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Class deleted."}
         self.assertEqual(resp.json, expected)
 
+    @mock.patch("db.dataset.delete_class")
     @mock.patch("db.dataset.get")
-    def test_delete_class_invalid_data(self, dataset_get):
+    def test_delete_class_invalid_data(self, dataset_get, delete_class):
         self.temporary_login(self.test_user_id)
 
         dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
@@ -316,6 +317,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
+        delete_class.assert_not_called()
         self.assertEqual(resp.status_code, 400)
         expected = {"message": "Field `name` is missing from class."}
         self.assertEqual(resp.json, expected)

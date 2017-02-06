@@ -364,6 +364,8 @@ def add_recordings(dataset_id, class_name, recordings):
 
     Args:
         dataset_id: the uuid of the dataset
+        class_name: The class to add the recordings to
+        recordings: the recordings to add
 
     Raises:
         NoDataFoundException if the dataset doesn't exist or if the class doesn't exist in the dataset
@@ -415,7 +417,7 @@ def delete_recordings(dataset_id, class_name, recordings):
                                {"class_name": clsid[0], "mbid_num": mbid})
 
 
-def add_class(dict, dataset_id):
+def add_class(dataset_id, dict):
     """Add a class to a dataset
 
     If the dict argument contains a key "recordings", add these recordings
@@ -424,10 +426,10 @@ def add_class(dict, dataset_id):
     to it if they are given.
 
     Args:
+        dataset_id: the UUID of the dataset to add this class to
         dict: A dictionary representing the class to add:
               {"name": "Classname", "description": "Class desc",
                "recordings": [list of recording ids (optional)}
-        dataset_id: the UUID of the dataset to add this class to
     """
 
     with db.engine.begin() as connection:
@@ -446,15 +448,15 @@ def add_class(dict, dataset_id):
         add_recordings(dataset_id, dict["name"], dict["recordings"])
 
 
-def delete_class(dict, dataset_id):
+def delete_class(dataset_id, dict):
     """Delete a class from a dataset
 
     Deletes the class members as well since we have ON DELETE CASCADE set in the database
 
     Args:
+        dataset_id: the UUID of the dataset to delete this class from
         dict: A dictionary representing the class to delete:
               {"name": "Classname"}
-        dataset_id: the UUID of the dataset to delete this class from
     """
 
     with db.engine.begin() as connection:

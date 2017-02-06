@@ -178,7 +178,7 @@ def add_class(dataset_id):
         unique_mbids = list(set(class_dict["recordings"]))
         class_dict["recordings"] = unique_mbids
 
-    db.dataset.add_class(class_dict, ds["id"])
+    db.dataset.add_class(ds["id"], class_dict)
     return jsonify(
         success=True,
         message="Class added."
@@ -256,7 +256,7 @@ def delete_class(dataset_id):
     except dataset_validator.ValidationException as e:
         raise api_exceptions.APIBadRequest(e.message)
 
-    db.dataset.delete_class(class_dict, ds["id"])
+    db.dataset.delete_class(ds["id"], class_dict)
     return jsonify(
         success=True,
         message="Class deleted."

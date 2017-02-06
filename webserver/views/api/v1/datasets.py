@@ -117,11 +117,23 @@ def update_dataset_details(dataset_id):
     :reqheader Content-Type: *application/json*
     :<json string name: *Optional.* Name of the dataset.
     :<json string description: *Optional.* Description of the dataset.
-    :<json boolean public: *Optional.* ``True`` to make dataset public, ``False`` to make it private.
+    :<json boolean public: *Optional.* ``true`` to make dataset public, ``false`` to make it private.
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id, write=True)
+    dataset_data = request.get_json()
+
+    try:
+        dataset_validator.validate_dataset_update(dataset_data)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+
+    db.dataset.update_dataset_meta(ds["id"], dataset_data)
+    return jsonify(
+        success=True,
+        message="Dataset updated."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["POST"])

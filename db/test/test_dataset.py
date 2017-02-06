@@ -101,6 +101,20 @@ class DatasetTestCase(DatabaseTestCase):
         with self.assertRaises(dataset_validator.ValidationException):
             dataset.update(dataset_id=id, dictionary=bad_dataset, author_id=self.test_user_id)
 
+    def test_update_metadata(self):
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+
+        existing_dataset = dataset.get(dsid)
+        dataset.update_dataset_meta(dsid, {"name": "new name", "description": "new desc", "public": False})
+        new_dataset = dataset.get(dsid)
+
+        self.assertNotEqual(existing_dataset["name"], new_dataset["name"])
+        self.assertEqual(new_dataset["name"], "new name")
+        self.assertNotEqual(existing_dataset["description"], new_dataset["description"])
+        self.assertEqual(new_dataset["description"], "new desc")
+        self.assertNotEqual(existing_dataset["public"], new_dataset["public"])
+        self.assertEqual(new_dataset["public"], False)
+
     def test_get_by_user_id(self):
         dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 

@@ -57,6 +57,44 @@ def create_from_dict(dictionary, author_id):
     return dataset_id
 
 
+def update_dataset_meta(dataset_id, meta):
+    """ Update the metadata (name, description, public) for a dataset.
+
+    Args:
+        dataset_id: id of the dataset to update
+        meta: dictionary of metadata to update
+
+    Valid keys for `meta` are: `name`, `description`, `public`.
+    If one of these keys is not present, the corresponding field
+    for the dataset will not be updated. If no keys are present,
+    the dataset will not be updated.
+    """
+
+    params = {}
+    updates = []
+    if "name" in meta:
+        updates.append("name = :name")
+        params["name"] = meta["name"]
+    if "description" in meta:
+        updates.append("description = :description")
+        params["description"] = meta["description"]
+    if "public" in meta:
+        updates.append("public = :public")
+        params["public"] = meta["public"]
+    setstr = ", ".join(updates)
+    query = text("""UPDATE dataset
+                               SET %s
+                             WHERE id = :id
+
+            """ % setstr)
+
+    # Only do an update if we have items to update
+    if params:
+        params["id"] = dataset_id
+        with db.engine.begin() as connection:
+            connection.execute(query, params)
+
+
 def update(dataset_id, dictionary, author_id):
     # TODO(roman): Make author_id argument optional (keep old author if None).
     dataset_validator.validate(dictionary)

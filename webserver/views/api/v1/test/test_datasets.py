@@ -162,6 +162,55 @@ class APIDatasetViewsTestCase(ServerTestCase):
         expected = {"success": True, "dataset_id": "6b6b9205-f9c8-4674-92f5-2ae17bcb3cb0"}
         self.assertEqual(resp.json, expected)
 
+    @mock.patch("db.dataset.update_dataset_meta")
+    @mock.patch("db.dataset.get")
+    def test_update_dataset_details(self, dataset_get, update_dataset_meta):
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {"name": "new name"}
+
+        url = '/api/v1/datasets/%s' % (str(dsid))
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        update_dataset_meta.assert_called_with(dsid, submit)
+
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Dataset updated."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_update_dataset_details_invalid(self, dataset_get):
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {"invalidfield": "data"}
+
+        url = '/api/v1/datasets/%s' % (str(dsid))
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        self.assertEqual(resp.status_code, 400)
+        expected = {"message": "Unexpected field `invalidfield` in dataset dictionary."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_update_dataset_details_no_dataset(self, dataset_get):
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+
+        dataset_get.side_effect = db.exceptions.NoDataFoundException("Doesn't exist")
+
+        submit = {}
+        url = '/api/v1/datasets/%s' % (str(dsid))
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        self.assertEqual(resp.status_code, 404)
+        expected = {"message": "Can't find this dataset."}
+        self.assertEqual(resp.json, expected)
+
     @mock.patch("db.dataset.add_class")
     @mock.patch("db.dataset.get")
     def test_add_class(self, dataset_get, add_class):
@@ -185,6 +234,30 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Class added."}
         self.assertEqual(resp.json, expected)
+
+        @mock.patch("db.dataset.add_class")
+        @mock.patch("db.dataset.get")
+        def test_add_class(self, dataset_get, add_class):
+            """Add a class"""
+            self.temporary_login(self.test_user_id)
+
+            dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+            dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+            submit = {
+                "name": "Class #2",
+                "description": "This is class number 2",
+                "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6", ]
+            }
+            url = '/api/v1/datasets/%s/classes' % (str(dsid))
+            resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
+
+            dataset_get.assert_called_with(uuid.UUID(dsid))
+            add_class.assert_called_with(submit, dsid)
+
+            self.assertEqual(resp.status_code, 200)
+            expected = {"success": True, "message": "Class added."}
+            self.assertEqual(resp.json, expected)
 
     @mock.patch("db.dataset.get")
     def test_add_class_invalid_data(self, dataset_get):

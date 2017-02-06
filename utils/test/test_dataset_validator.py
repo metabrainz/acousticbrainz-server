@@ -135,6 +135,32 @@ class DatasetValidatorTestCase(unittest.TestCase):
                 "public": False,
             })
 
+    def test_dataset_update(self):
+        # All fields is OK
+        dataset_validator.validate_dataset_update({"name": "dataset name",
+                                                   "description": "description",
+                                                   "public": True})
+        # An empty dict is OK
+        dataset_validator.validate_dataset_update({})
+
+        # Extra field
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_dataset_update({"anotherfield": "value"})
+
+        # Name too short
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_dataset_update({"name": ""})
+
+        # desc must be string
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_dataset_update({"description": 1})
+
+        # public must be boolean
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_dataset_update({"public": "true"})
+
+
+
     def test_dataset_incorrect_types(self):
         # Incorrect types
 

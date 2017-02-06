@@ -48,23 +48,64 @@ def validate(dataset):
     )
 
     # Name
-    if not isinstance(dataset["name"], string_types):
-        raise ValidationException("Field `name` must be a string.")
-    if not (DATASET_NAME_LEN_MIN < len(dataset["name"]) < DATASET_NAME_LEN_MAX):
-        raise ValidationException("Class name must be between %s and %s characters" %
-                                  (DATASET_NAME_LEN_MIN, DATASET_NAME_LEN_MAX))
+    _validate_dataset_name(dataset["name"])
 
     # Description (optional)
     if "description" in dataset and dataset["description"] is not None:
-        if not isinstance(dataset["description"], string_types):
-            raise ValidationException("Value of `description` in a dataset must be a string.")
+        _validate_dataset_description(dataset["description"])
 
     # Classes
     _validate_classes(dataset["classes"])
 
     # Publicity
-    if not isinstance(dataset["public"], bool):
+    _validate_dataset_public(dataset["public"])
+
+
+def _validate_dataset_name(name):
+    """ Validate the name field of a dataset """
+    if not isinstance(name, string_types):
+        raise ValidationException("Field `name` must be a string.")
+    if not (DATASET_NAME_LEN_MIN < len(name) < DATASET_NAME_LEN_MAX):
+        raise ValidationException("Class name must be between %s and %s characters" %
+                                  (DATASET_NAME_LEN_MIN, DATASET_NAME_LEN_MAX))
+
+
+def _validate_dataset_description(description):
+    """ Validate the description of a dataset """
+    if not isinstance(description, string_types):
+        raise ValidationException("Value of `description` in a dataset must be a string.")
+
+
+def _validate_dataset_public(public):
+    """ Validate the public field of a dataset """
+    if not isinstance(public, bool):
         raise ValidationException('Value of `public` must be a boolean.')
+
+
+def validate_dataset_update(dataset):
+    if not isinstance(dataset, dict):
+        raise ValidationException("Dataset must be a dictionary.")
+    _check_dict_structure(
+        dataset,
+        [
+            ("name", False),
+            ("description", False),
+            ("public", False),
+        ],
+        "dataset dictionary",
+    )
+
+    # Name
+    if "name" in dataset:
+        _validate_dataset_name(dataset["name"])
+
+    # Description (optional)
+    if "description" in dataset and dataset["description"] is not None:
+        _validate_dataset_description(dataset["description"])
+
+    # Publicity
+    if "public" in dataset:
+        _validate_dataset_public(dataset["public"])
 
 
 def validate_class(cls, idx=None, recordings_required=True):

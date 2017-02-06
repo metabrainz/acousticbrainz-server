@@ -156,6 +156,7 @@ def _parse_bulk_params(params):
 
 
 @bp_core.route("/low-level", methods=["GET"])
+@crossdomain()
 def get_many_lowlevel():
     """Get low-level data for many recordings at once.
 

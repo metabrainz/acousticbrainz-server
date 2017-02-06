@@ -52,8 +52,9 @@ class CoreViewsTestCase(ServerTestCase):
         mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
         self.load_low_level_data(mbid)
 
-        resp = self.client.get("/api/v1/%s/low-level" % mbid)
-        self.assertEqual(resp.headers["Access-Control-Allow-Origin"], "*")
+        for req in ["%s/low-level", "low-level?recording_ids=%s"]:
+            resp = self.client.get("/api/v1/" + req % mbid)
+            self.assertEqual(resp.headers["Access-Control-Allow-Origin"], "*")
 
         # TODO: Test in get_high_level.
 

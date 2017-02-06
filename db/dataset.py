@@ -357,6 +357,19 @@ def _delete_snapshots_for_dataset(connection, dataset_id):
     connection.execute(query, {"dataset_id": dataset_id})
 
 
+def _get_classid_for_dataset(connection, dataset_id, class_name):
+    query = sqlalchemy.text("""
+      SELECT id
+        FROM dataset_class
+       WHERE name = :name
+         AND dataset = :dataset_id""")
+    result = connection.execute(query, {"name": class_name, "dataset_id": dataset_id})
+    if result.rowcount < 1:
+        raise exceptions.NoDataFoundException("No such class exists.")
+    clsid = result.fetchone()
+    return clsid[0]
+
+
 def add_recordings(dataset_id, class_name, recordings):
     """Adds new recordings to a class in a dataset.
 
@@ -372,16 +385,7 @@ def add_recordings(dataset_id, class_name, recordings):
     """
 
     with db.engine.begin() as connection:
-        # TODO: refactor into `_get_class_for_ds`
-        query = sqlalchemy.text("""
-          SELECT id
-            FROM dataset_class
-           WHERE name = :name
-             AND dataset = :dataset_id""")
-        result = connection.execute(query, {"name": class_name, "dataset_id": dataset_id})
-        if result.rowcount < 1:
-            raise exceptions.NoDataFoundException("No such class exists.")
-        clsid = result.fetchone()
+        clsid = _get_classid_for_dataset(connection, dataset_id, class_name)
         for mbid in recordings:
             connection.execute(sqlalchemy.text("""
               INSERT INTO dataset_class_member (class, mbid)
@@ -391,30 +395,21 @@ def add_recordings(dataset_id, class_name, recordings):
                             WHERE d.class = :clsid
                               AND d.mbid = :mbid)
                       """),
-                               {"clsid": clsid[0], "mbid": mbid})
+                               {"clsid": clsid, "mbid": mbid})
 
 
 def delete_recordings(dataset_id, class_name, recordings):
     """Delete recordings from a dataset class"""
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("""
-                    SELECT id
-                      FROM dataset_class
-                     WHERE name = :name
-                       AND dataset = :dataset_id
-                                """),
-                                    {"name": class_name, "dataset_id": dataset_id})
-        if result.rowcount < 1:
-            raise exceptions.NoDataFoundException("No such class exists.")
-        clsid = result.fetchone()
+        clsid = _get_classid_for_dataset(connection, dataset_id, class_name)
         for mbid in recordings:
             connection.execute(sqlalchemy.text("""
                 DELETE FROM dataset_class_member
                       WHERE class = :class_name
                         AND mbid = :mbid_num
                             """),
-                               {"class_name": clsid[0], "mbid_num": mbid})
+                               {"class_name": clsid, "mbid_num": mbid})
 
 
 def add_class(dataset_id, dict):
@@ -500,16 +495,7 @@ def update_class(dataset_id, class_name, class_data):
 
     if params:
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text("""
-                        SELECT id
-                          FROM dataset_class
-                         WHERE name = :name
-                           AND dataset = :dataset_id
-                                    """),
-                                        {"name": class_name, "dataset_id": dataset_id})
-            if result.rowcount < 1:
-                raise exceptions.NoDataFoundException("No such class exists.")
-            clsid = result.fetchone()[0]
+            clsid = _get_classid_for_dataset(connection, dataset_id, class_name)
             params["id"] = clsid
 
             connection.execute(update_query, params)

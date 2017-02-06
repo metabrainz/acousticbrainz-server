@@ -334,6 +334,35 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(2, len(originaldataset["classes"]))
         self.assertEqual(2, len(updateddataset["classes"]))
 
+    def test_update_class(self):
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data = {
+            "name": "Class #1",
+            "new_name": "Different class",
+            "description": "different desc"
+        }
+        originaldataset = dataset.get(dsid)
+        dataset.update_class(dsid, "Class #1", test_data)
+        updateddataset = dataset.get(dsid)
+
+        self.assertEqual("Class #2", updateddataset["classes"][1]["name"])
+        self.assertEqual("", updateddataset["classes"][1]["description"])
+
+        self.assertEqual("Class #1", originaldataset["classes"][0]["name"])
+        self.assertEqual("Different class", updateddataset["classes"][0]["name"])
+        self.assertEqual("different desc", updateddataset["classes"][0]["description"])
+
+    def test_update_class_no_class(self):
+        """ Return error if the class doesn't exist """
+        dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        test_data = {
+            "name": "Class #1",
+            "new_name": "Different class",
+            "description": "different desc"
+        }
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            dataset.update_class(dsid, "Class #99", test_data)
+
 
 class GetPublicDatasetsTestCase(DatabaseTestCase):
     """A whole testcase because there are lots of cases to test"""

@@ -159,7 +159,31 @@ class DatasetValidatorTestCase(unittest.TestCase):
         with self.assertRaises(dataset_validator.ValidationException):
             dataset_validator.validate_dataset_update({"public": "true"})
 
+    def test_class_update(self):
+        # requires at least name field
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_class_update({})
 
+        # just name field is OK
+        dataset_validator.validate_class_update({"name": "a name"})
+
+        # all fields is OK
+        dataset_validator.validate_class_update({"name": "a name", "new_name": "new name", "description": "a desc"})
+
+        # Extra field
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_class_update({"anotherfield": "value"})
+
+        # new name must be string
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_class_update({"name": "a name", "new_name": 1})
+        # new name limits
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_class_update({"name": "a name", "new_name": ""})
+
+        # description must be string
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate_class_update({"name": "a name", "description": 1})
 
     def test_dataset_incorrect_types(self):
         # Incorrect types

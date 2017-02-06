@@ -208,7 +208,26 @@ def update_class(dataset_id):
 
     :resheader Content-Type: *application/json*
     """
-    raise NotImplementedError
+    ds = get_check_dataset(dataset_id, write=True)
+    class_data = request.get_json()
+
+    try:
+        dataset_validator.validate_class_update(class_data)
+    except dataset_validator.ValidationException as e:
+        raise api_exceptions.APIBadRequest(e.message)
+
+    try:
+        db.dataset.update_class(ds["id"], class_data["name"], class_data)
+    except db.exceptions.NoDataFoundException as e:
+        # NoDataFoundException is raised if the class name doesn't exist in this dataset.
+        # We treat this as a bad request, because it's based on data in the request body,
+        # and not the url
+        raise api_exceptions.APIBadRequest(e.message)
+
+    return jsonify(
+        success=True,
+        message="Class updated."
+    )
 
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["DELETE"])

@@ -187,6 +187,7 @@ def _get_classes(dataset_id):
                              , description
                           FROM dataset_class
                          WHERE dataset = :dataset_id
+                      ORDER BY id
         """)
         result = connection.execute(query, {"dataset_id": dataset_id})
         rows = result.fetchall()
@@ -463,3 +464,50 @@ def delete_class(dict, dataset_id):
                     AND dataset = :dataset_id
                         """)
         connection.execute(query,  {"class_name": dict["name"], "dataset_id": dataset_id})
+
+
+def update_class(dataset_id, class_name, class_data):
+    """ Update the metadata (name, description) for a class.
+
+    Args:
+        dataset_id: id of the dataset to update
+        class_name: the name of the class to update
+        class_data: dictionary of metadata to update
+
+    Valid keys for `meta` are: `name` (required),
+     `new_name` (optional), `description` (optional)
+    If one of the optional keys is not present, the corresponding field
+    for the class will not be updated. If no keys are present,
+    the class will not be updated.
+    """
+
+    params = {}
+    updates = []
+    if "new_name" in class_data:
+        updates.append("name = :new_name")
+        params["new_name"] = class_data["new_name"]
+    if "description" in class_data:
+        updates.append("description = :description")
+        params["description"] = class_data["description"]
+    setstr = ", ".join(updates)
+    update_query = text("""UPDATE dataset_class
+                               SET %s
+                             WHERE id = :id
+
+            """ % setstr)
+
+    if params:
+        with db.engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text("""
+                        SELECT id
+                          FROM dataset_class
+                         WHERE name = :name
+                           AND dataset = :dataset_id
+                                    """),
+                                        {"name": class_name, "dataset_id": dataset_id})
+            if result.rowcount < 1:
+                raise exceptions.NoDataFoundException("No such class exists.")
+            clsid = result.fetchone()[0]
+            params["id"] = clsid
+
+            connection.execute(update_query, params)

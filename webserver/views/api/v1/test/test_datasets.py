@@ -235,30 +235,6 @@ class APIDatasetViewsTestCase(ServerTestCase):
         expected = {"success": True, "message": "Class added."}
         self.assertEqual(resp.json, expected)
 
-        @mock.patch("db.dataset.add_class")
-        @mock.patch("db.dataset.get")
-        def test_add_class(self, dataset_get, add_class):
-            """Add a class"""
-            self.temporary_login(self.test_user_id)
-
-            dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
-            dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
-
-            submit = {
-                "name": "Class #2",
-                "description": "This is class number 2",
-                "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6", ]
-            }
-            url = '/api/v1/datasets/%s/classes' % (str(dsid))
-            resp = self.client.post(url, data=json.dumps(submit), content_type='application/json')
-
-            dataset_get.assert_called_with(uuid.UUID(dsid))
-            add_class.assert_called_with(submit, dsid)
-
-            self.assertEqual(resp.status_code, 200)
-            expected = {"success": True, "message": "Class added."}
-            self.assertEqual(resp.json, expected)
-
     @mock.patch("db.dataset.get")
     def test_add_class_invalid_data(self, dataset_get):
         """ An invalid submission results in HTTP 400 """
@@ -342,6 +318,74 @@ class APIDatasetViewsTestCase(ServerTestCase):
         dataset_get.assert_called_with(uuid.UUID(dsid))
         self.assertEqual(resp.status_code, 400)
         expected = {"message": "Field `name` is missing from class."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.update_class")
+    @mock.patch("db.dataset.get")
+    def test_update_class(self, dataset_get, update_class):
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
+            "name": "Class #1",
+            "new_name": "new class"
+        }
+        url = '/api/v1/datasets/%s/classes' % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        update_class.assert_called_with(dsid, "Class #1", submit)
+
+        self.assertEqual(resp.status_code, 200)
+        expected = {"success": True, "message": "Class updated."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.update_class")
+    @mock.patch("db.dataset.get")
+    def test_update_class_bad_data(self, dataset_get, update_class):
+        """ Test that we get http 400 if the data is invalid"""
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+
+        submit = {
+            "new_name": "new class"
+        }
+        url = '/api/v1/datasets/%s/classes' % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        update_class.assert_not_called()
+
+        self.assertEqual(resp.status_code, 400)
+        expected = {"message": "Field `name` is missing from class."}
+        self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.update_class")
+    @mock.patch("db.dataset.get")
+    def test_update_class_no_class(self, dataset_get, update_class):
+        """ Test that we get http 400 if the class name doesn't exist"""
+        self.temporary_login(self.test_user_id)
+
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+        dataset_get.return_value = {"id": dsid, "author": self.test_user_id, "public": False}
+        update_class.side_effect = db.exceptions.NoDataFoundException("No such class exists.")
+
+        submit = {
+            "name": "Class #999",
+            "new_name": "new class"
+        }
+        url = '/api/v1/datasets/%s/classes' % dsid
+        resp = self.client.put(url, data=json.dumps(submit), content_type='application/json')
+
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        update_class.assert_called_with(dsid, "Class #999", submit)
+
+        self.assertEqual(resp.status_code, 400)
+        expected = {"message": "No such class exists."}
         self.assertEqual(resp.json, expected)
 
     @mock.patch("db.dataset.add_recordings")

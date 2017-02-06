@@ -153,6 +153,43 @@ def validate_class(cls, idx=None, recordings_required=True):
         _validate_recordings(cls["recordings"], cls["name"], idx)
 
 
+def validate_class_update(cls):
+    """ Validate the contents of a definition for updating a dataset class
+
+    :param cls: the class to check
+    :raises: `ValidationException` if the class definition has a problem
+    """
+
+    if not isinstance(cls, dict):
+        raise ValidationException("Class is not a dictionary. All classes "
+                                  "must be dictionaries.")
+    _check_dict_structure(
+        cls,
+        [
+            ("name", True),
+            ("new_name", False),
+            ("description", False),
+        ],
+        "class",
+    )
+
+    # Name
+    if not isinstance(cls["name"], string_types):
+        raise ValidationException("Field `name` of class is not a string.")
+    if "new_name" in cls and not isinstance(cls["new_name"], string_types):
+        raise ValidationException("Field `new_name` of class is not a string.")
+    if "new_name" in cls and not (CLASS_NAME_LEN_MIN < len(cls["new_name"]) < CLASS_NAME_LEN_MAX):
+        raise ValidationException("Length of the `new_name` field in class doesn't fit the limits. "
+                                  "Class name must be between %s and %s characters" %
+                                  (CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
+
+    # Description (optional)
+    if "description" in cls and cls["description"] is not None:
+        if not isinstance(cls["description"], string_types):
+            raise ValidationException('Field `description` in class "%s" is not a string.' %
+                                      (cls["name"], ))
+
+
 def validate_recordings_add_delete(record_dict):
     """Validate for add/delete recordings"""
     if not isinstance(record_dict, dict):

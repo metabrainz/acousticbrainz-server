@@ -423,6 +423,20 @@ def count_lowlevel(mbid):
         )
         return result.fetchone()[0]
 
+
+def count_many_lowlevel(mbids):
+    """Count number of stored low-level submissions for a specified set
+    of MBID."""
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT gid, COUNT(*)
+            FROM lowlevel
+            WHERE gid IN :mbids
+            GROUP BY gid;""")
+        result = connection.execute(query, mbids=tuple(mbids))
+        return result.fetchall()
+
+
 def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
     """Fetch up to 100 low-level documents which have no associated
     high level data for the given module_id.

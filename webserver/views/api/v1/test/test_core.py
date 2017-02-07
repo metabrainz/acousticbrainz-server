@@ -142,6 +142,32 @@ class CoreViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
 
+    def test_get_bulk_count_no_param(self):
+        # No parameter in bulk lookup results in an error
+        resp = self.client.get('api/v1/count')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_get_bulk_count(self):
+        mbid1 = self.test_recording1_mbid
+        mbid2 = self.test_recording2_mbid
+        for mbid in [mbid1, mbid2]:
+            self.load_low_level_data(mbid)
+
+        resp = self.client.get('api/v1/count?recording_ids=' + ';'.join([mbid1, mbid2]))
+        self.assertEqual(resp.status_code, 200)
+
+        expected_result = {mbid1: 1, mbid2: 1}
+        self.assertDictEqual(resp.json, expected_result)
+
+    def test_get_bulk_count_more_than_200(self):
+        # Create many random uuids, because of parameter deduplication
+        manyids = [str(uuid.uuid4()) for i in range(205)]
+        limit_exceed_url = ";".join(manyids)
+        resp = self.client.get('api/v1/count?recording_ids=' + limit_exceed_url)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual('More than 200 recordings not allowed per request',
+                         resp.json['message'])
+
 
 class GetBulkValidationTest(unittest.TestCase):
     # Validation/parse methods don't need to spin up test server

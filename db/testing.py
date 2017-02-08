@@ -3,6 +3,7 @@ import db.data
 import unittest
 import json
 import os
+import random
 from db import gid_types
 
 
@@ -77,3 +78,22 @@ class DatabaseTestCase(unittest.TestCase):
         """
         with open(self.data_filename(mbid)) as json_file:
             db.data.submit_low_level_data(mbid, json.loads(json_file.read()), gid_types.GID_TYPE_MBID)
+
+    def load_fake_low_level_data(self, mbid):
+        db.data.submit_low_level_data(
+            mbid,
+            {"lowlevel": {"average_loudness": random.random()},
+             "metadata": {"audio_properties": {"length": None,
+                                               "bit_rate": None,
+                                               "codec": None,
+                                               "lossless": True},
+                          "tags": {"file_name": "fake",
+                                   "musicbrainz_recordingid": [mbid]},
+                          "version": {"essentia": None,
+                                      "essentia_build_sha": "",
+                                      "essentia_git_sha": None,
+                                      "extractor": None}},
+             "rhythm": {},
+             "tonal": {}
+            },
+            gid_types.GID_TYPE_MBID)

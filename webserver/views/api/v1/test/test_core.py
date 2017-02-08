@@ -148,15 +148,21 @@ class CoreViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
 
     def test_get_bulk_count(self):
-        mbid1 = self.test_recording1_mbid
-        mbid2 = self.test_recording2_mbid
-        for mbid in [mbid1, mbid2]:
-            self.load_low_level_data(mbid)
+        mbids = ["c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
+                 "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
+                 "405a5ff4-7ee2-436b-95c1-90ce8a83b359",
+                 "405a5ff4-7ee2-436b-95c1-90ce8a83b359"]
+        for mbid in mbids[1:]:
+            self.load_fake_low_level_data(mbid)
 
-        resp = self.client.get('api/v1/count?recording_ids=' + ';'.join([mbid1, mbid2]))
+        resp = self.client.get('api/v1/count?recording_ids=' + ';'.join(mbids))
         self.assertEqual(resp.status_code, 200)
 
-        expected_result = {mbid1: 1, mbid2: 1}
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": 0,
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": 1,
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": 2,
+        }
         self.assertDictEqual(resp.json, expected_result)
 
     def test_get_bulk_count_more_than_200(self):

@@ -452,6 +452,8 @@ var Recordings = React.createClass({
     }
 });
 
+var RECORDING_MBID_RE = /^(https?:\/\/musicbrainz\.org\/recording\/)?([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+
 var RecordingAddForm = React.createClass({
     propTypes: {
         recordings: React.PropTypes.array.isRequired,
@@ -460,19 +462,26 @@ var RecordingAddForm = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
         var mbid = this.refs.mbid.value.trim();
+        mbid = RECORDING_MBID_RE.exec(mbid)[2];
         if (!mbid) {
             return;
         }
+        mbid = mbid.toLowerCase();
         this.props.onRecordingSubmit(mbid);
         this.refs.mbid.value = '';
     },
     handleChange: function () {
-        var mbid = this.refs.mbid.value;
-        var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mbid);
-        var isNotDuplicate = this.props.recordings.indexOf(mbid) == -1;
+        var mbidField = this.refs.mbid.value;
+        var isValidUUID = RECORDING_MBID_RE.test(mbidField);
+        var isNotDuplicate = false;
+        if (isValidUUID) {
+            var mbid = RECORDING_MBID_RE.exec(mbidField)[2];
+            mbid = mbid.toLowerCase();
+            isNotDuplicate = this.props.recordings.indexOf(mbid) === -1;
+        }
         this.setState({
             validInput: isValidUUID && isNotDuplicate,
-            length: mbid.length
+            length: mbidField.length
         });
         // TODO: Show informative error messages if input is invalid.
     },
@@ -485,8 +494,8 @@ var RecordingAddForm = React.createClass({
     render: function () {
         return (
             <form className="recording-add clearfix form-inline form-group-sm" onSubmit={this.handleSubmit}>
-                <div className={this.state.validInput || this.state.length == 0 ? 'input-group' : 'input-group has-error'}>
-                    <input type="text" className="form-control input-sm" placeholder="MusicBrainz ID"
+                <div className={this.state.validInput || this.state.length === 0 ? 'input-group' : 'input-group has-error'}>
+                    <input type="text" className="form-control input-sm" placeholder="MusicBrainz ID or URL"
                            ref="mbid" onChange={this.handleChange} />
                     <span className="input-group-btn">
                         <button disabled={this.state.validInput ? '' : 'disabled'}

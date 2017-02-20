@@ -193,7 +193,12 @@ def get_many_lowlevel():
 
     # TODO: This should use a bulk get method for speed
     for recording_id, offset in recordings:
-        recording_details.setdefault(recording_id, {})[offset] = db.data.load_low_level(recording_id, offset)
+        try:
+            recording_details.setdefault(recording_id, {})[offset] = db.data.load_low_level(recording_id, offset)
+        except NoDataFoundException:
+            errors = recording_details.setdefault("errors", {})
+            mbid_entry = errors.setdefault(recording_id, {})
+            mbid_entry[offset] = {"message": "recording does not exist"}
 
     return jsonify(recording_details)
 

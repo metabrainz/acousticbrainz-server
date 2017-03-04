@@ -148,8 +148,10 @@ class CoreViewsTestCase(ServerTestCase):
                  "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
                  "405a5ff4-7ee2-436b-95c1-90ce8a83b359",
                  "405a5ff4-7ee2-436b-95c1-90ce8a83b359"]
+        # we do not submit the first mbid in order to have a zero count in the
+        # response
         for mbid in mbids[1:]:
-            self.load_fake_low_level_data(mbid)
+            self.submit_fake_low_level_data(mbid)
 
         expected_result = collections.Counter(mbids)
         expected_result[mbids[0]] = 0
@@ -172,7 +174,7 @@ class CoreViewsTestCase(ServerTestCase):
                  "405a5ff4-7ee2-436b-95c1-90ce8a83b359",
                  "405a5ff4-7ee2-436b-95c1-90ce8a83b359"]
         for mbid in mbids[1:]:
-            self.load_fake_low_level_data(mbid)
+            self.submit_fake_low_level_data(mbid)
 
         resp = self.client.get('api/v1/count?recording_ids=' + ';'.join(mbids))
         self.assertEqual(resp.status_code, 200)

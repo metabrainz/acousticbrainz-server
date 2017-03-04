@@ -79,7 +79,10 @@ class DatabaseTestCase(unittest.TestCase):
         with open(self.data_filename(mbid)) as json_file:
             db.data.submit_low_level_data(mbid, json.loads(json_file.read()), gid_types.GID_TYPE_MBID)
 
-    def load_fake_low_level_data(self, mbid):
+    def submit_fake_low_level_data(self, mbid):
+        """Generate a minimal dataset to be submitted in tests for a given
+        MBID. Several calls to this function generate distinct entries by using
+        a random value for the 'average_loudness' field"""
         db.data.submit_low_level_data(
             mbid,
             {"lowlevel": {"average_loudness": random.random()},

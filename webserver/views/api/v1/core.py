@@ -230,6 +230,5 @@ def get_many_count():
 
     mbids = set(r[0] for r in recordings)
     recording_count = {}.fromkeys(mbids, 0)
-    recording_count.update({str(mbid): int(count) for (mbid, count)
-                            in db.data.count_many_lowlevel(mbids)})
+    recording_count.update(db.data.count_many_lowlevel(mbids))
     return jsonify(recording_count)

@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import json
 import uuid
 
+import six
+
 from flask import Blueprint, request, jsonify
 
 import db.data
@@ -207,8 +209,8 @@ def get_many_count():
 
     .. sourcecode:: json
 
-       {"mbid1": 0,
-        "mbid2": 1
+       {"mbid1": {"count": 0},
+        "mbid2": {"count": 1}
        }
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
@@ -229,6 +231,7 @@ def get_many_count():
             "More than 200 recordings not allowed per request")
 
     mbids = set(r[0] for r in recordings)
-    recording_count = {}.fromkeys(mbids, 0)
-    recording_count.update(db.data.count_many_lowlevel(mbids))
+    recording_count = {}.fromkeys(mbids, {'count': 0})
+    for (mbid, count) in six.iteritems(db.data.count_many_lowlevel(mbids)):
+        recording_count[mbid] = {'count': count}
     return jsonify(recording_count)

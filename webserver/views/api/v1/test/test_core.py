@@ -143,7 +143,7 @@ class CoreViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
 
-    def test_get_count(self):
+    def submit_fake_data(self):
         mbids = ["c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
                  "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
                  "405a5ff4-7ee2-436b-95c1-90ce8a83b359",
@@ -152,7 +152,10 @@ class CoreViewsTestCase(ServerTestCase):
         # response
         for mbid in mbids[1:]:
             self.submit_fake_low_level_data(mbid)
+        return mbids
 
+    def test_get_count(self):
+        mbids = self.submit_fake_data()
         expected_result = collections.Counter(mbids)
         expected_result[mbids[0]] = 0
 
@@ -169,13 +172,7 @@ class CoreViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
 
     def test_get_bulk_count(self):
-        mbids = ["c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
-                 "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
-                 "405a5ff4-7ee2-436b-95c1-90ce8a83b359",
-                 "405a5ff4-7ee2-436b-95c1-90ce8a83b359"]
-        for mbid in mbids[1:]:
-            self.submit_fake_low_level_data(mbid)
-
+        mbids = self.submit_fake_data()
         resp = self.client.get('api/v1/count?recording_ids=' + ';'.join(mbids))
         self.assertEqual(resp.status_code, 200)
 

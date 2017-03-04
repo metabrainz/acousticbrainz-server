@@ -418,7 +418,9 @@ def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
     with db.engine.connect() as connection:
         result = connection.execute(
-            "SELECT count(*) FROM lowlevel WHERE gid = %s",
+            """SELECT COUNT(*)
+                 FROM lowlevel
+                WHERE gid = %s""",
             (str(mbid),)
         )
         return result.fetchone()[0]
@@ -428,11 +430,13 @@ def count_many_lowlevel(mbids):
     """Count number of stored low-level submissions for a specified set
     of MBID."""
     with db.engine.connect() as connection:
-        query = text("""
-            SELECT gid, COUNT(*)
-            FROM lowlevel
-            WHERE gid IN :mbids
-            GROUP BY gid;""")
+        query = text(
+            """SELECT gid
+                    , COUNT(*)
+                 FROM lowlevel
+                WHERE gid
+                   IN :mbids
+             GROUP BY gid;""")
         result = connection.execute(query, mbids=tuple(mbids))
         return result.fetchall()
 

@@ -173,13 +173,17 @@ def get_many_lowlevel():
     If an offset was not specified in the request for an mbid, the offset
     will be 0.
 
+    If the list of MBIDs in the query string has a recording which is not
+    present in the database, then it is silently ignored and will not appear
+    in the returned data.
+ 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
 
     :resheader Content-Type: *application/json*
-    """
+   """
     recording_ids = request.args.get("recording_ids")
 
     if not recording_ids:

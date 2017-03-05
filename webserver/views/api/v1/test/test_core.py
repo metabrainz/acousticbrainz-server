@@ -133,6 +133,31 @@ class CoreViewsTestCase(ServerTestCase):
                  mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
         load_low_level.assert_has_calls(calls)
 
+    @mock.patch('db.data.load_low_level')
+    def test_get_bulk_ll_absent_mbid(self, load_low_level):
+        # Check that within a set of mbid parameters, the ones absent
+        # from the database are ignored.
+
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
+        
+        rec_c5 = {"recording": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"}
+        rec_40_2 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"}
+
+        load_low_level.side_effect = [rec_c5, db.exceptions.NoDataFoundException, rec_40_2]
+
+        resp = self.client.get('api/v1/low-level?recording_ids=' + params)
+        self.assertEqual(resp.status_code, 200)
+
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2},
+        }
+        self.assertEqual(resp.json, expected_result)
+
+        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
+        load_low_level.assert_has_calls(calls)
 
     def test_get_bulk_ll_more_than_200(self):
         # Create many random uuids, because of parameter deduplication

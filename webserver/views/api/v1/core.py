@@ -196,9 +196,7 @@ def get_many_lowlevel():
         try:
             recording_details.setdefault(recording_id, {})[offset] = db.data.load_low_level(recording_id, offset)
         except NoDataFoundException:
-            errors = recording_details.setdefault("errors", {})
-            mbid_entry = errors.setdefault(recording_id, {})
-            mbid_entry[offset] = {"message": "recording does not exist"}
+            pass
 
     return jsonify(recording_details)
 

@@ -322,7 +322,7 @@ def delete(dataset_id):
 
 
 @datasets_bp.route("/recording/<uuid:mbid>")
-@login_required
+#@login_required
 def recording_info(mbid):
     """Endpoint for getting information about recordings (title and artist)."""
     try:

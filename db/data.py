@@ -436,7 +436,7 @@ def count_many_lowlevel(mbids):
                  FROM lowlevel
                 WHERE gid IN :mbids
              GROUP BY gid;""")
-        return {str(mbid): int(count) for mbid, count
+        return {str(mbid): {"count": int(count)} for mbid, count
                 in connection.execute(query, {"mbids": tuple(mbids)})}
 
 

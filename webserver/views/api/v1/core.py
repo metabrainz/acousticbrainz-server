@@ -3,8 +3,6 @@ from __future__ import absolute_import
 import json
 import uuid
 
-import six
-
 from flask import Blueprint, request, jsonify
 
 import db.data
@@ -203,13 +201,14 @@ def get_many_lowlevel():
 @bp_core.route("/count", methods=["GET"])
 @crossdomain()
 def get_many_count():
-    """Get low-level count for many recordings at once.
+    """Get low-level count for many recordings at once. MBIDs not found in
+    the database are omitted in the response.
 
     **Example response**:
 
     .. sourcecode:: json
 
-       {"mbid1": {"count": 0},
+       {"mbid1": {"count": 3},
         "mbid2": {"count": 1}
        }
 
@@ -230,8 +229,5 @@ def get_many_count():
         raise webserver.views.api.exceptions.APIBadRequest(
             "More than 200 recordings not allowed per request")
 
-    mbids = set(r[0] for r in recordings)
-    recording_count = {}.fromkeys(mbids, {'count': 0})
-    for (mbid, count) in six.iteritems(db.data.count_many_lowlevel(mbids)):
-        recording_count[mbid] = {'count': count}
-    return jsonify(recording_count)
+    mbids = [mbid for (mbid, offset) in recordings]
+    return jsonify(db.data.count_many_lowlevel(mbids))

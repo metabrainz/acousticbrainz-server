@@ -177,7 +177,6 @@ class CoreViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 200)
 
         expected_result = {
-            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"count": 0},
             "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"count": 1},
             "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"count": 2},
         }

@@ -437,7 +437,7 @@ def count_many_lowlevel(mbids):
                 WHERE gid IN :mbids
              GROUP BY gid;""")
         return {str(mbid): int(count) for mbid, count
-                in connection.execute(query, mbids=tuple(mbids))}
+                in connection.execute(query, {"mbids": tuple(mbids)})}
 
 
 def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):

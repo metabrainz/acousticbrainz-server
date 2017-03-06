@@ -371,6 +371,17 @@ class DatasetTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             dataset.update_class(dsid, "Class #99", test_data)
 
+    def test_check_recording_in_dataset(self):
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        recording_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
+
+        resp = dataset.check_recording_in_dataset(dataset_id,recording_mbid)
+        self.assertTrue(resp)
+
+        recording_mbid = "770cc467-8dde-4d22-bc4c-a42f91e7515e"
+        resp = dataset.check_recording_in_dataset(dataset_id,recording_mbid)
+        self.assertFalse(resp)
+
 
 class GetPublicDatasetsTestCase(DatabaseTestCase):
     """A whole testcase because there are lots of cases to test"""
@@ -507,4 +518,3 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
     def test_invalid_status(self):
         with self.assertRaises(ValueError):
             datasets = dataset.get_public_datasets("not_a_status")
-

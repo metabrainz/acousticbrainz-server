@@ -544,7 +544,7 @@ var Recording = React.createClass({
     componentDidMount: function () {
         $.ajax({
             type: "GET",
-            url: "/datasets/recording/" + this.props.mbid,
+            url: "/datasets/metadata/recording/" + this.props.mbid,
             success: function (data) {
                 if (this.isMounted()) {
                     this.setState({

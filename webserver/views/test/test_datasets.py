@@ -205,6 +205,15 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.recording_info", mbid=self.test_uuid))
         self.assert404(resp)
 
+    def test_recording_info_in_dataset(self):
+        recording_mbid = "e8afe383-1478-497e-90b1-7885c7f37f6e"
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+
+        resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=recording_mbid))
+        self.assert200(resp)
+        resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=self.test_uuid))
+        self.assert404(resp)
+
     def test_evaluate_location_options(self):
         self.temporary_login(self.test_user_id)
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)

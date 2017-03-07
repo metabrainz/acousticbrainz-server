@@ -9,6 +9,7 @@ import mock
 import uuid
 import os
 import json
+import collections
 
 
 class CoreViewsTestCase(ServerTestCase):
@@ -166,6 +167,54 @@ class CoreViewsTestCase(ServerTestCase):
         resp = self.client.get('api/v1/low-level?recording_ids=' + limit_exceed_url)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
+
+    def submit_fake_data(self):
+        mbids = ["c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
+                 "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
+                 "405a5ff4-7ee2-436b-95c1-90ce8a83b359",
+                 "405a5ff4-7ee2-436b-95c1-90ce8a83b359"]
+        # we do not submit the first mbid in order to have a zero count in the
+        # response
+        for mbid in mbids[1:]:
+            self.submit_fake_low_level_data(mbid)
+        return mbids
+
+    def test_get_count(self):
+        mbids = self.submit_fake_data()
+        expected_result = collections.Counter(mbids)
+        expected_result[mbids[0]] = 0
+
+        for mbid in mbids:
+            resp = self.client.get('api/v1/%s/count' % mbid)
+            self.assertEqual(resp.status_code, 200)
+            self.assertDictEqual(resp.json,
+                                 {"mbid": mbid,
+                                  "count": expected_result[mbid]})
+
+    def test_get_bulk_count_no_param(self):
+        # No parameter in bulk lookup results in an error
+        resp = self.client.get('api/v1/count')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_get_bulk_count(self):
+        mbids = self.submit_fake_data()
+        resp = self.client.get('api/v1/count?recording_ids=' + ';'.join(mbids))
+        self.assertEqual(resp.status_code, 200)
+
+        expected_result = {
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"count": 1},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"count": 2},
+        }
+        self.assertDictEqual(resp.json, expected_result)
+
+    def test_get_bulk_count_more_than_200(self):
+        # Create many random uuids, because of parameter deduplication
+        manyids = [str(uuid.uuid4()) for i in range(205)]
+        limit_exceed_url = ";".join(manyids)
+        resp = self.client.get('api/v1/count?recording_ids=' + limit_exceed_url)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual('More than 200 recordings not allowed per request',
+                         resp.json['message'])
 
 
 class GetBulkValidationTest(unittest.TestCase):

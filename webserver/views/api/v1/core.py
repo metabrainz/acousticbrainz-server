@@ -204,3 +204,37 @@ def get_many_lowlevel():
 
     return jsonify(recording_details)
 
+
+@bp_core.route("/count", methods=["GET"])
+@crossdomain()
+def get_many_count():
+    """Get low-level count for many recordings at once. MBIDs not found in
+    the database are omitted in the response.
+
+    **Example response**:
+
+    .. sourcecode:: json
+
+       {"mbid1": {"count": 3},
+        "mbid2": {"count": 1}
+       }
+
+    :query recording_ids: *Required.* A list of recording MBIDs to retrieve
+
+      Takes the form `mbid;mbid`.
+
+    :resheader Content-Type: *application/json*
+    """
+    recording_ids = request.args.get("recording_ids")
+
+    if not recording_ids:
+        raise webserver.views.api.exceptions.APIBadRequest(
+            "Missing `recording_ids` parameter")
+
+    recordings = _parse_bulk_params(recording_ids)
+    if len(recordings) > 200:
+        raise webserver.views.api.exceptions.APIBadRequest(
+            "More than 200 recordings not allowed per request")
+
+    mbids = [mbid for (mbid, offset) in recordings]
+    return jsonify(db.data.count_many_lowlevel(mbids))

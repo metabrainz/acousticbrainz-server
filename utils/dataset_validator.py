@@ -111,11 +111,14 @@ def validate_dataset_update(dataset):
 def validate_class(cls, idx=None, recordings_required=True):
     """ Validate the contents of a class dictionary
 
-    :param cls: the class to check
-    :param idx: the index of this class if it is part of a list of classes,
+    Args:
+        cls: the class to check
+        idx: the index of this class if it is part of a list of classes,
                 otherwise None if it's a standalone class
-    :param recordings_required: True if this class must have a `recordings` element
-    :raises: `ValidationException` if the class definition has a problem
+        recordings_required: True if this class must have a `recordings` element
+
+    Raises:
+        ValidationException if the class structure doesn't match the requirements.
     """
 
     class_number_text = "" if idx is None else " number %s" % idx

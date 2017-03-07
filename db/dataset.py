@@ -378,7 +378,7 @@ def add_recordings(dataset_id, class_name, recordings):
     Args:
         dataset_id: the uuid of the dataset
         class_name: The class to add the recordings to
-        recordings: the recordings to add
+        recordings: List of recordings (MBID strings) to add
 
     Raises:
         NoDataFoundException if the dataset doesn't exist or if the class doesn't exist in the dataset

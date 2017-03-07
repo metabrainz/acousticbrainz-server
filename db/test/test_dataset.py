@@ -119,9 +119,9 @@ class DatasetTestCase(DatabaseTestCase):
         dsid = str(uuid.uuid4())
 	try:
             dataset.update_dataset_meta(dsid, {"name": "new name", "badkey": "badvalue"})
-	    self.fail("Shouldn't get here")
-	except ValueError as e:
-	    self.assertEqual(e.message, "Unexpected meta value(s): badkey")
+            self.fail("Shouldn't get here")
+        except ValueError as e:
+            self.assertEqual(e.message, "Unexpected meta value(s): badkey")
 
     def test_get_by_user_id(self):
         dataset.create_from_dict(self.test_data, author_id=self.test_user_id)

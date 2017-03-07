@@ -412,7 +412,7 @@ def delete_recordings(dataset_id, class_name, recordings):
                                {"class_name": clsid, "mbid_num": mbid})
 
 
-def add_class(dataset_id, dict):
+def add_class(dataset_id, class_data):
     """Add a class to a dataset
 
     If the dict argument contains a key "recordings", add these recordings
@@ -422,14 +422,14 @@ def add_class(dataset_id, dict):
 
     Args:
         dataset_id: the UUID of the dataset to add this class to
-        dict: A dictionary representing the class to add:
+        class_data: A dictionary representing the class to add:
               {"name": "Classname", "description": "Class desc",
                "recordings": [list of recording ids (optional)}
     """
 
     with db.engine.begin() as connection:
-        if "description" not in dict:
-            dict["description"] = None
+        if "description" not in class_data:
+            class_data["description"] = None
         connection.execute(sqlalchemy.text("""
             INSERT INTO dataset_class (name, description, dataset)
                  SELECT :name, :description, :datasetid
@@ -438,19 +438,19 @@ def add_class(dataset_id, dict):
                           WHERE d.name = :name
                             AND d.dataset = :datasetid)
                     """),
-                           {"name": dict["name"], "description": dict["description"], "datasetid": dataset_id})
-    if "recordings" in dict:
-        add_recordings(dataset_id, dict["name"], dict["recordings"])
+                           {"name": class_data["name"], "description": class_data["description"], "datasetid": dataset_id})
+    if "recordings" in class_data:
+        add_recordings(dataset_id, class_data["name"], class_data["recordings"])
 
 
-def delete_class(dataset_id, dict):
+def delete_class(dataset_id, class_data):
     """Delete a class from a dataset
 
     Deletes the class members as well since we have ON DELETE CASCADE set in the database
 
     Args:
         dataset_id: the UUID of the dataset to delete this class from
-        dict: A dictionary representing the class to delete:
+        class_data: A dictionary representing the class to delete:
               {"name": "Classname"}
     """
 
@@ -460,7 +460,7 @@ def delete_class(dataset_id, dict):
                   WHERE name = :class_name
                     AND dataset = :dataset_id
                         """)
-        connection.execute(query,  {"class_name": dict["name"], "dataset_id": dataset_id})
+        connection.execute(query,  {"class_name": class_data["name"], "dataset_id": dataset_id})
 
 
 def update_class(dataset_id, class_name, class_data):

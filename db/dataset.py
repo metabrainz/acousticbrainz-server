@@ -72,20 +72,27 @@ def update_dataset_meta(dataset_id, meta):
 
     params = {}
     updates = []
-    if "name" in meta:
+    # Check meta values against None because "" and False are valid values
+    name = meta.pop("name", None)
+    if name is not None:
         updates.append("name = :name")
-        params["name"] = meta["name"]
-    if "description" in meta:
+        params["name"] = name
+    desc = meta.pop("description", None)
+    if desc is not None:
         updates.append("description = :description")
-        params["description"] = meta["description"]
-    if "public" in meta:
+        params["description"] = desc
+    public = meta.pop("public", None)
+    if public is not None:
         updates.append("public = :public")
-        params["public"] = meta["public"]
+        params["public"] = public
+
+    if meta:
+        raise ValueError("Unexpected meta value(s): %s" % ", ".join(meta.keys()))
+
     setstr = ", ".join(updates)
     query = text("""UPDATE dataset
-                               SET %s
-                             WHERE id = :id
-
+                       SET %s
+                     WHERE id = :id
             """ % setstr)
 
     # Only do an update if we have items to update

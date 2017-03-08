@@ -160,6 +160,12 @@ var ClassDetails = React.createClass({
         datasetName: React.PropTypes.string.isRequired,
         onReturn: React.PropTypes.func.isRequired,
     },
+    componentDidMount() {  
+        window.history.pushState(null,'class-details',this.props.id);
+        window.onpopstate = (event) => {
+            this.props.onReturn();
+        };
+    },
     render: function () {
         return (
             <div className="class-details">

@@ -61,6 +61,7 @@ var EvaluationJobsViewer = React.createClass({
 
         // Hash is used to store ID of the job that is currently viewed.
         window.addEventListener('hashchange', this.handleHashChange);
+
     },
     componentWillUnmount: function() {
         window.removeEventListener('hashchange', this.handleHashChange);
@@ -68,7 +69,8 @@ var EvaluationJobsViewer = React.createClass({
     handleHashChange: function(e) {
         // Hash is used to store ID of the currently viewed job.
         if (this.state.jobs) {
-            var hash = window.location.hash.substr(1);
+            //var hash = window.location.hash.substr(1);
+            var hash = this.state.active_job_index;
             var active_section = SECTION_JOB_LIST;
             if (hash.length > 0) {
                 active_section = SECTION_JOB_DETAILS;
@@ -97,7 +99,7 @@ var EvaluationJobsViewer = React.createClass({
             active_section: SECTION_JOB_DETAILS,
             active_job_index: index
         });
-        window.location.hash = "#" + this.state.jobs[index].id;
+        //window.location.hash = "#" + this.state.jobs[index].id;
     },
     handleReturn: function () {
         this.setState({
@@ -310,6 +312,12 @@ var JobDetails = React.createClass({
         statusMsg: React.PropTypes.string,
         result: React.PropTypes.object,
         onReturn: React.PropTypes.func.isRequired
+    },
+    componentDidMount() { 
+        window.history.pushState(null,'job-details',this.props.id);
+        window.onpopstate = (event) => {
+            this.props.onReturn();
+        };
     },
     render: function () {
         var status = "";

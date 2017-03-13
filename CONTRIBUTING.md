@@ -1,4 +1,4 @@
-# AcousticBrainz contributing guidelines
+# AcousticBrainz contribution guidelines
 
 Our contributing guidelines are an extension of the MetaBrainz guidelines, which can be found
 at https://github.com/metabrainz/guidelines.

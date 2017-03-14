@@ -16,8 +16,11 @@ import db.cache
 import config
 
 #db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
-
-rtoajson = json.load(open("recordingtoartistmap.json"))
+fname="recordingtoartistmap.json"
+if os.path.isfile(fname):
+    rtoajson = json.load(open(fname))
+else:
+    rtoajson = {}
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""

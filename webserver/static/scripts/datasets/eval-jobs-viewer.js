@@ -43,6 +43,10 @@ var EvaluationJobsViewer = React.createClass({
                 "in data-dataset-id property.");
             return;
         }
+        else if(container.dataset.jobId){
+            this.state.active_section = SECTION_JOB_DETAILS
+        }
+
         $.get("/datasets/" + container.dataset.datasetId + "/evaluation/json", function(data) {
             if (this.isMounted()) {
                 let isAuthorViewing = false;
@@ -55,37 +59,30 @@ var EvaluationJobsViewer = React.createClass({
                 });
                 console.debug("Received jobs:", data);
                 console.debug("Is author viewing:", isAuthorViewing);
-                this.handleHashChange();
+                //this.handleJobChange();
             }
         }.bind(this));
 
-        // Hash is used to store ID of the job that is currently viewed.
-        window.addEventListener('hashchange', this.handleHashChange);
-
-    },
-    componentWillUnmount: function() {
-        window.removeEventListener('hashchange', this.handleHashChange);
-    },
-    handleHashChange: function(e) {
-        // Hash is used to store ID of the currently viewed job.
+        
+    },  
+    handleJobChange: function(e) {
         if (this.state.jobs) {
-            //var hash = window.location.hash.substr(1);
-            var hash = this.state.active_job_index;
+            var job_id = this.state.active_job_index;
             var active_section = SECTION_JOB_LIST;
-            if (hash.length > 0) {
+            if (job_id) {
                 active_section = SECTION_JOB_DETAILS;
                 for (var i = 0; i < this.state.jobs.length; ++i) {
-                    if (this.state.jobs[i].id == hash) {
+                    if (this.state.jobs[i].id == job_id) {
                         this.handleViewDetails(i);
                         console.debug(
-                            "Found job with a specified ID (" + hash + "). " +
+                            "Found job with a specified ID (" + job_id + "). " +
                             "Switching view."
                         );
                         return;
                     }
                 }
                 console.debug(
-                    "Couldn't find any job with a specified ID (" + hash + "). " +
+                    "Couldn't find any job with a specified ID (" + job_id + "). " +
                     "Resetting to job list."
                 );
                 this.handleReturn();
@@ -99,14 +96,12 @@ var EvaluationJobsViewer = React.createClass({
             active_section: SECTION_JOB_DETAILS,
             active_job_index: index
         });
-        //window.location.hash = "#" + this.state.jobs[index].id;
     },
     handleReturn: function () {
         this.setState({
             active_section: SECTION_JOB_LIST,
             active_job_index: undefined
         });
-        window.location.hash = "";
     },
     handleJobDelete: function (jobID, index) {
         $.ajax({
@@ -138,6 +133,15 @@ var EvaluationJobsViewer = React.createClass({
                         onDelete={this.handleJobDelete} />
                 );
             } else { // SECTION_JOB_DETAILS
+               if(container.dataset.jobId){
+                    var active_job_index;
+                    this.state.jobs.forEach(function (cls, index) {
+                       if(container.dataset.jobId == cls.id)
+                            active_job_index = index;
+                    });
+                    this.state.active_job_index = active_job_index
+                }
+
                 var active_job = this.state.jobs[this.state.active_job_index];
                 return (
                     <JobDetails
@@ -151,6 +155,7 @@ var EvaluationJobsViewer = React.createClass({
                         outdated={active_job.outdated}
                         onReturn={this.handleReturn} />
                 );
+
             }
         } else {
             return (<strong>Loading job list...</strong>);
@@ -253,7 +258,7 @@ var JobRow = React.createClass({
         }
         return (
             <tr className="job">
-                <td className="id"><a href="#" onClick={this.handleViewDetails}>{this.props.id}</a></td>
+                <td className="id"><a href={"evaluation/"+this.props.id} onClick={this.handleViewDetails}>{this.props.id}</a></td>
                 <td className="status">{status}</td>
                 <td className="created"><span>{this.props.created}</span></td>
                 <td className="controls">{controls}</td>
@@ -314,7 +319,15 @@ var JobDetails = React.createClass({
         onReturn: React.PropTypes.func.isRequired
     },
     componentDidMount() { 
-        window.history.pushState(null,'job-details',this.props.id);
+        var url = window.location.href;
+
+        if(window.location.href.indexOf("evaluation") == -1 )   
+        url +=  "/evaluation" ;
+         
+        if(window.location.href.indexOf(this.props.id) == -1 )   
+        url +=  "/"+this.props.id ;
+         
+        window.history.pushState(null,'job-details',url);
         window.onpopstate = (event) => {
             this.props.onReturn();
         };
@@ -351,7 +364,7 @@ var JobDetails = React.createClass({
                         The dataset has been changed since this job was run, so the results may be out of date.
                     </div>;
                 } else {
-		    status = <div className="alert alert-success">
+            status = <div className="alert alert-success">
                         This evaluation job has been completed on {this.props.updated}.
                         You can find results below.
                     </div>;
@@ -361,7 +374,7 @@ var JobDetails = React.createClass({
         var header = <div>
             <h3>Job {this.props.id}</h3>
             <p>
-                <a href='#' onClick={this.props.onReturn}>
+                <a href="javascript:window.history.back()" >
                     <strong>&larr; Back to job list</strong>
                 </a>
             </p>

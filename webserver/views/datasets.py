@@ -88,6 +88,16 @@ def view(id):
         author=db.user.get(ds["author"]),
     )
 
+@datasets_bp.route("/<uuid:id>/<string:class_name>")
+def view_class_details(id,class_name):
+    ds = get_dataset(id)
+    return render_template(
+        "datasets/view.html",
+        dataset=ds,
+        author=db.user.get(ds["author"]),
+        class_name=class_name
+    )
+
 
 @datasets_bp.route("/accuracy")
 def accuracy():
@@ -103,6 +113,15 @@ def eval_info(dataset_id):
         author=db.user.get(ds["author"]),
     )
 
+@datasets_bp.route("/<uuid:dataset_id>/evaluation/<uuid:job_id>")
+def eval_job_info(dataset_id,job_id):
+    ds = get_dataset(dataset_id)
+    return render_template(
+        "datasets/eval-info.html",
+        dataset=ds,
+        author=db.user.get(ds["author"]),
+        job_id=job_id
+    )
 
 @datasets_bp.route("/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
 def eval_job(dataset_id, job_id):
@@ -322,7 +341,7 @@ def delete(dataset_id):
 
 
 @datasets_bp.route("/recording/<uuid:mbid>")
-#@login_required
+@login_required
 def recording_info(mbid):
     """Endpoint for getting information about recordings (title and artist)."""
     try:

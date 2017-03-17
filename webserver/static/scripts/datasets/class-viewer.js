@@ -50,6 +50,10 @@ var Dataset = React.createClass({
             "in data-dataset-id property.");
             return;
         }
+        else if(container.dataset.className){
+            this.state.active_section = SECTION_CLASS_DETAILS
+        }
+
         $.get("/datasets/" + container.dataset.datasetId + "/json", function(result) {
             if (this.isMounted()) { this.setState({data: result}); }
         }.bind(this));
@@ -76,6 +80,15 @@ var Dataset = React.createClass({
                         onViewClass={this.handleViewDetails} />
                 );
             } else { // SECTION_CLASS_DETAILS
+                //set active index if the class was directly called 
+                if(container.dataset.className){
+                    var active_class_index;
+                    this.state.data.classes.forEach(function (cls, index) {
+                        if(cls.name == container.dataset.className)
+                            active_class_index= index;
+                    });
+                    this.state.active_class_index = active_class_index
+                }
                 var active_class = this.state.data.classes[this.state.active_class_index];
                 return (
                     <ClassDetails
@@ -84,6 +97,7 @@ var Dataset = React.createClass({
                         description={active_class.description}
                         recordings={active_class.recordings}
                         datasetName={this.state.data.name}
+                        datasetId={container.dataset.datasetId}
                         onReturn={this.handleReturn} />
                 );
             }
@@ -108,6 +122,7 @@ var ClassList = React.createClass({
                               name={cls.name}
                               description={cls.description}
                               recordingCounter={cls.recordings.length}
+                              datasetId = {container.dataset.datasetId}
                               onViewClass={this.props.onViewClass} />);
         }.bind(this));
         return (
@@ -123,6 +138,7 @@ var Class = React.createClass({
     propTypes: {
         id: React.PropTypes.number.isRequired,
         name: React.PropTypes.string.isRequired,
+        datasetId:React.PropTypes.string.isRequired,
         description: React.PropTypes.string.isRequired,
         recordingCounter: React.PropTypes.number.isRequired,
         onViewClass: React.PropTypes.func.isRequired
@@ -133,13 +149,14 @@ var Class = React.createClass({
     },
     render: function () {
         var name = this.props.name;
+        var link = this.props.datasetId + "/" + this.props.name ;
         if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
         var recordingsCounterText = this.props.recordingCounter.toString() + " ";
         if (this.props.recordingCounter == 1) recordingsCounterText += "recording";
         else recordingsCounterText += "recordings";
         return (
             <div className="col-md-3 class">
-                <a href="#" onClick={this.handleViewDetails} className="thumbnail">
+                <a href={link} onClick={this.handleViewDetails} className="thumbnail">
                     <div className="name">{name}</div>
                     <div className="counter">{recordingsCounterText}</div>
                 </a>
@@ -158,10 +175,19 @@ var ClassDetails = React.createClass({
         description: React.PropTypes.string.isRequired,
         recordings: React.PropTypes.array.isRequired,
         datasetName: React.PropTypes.string.isRequired,
+        datasetId: React.PropTypes.string.isRequired,
         onReturn: React.PropTypes.func.isRequired,
     },
     componentDidMount() {  
-        window.history.pushState(null,'class-details',this.props.id);
+        var url = window.location.href;
+
+        if(window.location.href.indexOf(this.props.datasetId) == -1 )
+           url += "/"+this.props.datasetId;
+
+        if(window.location.href.indexOf(this.props.name) == -1 )
+           url +=  "/"+this.props.name ;
+        
+        window.history.pushState(null,'class-details', url);
         window.onpopstate = (event) => {
             this.props.onReturn();
         };
@@ -178,7 +204,7 @@ var ClassDetails = React.createClass({
                     {this.props.name}
                 </h3>
                 <p>
-                    <a href='#' onClick={this.props.onReturn}>
+                    <a href="javascript:window.history.back()">
                         <strong>&larr; Back to class list</strong>
                     </a>
                 </p>

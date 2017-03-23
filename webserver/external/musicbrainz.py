@@ -1,11 +1,12 @@
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import ResponseError
-from db import cache
+from brainzutils import cache
 
 CACHE_TIMEOUT = 86400  # 1 day
 
 
 def get_recording_by_id(mbid):
+    mbid = str(mbid)
     recording = cache.get(mbid)
     if not recording:
         try:

@@ -35,12 +35,22 @@ def create_app(debug=None, config_path=None):
     from db import init_db_engine
     init_db_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
-    # Memcached
-    if 'MEMCACHED_SERVERS' in app.config:
-        from db import cache
-        cache.init(app.config['MEMCACHED_SERVERS'],
-                   app.config['MEMCACHED_NAMESPACE'],
-                   debug=1 if app.debug else 0)
+    # Cache 
+    if 'REDIS_HOST' in app.config and\
+       'REDIS_PORT' in app.config and\
+       'REDIS_NAMESPACE' in app.config and\
+       'REDIS_NS_VERSIONS_LOCATION' in app.config:
+        if not os.path.exists(app.config['REDIS_NS_VERSIONS_LOCATION']):
+            os.makedirs(app.config['REDIS_NS_VERSIONS_LOCATION'])
+
+        from brainzutils import cache
+        cache.init(
+            host=app.config['REDIS_HOST'],
+            port=app.config['REDIS_PORT'],
+            namespace=app.config['REDIS_NAMESPACE'],
+            ns_versions_loc=app.config['REDIS_NS_VERSIONS_LOCATION'])
+    else:
+        raise Exception('One or more redis cache configuration options are missing from config.py')
 
     # Extensions
     from flask_uuid import FlaskUUID

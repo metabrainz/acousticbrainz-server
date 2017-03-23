@@ -1,6 +1,6 @@
 from __future__ import print_function
+
 import db
-import db.cache
 import db.dump
 import db.user
 import db.stats
@@ -142,7 +142,7 @@ def compute_stats():
 
 @cli.command()
 def cache_stats():
-    """Compute recent stats and add to memcache."""
+    """Compute recent stats and add to cache."""
     # inits the db engine and cache
     create_app()
     db.stats.add_stats_to_cache()

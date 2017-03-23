@@ -1,3 +1,6 @@
+import os
+
+
 DEBUG = False  # set to False in production mode
 # Additional files to watch to restart the development server
 RELOAD_ON_FILES = ["webserver/static/build/rev-manifest.json"]
@@ -27,8 +30,10 @@ MUSICBRAINZ_CLIENT_SECRET = "CHANGE_ME"
 
 # CACHE
 
-MEMCACHED_SERVERS = ["127.0.0.1:11211"]
-MEMCACHED_NAMESPACE = "AB"
+REDIS_HOST = "127.0.0.1"
+REDIS_PORT = 6379
+REDIS_NAMESPACE = "AB"
+REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache_namespaces')
 
 # LOGGING
 

@@ -1,9 +1,8 @@
 from __future__ import with_statement
 
 import os
-import sys
-print sys.path
 
+from brainzutils import cache
 from fabric.api import local
 from fabric.colors import green, red
 
@@ -40,20 +39,22 @@ def build_static():
     local("./node_modules/.bin/gulp")
 
 
-def clear_memcached():
-    import sys
-    print(sys.path)
+def clear_redis_cache():
     app = create_app()
     try:
-        cache.init(app.config["MEMCACHED_SERVERS"])
+        cache.init(
+                host=app.config["REDIS_HOST"],
+                port=app.config["REDIS_PORT"],
+                namespace=app.config["REDIS_NAMESPACE"],
+                ns_versions_loc=app.config["REDIS_NS_VERSIONS_LOCATION"])
         cache.flush_all()
-        print(green("Flushed everything from memcached.", bold=True))
+        print(green("Flushed everything from redis_cache", bold=True))
     except AttributeError as e:
-        print(red("Failed to clear memcached! Check your config file.\nError: %s" % e))
+        print(red("Failed to clear redis_cache! Check your config file.\nError: %s" % e))
 
 
 def deploy():
     git_pull()
     install_requirements()
     build_static()
-    clear_memcached()
+    clear_redis_cache()

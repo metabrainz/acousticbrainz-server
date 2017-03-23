@@ -3,8 +3,8 @@
 Values are stored in `statistics` table and are referenced by <name, timestamp>
 pair.
 """
+from brainzutils import cache
 import db
-import db.cache
 import db.exceptions
 import datetime
 import pytz
@@ -16,9 +16,9 @@ from sqlalchemy import text
 STATS_CACHE_TIMEOUT = 60 * 10  # 10 minutes
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
-STATS_MEMCACHE_KEY = "recent-stats"
-STATS_MEMCACHE_LAST_UPDATE_KEY = "recent-stats-last-updated"
-STATS_MEMCACHE_NAMESPACE = "statistics"
+STATS_CACHE_KEY = "recent-stats"
+STATS_CACHE_LAST_UPDATE_KEY = "recent-stats-last-updated"
+STATS_CACHE_NAMESPACE = "statistics"
 
 LOWLEVEL_LOSSY = "lowlevel-lossy"
 LOWLEVEL_LOSSY_UNIQUE = "lowlevel-lossy-unique"
@@ -45,7 +45,7 @@ def get_last_submitted_recordings():
         mbid (MusicBrainz ID), artist (name), and title.
     """
     cache_key = "last-submitted-recordings"
-    last_submissions = db.cache.get(cache_key)
+    last_submissions = cache.get(cache_key)
     if not last_submissions:
         with db.engine.connect() as connection:
             # We are getting results with of offset of 10 rows because we'd
@@ -63,12 +63,12 @@ def get_last_submitted_recordings():
             last_submissions = result.fetchall()
             last_submissions = [
                 {
-                    "mbid": r[0],
+                    "mbid": str(r[0]),
                     "artist": r[1],
                     "title": r[2],
                 } for r in last_submissions if r[1] and r[2]
             ]
-        db.cache.set(cache_key, last_submissions, time=LAST_MBIDS_CACHE_TIMEOUT)
+        cache.set(cache_key, last_submissions, time=LAST_MBIDS_CACHE_TIMEOUT)
 
     return last_submissions
 
@@ -114,14 +114,14 @@ def _write_stats(connection, date, stats):
 
 
 def add_stats_to_cache():
-    """Compute the most recent statistics and add them to memcache"""
+    """Compute the most recent statistics and add them to cache"""
     now = datetime.datetime.now(pytz.utc)
     with db.engine.connect() as connection:
         stats = _count_submissions_to_date(connection, now)
-        db.cache.set(STATS_MEMCACHE_KEY, stats,
-                     time=STATS_CACHE_TIMEOUT, namespace=STATS_MEMCACHE_NAMESPACE)
-        db.cache.set(STATS_MEMCACHE_LAST_UPDATE_KEY, now,
-                     time=STATS_CACHE_TIMEOUT, namespace=STATS_MEMCACHE_NAMESPACE)
+        cache.set(STATS_CACHE_KEY, stats,
+                     time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+        cache.set(STATS_CACHE_LAST_UPDATE_KEY, now,
+                     time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
 
 
 def get_stats_summary():
@@ -142,10 +142,10 @@ def get_stats_summary():
 
 
 def _get_stats_from_cache():
-    """Get submission statistics from memcache"""
-    stats = db.cache.get(STATS_MEMCACHE_KEY, namespace=STATS_MEMCACHE_NAMESPACE)
-    last_collected = db.cache.get(STATS_MEMCACHE_LAST_UPDATE_KEY,
-                                  namespace=STATS_MEMCACHE_NAMESPACE)
+    """Get submission statistics from cache"""
+    stats = cache.get(STATS_CACHE_KEY, namespace=STATS_CACHE_NAMESPACE)
+    last_collected = cache.get(STATS_CACHE_LAST_UPDATE_KEY,
+                                  namespace=STATS_CACHE_NAMESPACE)
 
     return last_collected, stats
 

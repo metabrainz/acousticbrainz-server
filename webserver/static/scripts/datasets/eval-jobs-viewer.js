@@ -59,10 +59,15 @@ var EvaluationJobsViewer = React.createClass({
                 });
                 console.debug("Received jobs:", data);
                 console.debug("Is author viewing:", isAuthorViewing);
-                //this.handleJobChange();
             }
         }.bind(this));
 
+        window.onpopstate = (event) => {
+            if(this.state.active_section == SECTION_JOB_LIST)
+                this.handleViewDetails(event.state.active_job_index);
+            else
+                this.handleReturn();
+        };
         
     },  
     handleJobChange: function(e) {
@@ -145,6 +150,7 @@ var EvaluationJobsViewer = React.createClass({
                 var active_job = this.state.jobs[this.state.active_job_index];
                 return (
                     <JobDetails
+                        index={this.state.active_job_index}
                         id={active_job.id}
                         created={active_job.created}
                         updated={active_job.updated}
@@ -309,6 +315,7 @@ let JobDeleteButton = React.createClass({
 
 var JobDetails = React.createClass({
     propTypes: {
+        index: React.PropTypes.number.isRequired,
         id: React.PropTypes.string.isRequired,
         created: React.PropTypes.string.isRequired,
         updated: React.PropTypes.string.isRequired,
@@ -327,10 +334,7 @@ var JobDetails = React.createClass({
         if(window.location.href.indexOf(this.props.id) == -1 )   
         url +=  "/"+this.props.id ;
          
-        window.history.pushState(null,'job-details',url);
-        window.onpopstate = (event) => {
-            this.props.onReturn();
-        };
+        window.history.pushState({active_job_index:this.props.index},'job-details', url);    
     },
     render: function () {
         var status = "";

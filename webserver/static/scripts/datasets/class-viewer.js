@@ -57,6 +57,13 @@ var Dataset = React.createClass({
         $.get("/datasets/" + container.dataset.datasetId + "/json", function(result) {
             if (this.isMounted()) { this.setState({data: result}); }
         }.bind(this));
+
+        window.onpopstate = (event) => {
+           if(this.state.active_section == SECTION_DATASET_DETAILS)
+            this.handleViewDetails(event.state.active_class_index);
+           else
+            this.handleReturn();
+        };
     },
     handleViewDetails: function (index) {
         this.setState({
@@ -97,7 +104,6 @@ var Dataset = React.createClass({
                         description={active_class.description}
                         recordings={active_class.recordings}
                         datasetName={this.state.data.name}
-                        datasetId={container.dataset.datasetId}
                         onReturn={this.handleReturn} />
                 );
             }
@@ -122,7 +128,6 @@ var ClassList = React.createClass({
                               name={cls.name}
                               description={cls.description}
                               recordingCounter={cls.recordings.length}
-                              datasetId = {container.dataset.datasetId}
                               onViewClass={this.props.onViewClass} />);
         }.bind(this));
         return (
@@ -138,7 +143,6 @@ var Class = React.createClass({
     propTypes: {
         id: React.PropTypes.number.isRequired,
         name: React.PropTypes.string.isRequired,
-        datasetId:React.PropTypes.string.isRequired,
         description: React.PropTypes.string.isRequired,
         recordingCounter: React.PropTypes.number.isRequired,
         onViewClass: React.PropTypes.func.isRequired
@@ -149,7 +153,7 @@ var Class = React.createClass({
     },
     render: function () {
         var name = this.props.name;
-        var link = this.props.datasetId + "/" + this.props.name ;
+        var link = container.dataset.datasetId + "/" + name ;
         if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
         var recordingsCounterText = this.props.recordingCounter.toString() + " ";
         if (this.props.recordingCounter == 1) recordingsCounterText += "recording";
@@ -175,22 +179,20 @@ var ClassDetails = React.createClass({
         description: React.PropTypes.string.isRequired,
         recordings: React.PropTypes.array.isRequired,
         datasetName: React.PropTypes.string.isRequired,
-        datasetId: React.PropTypes.string.isRequired,
         onReturn: React.PropTypes.func.isRequired,
     },
     componentDidMount() {  
         var url = window.location.href;
+        var datasetId = container.dataset.datasetId;
 
-        if(window.location.href.indexOf(this.props.datasetId) == -1 )
-           url += "/"+this.props.datasetId;
+        if(window.location.href.indexOf(datasetId) == -1 )
+           url += "/"+datasetId;
 
         if(window.location.href.indexOf(this.props.name) == -1 )
            url +=  "/"+this.props.name ;
         
-        window.history.pushState(null,'class-details', url);
-        window.onpopstate = (event) => {
-            this.props.onReturn();
-        };
+        window.history.pushState({active_class_index:this.props.id},'class-details', url);    
+        
     },
     render: function () {
         return (

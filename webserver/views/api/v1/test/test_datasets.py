@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from flask_login import login_user
+from werkzeug.exceptions import InternalServerError
 from webserver.login import User
 from webserver.testing import ServerTestCase
 import webserver.views.api
@@ -225,6 +226,34 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 404)
         expected = {"message": "Can't find this dataset."}
         self.assertEqual(resp.json, expected)
+
+    @mock.patch("db.dataset.get")
+    def test_update_dataset_details_bad_uuid(self, dataset_get):
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240xxxx"
+
+        dataset_get.side_effect = {}
+        submit = {}
+        url = "/api/v1/datasets/%s" % (dsid)
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
+
+        self.assertEqual(resp.status_code, 404)
+        expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
+        self.assertEqual(resp.json, expected_result)
+
+    @mock.patch("db.dataset.get")
+    def test_update_dataset_details_bad_uuid(self, dataset_get):
+        self.temporary_login(self.test_user_id)
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+
+        dataset_get.side_effect = InternalServerError()
+        submit = {}
+        url = "/api/v1/datasets/%s" % (dsid)
+        resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
+
+        self.assertEqual(resp.status_code, 500)
+        expected_result = {"message": "The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application."}
+        self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.dataset.add_class")
     @mock.patch("db.dataset.get")

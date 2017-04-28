@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import unittest
+from werkzeug.exceptions import InternalServerError
 from webserver.testing import ServerTestCase
 from webserver.views.api.v1 import core
 import webserver.views.api.exceptions
@@ -63,6 +64,18 @@ class CoreViewsTestCase(ServerTestCase):
     def test_ll_bad_uuid(self, ll):
         resp = self.client.get("/api/v1/nothing/low-level")
         self.assertEqual(404, resp.status_code)
+        
+        expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
+        self.assertEqual(resp.json, expected_result)
+
+    @mock.patch("db.data.load_low_level")
+    def test_ll_internal_server_error(self, ll):
+        ll.side_effect = InternalServerError()
+        resp = self.client.get("/api/v1/%s/low-level" % self.uuid)
+        self.assertEqual(500, resp.status_code)
+
+        expected_result = {"message": "The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application."}
+        self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.data.load_low_level")
     def test_ll_no_offset(self, ll):

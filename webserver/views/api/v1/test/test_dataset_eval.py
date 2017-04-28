@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from werkzeug.exceptions import InternalServerError
 from webserver.testing import ServerTestCase
 from db.testing import TEST_DATA_PATH
 import db.exceptions
@@ -151,3 +152,24 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(json.loads(resp.data), {"message": "No such job"})
 
+    @mock.patch('db.dataset_eval.get_job')
+    def test_get_job_details_invalid_uuid(self, get_job):
+        self.temporary_login(self.test_user_id)
+
+        get_job.return_value = self.test_job_details
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs/7804abe5-58be-4c9c-a787-22b91d03xxxx', content_type='application/json')
+        self.assertEqual(resp.status_code, 404)
+
+        expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
+        self.assertEqual(resp.json, expected_result)
+
+    @mock.patch('db.dataset_eval.get_job')
+    def test_get_job_details_internal_server_error(self, get_job):
+        self.temporary_login(self.test_user_id)
+
+        get_job.side_effect = InternalServerError()
+        resp = self.client.get('/api/v1/datasets/evaluation/jobs/7804abe5-58be-4c9c-a787-22b91d031489', content_type='application/json')
+        self.assertEqual(resp.status_code, 500)
+
+        expected_result = {"message": "The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application."}
+        self.assertEqual(resp.json, expected_result)

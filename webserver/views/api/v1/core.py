@@ -169,7 +169,7 @@ def get_many_lowlevel():
         "mbid2": {"offset1": {document}}
        }
 
-    Offset keys are returned as strings, as per JSON encoding rultes.
+    Offset keys are returned as strings, as per JSON encoding rules.
     If an offset was not specified in the request for an mbid, the offset
     will be 0.
 

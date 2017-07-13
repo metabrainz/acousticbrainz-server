@@ -1,6 +1,4 @@
 from __future__ import absolute_import
-from flask_login import login_user
-from webserver.login import User
 from webserver.testing import ServerTestCase
 import webserver.views.api
 import db.exceptions
@@ -9,6 +7,8 @@ import webserver.views.api.exceptions
 import webserver.views.api.v1.datasets
 from utils import dataset_validator
 from contextlib import contextmanager
+import db
+import config
 
 import json
 import mock
@@ -24,13 +24,15 @@ class GetCheckDatasetTestCase(ServerTestCase):
         self.test_user_id = db.user.create(self.test_user_mb_name)
         self.test_user = db.user.get(self.test_user_id)
 
-    # In this test we don't have a webserver endpoint to access with the test client
-    # so we create an app_context instead. We have to duplicate the functionality of
-    # self.temporary_login, because we need the session data in the app context
-    # instead of in the test client context
+    # In these tests we directly call the view functions instead of accessing
+    # them through the webserver with the test client. Because of this we need
+    # a temporary application context
+    # We have to duplicate the functionality of self.temporary_login, because we
+    # need the session data in the app context instead of in the test client context
     @contextmanager
     def context(self):
         with self.create_app().app_context():
+            db.init_db_engine(config.SQLALCHEMY_TEST_URI)
             flask.session["user_id"] = self.test_user_id
             flask.session["_fresh"] = True
             yield

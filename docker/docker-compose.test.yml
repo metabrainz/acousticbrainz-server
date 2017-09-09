@@ -1,0 +1,40 @@
+# Docker Compose file for development
+version: "2"
+services:
+
+  db:
+    image: postgres:9.5.4
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: acousticbrainz
+      POSTGRES_PASSWORD: acousticbrainz
+      POSTGRES_DB: acousticbrainz
+    ports:
+      - "15432:5432"
+
+  acousticbrainz:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - acousticbrainz_cache
+
+  acousticbrainz_cache:
+    image: memcached:1.5-alpine
+
+  hl_extractor:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.hl
+    depends_on:
+      - db
+
+  dataset_evaluator:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.eval
+    depends_on:
+      - db

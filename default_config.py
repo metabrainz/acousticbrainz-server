@@ -11,7 +11,7 @@ SECRET_KEY = "CHANGE_ME"
 # DATABASES
 
 # Primary database
-SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@/acousticbrainz"
+SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@db/acousticbrainz"
 
 # The name of a postgres user who has superuser privileges. Your local user should
 # be able to connect to the database with this user.

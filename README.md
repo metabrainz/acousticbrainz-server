@@ -6,40 +6,28 @@ The server components for the new AcousticBrainz project.
 Please report issues here: http://tickets.musicbrainz.org/browse/AB
 
 
-## Installation
+## Installation and Running
 
 ### Vagrant VM
 
-The easiest way to start is to setup ready-to-use [Vagrant](https://www.vagrantup.com/)
-VM. To do that [download](https://www.vagrantup.com/downloads.html) and install
-Vagrant for your OS. Then copy two config files:
+You can use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server. Make sure docker and docker-compose are installed.
+Then copy two config files:
 
 1. `custom_config.py.example` to `custom_config.py` *(you don't need to modify this file)*
 2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
 *(in this file you need to set `models_essentia_git_sha` value)*
 
-After that you can spin up the VM and start working with it:
+Then, in order to download all the software and build and start the containers needed to run AcousticBrainz, use the following command:
 
-    $ vagrant up
-    $ vagrant ssh
+`docker-compose -f docker/docker-compose.dev.yml up --build`
 
-There are some environment variables that you can set to affect the
-provisioning of the virtual machine.
+The first time you do that, you will then need to initialize the AcousticBrainz database:
 
- * `AB_NCPUS`: Number of CPUs to put in the VM (default 1, 2 makes
-               compilation faster)
- * `AB_MEM`:   Amount of memory (default 1024mb)
- * `AB_MIRROR`: ubuntu mirror (default archive.ubuntu.com)
- * `AB_NOHL`: If set, don't compile the highlevel calculation tools
-              (not needed for regular server development)
+`docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py init_db --skip-create-db`
 
+In order to load a psql session, use the following command:
 
-There are some shortcuts defined using fabric to perform commonly used
-commands:
-
- * `fab vpsql`: Load a psql session. Requires a local psql client
- * `fab vssh`: Connect to the VM more efficiently, saving the settings
-               so that you don't need to run vagrant each time you ssh.
+`docker-compose -f docker/docker-compose.dev.yml run webserver psql -U acousticbrainz -h db`
 
 ### Manually
 
@@ -50,10 +38,16 @@ Full installation instructions are available in [INSTALL.md](https://github.com/
 ### Building static files
 
 We use Gulp as our JavaScript/CSS build system.
-node.js dependencies. Calling `gulp` on its own will build everything necessary
+node.js dependencies.
+After you started development versions of containers with `docker-compose`, connect to the main container:
+
+`docker-compose -f docker/docker-compose.dev.yml run webserver run /bin/bash`
+
+Calling `gulp` on its own will build everything necessary
 to access the server in a web browser:
 
-    ./node_modules/.bin/gulp
+    root@<container_id>:/code# npm install
+    root@<container_id>:/code# ./node_modules/.bin/gulp
 
 *Keep in mind that you'll need to rebuild static files after you modify
 JavaScript or CSS.*
@@ -77,35 +71,9 @@ to log in.
 
 Once you have logged in, you can make your user an admin, by running
 
-    python manage.py add_admin <your user>
+    docker-compose -f docker-compose.dev.yml run webserver python2 manage.py add_admin <your user>
 
 You should now be able to access the admin section at http://localhost:8080/admin
-
-
-## Running
-
-Before starting the server you will need to build static files:
-
-    $ cd acousticbrainz-server
-    $ fab build_static
-
-*Keep in mind that you'll need to rebuild static files after you modify
-JavaScript or CSS.*
-
-You can start the web server (will be available at http://localhost:8080/):
-
-    $ cd acousticbrainz-server
-    $ python manage.py runserver
-
-the high-level data extractor:
-
-    $ cd acousticbrainz-server/hl_extractor
-    $ python hl_calc.py
-
-the dataset evaluator:
-
-    $ cd acousticbrainz-server/dataset_eval
-    $ python evaluate.py
 
 
 ## Working with data
@@ -117,16 +85,16 @@ Latest database dump is available at http://acousticbrainz.org/download. You
 need to download full database dump from this page and use it during database
 initialization:
 
-    $ python manage.py init_db path_to_the_archive
+    $ docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py init_db path_to_the_archive
 
 you can also easily remove existing database before initialization using
 `--force` option:
 
-    $ python manage.py init_db --force path_to_the_archive
+    $ docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py init_db --force path_to_the_archive
 
 or import archive after database is created:
 
-    $ python manage.py import_data path_to_the_archive
+    $ docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py import_data path_to_the_archive
 
 *You can also import dumps that you created yourself. This process is described
 below (see `dump full_db` command).*
@@ -141,23 +109,23 @@ format. Both ways support incremental dumping.
 
 **Full database dump:**
 
-    $ python manage.py dump full_db
+    $ docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py dump full_db
 
 **JSON dump:**
 
-    $ python manage.py dump json
+    $ docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py dump json
 
 *Creates two separate full JSON dumps with low-level and high-level data.*
 
 **Incremental dumps:**
 
-    $ python manage.py dump incremental
+    $ docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py dump incremental
 
 *Creates new incremental dump in three different formats: usual database dump,
 low-level and high-level JSON.*
 
 **Previous incremental dumps:**
 
-    $ python manage.py dump incremental --id 42
+    $ docker-compose -f docker/docker-compose.dev.yml run webserver python2 manage.py dump incremental --id 42
 
 *Same as another one, but recreates previously created incremental dump.*

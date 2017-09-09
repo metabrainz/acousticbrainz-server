@@ -74,7 +74,7 @@ def create_app(debug=None, config_path=None):
     init_error_handlers(app)
 
     # Static files
-    import static_manager
+    from webserver import static_manager
     static_manager.read_manifest()
 
     # Template utilities

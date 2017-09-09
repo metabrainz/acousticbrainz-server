@@ -15,6 +15,7 @@ musicbrainzngs == 0.5
 ndg-httpsclient==0.4.2
 psycopg2 == 2.6.1
 pytz==2015.7
+pytest==3.2.0
 pyyaml == 3.11
 rauth == 0.7.1
 raven[flask] == 5.9.2

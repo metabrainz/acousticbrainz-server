@@ -34,7 +34,8 @@ def runserver(host, port, debug):
 @cli.command()
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
 @click.argument("archive", type=click.Path(exists=True), required=False)
-def init_db(archive, force):
+@click.option("--skip-create-db", "-s", is_flag=True, help="Skip database creation step.")
+def init_db(archive, force, skip_create_db=False):
     """Initializes database and imports data if needed.
 
     This process involves several steps:
@@ -53,10 +54,11 @@ def init_db(archive, force):
         if exit_code != 0:
             raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
 
-    print('Creating user and a database...')
-    exit_code = _run_psql('create_db.sql')
-    if exit_code != 0:
-        raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
+    if not skip_create_db:
+        print('Creating user and a database...')
+        exit_code = _run_psql('create_db.sql')
+        if exit_code != 0:
+            raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
 
     print('Creating database extensions...')
     exit_code = _run_psql('create_extensions.sql', 'acousticbrainz')
@@ -194,7 +196,7 @@ def _run_psql(script, database=None):
         PG_PORT = default_config.PG_PORT
         PG_SUPER_USER = default_config.PG_SUPER_USER
     script = os.path.join(ADMIN_SQL_DIR, script)
-    command = ['psql', '-p', PG_PORT, '-U', PG_SUPER_USER, '-f', script]
+    command = ['psql', '-p', config.PG_PORT, '-U', config.PG_SUPER_USER, '-h', config.PG_HOST, '-f', script]
     if database:
         command.extend(['-d', database])
     exit_code = subprocess.call(command)

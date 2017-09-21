@@ -1,24 +1,30 @@
 import db
 import db.data
-import unittest
 import json
 import os
 import random
 from db import gid_types
 
+from webserver import create_app
 
-# Configuration
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-import config
+from flask_testing import TestCase
+
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'admin', 'sql')
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_data')
 
-class DatabaseTestCase(unittest.TestCase):
+
+class DatabaseTestCase(TestCase):
+
+    @staticmethod
+    def create_app():
+        root_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+        app = create_app(config_path=os.path.join(
+            root_dir,
+            'test_config.py'))
+        return app
 
     def setUp(self):
-        db.init_db_engine(config.SQLALCHEMY_TEST_URI)
         self.reset_db()
 
     def tearDown(self):

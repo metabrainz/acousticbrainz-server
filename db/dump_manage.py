@@ -1,11 +1,11 @@
 from __future__ import print_function
 from db import dump
-import db
-import config
 import shutil
 import click
 import re
 import os
+
+from webserver import create_app
 
 cli = click.Group()
 
@@ -24,7 +24,8 @@ def full(ctx, location, threads, rotate):
 
     Archive rotation is enabled by default for full dumps.
     """
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
     try:
         start_t = dump.prepare_incremental_dump()[1]
         if start_t:  # not the first incremental dump
@@ -44,7 +45,8 @@ def full(ctx, location, threads, rotate):
 @click.option("--threads", "-t", type=int)
 @click.option("--rotate", "-r", is_flag=True)
 def full_db(location, threads, rotate):
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
     print("Creating full database dump...")
     path = dump.dump_db(location, threads)
     print("Done! Created:", path)
@@ -62,7 +64,8 @@ def full_db(location, threads, rotate):
 @click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
 def json(location, rotate, no_lowlevel, no_highlevel):
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
     if no_lowlevel and no_highlevel:
         print("wut? check your options, mate!")
 
@@ -101,7 +104,8 @@ def _json_highlevel(location, rotate):
 @click.option("--id", type=int)
 @click.option("--threads", "-t", type=int)
 def incremental(location, id, threads):
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
     dump_id, start_t, end_t = dump.prepare_incremental_dump(int(id) if id else None)
     print("Creating incremental dumps with data between %s and %s:\n" % (start_t, end_t))
     _incremental_db(location, dump_id, threads)
@@ -130,11 +134,12 @@ def _incremental_json_highlevel(location, id):
 @cli.command()
 @click.option("--all", "-a", is_flag=True, help="Print info about all incremental dumps.")
 def incremental_info(all=False):
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
     """Prints information about incremental dumps: id, timestamp.
 
     By default outputs information for the latest dump.
     """
+    # inits the db engine
+    create_app()
     info = dump.list_incremental_dumps()
     if info:
         if all:

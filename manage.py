@@ -7,10 +7,10 @@ import db.stats
 import db.dump_manage
 import db.exceptions
 from webserver import create_app
+from db.testing import DatabaseTestCase
 import subprocess
 import os
 import click
-import config
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -24,8 +24,10 @@ cli = click.Group()
               help="Turns debugging mode on or off. If specified, overrides "
                    "'DEBUG' value in the config file.")
 def runserver(host, port, debug):
-    create_app().run(host=host, port=port, debug=debug,
-                     extra_files=config.RELOAD_ON_FILES)
+    app = create_app(debug=debug)
+    reload_on_files = app.config['RELOAD_ON_FILES']
+    app.run(host=host, port=port,
+            extra_files=reload_on_files)
 
 
 @cli.command()
@@ -60,7 +62,8 @@ def init_db(archive, force):
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
 
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
@@ -89,8 +92,6 @@ def init_db(archive, force):
 def init_test_db(force=False):
     """Same as `init_db` command, but creates a database that will be used to
     run tests and doesn't import data (no need to do that).
-
-    `SQLALCHEMY_TEST_URI` must be defined in the config file.
     """
     if force:
         exit_code = _run_psql('drop_test_db.sql')
@@ -106,7 +107,8 @@ def init_test_db(force=False):
     if exit_code != 0:
         raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
 
-    db.init_db_engine(config.SQLALCHEMY_TEST_URI)
+    # inits the test database
+    DatabaseTestCase.create_app()
 
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
@@ -121,7 +123,9 @@ def init_test_db(force=False):
 @click.argument("archive", type=click.Path(exists=True))
 def import_data(archive):
     """Imports data dump into the database."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+
+    # inits the db engine
+    create_app()
     print('Importing data...')
     db.dump.import_db_dump(archive)
 
@@ -129,7 +133,8 @@ def import_data(archive):
 @cli.command()
 def compute_stats():
     """Compute any outstanding hourly stats and add to the database."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
@@ -138,8 +143,8 @@ def compute_stats():
 @cli.command()
 def cache_stats():
     """Compute recent stats and add to memcache."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
-    db.cache.init(config.MEMCACHED_SERVERS)
+    # inits the db engine and cache
+    create_app()
     db.stats.add_stats_to_cache()
 
 
@@ -148,7 +153,8 @@ def cache_stats():
 @click.option("--force", "-f", is_flag=True, help="Create user if doesn't exist.")
 def add_admin(username, force=False):
     """Make user an admin."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
     try:
         db.user.set_admin(username, admin=True, force=force)
     except db.exceptions.DatabaseException as e:
@@ -160,7 +166,8 @@ def add_admin(username, force=False):
 @click.argument("username")
 def remove_admin(username):
     """Remove admin privileges from a user."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    # inits the db engine
+    create_app()
     try:
         db.user.set_admin(username, admin=False)
     except db.exceptions.DatabaseException as e:
@@ -169,8 +176,16 @@ def remove_admin(username):
 
 
 def _run_psql(script, database=None):
+    import default_config
+    try:
+        import custom_config
+        PG_PORT = getattr(custom_config, 'PG_PORT', default_config.PG_PORT)
+        PG_SUPER_USER = getattr(custom_config, 'PG_SUPER_USER', default_config.PG_SUPER_USER)
+    except ImportError:
+        PG_PORT = default_config.PG_PORT
+        PG_SUPER_USER = default_config.PG_SUPER_USER
     script = os.path.join(ADMIN_SQL_DIR, script)
-    command = ['psql', '-p', config.PG_PORT, '-U', config.PG_SUPER_USER, '-f', script]
+    command = ['psql', '-p', PG_PORT, '-U', PG_SUPER_USER, '-f', script]
     if database:
         command.extend(['-d', database])
     exit_code = subprocess.call(command)

@@ -97,11 +97,16 @@ def init_db(archive, force, skip_create_db=False):
 
 @cli.command()
 @click.argument("archive", type=click.Path(exists=True))
-def import_data(archive):
+@click.option("--is-dataset-dump", "-d", is_flag=True, help="Import dataset dumps.")
+def import_data(archive, is_dataset_dump=False):
     """Imports data dump into the database."""
 
     print('Importing data...')
-    db.dump.import_db_dump(archive)
+    if is_dataset_dump:
+        db.dump.import_datasets_dump(archive)
+    else:
+        db.dump.import_db_dump(archive)
+    print('Done!')
 
 
 @cli.command()

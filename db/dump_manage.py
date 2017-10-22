@@ -175,3 +175,14 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
             shutil.rmtree(entry)
         else:
             os.remove(entry)
+
+
+@cli.command()
+@click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
+              help="Directory where dumps need to be created")
+@click.option("--threads", "-t", type=int)
+def full_dataset_dump(location, threads):
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    print("Creating full datasets dump...")
+    path = dump.dump_dataset_tables(location, threads)
+    print("Done! Created:", path)

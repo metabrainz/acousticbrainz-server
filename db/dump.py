@@ -93,7 +93,7 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
     Args:
         location: Directory where archive will be created.
         threads: Maximal number of threads to run during compression.
-        incremental: False if resulting data dump should be complete, False if
+        incremental: False if resulting data dump should be complete, True if
             it needs to be incremental.
         dump_id: If you need to reproduce previously created incremental dump,
             its identifier (integer) can be specified there.

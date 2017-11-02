@@ -71,8 +71,6 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
             'updated': 'Tue, 07 Jun 2016 22:12:32 GMT'
         }
 
-
-
     @mock.patch('db.dataset_eval.get_remote_pending_jobs_for_user')
     def test_get_pending_jobs_for_user(self, get_remote_pending_jobs_for_user):
         self.temporary_login(self.test_user_id)
@@ -171,5 +169,5 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
         resp = self.client.get('/api/v1/datasets/evaluation/jobs/7804abe5-58be-4c9c-a787-22b91d031489', content_type='application/json')
         self.assertEqual(resp.status_code, 500)
 
-        expected_result = {"message": "The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application."}
+        expected_result = {"message": "An unknown error occurred"}
         self.assertEqual(resp.json, expected_result)

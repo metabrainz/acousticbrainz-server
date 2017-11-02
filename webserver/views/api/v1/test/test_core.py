@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import unittest
-from werkzeug.exceptions import InternalServerError
 from webserver.testing import ServerTestCase
 from webserver.views.api.v1 import core
 import webserver.views.api.exceptions
@@ -61,21 +60,34 @@ class CoreViewsTestCase(ServerTestCase):
         # TODO: Test in get_high_level.
 
     @mock.patch("db.data.load_low_level")
-    def test_ll_bad_uuid(self, ll):
+    def test_ll_bad_uuid_404(self, load_low_level):
+        """ URL Endpoint returns 404 because url-part doesn't match UUID.
+            This error is raised by Flask, but we special-case to json.
+        """
         resp = self.client.get("/api/v1/nothing/low-level")
         self.assertEqual(404, resp.status_code)
+        load_low_level.assert_not_called()
         
         expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.data.load_low_level")
-    def test_ll_internal_server_error(self, ll):
-        ll.side_effect = InternalServerError()
+    def test_ll_internal_server_error(self, load_low_level):
+
+        # Flask will propagate exceptions instead of calling an error handler
+        # if either DEBUG *or* TESTING is True. In order to actually test
+        # that a programming error in the API results in a nice error message
+        # being set, we temporarily disable it
+        old_propagate_exceptions = self.app.config['PROPAGATE_EXCEPTIONS']
+        self.app.config['PROPAGATE_EXCEPTIONS'] = False
+
+        load_low_level.side_effect = ValueError
         resp = self.client.get("/api/v1/%s/low-level" % self.uuid)
         self.assertEqual(500, resp.status_code)
 
-        expected_result = {"message": "The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application."}
+        expected_result = {"message": "An unknown error occurred"}
         self.assertEqual(resp.json, expected_result)
+        self.app.config['PROPAGATE_EXCEPTIONS'] = old_propagate_exceptions
 
     @mock.patch("db.data.load_low_level")
     def test_ll_no_offset(self, ll):
@@ -116,6 +128,8 @@ class CoreViewsTestCase(ServerTestCase):
         resp = self.client.get('api/v1/low-level')
         self.assertEqual(resp.status_code, 400)
 
+        expected_result = {"message": "Missing `recording_ids` parameter"}
+        self.assertEqual(resp.json, expected_result)
 
     @mock.patch('db.data.load_low_level')
     def test_get_bulk_ll(self, load_low_level):
@@ -241,7 +255,6 @@ class GetBulkValidationTest(unittest.TestCase):
 
         expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3), ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
         self.assertEqual(expected, validated)
-
 
     def test_validate_bulk_params_bad_offset(self):
         # If a parameter is <0 or not an integer, replace it with 0

@@ -2,6 +2,7 @@ from flask import Flask
 import sys
 import os
 
+API_PREFIX = '/api/'
 
 def create_app():
     app = Flask(__name__)
@@ -100,7 +101,7 @@ def _register_blueprints(app):
         app.register_blueprint(datasets_bp, url_prefix='/datasets')
 
     def register_api(app):
-        v1_prefix = '/api/v1'
+        v1_prefix = os.path.join(API_PREFIX, 'v1')
         from webserver.views.api.v1.core import bp_core
         from webserver.views.api.v1.datasets import bp_datasets
         from webserver.views.api.v1.dataset_eval import bp_dataset_eval

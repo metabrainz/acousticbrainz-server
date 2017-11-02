@@ -254,7 +254,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         self.assertEqual(resp.status_code, 500)
-        expected_result = {"message": "The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application."}
+        expected_result = {"message": "An unknown error occurred"}
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.dataset.add_class")

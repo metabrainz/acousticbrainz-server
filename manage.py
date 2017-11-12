@@ -97,15 +97,21 @@ def init_db(archive, force, skip_create_db=False):
 
 @cli.command()
 @click.argument("archive", type=click.Path(exists=True))
-@click.option("--is-dataset-dump", "-d", is_flag=True, help="Import dataset dumps.")
-def import_data(archive, is_dataset_dump=False):
+def import_data(archive):
     """Imports data dump into the database."""
 
     print('Importing data...')
-    if is_dataset_dump:
-        db.dump.import_datasets_dump(archive)
-    else:
-        db.dump.import_db_dump(archive)
+    db.dump.import_db_dump(archive)
+    print('Done!')
+
+
+@cli.command()
+@click.argument("archive", type=click.Path(exists=True))
+def import_dataset_data(archive):
+    """Imports dataset dump into the database."""
+    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    print('Importing dataset data...')
+    db.dump.import_datasets_dump(archive)
     print('Done!')
 
 

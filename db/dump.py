@@ -134,45 +134,18 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
         archive_name = "acousticbrainz-dump-%s" % time_now.strftime("%Y%m%d-%H%M%S")
 
     archive_path = os.path.join(location, archive_name + ".tar.xz")
-    with open(archive_path, "w") as archive:
-
-        pxz_command = ["pxz", "--compress"]
-        if threads is not None:
-            pxz_command.append("-T %s" % threads)
-        pxz = subprocess.Popen(pxz_command, stdin=subprocess.PIPE, stdout=archive)
-
-        # Creating the archive
-        with tarfile.open(fileobj=pxz.stdin, mode="w|") as tar:
-            # TODO(roman): Get rid of temporary directories and write directly to tar file if that's possible.
-            temp_dir = tempfile.mkdtemp()
-
-            # Adding metadata
-            schema_seq_path = os.path.join(temp_dir, "SCHEMA_SEQUENCE")
-            with open(schema_seq_path, "w") as f:
-                f.write(str(db.SCHEMA_VERSION))
-            tar.add(schema_seq_path,
-                    arcname=os.path.join(archive_name, "SCHEMA_SEQUENCE"))
-            timestamp_path = os.path.join(temp_dir, "TIMESTAMP")
-            with open(timestamp_path, "w") as f:
-                f.write(time_now.isoformat(" "))
-            tar.add(timestamp_path,
-                    arcname=os.path.join(archive_name, "TIMESTAMP"))
-            tar.add(DUMP_LICENSE_FILE_PATH,
-                    arcname=os.path.join(archive_name, "COPYING"))
-
-            archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
-            utils.path.create_path(archive_tables_dir)
-            _copy_tables(archive_tables_dir, start_t, end_t)
-            tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
-
-            shutil.rmtree(temp_dir)  # Cleanup
-
-        pxz.stdin.close()
-
+    _dump_tables(
+        archive_path=archive_path,
+        threads=threads,
+        dataset_dump=False,
+        time_now=time_now,
+        start_t=start_t,
+        end_t=end_t,
+    )
     return archive_path
 
 
-def _copy_tables(location, start_time=None, end_time=None):
+def _copy_tables(location, dataset_dump, start_time=None, end_time=None):
     """Copies all tables into separate files within a specified location (directory).
 
     You can also define time frame that will be used during data selection.
@@ -198,64 +171,81 @@ def _copy_tables(location, start_time=None, end_time=None):
     try:
         cursor = connection.cursor()
 
-        # version
-        with open(os.path.join(location, "version"), "w") as f:
-            logging.info(" - Copying table version...")
-            cursor.copy_to(f, "(SELECT %s FROM version %s)" %
-                           (", ".join(_TABLES["version"]), generate_where("created")))
+        if dataset_dump:
+            # dataset
+            with open(os.path.join(location, "dataset"), "w") as f:
+                logging.info(" - Copying table dataset...")
+                cursor.copy_to(f, 'dataset', columns=_DATASET_TABLES['dataset'])
 
-        # lowlevel
-        with open(os.path.join(location, "lowlevel"), "w") as f:
-            logging.info(" - Copying table lowlevel...")
-            cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
-                           (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
+            # dataset_class
+            with open(os.path.join(location, "dataset_class"), "w") as f:
+                logging.info(" - Copying table dataset_class...")
+                cursor.copy_to(f, 'dataset_class', columns=_DATASET_TABLES['dataset_class'])
 
-        # lowlevel_json
-        with open(os.path.join(location, "lowlevel_json"), "w") as f:
-            logging.info(" - Copying table lowlevel_json...")
-            query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
-                    % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
-            cursor.copy_to(f, "(%s)" % query)
+            # dataset_class_member
+            with open(os.path.join(location, "dataset_class_member"), "w") as f:
+                logging.info(" - Copying table dataset_class_member...")
+                cursor.copy_to(f, 'dataset_class_member', columns=_DATASET_TABLES['dataset_class_member'])
 
-        # model
-        with open(os.path.join(location, "model"), "w") as f:
-            logging.info(" - Copying table model...")
-            query = "SELECT %s FROM model %s" \
-                    % (", ".join(_TABLES["model"]), generate_where("date"))
-            cursor.copy_to(f, "(%s)" % query)
+        else:
+            # version
+            with open(os.path.join(location, "version"), "w") as f:
+                logging.info(" - Copying table version...")
+                cursor.copy_to(f, "(SELECT %s FROM version %s)" %
+                               (", ".join(_TABLES["version"]), generate_where("created")))
+
+            # lowlevel
+            with open(os.path.join(location, "lowlevel"), "w") as f:
+                logging.info(" - Copying table lowlevel...")
+                cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
+                               (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
+
+            # lowlevel_json
+            with open(os.path.join(location, "lowlevel_json"), "w") as f:
+                logging.info(" - Copying table lowlevel_json...")
+                query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
+                        % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
+                cursor.copy_to(f, "(%s)" % query)
+
+            # model
+            with open(os.path.join(location, "model"), "w") as f:
+                logging.info(" - Copying table model...")
+                query = "SELECT %s FROM model %s" \
+                        % (", ".join(_TABLES["model"]), generate_where("date"))
+                cursor.copy_to(f, "(%s)" % query)
 
 
-        # highlevel
-        with open(os.path.join(location, "highlevel"), "w") as f:
-            logging.info(" - Copying table highlevel...")
-            cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
-                           (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
+            # highlevel
+            with open(os.path.join(location, "highlevel"), "w") as f:
+                logging.info(" - Copying table highlevel...")
+                cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
+                               (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
 
-        # highlevel_meta
-        with open(os.path.join(location, "highlevel_meta"), "w") as f:
-            logging.info(" - Copying table highlevel_meta...")
-            query = "SELECT %s FROM highlevel_meta WHERE id IN (SELECT id FROM highlevel %s)" \
-                    % (", ".join(_TABLES["highlevel_meta"]), generate_where("submitted"))
-            cursor.copy_to(f, "(%s)" % query)
+            # highlevel_meta
+            with open(os.path.join(location, "highlevel_meta"), "w") as f:
+                logging.info(" - Copying table highlevel_meta...")
+                query = "SELECT %s FROM highlevel_meta WHERE id IN (SELECT id FROM highlevel %s)" \
+                        % (", ".join(_TABLES["highlevel_meta"]), generate_where("submitted"))
+                cursor.copy_to(f, "(%s)" % query)
 
-        # highlevel_model
-        with open(os.path.join(location, "highlevel_model"), "w") as f:
-            logging.info(" - Copying table highlevel_model...")
-            query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
-                    % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
-            cursor.copy_to(f, "(%s)" % query)
+            # highlevel_model
+            with open(os.path.join(location, "highlevel_model"), "w") as f:
+                logging.info(" - Copying table highlevel_model...")
+                query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
+                        % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
+                cursor.copy_to(f, "(%s)" % query)
 
-        # statistics
-        with open(os.path.join(location, "statistics"), "w") as f:
-            logging.info(" - Copying table statistics...")
-            cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
-                           (", ".join(_TABLES["statistics"]), generate_where("collected")))
+            # statistics
+            with open(os.path.join(location, "statistics"), "w") as f:
+                logging.info(" - Copying table statistics...")
+                cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
+                               (", ".join(_TABLES["statistics"]), generate_where("collected")))
 
-        # incremental_dumps
-        with open(os.path.join(location, "incremental_dumps"), "w") as f:
-            logging.info(" - Copying table incremental_dumps...")
-            cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
-                           (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
+            # incremental_dumps
+            with open(os.path.join(location, "incremental_dumps"), "w") as f:
+                logging.info(" - Copying table incremental_dumps...")
+                cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
+                               (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
     finally:
         connection.close()
 
@@ -579,6 +569,55 @@ class NoNewData(Exception):
     pass
 
 
+def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, end_t=None):
+    """Copies the metadata and the tables to the archive.
+
+    Args:
+        archive_path (str): Complete path of the archive that will be created.
+        threads (int): Maximal number of threads to run during compression.
+        dataset_dump (bool): If true, only dataset tables are copied to the archive.
+        time_now (datetime): Current time.
+        start_t (datetime): Start time of the frame that will be used for data selection. (in incremental dumps)
+        end_t (datetime): End time of the frame that will be used for data selection.
+    """
+    archive_name = os.path.basename(archive_path).split('.')[0]
+    print(archive_name)
+    with open(archive_path, "w") as archive:
+
+        pxz_command = ["pxz", "--compress"]
+        if threads is not None:
+            pxz_command.append("-T %s" % threads)
+        pxz = subprocess.Popen(pxz_command, stdin=subprocess.PIPE, stdout=archive)
+
+        # Creating the archive
+        with tarfile.open(fileobj=pxz.stdin, mode="w|") as tar:
+            # TODO: Get rid of temporary directories and write directly to tar file if that's possible
+            temp_dir = tempfile.mkdtemp()
+
+            # Adding metadata
+            schema_seq_path = os.path.join(temp_dir, "SCHEMA_SEQUENCE")
+            with open(schema_seq_path, "w") as f:
+                f.write(str(db.SCHEMA_VERSION))
+            tar.add(schema_seq_path,
+                    arcname=os.path.join(archive_name, "SCHEMA_SEQUENCE"))
+            timestamp_path = os.path.join(temp_dir, "TIMESTAMP")
+            with open(timestamp_path, "w") as f:
+                f.write(time_now.isoformat(" "))
+            tar.add(timestamp_path,
+                    arcname=os.path.join(archive_name, "TIMESTAMP"))
+            tar.add(DUMP_LICENSE_FILE_PATH,
+                    arcname=os.path.join(archive_name, "COPYING"))
+
+            archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
+            utils.path.create_path(archive_tables_dir)
+            _copy_tables(archive_tables_dir, dataset_dump, start_t, end_t)
+            tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
+
+            shutil.rmtree(temp_dir)
+
+        pxz.stdin.close()
+
+
 def dump_dataset_tables(location, threads=None):
     """Create full dump of dataset tables in a specified location.
 
@@ -592,60 +631,13 @@ def dump_dataset_tables(location, threads=None):
     archive_name = "acousticbrainz-dataset-dump-%s" % time_now.strftime("%Y%m%d-%H%M%S")
 
     archive_path = os.path.join(location, archive_name + ".tar.xz")
-    with open(archive_path, "w") as archive:
-
-        pxz_command = ["pxz", "--compress"]
-        if threads is not None:
-            pxz_command.append("-T %s" % threads)
-        pxz = subprocess.Popen(pxz_command, stdin=subprocess.PIPE, stdout=archive)
-
-        # Creating the archive
-        with tarfile.open(fileobj=pxz.stdin, mode="w|") as tar:
-            temp_dir = tempfile.mkdtemp()
-
-            # Adding SCHEMA_SEQUENCE and TIMESTAMP
-            schema_seq_path = os.path.join(temp_dir, "SCHEMA_SEQUENCE")
-            with open(schema_seq_path, "w") as f:
-                f.write(str(db.SCHEMA_VERSION))
-            tar.add(schema_seq_path,
-                    arcname=os.path.join(archive_name, "SCHEMA_SEQUENCE"))
-            timestamp_path = os.path.join(temp_dir, "TIMESTAMP")
-            with open(timestamp_path, "w") as f:
-                f.write(time_now.isoformat(" "))
-            tar.add(timestamp_path,
-                    arcname=os.path.join(archive_name, "TIMESTAMP"))
-
-            dataset_tables_dir = os.path.join(temp_dir, "datasets", "datasets")
-            utils.path.create_path(dataset_tables_dir)
-            _copy_dataset_tables(dataset_tables_dir)
-            tar.add(dataset_tables_dir, arcname=os.path.join(archive_name, "abdatasetdump"))
-
-            shutil.rmtree(temp_dir)  # Cleanup
-
-        pxz.stdin.close()
+    _dump_tables(
+        archive_path=archive_path,
+        threads=threads,
+        dataset_dump=True,
+        time_now=time_now,
+    )
     return archive_path
-
-
-def _copy_dataset_tables(location):
-    """Copies all dataset tables into separate files within a specified location."""
-    connection = db.engine.raw_connection()
-    try:
-        cursor = connection.cursor()
-
-        with open(os.path.join(location, "dataset"), "w") as f:
-            logging.info(" - Copying table dataset...")
-            cursor.copy_to(f, 'dataset', columns=_DATASET_TABLES['dataset'])
-
-        with open(os.path.join(location, "dataset_class"), "w") as f:
-            logging.info(" - Copying table dataset_class...")
-            cursor.copy_to(f, 'dataset_class', columns=_DATASET_TABLES['dataset_class'])
-
-        with open(os.path.join(location, "dataset_class_member"), "w") as f:
-            logging.info(" - Copying table dataset_class_member...")
-            cursor.copy_to(f, 'dataset_class_member', columns=_DATASET_TABLES['dataset_class_member'])
-
-    finally:
-        connection.close()
 
 
 def import_datasets_dump(archive_path):
@@ -663,7 +655,7 @@ def import_datasets_dump(archive_path):
             tar.extractall(temp_dir)
 
             for table in table_names:
-                with open(os.path.join(temp_dir, archive_name, 'abdatasetdump', table)) as f:
+                with open(os.path.join(temp_dir, archive_name, 'abdump', table)) as f:
                     logging.info(" - Importing data into %s table..." % table)
                     cursor.copy_from(f, table, columns=_DATASET_TABLES[table])
         connection.commit()

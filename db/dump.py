@@ -342,17 +342,18 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None, max_count=floa
         ))
 
         data = None
-        total_dumped = 0
-        dump_done = False
+        total_dumped = 0 # total number of recordings dumped
+        dump_done = False # flag to check if all recordings have been dumped
+
+        temp_dir = tempfile.mkdtemp()
+
         while True:
 
             # create a new file and dump recordings there
             filename = filename_pattern % file_num
             file_path = os.path.join(dump_path, "%s.tar.bz2" % filename)
             with tarfile.open(file_path, "w:bz2") as tar:
-                print("opened file %s" % file_path)
 
-                temp_dir = tempfile.mkdtemp()
                 dumped_count = 0
 
                 while dumped_count < max_count:
@@ -397,7 +398,6 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None, max_count=floa
                 tar.add(DUMP_LICENSE_FILE_PATH,
                         arcname=os.path.join(filename, "COPYING"))
 
-                shutil.rmtree(temp_dir)  # Cleanup
 
                 logging.info("Dumped %s recordings in file number %d." % (dumped_count, file_num))
                 file_num += 1
@@ -406,6 +406,8 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None, max_count=floa
             if dump_done:
                 break
 
+
+        shutil.rmtree(temp_dir) # Cleanup
 
     logging.info("Dumped a total of %d recordings in %d files." % (total_dumped, file_num))
     return dump_path

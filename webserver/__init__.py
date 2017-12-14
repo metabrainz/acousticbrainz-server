@@ -1,18 +1,31 @@
-from flask import Flask
-import sys
+from brainzutils.flask import CustomFlask
 import os
 
 API_PREFIX = '/api/'
 
-def create_app():
-    app = Flask(__name__)
+def create_app(debug=None, config_path=None):
+    app = CustomFlask(
+        import_name=__name__,
+        use_flask_uuid=True,
+        use_debug_toolbar=True
+    )
 
     # Configuration
-    sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-    import default_config
-    app.config.from_object(default_config)
-    import config
-    app.config.from_object(config)
+    root_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+    app.config.from_pyfile(os.path.join(
+        root_path,
+        'default_config.py'
+    ))
+    app.config.from_pyfile(os.path.join(
+        root_path,
+        'custom_config.py'
+    ), silent=True)
+
+    if config_path:
+        app.config.from_pyfile(config_path)
+
+    if debug is not None:
+        app.debug = debug
 
     # Logging
     from webserver.loggers import init_loggers
@@ -79,7 +92,7 @@ def create_app_sphinx():
     that we use, so we have to ignore these initialization steps. Only
     blueprints/views are needed to build documentation.
     """
-    app = Flask(__name__)
+    app = CustomFlask(import_name=__name__)
     _register_blueprints(app)
     return app
 

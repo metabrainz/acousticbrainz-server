@@ -9,7 +9,6 @@ import webserver.views.api.v1.datasets
 from utils import dataset_validator
 from contextlib import contextmanager
 import db
-import config
 
 import json
 import mock
@@ -33,7 +32,6 @@ class GetCheckDatasetTestCase(ServerTestCase):
     @contextmanager
     def context(self):
         with self.create_app().app_context():
-            db.init_db_engine(config.SQLALCHEMY_TEST_URI)
             flask.session["user_id"] = self.test_user_id
             flask.session["_fresh"] = True
             yield

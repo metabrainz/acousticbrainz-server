@@ -10,9 +10,6 @@ SECRET_KEY = "CHANGE_ME"
 # Primary database
 SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@/acousticbrainz"
 
-# This connection string will be used for testing
-SQLALCHEMY_TEST_URI = "postgresql://ab_test@/ab_test"
-
 # The name of a postgres user who has superuser privileges. Your local user should
 # be able to connect to the database with this user.
 PG_SUPER_USER = "postgres"

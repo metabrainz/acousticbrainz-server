@@ -91,7 +91,7 @@ def create_app_sphinx():
     that we use, so we have to ignore these initialization steps. Only
     blueprints/views are needed to build documentation.
     """
-    app = Flask(__name__)
+    app = CustomFlask(import_name=__name__)
     _register_blueprints(app)
     return app
 

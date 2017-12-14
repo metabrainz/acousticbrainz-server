@@ -1,22 +1,19 @@
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-
-from sqlalchemy import text
-import logging
-fmt = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.INFO, format=fmt)
-import random
 import collections
 import json
+import logging
+import os
+import random
+
+from sqlalchemy import text
 
 import db
-import db.dataset
 import db.cache
-import config
+import db.dataset
 
-#db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
-fname="recordingtoartistmap.json"
+fmt = '%(asctime)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=fmt)
+
+fname = "recordingtoartistmap.json"
 if os.path.isfile(fname):
     rtoajson = json.load(open(fname))
 else:

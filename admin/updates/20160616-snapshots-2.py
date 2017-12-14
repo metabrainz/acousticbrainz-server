@@ -1,18 +1,14 @@
 from __future__ import print_function
 
-# Configuration
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
-import config
+import sqlalchemy
 
 import db
 import db.dataset
-import sqlalchemy
+from webserver import create_app
 
 
 def generate_snapshots():
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    create_app()
     with db.engine.connect() as connection:
         for job in get_all_jobs(connection):
             set_snapshot_id(

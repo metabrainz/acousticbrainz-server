@@ -1,31 +1,31 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from hashlib import sha256, sha1
-from threading import Thread
-from time import sleep
-import subprocess
-import tempfile
+
 import argparse
 import json
-import yaml
 import os
-from setproctitle import setproctitle
-
-# Configuration
+import subprocess
 import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+import tempfile
+from hashlib import sha1
+from setproctitle import setproctitle
+from threading import Thread
+from time import sleep
 
-import db.data
+import yaml
+
 import db
-import config
+import db.data
+from webserver import create_app
 
 DEFAULT_NUM_THREADS = 1
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
-HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
+BASE_DIR = os.path.dirname(__file__)
+HIGH_LEVEL_EXTRACTOR_BINARY = os.path.join(BASE_DIR, "streaming_extractor_music_svm")
 
-PROFILE_CONF_TEMPLATE = "profile.conf.in"
-PROFILE_CONF = "profile.conf"
+PROFILE_CONF_TEMPLATE = os.path.join(BASE_DIR, "profile.conf.in")
+PROFILE_CONF = os.path.join(BASE_DIR, "profile.conf")
 
 
 class HighLevel(Thread):
@@ -145,10 +145,10 @@ def get_build_sha1(binary):
 
 def main(num_threads):
     print("High-level extractor daemon starting with %d threads" % num_threads)
+    create_app()
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
 
     num_processed = 0
 

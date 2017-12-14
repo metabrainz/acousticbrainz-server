@@ -1,13 +1,16 @@
-import db
-import db.dataset_eval
-from utils import dataset_validator
+from __future__ import absolute_import
 
 import json
-import sqlalchemy
-from db import exceptions
 import re
-from sqlalchemy import text
 import unicodedata
+
+import sqlalchemy
+from sqlalchemy import text
+
+import db
+import db.dataset_eval
+from db import exceptions
+from utils import dataset_validator
 
 
 def _slugify(string):

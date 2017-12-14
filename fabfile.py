@@ -1,10 +1,14 @@
 from __future__ import with_statement
-from fabric.api import local
-from fabric.colors import green, yellow, red
-from db import cache
-import config
 
 import os
+import sys
+print sys.path
+
+from fabric.api import local
+from fabric.colors import green, red
+
+from db import cache
+from webserver import create_app
 
 
 def vpsql():
@@ -37,8 +41,11 @@ def build_static():
 
 
 def clear_memcached():
+    import sys
+    print(sys.path)
+    app = create_app()
     try:
-        cache.init(config.MEMCACHED_SERVERS)
+        cache.init(app.config["MEMCACHED_SERVERS"])
         cache.flush_all()
         print(green("Flushed everything from memcached.", bold=True))
     except AttributeError as e:

@@ -8,6 +8,7 @@ import db.dump_manage
 import db.exceptions
 from webserver import create_app
 from db.testing import DatabaseTestCase
+from brainzutils import cache
 import subprocess
 import os
 import click
@@ -146,6 +147,14 @@ def cache_stats():
     # inits the db engine and cache
     create_app()
     db.stats.add_stats_to_cache()
+
+
+@cli.command()
+def clear_cache():
+    """Clear the cache"""
+    # inits the db engine and cache
+    create_app()
+    cache.flush_all()
 
 
 @cli.command()

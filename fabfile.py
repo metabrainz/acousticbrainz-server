@@ -2,12 +2,8 @@ from __future__ import with_statement
 
 import os
 
-from brainzutils import cache
 from fabric.api import local
-from fabric.colors import green, red
-
-from db import cache
-from webserver import create_app
+from fabric.colors import green
 
 
 def vpsql():
@@ -39,22 +35,8 @@ def build_static():
     local("./node_modules/.bin/gulp")
 
 
-def clear_redis_cache():
-    app = create_app()
-    try:
-        cache.init(
-                host=app.config["REDIS_HOST"],
-                port=app.config["REDIS_PORT"],
-                namespace=app.config["REDIS_NAMESPACE"],
-                ns_versions_loc=app.config["REDIS_NS_VERSIONS_LOCATION"])
-        cache.flush_all()
-        print(green("Flushed everything from redis_cache", bold=True))
-    except AttributeError as e:
-        print(red("Failed to clear redis_cache! Check your config file.\nError: %s" % e))
-
-
 def deploy():
     git_pull()
     install_requirements()
     build_static()
-    clear_redis_cache()
+    local("python manage.py clear_cache")

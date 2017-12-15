@@ -7,7 +7,6 @@ import random
 from sqlalchemy import text
 
 import db
-import db.cache
 import db.dataset
 
 fmt = '%(asctime)s - %(levelname)s - %(message)s'

@@ -480,18 +480,27 @@ var RecordingAddForm = React.createClass({
             isNotDuplicate = this.props.recordings.indexOf(mbid) === -1;
         }
         this.setState({
+            validUUID: isValidUUID,
+            notDuplicate: isNotDuplicate,
             validInput: isValidUUID && isNotDuplicate,
             length: mbidField.length
         });
-        // TODO: Show informative error messages if input is invalid.
     },
     getInitialState: function () {
         return {
+            validUUID: false,
+            notDuplicate: true,
             validInput: false,
             length: 0
         };
     },
     render: function () {
+        let error = <div></div>;
+        if (this.state.length > 0 && !this.state.validUUID) {
+            error = <div className="has-error small">Not a valid recording MBID</div>
+        } else if (this.state.length > 0 && !this.state.notDuplicate) {
+            error = <div className="has-error small">MBID is duplicate</div>
+        }
         return (
             <form className="recording-add clearfix form-inline form-group-sm" onSubmit={this.handleSubmit}>
                 <div className={this.state.validInput || this.state.length === 0 ? 'input-group' : 'input-group has-error'}>
@@ -502,6 +511,7 @@ var RecordingAddForm = React.createClass({
                                 className="btn btn-default btn-sm" type="submit">Add recording</button>
                     </span>
                 </div>
+                {error}
             </form>
         );
     }

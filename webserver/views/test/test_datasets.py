@@ -1,13 +1,15 @@
 from __future__ import absolute_import
-from webserver.testing import ServerTestCase
-from db import dataset, dataset_eval, user
-from db.testing import TEST_DATA_PATH
-import webserver.forms as forms
-from flask import url_for
-import os.path
-import json
-import mock
+
 import datetime
+import json
+
+import mock
+from flask import url_for
+
+import webserver.forms as forms
+from db import dataset, dataset_eval, user
+from webserver.testing import ServerTestCase
+from webserver.views.test.test_data import FakeMusicBrainz
 
 
 class DatasetsViewsTestCase(ServerTestCase):
@@ -189,9 +191,13 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertRedirects(resp, url_for("user.profile", musicbrainz_id=self.test_user_mb_name))
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 0)
 
-    def test_recording_info(self):
+    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    def test_recording_info(self, get_recording_by_id):
+        get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
+
         recording_mbid = "770cc467-8dde-4d22-bc4c-a42f91e7515e"
 
+        # If you're not logged in, you get redirected to the login page
         resp = self.client.get(url_for("datasets.recording_info", mbid=recording_mbid))
         self.assertStatus(resp, 302)
         resp = self.client.get(url_for("datasets.recording_info", mbid=self.test_uuid))
@@ -205,12 +211,21 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.recording_info", mbid=self.test_uuid))
         self.assert404(resp)
 
-    def test_recording_info_in_dataset(self):
+    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    def test_recording_info_in_dataset(self, get_recording_by_id):
+        # self.test_mbid_1, is in the dataset
         recording_mbid = "e8afe383-1478-497e-90b1-7885c7f37f6e"
+
+        get_recording_by_id.return_value = {'title': 'recording_title',
+                                            'artist-credit-phrase': 'artist_credit'}
+
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=recording_mbid))
         self.assert200(resp)
+        expected = {'recording': {'title': 'recording_title', 'artist': 'artist_credit'}}
+        self.assertEqual(expected, json.loads(resp.data))
+
         resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=self.test_uuid))
         self.assert404(resp)
 

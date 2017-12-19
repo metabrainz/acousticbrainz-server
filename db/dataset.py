@@ -511,25 +511,25 @@ def update_class(dataset_id, class_name, class_data):
             connection.execute(update_query, params)
 
 
-def check_recording_in_dataset(dataset_id,mbid):
-    """Check whether mbid belongs to given dataset.
+def check_recording_in_dataset(dataset_id, mbid):
+    """Check whether an MBID is in a given dataset.
     Args:
-        dataset_id(string/uuid): ID of a dataset.
-        mbid(string/uuid): ID which is to be verified 
+        dataset_id: ID of a dataset
+        mbid: MBID to be checked
     Returns:
-        True/False depending on whether given mbid is a part of dataset 
+        True if an MBID appears anywhere in a dataset, False otherwise
     """
     with db.engine.connect() as connection:
         result = connection.execute(sqlalchemy.text("""
-            SELECT a.id from dataset_class as a
-             JOIN dataset_class_member as b
-             ON b.class = a.id 
-             WHERE a.dataset = :dataset_id and 
-             b.mbid = :mbid
+            SELECT dataset_class.id
+              FROM dataset_class
+              JOIN dataset_class_member
+                ON dataset_class_member.class = dataset_class.id 
+             WHERE dataset_class.dataset = :dataset_id
+               AND dataset_class_member.mbid = :mbid
         """), {"dataset_id": dataset_id, "mbid": mbid})
         
-        row = result.fetchone()
-        if not row:
-            return False
-        else:
+        if result.rowcount > 0:
             return True
+        else:
+            return False

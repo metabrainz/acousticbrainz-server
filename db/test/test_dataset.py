@@ -117,7 +117,7 @@ class DatasetTestCase(DatabaseTestCase):
 
     def test_update_dataset_meta_badmeta(self):
         dsid = str(uuid.uuid4())
-	try:
+        try:
             dataset.update_dataset_meta(dsid, {"name": "new name", "badkey": "badvalue"})
             self.fail("Shouldn't get here")
         except ValueError as e:
@@ -375,11 +375,11 @@ class DatasetTestCase(DatabaseTestCase):
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         recording_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
 
-        resp = dataset.check_recording_in_dataset(dataset_id,recording_mbid)
+        resp = dataset.check_recording_in_dataset(dataset_id, recording_mbid)
         self.assertTrue(resp)
 
         recording_mbid = "770cc467-8dde-4d22-bc4c-a42f91e7515e"
-        resp = dataset.check_recording_in_dataset(dataset_id,recording_mbid)
+        resp = dataset.check_recording_in_dataset(dataset_id, recording_mbid)
         self.assertFalse(resp)
 
 

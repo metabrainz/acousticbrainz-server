@@ -321,10 +321,7 @@ def delete(dataset_id):
         return render_template("datasets/delete.html", dataset=ds)
 
 
-@datasets_bp.route("/metadata/recording/<uuid:mbid>")
-@login_required
-def recording_info(mbid):
-    """Endpoint for getting information about recordings (title and artist)."""
+def _get_recording_info_for_mbid(mbid):
     try:
         recording = musicbrainz.get_recording_by_id(mbid)
         return jsonify(recording={
@@ -335,20 +332,20 @@ def recording_info(mbid):
         return jsonify(error=str(e)), 404
 
 
+@datasets_bp.route("/metadata/recording/<uuid:mbid>")
+@login_required
+def recording_info(mbid):
+    """Endpoint for getting information about recordings (title and artist)."""
+    return _get_recording_info_for_mbid(mbid)
+
+
 @datasets_bp.route("/metadata/dataset/<uuid:dataset_id>/<uuid:mbid>")
-def recording_info_in_dataset(dataset_id,mbid):
+def recording_info_in_dataset(dataset_id, mbid):
     """Endpoint for getting information about recordings (title and artist), for the
      case when user is not logged in"""
-    try:
-        if not db.dataset.check_recording_in_dataset(dataset_id,mbid):
-            return jsonify(error="Recording not found in the dataset"), 404
-        recording = musicbrainz.get_recording_by_id(mbid)    
-        return jsonify(recording={
-            "title": recording["title"],
-            "artist": recording["artist-credit-phrase"],
-        })
-    except musicbrainz.DataUnavailable as e:
-        return jsonify(error=str(e)), 404
+    if not db.dataset.check_recording_in_dataset(dataset_id, mbid):
+        return jsonify(error="Recording not found in the dataset"), 404
+    return _get_recording_info_for_mbid(mbid)
 
 
 def get_dataset(dataset_id):

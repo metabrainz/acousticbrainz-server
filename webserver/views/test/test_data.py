@@ -1,15 +1,16 @@
 from __future__ import absolute_import
-from webserver.testing import ServerTestCase
-from webserver.views import data
-from webserver.external import musicbrainz
+
+import mock
 from flask import url_for
+
+from webserver.external import musicbrainz
+from webserver.testing import ServerTestCase
 
 
 class DataViewsTestCase(ServerTestCase):
 
     def setUp(self):
         super(DataViewsTestCase, self).setUp()
-        data.musicbrainz.get_recording_by_id = FakeMusicBrainz.get_recording_by_id
 
     def test_api(self):
         resp = self.client.get(url_for('data.api'))
@@ -29,7 +30,9 @@ class DataViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for('data.view_low_level', mbid=mbid))
         self.assertEqual(resp.status_code, 200)
 
-    def test_summary(self):
+    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    def test_summary(self, get_recording_by_id):
+        get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
         resp = self.client.get(url_for('data.summary', mbid=mbid))
         self.assertEqual(resp.status_code, 404)

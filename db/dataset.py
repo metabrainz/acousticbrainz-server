@@ -528,8 +528,5 @@ def check_recording_in_dataset(dataset_id, mbid):
              WHERE dataset_class.dataset = :dataset_id
                AND dataset_class_member.mbid = :mbid
         """), {"dataset_id": dataset_id, "mbid": mbid})
-        
-        if result.rowcount > 0:
-            return True
-        else:
-            return False
+
+        return result.rowcount > 0

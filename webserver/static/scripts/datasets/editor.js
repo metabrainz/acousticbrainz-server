@@ -473,23 +473,23 @@ var RecordingAddForm = React.createClass({
     handleChange: function () {
         var mbidField = this.refs.mbid.value;
         var isValidUUID = RECORDING_MBID_RE.test(mbidField);
-        var isNotDuplicate = false;
+        var isDuplicate = true;
         if (isValidUUID) {
             var mbid = RECORDING_MBID_RE.exec(mbidField)[2];
             mbid = mbid.toLowerCase();
-            isNotDuplicate = this.props.recordings.indexOf(mbid) === -1;
+            isDuplicate = this.props.recordings.indexOf(mbid) !== -1;
         }
         this.setState({
             validUUID: isValidUUID,
-            notDuplicate: isNotDuplicate,
-            validInput: isValidUUID && isNotDuplicate,
+            duplicate: isDuplicate,
+            validInput: isValidUUID && !isDuplicate,
             length: mbidField.length
         });
     },
     getInitialState: function () {
         return {
             validUUID: false,
-            notDuplicate: true,
+            duplicate: false,
             validInput: false,
             length: 0
         };
@@ -498,7 +498,7 @@ var RecordingAddForm = React.createClass({
         let error = <div></div>;
         if (this.state.length > 0 && !this.state.validUUID) {
             error = <div className="has-error small">Not a valid recording MBID</div>
-        } else if (this.state.length > 0 && !this.state.notDuplicate) {
+        } else if (this.state.length > 0 && this.state.duplicate) {
             error = <div className="has-error small">MBID is duplicate</div>
         }
         return (

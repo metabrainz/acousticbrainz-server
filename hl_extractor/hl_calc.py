@@ -2,17 +2,19 @@
 from __future__ import print_function
 
 import argparse
+import click
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import yaml
+
 from hashlib import sha1
 from setproctitle import setproctitle
 from threading import Thread
 from time import sleep
 
-import yaml
 
 import db
 import db.data
@@ -26,6 +28,9 @@ HIGH_LEVEL_EXTRACTOR_BINARY = os.path.join(BASE_DIR, "streaming_extractor_music_
 
 PROFILE_CONF_TEMPLATE = os.path.join(BASE_DIR, "profile.conf.in")
 PROFILE_CONF = os.path.join(BASE_DIR, "profile.conf")
+
+
+app = create_app() # Flask app created to use Flask CLI
 
 
 class HighLevel(Thread):
@@ -145,7 +150,6 @@ def get_build_sha1(binary):
 
 def main(num_threads):
     print("High-level extractor daemon starting with %d threads" % num_threads)
-    create_app()
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
@@ -217,9 +221,11 @@ def main(num_threads):
             else:
                 break
 
-if __name__ == "__main__":
+
+@app.cli.command()
+@click.option("--threads", "-t", default=DEFAULT_NUM_THREADS, show_default=True, help="Number of threads to start")
+def hl_calc(threads):
+    """ Extract high-level data from low-level data.
+    """
     setproctitle("hl_calc")
-    parser = argparse.ArgumentParser(description='Extract high-level data from low-level data')
-    parser.add_argument("-t", "--threads", help="Number of threads to start", default=DEFAULT_NUM_THREADS, type=int)
-    args = parser.parse_args()
-    main(args.threads)
+    main(threads)

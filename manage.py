@@ -183,7 +183,3 @@ def remove_admin(username):
 
 # Please keep additional sets of commands down there
 app.cli.add_command(db.dump_manage.cli, name="dump")
-
-
-if __name__ == '__main__':
-    cli()

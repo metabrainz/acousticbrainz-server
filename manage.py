@@ -15,23 +15,19 @@ import click
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
-cli = click.Group()
+app = create_app()
 
 
-@cli.command()
+@app.cli.command()
 @click.option("--host", "-h", default="0.0.0.0", show_default=True)
 @click.option("--port", "-p", default=8080, show_default=True)
-@click.option("--debug", "-d", type=bool,
-              help="Turns debugging mode on or off. If specified, overrides "
-                   "'DEBUG' value in the config file.")
-def runserver(host, port, debug):
-    app = webserver.create_app(debug=debug)
+def runserver(host, port):
     reload_on_files = app.config['RELOAD_ON_FILES']
     app.run(host=host, port=port,
             extra_files=reload_on_files)
 
 
-@cli.command()
+@app.cli.command()
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
 @click.argument("archive", type=click.Path(exists=True), required=False)
 @click.option("--skip-create-db", "-s", is_flag=True, help="Skip database creation step.")
@@ -50,8 +46,6 @@ def init_db(archive, force, skip_create_db=False):
     found at http://www.postgresql.org/docs/current/static/populate.html.
     """
 
-    app = webserver.create_app_with_configuration()
-
     db.init_db_engine(app.config['POSTGRES_ADMIN_URI'])
     if force:
         res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_db.sql'))
@@ -67,9 +61,6 @@ def init_db(archive, force, skip_create_db=False):
     print('Creating database extensions...')
     db.init_db_engine(app.config['POSTGRES_ADMIN_AB_URI'])
     res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'))
-
-    # inits the db engine
-    webserver.create_app()
 
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
@@ -96,7 +87,7 @@ def init_db(archive, force, skip_create_db=False):
     print("Done!")
 
 
-@cli.command()
+@app.cli.command()
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
 def init_test_db(force=False):
     """Same as `init_db` command, but creates a database that will be used to
@@ -137,49 +128,39 @@ def init_test_db(force=False):
     print("Done!")
 
 
-@cli.command()
+@app.cli.command()
 @click.argument("archive", type=click.Path(exists=True))
 def import_data(archive):
     """Imports data dump into the database."""
-
-    # inits the db engine
-    webserver.create_app()
     print('Importing data...')
     db.dump.import_db_dump(archive)
 
 
-@cli.command()
+@app.cli.command()
 def compute_stats():
     """Compute any outstanding hourly stats and add to the database."""
-    # inits the db engine
-    webserver.create_app()
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
 
 
-@cli.command()
+@app.cli.command()
 def cache_stats():
     """Compute recent stats and add to cache."""
-    # inits the db engine and cache
-    webserver.create_app()
     db.stats.add_stats_to_cache()
 
 
-@cli.command()
+@app.cli.command()
 def clear_cache():
     """Clear the cache"""
-    # inits the db engine and cache
-    webserver.create_app()
     cache.flush_all()
 
-@cli.command()
+
+@app.cli.command()
 @click.argument("username")
 @click.option("--force", "-f", is_flag=True, help="Create user if doesn't exist.")
 def add_admin(username, force=False):
     """Make user an admin."""
-    # inits the db engine
-    webserver.create_app()
     try:
         db.user.set_admin(username, admin=True, force=force)
     except db.exceptions.DatabaseException as e:
@@ -187,7 +168,7 @@ def add_admin(username, force=False):
     click.echo("Made %s an admin." % username)
 
 
-@cli.command()
+@app.cli.command()
 @click.argument("username")
 def remove_admin(username):
     """Remove admin privileges from a user."""
@@ -201,7 +182,7 @@ def remove_admin(username):
 
 
 # Please keep additional sets of commands down there
-cli.add_command(db.dump_manage.cli, name="dump")
+app.cli.add_command(db.dump_manage.cli, name="dump")
 
 
 if __name__ == '__main__':

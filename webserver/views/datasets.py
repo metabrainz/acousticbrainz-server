@@ -342,7 +342,16 @@ def recording_info(mbid):
 @datasets_bp.route("/metadata/dataset/<uuid:dataset_id>/<uuid:mbid>")
 def recording_info_in_dataset(dataset_id, mbid):
     """Endpoint for getting information about recordings (title and artist), for the
-     case when user is not logged in"""
+    case when user is not logged in.
+
+    Args:
+        mbid (uuid): the recording mbid for which info is to be returned
+        dataset_id (uuid): the dataset id to which the passed recording mbid belongs
+
+    Returns:
+        json: If the mbid is present in the dataset, info about the recording
+              404 otherwise
+     """
     if not db.dataset.check_recording_in_dataset(dataset_id, mbid):
         return jsonify(error="Recording not found in the dataset"), 404
     return _get_recording_info_for_mbid(mbid)

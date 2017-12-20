@@ -213,19 +213,25 @@ class DatasetsViewsTestCase(ServerTestCase):
 
     @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
     def test_recording_info_in_dataset(self, get_recording_by_id):
-        # self.test_mbid_1, is in the dataset
-        recording_mbid = "e8afe383-1478-497e-90b1-7885c7f37f6e"
+        """ Tests views.datasets.recording_info_in_dataset.
+
+        If the Recording MBID is present in the dataset, the view should return information about the
+        MBID. Otherwise, it should return a 404 response
+        """
+
+        # Note: self.test_mbid_1 is in the dataset
 
         get_recording_by_id.return_value = {'title': 'recording_title',
                                             'artist-credit-phrase': 'artist_credit'}
 
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
-        resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=recording_mbid))
+        resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=self.test_mbid_1))
         self.assert200(resp)
         expected = {'recording': {'title': 'recording_title', 'artist': 'artist_credit'}}
         self.assertEqual(expected, json.loads(resp.data))
 
+        # self.test_uuid is not in the dataset
         resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=self.test_uuid))
         self.assert404(resp)
 

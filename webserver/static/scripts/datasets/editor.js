@@ -48,6 +48,7 @@ var SECTION_CLASS_DETAILS = "class_details";
 var Dataset = React.createClass({
     getInitialState: function () {
         return {
+            autoAddRecording: false,
             mode: container.dataset.mode,
             active_section: SECTION_DATASET_DETAILS,
             data: null
@@ -128,6 +129,9 @@ var Dataset = React.createClass({
         data.classes[index].recordings = recordings;
         this.setState({data: data});
     },
+    handleAutoAddRecordingUpdate: function (autoAddRecording) {
+        this.setState({autoAddRecording: autoAddRecording});
+    },
     render: function () {
         if (this.state.data) {
             if (this.state.active_section == SECTION_DATASET_DETAILS) {
@@ -168,6 +172,8 @@ var Dataset = React.createClass({
                         description={active_class.description}
                         recordings={active_class.recordings}
                         datasetName={this.state.data.name}
+                        autoAddRecording={this.state.autoAddRecording}
+                        onAutoAddRecordingUpdate={this.handleAutoAddRecordingUpdate}
                         onReturn={this.handleReturn}
                         onClassUpdate={this.handleClassUpdate} />
                 );
@@ -368,7 +374,9 @@ var ClassDetails = React.createClass({
         recordings: React.PropTypes.array.isRequired,
         datasetName: React.PropTypes.string.isRequired,
         onReturn: React.PropTypes.func.isRequired,
-        onClassUpdate: React.PropTypes.func.isRequired
+        onClassUpdate: React.PropTypes.func.isRequired,
+        autoAddRecording: React.PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
     },
     handleClassUpdate: function() {
         this.props.onClassUpdate(
@@ -413,7 +421,9 @@ var ClassDetails = React.createClass({
                           value={this.props.description}></textarea>
                 <Recordings
                     recordings={this.props.recordings}
-                    onRecordingsUpdate={this.handleRecordingsUpdate} />
+                    onRecordingsUpdate={this.handleRecordingsUpdate}
+                    autoAddRecording={this.props.autoAddRecording}
+                    onAutoAddRecordingUpdate={this.props.onAutoAddRecordingUpdate} />
             </div>
         );
     }
@@ -422,7 +432,9 @@ var ClassDetails = React.createClass({
 var Recordings = React.createClass({
     propTypes: {
         recordings: React.PropTypes.array.isRequired,
-        onRecordingsUpdate: React.PropTypes.func.isRequired
+        onRecordingsUpdate: React.PropTypes.func.isRequired,
+        autoAddRecording: React.PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
     },
     handleRecordingSubmit: function (mbid) {
         var recordings = this.props.recordings;
@@ -446,53 +458,90 @@ var Recordings = React.createClass({
                     onRecordingDelete={this.handleRecordingDelete} />
                 <RecordingAddForm
                     recordings={this.props.recordings}
-                    onRecordingSubmit={this.handleRecordingSubmit} />
+                    onRecordingSubmit={this.handleRecordingSubmit}
+                    autoAddRecording={this.props.autoAddRecording}
+                    onAutoAddRecordingUpdate={this.props.onAutoAddRecordingUpdate} />
             </div>
         );
     }
 });
 
+var RECORDING_MBID_RE = /^(https?:\/\/(?:beta\.)?musicbrainz\.org\/recording\/)?([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i;
+
 var RecordingAddForm = React.createClass({
     propTypes: {
         recordings: React.PropTypes.array.isRequired,
-        onRecordingSubmit: React.PropTypes.func.isRequired
+        onRecordingSubmit: React.PropTypes.func.isRequired,
+        autoAddRecording: React.PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
     },
-    handleSubmit: function (event) {
-        event.preventDefault();
+    addMbid: function() {
         var mbid = this.refs.mbid.value.trim();
+        mbid = RECORDING_MBID_RE.exec(mbid)[2];
         if (!mbid) {
             return;
         }
+        mbid = mbid.toLowerCase();
         this.props.onRecordingSubmit(mbid);
         this.refs.mbid.value = '';
+        this.setState(this.getInitialState());
+    },
+    handleSubmit: function (event) {
+        event.preventDefault();
+        this.addMbid();
     },
     handleChange: function () {
-        var mbid = this.refs.mbid.value;
-        var isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mbid);
-        var isNotDuplicate = this.props.recordings.indexOf(mbid) == -1;
+        var mbidField = this.refs.mbid.value;
+        var isValidUUID = RECORDING_MBID_RE.test(mbidField);
+        var isDuplicate = true;
+        if (isValidUUID) {
+            var mbid = RECORDING_MBID_RE.exec(mbidField)[2];
+            mbid = mbid.toLowerCase();
+            isDuplicate = this.props.recordings.indexOf(mbid) !== -1;
+        }
         this.setState({
-            validInput: isValidUUID && isNotDuplicate,
-            length: mbid.length
+            validUUID: isValidUUID,
+            duplicate: isDuplicate,
+            validInput: isValidUUID && !isDuplicate,
+            length: mbidField.length
         });
-        // TODO: Show informative error messages if input is invalid.
+        if (isValidUUID && !isDuplicate && this.props.autoAddRecording) {
+            this.addMbid();
+        }
     },
     getInitialState: function () {
         return {
+            validUUID: false,
+            duplicate: false,
             validInput: false,
             length: 0
         };
     },
+    changeAutoAddRecording: function(event) {
+        this.props.onAutoAddRecordingUpdate(!this.props.autoAddRecording);
+    },
     render: function () {
+        let error = <div></div>;
+        if (this.state.length > 0 && !this.state.validUUID) {
+            error = <div className="has-error small">Not a valid recording MBID</div>
+        } else if (this.state.length > 0 && this.state.duplicate) {
+            error = <div className="has-error small">MBID is duplicate</div>
+        }
         return (
             <form className="recording-add clearfix form-inline form-group-sm" onSubmit={this.handleSubmit}>
-                <div className={this.state.validInput || this.state.length == 0 ? 'input-group' : 'input-group has-error'}>
-                    <input type="text" className="form-control input-sm" placeholder="MusicBrainz ID"
+                <div className={this.state.validInput || this.state.length === 0 ? 'input-group' : 'input-group has-error'}>
+                    <input type="text" className="form-control input-sm" placeholder="MusicBrainz ID or URL"
                            ref="mbid" onChange={this.handleChange} />
                     <span className="input-group-btn">
                         <button disabled={this.state.validInput ? '' : 'disabled'}
                                 className="btn btn-default btn-sm" type="submit">Add recording</button>
                     </span>
                 </div>
+                <div>
+                    <span><input id="autoadd-check" type="checkbox" checked={this.props.autoAddRecording ? 'checked' : ''} onChange={this.changeAutoAddRecording} />&nbsp;
+                        <label htmlFor="autoadd-check">Automatically add recordings</label></span>
+                </div>
+                {error}
             </form>
         );
     }

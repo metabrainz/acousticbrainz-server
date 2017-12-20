@@ -48,6 +48,7 @@ var SECTION_CLASS_DETAILS = "class_details";
 var Dataset = React.createClass({
     getInitialState: function () {
         return {
+            autoAddRecording: false,
             mode: container.dataset.mode,
             active_section: SECTION_DATASET_DETAILS,
             data: null
@@ -128,6 +129,9 @@ var Dataset = React.createClass({
         data.classes[index].recordings = recordings;
         this.setState({data: data});
     },
+    handleAutoAddRecordingUpdate: function (autoAddRecording) {
+        this.setState({autoAddRecording: autoAddRecording});
+    },
     render: function () {
         if (this.state.data) {
             if (this.state.active_section == SECTION_DATASET_DETAILS) {
@@ -168,6 +172,8 @@ var Dataset = React.createClass({
                         description={active_class.description}
                         recordings={active_class.recordings}
                         datasetName={this.state.data.name}
+                        autoAddRecording={this.state.autoAddRecording}
+                        onAutoAddRecordingUpdate={this.handleAutoAddRecordingUpdate}
                         onReturn={this.handleReturn}
                         onClassUpdate={this.handleClassUpdate} />
                 );
@@ -368,7 +374,9 @@ var ClassDetails = React.createClass({
         recordings: React.PropTypes.array.isRequired,
         datasetName: React.PropTypes.string.isRequired,
         onReturn: React.PropTypes.func.isRequired,
-        onClassUpdate: React.PropTypes.func.isRequired
+        onClassUpdate: React.PropTypes.func.isRequired,
+        autoAddRecording: React.PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
     },
     handleClassUpdate: function() {
         this.props.onClassUpdate(
@@ -413,7 +421,9 @@ var ClassDetails = React.createClass({
                           value={this.props.description}></textarea>
                 <Recordings
                     recordings={this.props.recordings}
-                    onRecordingsUpdate={this.handleRecordingsUpdate} />
+                    onRecordingsUpdate={this.handleRecordingsUpdate}
+                    autoAddRecording={this.props.autoAddRecording}
+                    onAutoAddRecordingUpdate={this.props.onAutoAddRecordingUpdate} />
             </div>
         );
     }
@@ -422,7 +432,9 @@ var ClassDetails = React.createClass({
 var Recordings = React.createClass({
     propTypes: {
         recordings: React.PropTypes.array.isRequired,
-        onRecordingsUpdate: React.PropTypes.func.isRequired
+        onRecordingsUpdate: React.PropTypes.func.isRequired,
+        autoAddRecording: React.PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
     },
     handleRecordingSubmit: function (mbid) {
         var recordings = this.props.recordings;
@@ -446,7 +458,9 @@ var Recordings = React.createClass({
                     onRecordingDelete={this.handleRecordingDelete} />
                 <RecordingAddForm
                     recordings={this.props.recordings}
-                    onRecordingSubmit={this.handleRecordingSubmit} />
+                    onRecordingSubmit={this.handleRecordingSubmit}
+                    autoAddRecording={this.props.autoAddRecording}
+                    onAutoAddRecordingUpdate={this.props.onAutoAddRecordingUpdate} />
             </div>
         );
     }
@@ -457,10 +471,11 @@ var RECORDING_MBID_RE = /^(https?:\/\/(?:beta\.)?musicbrainz\.org\/recording\/)?
 var RecordingAddForm = React.createClass({
     propTypes: {
         recordings: React.PropTypes.array.isRequired,
-        onRecordingSubmit: React.PropTypes.func.isRequired
+        onRecordingSubmit: React.PropTypes.func.isRequired,
+        autoAddRecording: React.PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
     },
-    handleSubmit: function (event) {
-        event.preventDefault();
+    addMbid: function() {
         var mbid = this.refs.mbid.value.trim();
         mbid = RECORDING_MBID_RE.exec(mbid)[2];
         if (!mbid) {
@@ -469,6 +484,11 @@ var RecordingAddForm = React.createClass({
         mbid = mbid.toLowerCase();
         this.props.onRecordingSubmit(mbid);
         this.refs.mbid.value = '';
+        this.setState(this.getInitialState());
+    },
+    handleSubmit: function (event) {
+        event.preventDefault();
+        this.addMbid();
     },
     handleChange: function () {
         var mbidField = this.refs.mbid.value;
@@ -485,6 +505,9 @@ var RecordingAddForm = React.createClass({
             validInput: isValidUUID && !isDuplicate,
             length: mbidField.length
         });
+        if (isValidUUID && !isDuplicate && this.props.autoAddRecording) {
+            this.addMbid();
+        }
     },
     getInitialState: function () {
         return {
@@ -493,6 +516,9 @@ var RecordingAddForm = React.createClass({
             validInput: false,
             length: 0
         };
+    },
+    changeAutoAddRecording: function(event) {
+        this.props.onAutoAddRecordingUpdate(!this.props.autoAddRecording);
     },
     render: function () {
         let error = <div></div>;
@@ -510,6 +536,10 @@ var RecordingAddForm = React.createClass({
                         <button disabled={this.state.validInput ? '' : 'disabled'}
                                 className="btn btn-default btn-sm" type="submit">Add recording</button>
                     </span>
+                </div>
+                <div>
+                    <span><input id="autoadd-check" type="checkbox" checked={this.props.autoAddRecording ? 'checked' : ''} onChange={this.changeAutoAddRecording} />&nbsp;
+                        <label htmlFor="autoadd-check">Automatically add recordings</label></span>
                 </div>
                 {error}
             </form>

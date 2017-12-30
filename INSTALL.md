@@ -40,7 +40,7 @@ Then use `pip` to install the required Python dependencies:
 
 ### Configuration
 
-Copy `config.py.sample` to `config.py` and edit its content to fit your
+Copy `custom_config.py.example` to `custom_config.py` and edit its content to fit your
 environment.
 
 ### Creating the database

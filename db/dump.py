@@ -145,6 +145,20 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
     return archive_path
 
 
+def _copy_table(cursor, location, table_name, query):
+    """Copies data from a table into a file within a specified location.
+
+    Args:
+        cursor: a psycopg2 cursor
+        location: the directory where the table should be copied.
+        table_name: the name of the table to be copied.
+        query: the select query for getting data from the table.
+    """
+    with open(os.path.join(location, table_name), "w") as f:
+        logging.info(" - Copying table {table_name}...".format(table_name=table_name))
+        cursor.copy_to(f, query)
+
+
 def _copy_tables(location, dataset_dump, start_time=None, end_time=None):
     """Copies all tables into separate files within a specified location (directory).
 
@@ -173,79 +187,58 @@ def _copy_tables(location, dataset_dump, start_time=None, end_time=None):
 
         if dataset_dump:
             # dataset
-            with open(os.path.join(location, "dataset"), "w") as f:
-                logging.info(" - Copying table dataset...")
-                cursor.copy_to(f, 'dataset', columns=_DATASET_TABLES['dataset'])
+            _copy_table(cursor, location, "dataset", "(SELECT %s FROM dataset)" %
+                        (", ".join(_DATASET_TABLES["dataset"])))
 
             # dataset_class
-            with open(os.path.join(location, "dataset_class"), "w") as f:
-                logging.info(" - Copying table dataset_class...")
-                cursor.copy_to(f, 'dataset_class', columns=_DATASET_TABLES['dataset_class'])
+            _copy_table(cursor, location, "dataset_class", "(SELECT %s FROM dataset_class)" %
+                        (", ".join(_DATASET_TABLES["dataset_class"])))
 
             # dataset_class_member
-            with open(os.path.join(location, "dataset_class_member"), "w") as f:
-                logging.info(" - Copying table dataset_class_member...")
-                cursor.copy_to(f, 'dataset_class_member', columns=_DATASET_TABLES['dataset_class_member'])
+            _copy_table(cursor, location, "dataset_class_member", "(SELECT %s FROM dataset_class_member)" %
+                        (", ".join(_DATASET_TABLES["dataset_class_member"])))
 
         else:
             # version
-            with open(os.path.join(location, "version"), "w") as f:
-                logging.info(" - Copying table version...")
-                cursor.copy_to(f, "(SELECT %s FROM version %s)" %
-                               (", ".join(_TABLES["version"]), generate_where("created")))
+            _copy_table(cursor, location, "version", "(SELECT %s FROM version %s)" %
+                        (", ".join(_TABLES["version"]), generate_where("created")))
 
             # lowlevel
-            with open(os.path.join(location, "lowlevel"), "w") as f:
-                logging.info(" - Copying table lowlevel...")
-                cursor.copy_to(f, "(SELECT %s FROM lowlevel %s)" %
-                               (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
+            _copy_table(cursor, location, "lowlevel", "(SELECT %s FROM lowlevel %s)" %
+                        (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
 
             # lowlevel_json
-            with open(os.path.join(location, "lowlevel_json"), "w") as f:
-                logging.info(" - Copying table lowlevel_json...")
-                query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
-                        % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
-                cursor.copy_to(f, "(%s)" % query)
+            query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
+                    % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
+            _copy_table(cursor, location, "lowlevel_json", "(%s)" % query)
 
             # model
-            with open(os.path.join(location, "model"), "w") as f:
-                logging.info(" - Copying table model...")
-                query = "SELECT %s FROM model %s" \
-                        % (", ".join(_TABLES["model"]), generate_where("date"))
-                cursor.copy_to(f, "(%s)" % query)
+            query = "SELECT %s FROM model %s" \
+                    % (", ".join(_TABLES["model"]), generate_where("date"))
+            _copy_table(cursor, location, "model", "(%s)" % query)
 
 
             # highlevel
-            with open(os.path.join(location, "highlevel"), "w") as f:
-                logging.info(" - Copying table highlevel...")
-                cursor.copy_to(f, "(SELECT %s FROM highlevel %s)" %
-                               (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
+            _copy_table(cursor, location, "highlevel", "(SELECT %s FROM highlevel %s)" %
+                        (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
 
             # highlevel_meta
-            with open(os.path.join(location, "highlevel_meta"), "w") as f:
-                logging.info(" - Copying table highlevel_meta...")
-                query = "SELECT %s FROM highlevel_meta WHERE id IN (SELECT id FROM highlevel %s)" \
-                        % (", ".join(_TABLES["highlevel_meta"]), generate_where("submitted"))
-                cursor.copy_to(f, "(%s)" % query)
+            query = "SELECT %s FROM highlevel_meta WHERE id IN (SELECT id FROM highlevel %s)" \
+                    % (", ".join(_TABLES["highlevel_meta"]), generate_where("submitted"))
+            _copy_table(cursor, location, "highlevel_meta", "(%s)" % query)
 
             # highlevel_model
-            with open(os.path.join(location, "highlevel_model"), "w") as f:
-                logging.info(" - Copying table highlevel_model...")
-                query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
-                        % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
-                cursor.copy_to(f, "(%s)" % query)
+            query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
+                    % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
+            _copy_table(cursor, location, "highlevel_model", "(%s)" % query)
 
             # statistics
-            with open(os.path.join(location, "statistics"), "w") as f:
-                logging.info(" - Copying table statistics...")
-                cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
-                               (", ".join(_TABLES["statistics"]), generate_where("collected")))
+            _copy_table(cursor, location, "statistics", "(SELECT %s FROM statistics %s)" %
+                        (", ".join(_TABLES["statistics"]), generate_where("collected")))
 
             # incremental_dumps
-            with open(os.path.join(location, "incremental_dumps"), "w") as f:
-                logging.info(" - Copying table incremental_dumps...")
-                cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
-                               (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
+            _copy_table(cursor, location, "incremental_dumps", "(SELECT %s FROM incremental_dumps %s)" %
+                        (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
     finally:
         connection.close()
 

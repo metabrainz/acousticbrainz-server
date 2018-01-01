@@ -35,7 +35,7 @@ def create_app(debug=None, config_path=None):
     from db import init_db_engine
     init_db_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
-    # Cache 
+    # Cache
     if 'REDIS_HOST' in app.config and\
        'REDIS_PORT' in app.config and\
        'REDIS_NAMESPACE' in app.config and\
@@ -74,7 +74,7 @@ def create_app(debug=None, config_path=None):
     init_error_handlers(app)
 
     # Static files
-    from webserver import static_manager
+    import static_manager
     static_manager.read_manifest()
 
     # Template utilities

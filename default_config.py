@@ -18,6 +18,8 @@ SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@db/acousticbrainz"
 PG_SUPER_USER = "postgres"
 # The port that postgres is running on
 PG_PORT = "5432"
+# The host at which postgres is running
+PG_HOST = "db"
 
 # MUSICBRAINZ
 
@@ -30,7 +32,7 @@ MUSICBRAINZ_CLIENT_SECRET = "CHANGE_ME"
 
 # CACHE
 
-REDIS_HOST = "127.0.0.1"
+REDIS_HOST = "acousticbrainz_cache"
 REDIS_PORT = 6379
 REDIS_NAMESPACE = "AB"
 REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache_namespaces')

@@ -195,8 +195,9 @@ def _run_psql(script, database=None):
     except ImportError:
         PG_PORT = default_config.PG_PORT
         PG_SUPER_USER = default_config.PG_SUPER_USER
+        PG_HOST = default_config.PG_HOST
     script = os.path.join(ADMIN_SQL_DIR, script)
-    command = ['psql', '-p', config.PG_PORT, '-U', config.PG_SUPER_USER, '-h', config.PG_HOST, '-f', script]
+    command = ['psql', '-p', PG_PORT, '-U', PG_SUPER_USER, '-h', PG_HOST, '-f', script]
     if database:
         command.extend(['-d', database])
     exit_code = subprocess.call(command)

@@ -68,7 +68,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
     && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 COPY ./db /hl_extractor/db
-COPY ./config.py /hl_extractor/config.py
+COPY ./default_config.py /hl_extractor/default_config.py
 WORKDIR /hl_extractor/hl_extractor
 CMD dockerize --wait tcp://db:5432 -timeout 60s \
     python hl_calc.py

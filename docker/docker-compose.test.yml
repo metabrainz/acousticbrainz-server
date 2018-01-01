@@ -10,20 +10,20 @@ services:
       POSTGRES_PASSWORD: acousticbrainz
       POSTGRES_DB: acousticbrainz
     ports:
-      - "15432:5432"
+      - "15431:5432"
 
   acousticbrainz:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.dev
     ports:
-      - "8080:8080"
+      - "8082:8080"
     depends_on:
       - db
       - acousticbrainz_cache
 
   acousticbrainz_cache:
-    image: memcached:1.5-alpine
+    image: redis:4.0-alpine
 
   hl_extractor:
     build:

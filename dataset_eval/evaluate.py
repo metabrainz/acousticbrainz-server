@@ -8,7 +8,8 @@ import tempfile
 import time
 
 import gaia2.fastyaml as yaml
-
+import sys
+sys.path.insert(0,os.path.abspath('..'))
 import db
 import db.data
 import db.dataset
@@ -17,6 +18,7 @@ import db.exceptions
 import utils.path
 from dataset_eval import artistfilter
 from dataset_eval import gaia_wrapper
+
 from webserver import create_app
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs

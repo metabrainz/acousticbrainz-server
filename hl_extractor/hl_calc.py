@@ -11,12 +11,13 @@ from hashlib import sha1
 from setproctitle import setproctitle
 from threading import Thread
 from time import sleep
-
-import yaml
-
-import db
-import db.data
+import sys
+sys.path.insert(0,os.path.abspath('..'))
 from webserver import create_app
+import yaml
+import db.data
+import db
+
 
 DEFAULT_NUM_THREADS = 1
 

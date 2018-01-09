@@ -20,9 +20,9 @@ services:
       - "8082:8080"
     depends_on:
       - db
-      - acousticbrainz_cache
+      - redis
 
-  acousticbrainz_cache:
+  redis:
     image: redis:4.0-alpine
 
   hl_extractor:

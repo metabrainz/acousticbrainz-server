@@ -32,7 +32,7 @@ MUSICBRAINZ_CLIENT_SECRET = "CHANGE_ME"
 
 # CACHE
 
-REDIS_HOST = "acousticbrainz_cache"
+REDIS_HOST = "redis"
 REDIS_PORT = 6379
 REDIS_NAMESPACE = "AB"
 REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache_namespaces')

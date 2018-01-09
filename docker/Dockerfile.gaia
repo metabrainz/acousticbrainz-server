@@ -1,5 +1,10 @@
 FROM metabrainz/python:2.7
 
+# Install Dockerize
+ENV DOCKERIZE_VERSION v0.2.0
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+
 # Installing dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -8,6 +13,9 @@ RUN apt-get update \
                        libfftw3-dev \
                        libavcodec-dev \
                        libavformat-dev \
+                       libavutil-dev \
+                       libavresample-dev \
+                       python-dev \
                        python-numpy-dev \
                        python-numpy \
                        git \
@@ -19,13 +27,9 @@ RUN apt-get update \
                        libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /hl_extractor
-WORKDIR /hl_extractor
-
-COPY ./hl_extractor /hl_extractor/hl_extractor
-
-# PostgreSQL password
-ENV PGPASSWORD "acousticbrainz"
+RUN mkdir /code
+RUN mkdir /code/hl_extractor
+WORKDIR /code
 
 # Gaia
 # See https://github.com/MTG/gaia
@@ -33,7 +37,8 @@ RUN git clone https://github.com/MTG/gaia /tmp/gaia \
     && cd /tmp/gaia \
     && ./waf configure --with-python-bindings \
     && ./waf \
-    && ./waf install
+    && ./waf install \
+    && cd / && rm -r /tmp/gaia
 
 # Essentia
 # See http://essentia.upf.edu/documentation/installing.html
@@ -43,32 +48,21 @@ RUN git clone https://github.com/MTG/essentia /tmp/essentia \
     && ./waf \
     && ./waf install \
     && ldconfig \
-    && cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm /hl_extractor/hl_extractor/streaming_extractor_music_svm
+    && cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm /code/hl_extractor/streaming_extractor_music_svm \
+    && cd / && rm -r /tmp/essentia
 
 # SVM models
 RUN mkdir /tmp/models \
     && cd /tmp/models \
     && curl --silent -o models.tar.gz http://essentia.upf.edu/documentation/svm_models/essentia-extractor-svm_models-v2.1_beta1.tar.gz \
     && tar -xvzf models.tar.gz \
-    && mv /tmp/models/v2.1_beta1/svm_models /hl_extractor/hl_extractor/
-
-# Cleanup
-RUN rm -rf /tmp/gaia
-RUN rm -rf /tmp/essentia
+    && mv /tmp/models/v2.1_beta1/svm_models /code/hl_extractor/ \
+    && cd / && rm -r /tmp/models
 
 # Python dependencies
-COPY requirements.txt /hl_extractor/requirements.txt
-RUN mkdir /hl_extractor/docs/
-COPY docs/requirements.txt /hl_extractor/docs/requirements.txt
-RUN pip install -r requirements.txt
+RUN mkdir /code/docs/
+COPY docs/requirements.txt /code/docs/requirements.txt
+COPY requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Dockerize
-ENV DOCKERIZE_VERSION v0.2.0
-RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-
-COPY ./db /hl_extractor/db
-COPY ./default_config.py /hl_extractor/default_config.py
-WORKDIR /hl_extractor/hl_extractor
-CMD dockerize --wait tcp://db:5432 -timeout 60s \
-    python hl_calc.py
+COPY . /code

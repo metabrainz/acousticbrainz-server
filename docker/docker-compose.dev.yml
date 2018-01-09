@@ -34,6 +34,7 @@ services:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.gaia
+    command: python2 -m hl_extractor.hl_calc
     depends_on:
       - db
 
@@ -41,6 +42,7 @@ services:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.gaia
+    command: python2 -m dataset_eval.evaluate
     volumes:
       - ../:/eval
     depends_on:

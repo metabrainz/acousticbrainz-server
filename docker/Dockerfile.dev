@@ -7,7 +7,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 # Install dependencies
 # Node
-RUN curl -sL https://deb.nodesource.com/setup_6.x && apt-get update \
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
     && apt-get install -y --no-install-recommends \
                        build-essential \
                        ca-certificates \
@@ -31,6 +31,9 @@ RUN mkdir /code/docs/
 COPY docs/requirements.txt /code/docs/requirements.txt
 COPY requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY package.json /code
+RUN npm install
 
 COPY . /code/
 CMD python manage.py runserver

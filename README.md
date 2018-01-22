@@ -47,6 +47,16 @@ Full installation instructions are available in [INSTALL.md](https://github.com/
 
 We use Gulp as our JavaScript/CSS build system.
 
+#### First-time installation
+For development, the first time that you install acousticbrainz you must install
+node packages in your local directory.
+
+    ./develop.sh run --rm --user `id -u`:`id -g` -e HOME=/tmp webserver npm install
+
+This has the effect of creating a `node_modules` directory in your local code checkout.
+The `--user` and `-e` flags are needed on a Linux host to make this directory owned
+by your local user.
+
 To build stylesheets and javascript bundles, run gulp:
 
     ./develop.sh run --rm webserver ./node_modules/.bin/gulp

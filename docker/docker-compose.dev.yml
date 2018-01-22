@@ -8,9 +8,6 @@ services:
       - ../data/pgdata:/var/lib/postgresql/data/pgdata
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: acousticbrainz
-      POSTGRES_PASSWORD: acousticbrainz
-      POSTGRES_DB: acousticbrainz
     ports:
       - "15432:5432"
 

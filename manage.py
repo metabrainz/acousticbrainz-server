@@ -6,7 +6,7 @@ import db.user
 import db.stats
 import db.dump_manage
 import db.exceptions
-from webserver import create_app
+import webserver
 from db.testing import DatabaseTestCase
 from brainzutils import cache
 import subprocess
@@ -25,7 +25,7 @@ cli = click.Group()
               help="Turns debugging mode on or off. If specified, overrides "
                    "'DEBUG' value in the config file.")
 def runserver(host, port, debug):
-    app = create_app(debug=debug)
+    app = webserver.create_app(debug=debug)
     reload_on_files = app.config['RELOAD_ON_FILES']
     app.run(host=host, port=port,
             extra_files=reload_on_files)
@@ -49,24 +49,27 @@ def init_db(archive, force, skip_create_db=False):
     More information about populating a PostgreSQL database efficiently can be
     found at http://www.postgresql.org/docs/current/static/populate.html.
     """
+
+    app = webserver.create_app_with_configuration()
+
+    db.init_db_engine(app.config['POSTGRES_ADMIN_URI'])
     if force:
-        exit_code = _run_psql('drop_db.sql')
-        if exit_code != 0:
-            raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_db.sql'))
+        if not res:
+            raise Exception('Failed to drop existing database and user! Exit code: %i' % res)
 
     if not skip_create_db:
         print('Creating user and a database...')
-        exit_code = _run_psql('create_db.sql')
-        if exit_code != 0:
-            raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_db.sql'))
+        if not res:
+            raise Exception('Failed to create new database and user! Exit code: %i' % res)
 
     print('Creating database extensions...')
-    exit_code = _run_psql('create_extensions.sql', 'acousticbrainz')
-    if exit_code != 0:
-        raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
+    db.init_db_engine(app.config['POSTGRES_ADMIN_AB_URI'])
+    res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'))
 
     # inits the db engine
-    create_app()
+    webserver.create_app()
 
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
@@ -96,15 +99,24 @@ def init_test_db(force=False):
     """Same as `init_db` command, but creates a database that will be used to
     run tests and doesn't import data (no need to do that).
     """
-    if force:
-        exit_code = _run_psql('drop_test_db.sql')
-        if exit_code != 0:
-            raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
 
-    print('Creating database and user for testing...')
-    exit_code = _run_psql('create_test_db.sql')
-    if exit_code != 0:
-        raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
+    app = webserver.create_app_with_configuration()
+
+    db.init_db_engine(app.config['POSTGRES_ADMIN_URI'])
+    if force:
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_test_db.sql'))
+        if not res:
+            raise Exception('Failed to drop existing test database and user! Exit code: %i' % res)
+
+    if not skip_create_db:
+        print('Creating user and database for testing...')
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_test_db.sql'))
+        if not res:
+            raise Exception('Failed to create new database and user! Exit code: %i' % res)
+
+    print('Creating database extensions...')
+    db.init_db_engine(app.config['POSTGRES_ADMIN_AB_URI'])
+    res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'))
 
     exit_code = _run_psql('create_extensions.sql', 'ab_test')
     if exit_code != 0:
@@ -128,7 +140,7 @@ def import_data(archive):
     """Imports data dump into the database."""
 
     # inits the db engine
-    create_app()
+    webserver.create_app()
     print('Importing data...')
     db.dump.import_db_dump(archive)
 
@@ -137,7 +149,7 @@ def import_data(archive):
 def compute_stats():
     """Compute any outstanding hourly stats and add to the database."""
     # inits the db engine
-    create_app()
+    webserver.create_app()
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
@@ -147,7 +159,7 @@ def compute_stats():
 def cache_stats():
     """Compute recent stats and add to cache."""
     # inits the db engine and cache
-    create_app()
+    webserver.create_app()
     db.stats.add_stats_to_cache()
 
 
@@ -155,17 +167,16 @@ def cache_stats():
 def clear_cache():
     """Clear the cache"""
     # inits the db engine and cache
-    create_app()
+    webserver.create_app()
     cache.flush_all()
 
 
-@cli.command()
 @click.argument("username")
 @click.option("--force", "-f", is_flag=True, help="Create user if doesn't exist.")
 def add_admin(username, force=False):
     """Make user an admin."""
     # inits the db engine
-    create_app()
+    webserver.create_app()
     try:
         db.user.set_admin(username, admin=True, force=force)
     except db.exceptions.DatabaseException as e:
@@ -178,31 +189,12 @@ def add_admin(username, force=False):
 def remove_admin(username):
     """Remove admin privileges from a user."""
     # inits the db engine
-    create_app()
+    webserver.create_app()
     try:
         db.user.set_admin(username, admin=False)
     except db.exceptions.DatabaseException as e:
         click.echo("Error: %s" % e, err=True)
     click.echo("Removed admin privileges from %s." % username)
-
-
-def _run_psql(script, database=None):
-    import default_config
-    try:
-        import custom_config
-        PG_PORT = getattr(custom_config, 'PG_PORT', default_config.PG_PORT)
-        PG_SUPER_USER = getattr(custom_config, 'PG_SUPER_USER', default_config.PG_SUPER_USER)
-    except ImportError:
-        PG_PORT = default_config.PG_PORT
-        PG_SUPER_USER = default_config.PG_SUPER_USER
-        PG_HOST = default_config.PG_HOST
-    script = os.path.join(ADMIN_SQL_DIR, script)
-    command = ['psql', '-p', PG_PORT, '-U', PG_SUPER_USER, '-h', PG_HOST, '-f', script]
-    if database:
-        command.extend(['-d', database])
-    exit_code = subprocess.call(command)
-
-    return exit_code
 
 
 # Please keep additional sets of commands down there

@@ -13,13 +13,10 @@ SECRET_KEY = "CHANGE_ME"
 # Primary database
 SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@db/acousticbrainz"
 
-# The name of a postgres user who has superuser privileges. Your local user should
-# be able to connect to the database with this user.
-PG_SUPER_USER = "postgres"
-# The port that postgres is running on
-PG_PORT = "5432"
-# The host at which postgres is running
-PG_HOST = "db"
+# URI to connect to an empty database as the superuser
+POSTGRES_ADMIN_URI = "postgresql://postgres@db/template1"
+# URI to connect to the acousticbrainz database as the superuser (to install extensions)
+POSTGRES_ADMIN_AB_URI = "postgresql://postgres@db/acousticbrainz"
 
 # MUSICBRAINZ
 

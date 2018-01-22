@@ -31,7 +31,7 @@ Then, in order to download all the software and build and start the containers n
 
 The first time you install acousticbrainz, you will need to initialize the AcousticBrainz database:
 
-    ./develop.sh run --rm  webserver python2 manage.py init_db --skip-create-db
+    ./develop.sh run --rm  webserver python2 manage.py init_db
 
 In order to load a psql session, use the following command:
 

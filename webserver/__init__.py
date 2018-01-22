@@ -3,7 +3,9 @@ import os
 
 API_PREFIX = '/api/'
 
-def create_app(debug=None, config_path=None):
+def create_app_with_configuration(config_path=None):
+    """Create a Flask application and load all configuration files"""
+
     app = CustomFlask(
         import_name=__name__,
         use_flask_uuid=True,
@@ -23,6 +25,12 @@ def create_app(debug=None, config_path=None):
 
     if config_path:
         app.config.from_pyfile(config_path)
+
+    return app
+
+
+def create_app(debug=None, config_path=None):
+    app = create_app_with_configuration(config_path)
 
     if debug is not None:
         app.debug = debug

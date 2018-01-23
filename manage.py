@@ -82,6 +82,9 @@ def init_db(archive, force, skip_create_db=False):
         db.dump.import_db_dump(archive)
     else:
         print('Skipping data importing.')
+        print('Loading fixtures...')
+        print('Models...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_models.sql'))
 
     print('Creating primary and foreign keys...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))

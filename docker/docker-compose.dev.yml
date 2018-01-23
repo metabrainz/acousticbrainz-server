@@ -41,6 +41,7 @@ services:
       dockerfile: ./docker/Dockerfile.gaia
     command: python2 -m dataset_eval.evaluate
     volumes:
-      - ../:/eval
+      - ../data/datasets:/datasets
+      - ../data/files:/files
     depends_on:
       - db

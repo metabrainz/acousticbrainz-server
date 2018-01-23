@@ -55,7 +55,8 @@ SMTP_SERVER = "localhost"
 SMTP_PORT = 25
 MAIL_FROM_DOMAIN = "acousticbrainz.org"
 
-FILE_STORAGE_DIR = "./files"
+DATASET_DIR = "/datasets"
+FILE_STORAGE_DIR = "/files"
 
 #Feature Flags
 FEATURE_EVAL_LOCATION = False

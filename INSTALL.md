@@ -40,8 +40,11 @@ Then use `pip` to install the required Python dependencies:
 
 ### Configuration
 
-Copy `custom_config.py.example` to `custom_config.py` and edit its content to fit your
-environment.
+Copy `custom_config.py.example` to `custom_config.py` and edit its content to fit your environment.
+
+You will need to add configuration options for `DATASET_DIR` and
+`FILE_STORAGE_DIR` to point to directories that the user that you run the
+server as can write to.
 
 ### Creating the database
 
@@ -90,5 +93,9 @@ directory into *./hl_extractor/* in the project root.
 ### Installing SVM models
 
 Download archive from http://essentia.upf.edu/documentation/svm_models/, extract
-it, and move contents of *svm_models* directory into */hl_extractor/svm_models*
-in the project root.
+it, and move contents of the *svm_models* directory into
+*/hl_extractor/svm_models* in the project root.
+
+In the file `profile.conf.in`, you will need to change the paths of the
+items in the `svm_models` list. If you make these paths relative, they must
+be relative to the root directory of the project.

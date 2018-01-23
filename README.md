@@ -15,7 +15,8 @@ Then copy two config files:
 
 1. `custom_config.py.example` to `custom_config.py` *(you don't need to modify this file)*
 2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
-*(in this file you need to set `models_essentia_git_sha` value)*
+  In `profile.conf.in` you need to set the `models_essentia_git_sha` value.
+  Unless you know what you are doing, this value should be **v2.1_beta1**
 
 #### Running `docker-compose` commands
 

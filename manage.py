@@ -170,7 +170,7 @@ def clear_cache():
     webserver.create_app()
     cache.flush_all()
 
-
+@cli.command()
 @click.argument("username")
 @click.option("--force", "-f", is_flag=True, help="Create user if doesn't exist.")
 def add_admin(username, force=False):

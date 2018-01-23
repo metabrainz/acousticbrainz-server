@@ -29,6 +29,7 @@ RUN apt-get update \
 
 RUN mkdir /code
 RUN mkdir /code/hl_extractor
+RUN mkdir /data
 WORKDIR /code
 
 # Gaia
@@ -56,7 +57,7 @@ RUN mkdir /tmp/models \
     && cd /tmp/models \
     && curl --silent -o models.tar.gz http://essentia.upf.edu/documentation/svm_models/essentia-extractor-svm_models-v2.1_beta1.tar.gz \
     && tar -xvzf models.tar.gz \
-    && mv /tmp/models/v2.1_beta1/svm_models /code/hl_extractor/ \
+    && mv /tmp/models/v2.1_beta1/svm_models /data/ \
     && cd / && rm -r /tmp/models
 
 # Python dependencies

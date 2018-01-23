@@ -2,24 +2,24 @@ indent: 0
 
 highlevel:
    compute: 1.
-   svm_models: [ svm_models/danceability.history,
-                 svm_models/gender.history,
-                 svm_models/genre_dortmund.history,
-                 svm_models/genre_electronic.history,
-                 svm_models/genre_rosamerica.history,
-                 svm_models/genre_tzanetakis.history,
-                 svm_models/ismir04_rhythm.history,
-                 svm_models/mood_acoustic.history,
-                 svm_models/mood_aggressive.history,
-                 svm_models/mood_electronic.history,
-                 svm_models/mood_happy.history,
-                 svm_models/mood_party.history,
-                 svm_models/mood_relaxed.history,
-                 svm_models/mood_sad.history,
-                 svm_models/moods_mirex.history,
-                 svm_models/timbre.history,
-                 svm_models/tonal_atonal.history,
-                 svm_models/voice_instrumental.history
+   svm_models: [ /data/svm_models/danceability.history,
+                 /data/svm_models/gender.history,
+                 /data/svm_models/genre_dortmund.history,
+                 /data/svm_models/genre_electronic.history,
+                 /data/svm_models/genre_rosamerica.history,
+                 /data/svm_models/genre_tzanetakis.history,
+                 /data/svm_models/ismir04_rhythm.history,
+                 /data/svm_models/mood_acoustic.history,
+                 /data/svm_models/mood_aggressive.history,
+                 /data/svm_models/mood_electronic.history,
+                 /data/svm_models/mood_happy.history,
+                 /data/svm_models/mood_party.history,
+                 /data/svm_models/mood_relaxed.history,
+                 /data/svm_models/mood_sad.history,
+                 /data/svm_models/moods_mirex.history,
+                 /data/svm_models/timbre.history,
+                 /data/svm_models/tonal_atonal.history,
+                 /data/svm_models/voice_instrumental.history
                ]
 mergeValues:
     metadata:

@@ -40,7 +40,7 @@ function setup {
     echo "Running setup"
     # PostgreSQL Database initialization
     docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME run --rm acousticbrainz dockerize -wait tcp://db:5432 -timeout 60s \
-                bash -c "python manage.py init_db --skip-create-db"
+                bash -c "python manage.py init_db"
 }
 
 function is_db_running {

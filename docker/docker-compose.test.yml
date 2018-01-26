@@ -6,9 +6,6 @@ services:
     image: postgres:9.5.4
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: acousticbrainz
-      POSTGRES_PASSWORD: acousticbrainz
-      POSTGRES_DB: acousticbrainz
     ports:
       - "15431:5432"
 

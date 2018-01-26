@@ -4,8 +4,8 @@ TESTING = True
 SECRET_KEY = "CHANGE_ME"
 
 # Test database
-SQLALCHEMY_DATABASE_URI = "postgresql://ab_test@db/ab_test"
-POSTGRES_ADMIN_AB_URI = "postgresql://postgres@db/ab_test"
+SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@db/acousticbrainz"
+POSTGRES_ADMIN_AB_URI = "postgresql://postgres@db/acousticbrainz"
 
 
 # MUSICBRAINZ

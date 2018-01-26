@@ -147,3 +147,13 @@ low-level and high-level JSON.*
     ./develop.sh run --rm webserver python2 manage.py dump incremental --id 42
 
 *Same as another one, but recreates previously created incremental dump.*
+
+## Test your changes with unit tests
+
+Unit tests are an important part of AcousticBrainz. It helps make it easier for
+developers to test changes and help prevent easily avoidable mistakes later on.
+Before commiting new code or making a pull request, run the unit tests on your code.
+
+    ./test.sh
+
+This builds and runs the containers needed for the tests.

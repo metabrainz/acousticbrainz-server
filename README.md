@@ -99,13 +99,13 @@ You can start the web server (will be available at http://localhost:8080/):
 
 the high-level data extractor:
 
-    $ cd acousticbrainz-server/hl_extractor
-    $ python hl_calc.py
+    $ cd acousticbrainz-server
+    $ python -m hl_extractor.hl_calc
 
 the dataset evaluator:
 
-    $ cd acousticbrainz-server/dataset_eval
-    $ python evaluate.py
+    $ cd acousticbrainz-server
+    $ python -m dataset_eval.evaluate
 
 
 ## Working with data

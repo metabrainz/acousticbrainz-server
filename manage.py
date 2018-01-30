@@ -97,47 +97,6 @@ def init_db(archive, force, skip_create_db=False):
 
 
 @cli.command()
-@click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
-def init_test_db(force=False):
-    """Same as `init_db` command, but creates a database that will be used to
-    run tests and doesn't import data (no need to do that).
-    """
-
-    app = webserver.create_app_with_configuration()
-
-    db.init_db_engine(app.config['POSTGRES_ADMIN_URI'])
-    if force:
-        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_test_db.sql'))
-        if not res:
-            raise Exception('Failed to drop existing test database and user! Exit code: %i' % res)
-
-    if not skip_create_db:
-        print('Creating user and database for testing...')
-        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_test_db.sql'))
-        if not res:
-            raise Exception('Failed to create new database and user! Exit code: %i' % res)
-
-    print('Creating database extensions...')
-    db.init_db_engine(app.config['POSTGRES_ADMIN_AB_URI'])
-    res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'))
-
-    exit_code = _run_psql('create_extensions.sql', 'ab_test')
-    if exit_code != 0:
-        raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
-
-    # inits the test database
-    DatabaseTestCase.create_app()
-
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
-
-    print("Done!")
-
-
-@cli.command()
 @click.argument("archive", type=click.Path(exists=True))
 def import_data(archive):
     """Imports data dump into the database."""

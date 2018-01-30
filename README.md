@@ -157,3 +157,7 @@ Before commiting new code or making a pull request, run the unit tests on your c
     ./test.sh
 
 This builds and runs the containers needed for the tests.
+
+The `test.sh` command creates new containers and a new database every time it
+is run. This database is only meant for running the tests and is discarded after,
+unlike the normal database which is made to persist via a docker volume.

@@ -156,8 +156,33 @@ Before commiting new code or making a pull request, run the unit tests on your c
 
     ./test.sh
 
-This builds and runs the containers needed for the tests.
+This will start a set of docker containers separate to your development environment,
+run the tests, and then stop and remove the containers. To run tests more rapidly
+without having to bring up and take down containers all the time, you can run
+each step individually. To bring up containers in the background:
 
-The `test.sh` command creates new containers and a new database every time it
-is run. This database is only meant for running the tests and is discarded after,
-unlike the normal database which is made to persist via a docker volume.
+    ./test.sh -u
+
+Then run your tests when you need with:
+
+    ./test.sh [optional arguments to pass to py.test]
+
+Stop the test containers with:
+
+    ./test.sh -s
+
+This will stop but not delete the containers. You can delete the containers with:
+
+    ./test.sh -d
+
+We use the `-p` flag to `docker-compose` to start the test containers as a new
+project, `acousticbrainztest` so that containers don't conflict with
+already running development containers. You can access containers directly
+while they are running (e.g. with `docker exec`) with this name (e.g. `acousticbrainztest_db_1`)
+
+The database has no separate volume for data, this means that any data
+in the test database will disappear when the containers are
+deleted (at the end of standalone `./test.sh`, or after `./test.sh -d`)
+
+We forward the port from postgres to `localhost:15431`, so you can connect to it
+with `psql` on your host if you want to inspect the contents of the database.

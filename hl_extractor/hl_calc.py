@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import argparse
 import json
 import os
 import subprocess
 import sys
 import tempfile
 from hashlib import sha1
-from setproctitle import setproctitle
 from threading import Thread
 from time import sleep
 
@@ -16,7 +14,6 @@ import yaml
 
 import db
 import db.data
-from webserver import create_app
 
 DEFAULT_NUM_THREADS = 1
 
@@ -145,7 +142,6 @@ def get_build_sha1(binary):
 
 def main(num_threads):
     print("High-level extractor daemon starting with %d threads" % num_threads)
-    create_app()
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
@@ -216,10 +212,3 @@ def main(num_threads):
                 sleep(.1)
             else:
                 break
-
-if __name__ == "__main__":
-    setproctitle("hl_calc")
-    parser = argparse.ArgumentParser(description='Extract high-level data from low-level data')
-    parser.add_argument("-t", "--threads", help="Number of threads to start", default=DEFAULT_NUM_THREADS, type=int)
-    args = parser.parse_args()
-    main(args.threads)

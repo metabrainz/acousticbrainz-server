@@ -48,13 +48,13 @@ server as can write to.
 
 ### Creating the database
 
-After you tweak configuration file, the database needs to be created:
+After you tweak configuration file, the database needs to be created.
+
+Make sure that you have a postgres superuser which can create users and databases.
+If this user must be authenticated, change `POSTGRES_ADMIN_URI` and
+`POSTGRES_ADMIN_AB_URI` in your `custom_config.py`. Then, to create the database run:
 
     $ python manage.py init_db
-
-*Optional:* You might want to create a database that will be used by tests:
-
-    $ python manage.py init_test_db
 
 ### Node.js dependencies
 
@@ -99,3 +99,22 @@ it, and move contents of the *svm_models* directory into
 In the file `profile.conf.in`, you will need to change the paths of the
 items in the `svm_models` list. If you make these paths relative, they must
 be relative to the root directory of the project.
+
+### Running
+
+Run the high-level extractor using the `worker_manage.py` script:
+
+    python worker_manage.py hl_extractor
+
+## Dataset evaluator
+
+Run it like this:
+
+    python worker_manage.py dataset_evaluator
+
+## Testing
+
+Database configuration for testing is configured in `test_config.py`.
+You will need to manually create a user and database and
+set `SQLALCHEMY_DATABASE_URI` to use these values. The tests
+will automatically build the database structure when running.

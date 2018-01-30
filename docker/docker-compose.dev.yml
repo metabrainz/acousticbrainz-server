@@ -31,7 +31,7 @@ services:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.gaia
-    command: python2 -m hl_extractor.hl_calc
+    command: python2 worker_manage.py hl_extractor
     depends_on:
       - db
 
@@ -39,7 +39,7 @@ services:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.gaia
-    command: python2 -m dataset_eval.evaluate
+    command: python2 worker_manage.py dataset_evaluator
     volumes:
       - ../data/datasets:/data/datasets
       - ../data/files:/data/files

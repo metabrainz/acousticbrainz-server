@@ -21,10 +21,12 @@ from webserver import create_app
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
+app = create_app()
 
-def main():
+
+@app.cli.command()
+def dataset_eval():
     logging.info("Starting dataset evaluator...")
-    app = create_app()
     dataset_dir = app.config["DATASET_DIR"]
     storage_dir = os.path.join(app.config["FILE_STORAGE_DIR"], "history")
     while True:
@@ -174,7 +176,3 @@ def save_history_file(storage_dir, history_file_path, job_id):
     destination = os.path.join(directory, "%s.history" % job_id)
     shutil.copyfile(history_file_path, destination)
     return destination
-
-
-if __name__ == "__main__":
-    main()

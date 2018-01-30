@@ -60,3 +60,6 @@ FILE_STORAGE_DIR = "/data/files"
 
 #Feature Flags
 FEATURE_EVAL_LOCATION = False
+
+# Datasets
+DATASET_DIR = "datasets"

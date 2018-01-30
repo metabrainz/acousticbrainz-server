@@ -5,7 +5,6 @@ import click
 import re
 import os
 
-from webserver import create_app
 
 cli = click.Group()
 

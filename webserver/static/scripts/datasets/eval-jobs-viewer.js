@@ -42,9 +42,8 @@ var EvaluationJobsViewer = React.createClass({
             console.error("ID of existing dataset needs to be specified" +
                 "in data-dataset-id property.");
             return;
-        }
-        else if(container.dataset.jobId){
-            this.state.active_section = SECTION_JOB_DETAILS
+        } else if (container.dataset.jobId) {
+            this.state.active_section = SECTION_JOB_DETAILS;
         }
 
         $.get("/datasets/" + container.dataset.datasetId + "/evaluation/json", function(data) {
@@ -63,10 +62,11 @@ var EvaluationJobsViewer = React.createClass({
         }.bind(this));
 
         window.onpopstate = (event) => {
-            if(this.state.active_section == SECTION_JOB_LIST)
+            if (this.state.active_section == SECTION_JOB_LIST) {
                 this.handleViewDetails(event.state.active_job_index);
-            else
+            } else {
                 this.handleReturn();
+            }
         };
         
     },  
@@ -138,13 +138,14 @@ var EvaluationJobsViewer = React.createClass({
                         onDelete={this.handleJobDelete} />
                 );
             } else { // SECTION_JOB_DETAILS
-               if(container.dataset.jobId){
+               if (container.dataset.jobId) {
                     var active_job_index;
                     this.state.jobs.forEach(function (cls, index) {
-                       if(container.dataset.jobId == cls.id)
-                            active_job_index = index;
+                       if (container.dataset.jobId == cls.id) {
+                           active_job_index = index;
+                       }
                     });
-                    this.state.active_job_index = active_job_index
+                    this.state.active_job_index = active_job_index;
                 }
 
                 var active_job = this.state.jobs[this.state.active_job_index];
@@ -264,7 +265,7 @@ var JobRow = React.createClass({
         }
         return (
             <tr className="job">
-                <td className="id"><a href={"evaluation/"+this.props.id} onClick={this.handleViewDetails}>{this.props.id}</a></td>
+                <td className="id"><a href={"evaluation/" + this.props.id} onClick={this.handleViewDetails}>{this.props.id}</a></td>
                 <td className="status">{status}</td>
                 <td className="created"><span>{this.props.created}</span></td>
                 <td className="controls">{controls}</td>

@@ -49,9 +49,8 @@ var Dataset = React.createClass({
             console.error("ID of existing dataset needs to be specified" +
             "in data-dataset-id property.");
             return;
-        }
-        else if(container.dataset.className){
-            this.state.active_section = SECTION_CLASS_DETAILS
+        } else if (container.dataset.className) {
+            this.state.active_section = SECTION_CLASS_DETAILS;
         }
 
         $.get("/datasets/" + container.dataset.datasetId + "/json", function(result) {
@@ -59,10 +58,11 @@ var Dataset = React.createClass({
         }.bind(this));
 
         window.onpopstate = (event) => {
-           if(this.state.active_section == SECTION_DATASET_DETAILS)
-            this.handleViewDetails(event.state.active_class_index);
-           else
-            this.handleReturn();
+           if (this.state.active_section == SECTION_DATASET_DETAILS) {
+               this.handleViewDetails(event.state.active_class_index);
+           } else {
+               this.handleReturn();
+           }
         };
     },
     handleViewDetails: function (index) {
@@ -88,13 +88,14 @@ var Dataset = React.createClass({
                 );
             } else { // SECTION_CLASS_DETAILS
                 //set active index if the class was directly called 
-                if(container.dataset.className){
+                if (container.dataset.className) {
                     var active_class_index;
                     this.state.data.classes.forEach(function (cls, index) {
-                        if(cls.name == container.dataset.className)
-                            active_class_index= index;
+                        if (cls.name == container.dataset.className) {
+                            active_class_index = index;
+                        }
                     });
-                    this.state.active_class_index = active_class_index
+                    this.state.active_class_index = active_class_index;
                 }
                 var active_class = this.state.data.classes[this.state.active_class_index];
                 return (
@@ -153,7 +154,7 @@ var Class = React.createClass({
     },
     render: function () {
         var name = this.props.name;
-        var link = container.dataset.datasetId + "/" + name ;
+        var link = container.dataset.datasetId + "/" + name;
         if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
         var recordingsCounterText = this.props.recordingCounter.toString() + " ";
         if (this.props.recordingCounter == 1) recordingsCounterText += "recording";
@@ -185,14 +186,15 @@ var ClassDetails = React.createClass({
         var url = window.location.href;
         var datasetId = container.dataset.datasetId;
 
-        if(window.location.href.indexOf(datasetId) == -1 )
-           url += "/"+datasetId;
+        if (window.location.href.indexOf(datasetId) === -1) {
+            url += "/" + datasetId;
+        }
 
-        if(window.location.href.indexOf(this.props.name) == -1 )
-           url +=  "/"+this.props.name ;
+        if (window.location.href.indexOf(this.props.name) === -1) {
+            url += "/" + this.props.name;
+        }
         
-        window.history.pushState({active_class_index:this.props.id},'class-details', url);    
-        
+        window.history.pushState({active_class_index:this.props.id}, 'class-details', url);
     },
     render: function () {
         return (

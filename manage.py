@@ -26,6 +26,7 @@ cli.add_command(shell_command)
 @click.option("--host", "-h", default="0.0.0.0", show_default=True)
 @click.option("--port", "-p", default=8080, show_default=True)
 def runserver(host, port):
+    """Run a development server."""
     reload_on_files = current_app.config['RELOAD_ON_FILES']
     current_app.run(host=host, port=port,
                     extra_files=reload_on_files)
@@ -36,7 +37,7 @@ def runserver(host, port):
 @click.argument("archive", type=click.Path(exists=True), required=False)
 @click.option("--skip-create-db", "-s", is_flag=True, help="Skip database creation step.")
 def init_db(archive, force, skip_create_db=False):
-    """Initializes database and imports data if needed.
+    """Initialize database and import data.
 
     This process involves several steps:
     1. Table structure is created.
@@ -145,7 +146,7 @@ def import_data(archive):
 
 @cli.command()
 def compute_stats():
-    """Compute any outstanding hourly stats and add to the database."""
+    """Compute outstanding hourly statistics."""
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
@@ -159,7 +160,7 @@ def cache_stats():
 
 @cli.command()
 def clear_cache():
-    """Clear the cache"""
+    """Clear the cache."""
     cache.flush_all()
 
 

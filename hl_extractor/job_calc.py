@@ -18,7 +18,6 @@ import db
 import db.data
 import db.dataset
 import db.dataset_eval
-from webserver import create_app
 
 DEFAULT_NUM_THREADS = 1
 
@@ -157,7 +156,6 @@ def get_model_from_eval(jobid):
 
 
 def main(num_threads, profile, dataset_job_id):
-    app = create_app()
     print("High-level extractor daemon starting with %d threads" % num_threads)
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)

@@ -8,6 +8,7 @@ import tempfile
 import time
 
 import gaia2.fastyaml as yaml
+from flask import current_app
 
 import db
 import db.data
@@ -17,16 +18,14 @@ import db.exceptions
 import utils.path
 from dataset_eval import artistfilter
 from dataset_eval import gaia_wrapper
-from webserver import create_app
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
 
 def main():
     logging.info("Starting dataset evaluator...")
-    app = create_app()
-    dataset_dir = app.config["DATASET_DIR"]
-    storage_dir = os.path.join(app.config["FILE_STORAGE_DIR"], "history")
+    dataset_dir = current_app.config["DATASET_DIR"]
+    storage_dir = os.path.join(current_app.config["FILE_STORAGE_DIR"], "history")
     while True:
         pending_job = db.dataset_eval.get_next_pending_job()
         if pending_job:
@@ -174,7 +173,3 @@ def save_history_file(storage_dir, history_file_path, job_id):
     destination = os.path.join(directory, "%s.history" % job_id)
     shutil.copyfile(history_file_path, destination)
     return destination
-
-
-if __name__ == "__main__":
-    main()

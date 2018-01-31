@@ -80,12 +80,14 @@ def list_datasets(status):
 
 
 @datasets_bp.route("/<uuid:id>")
-def view(id):
+@datasets_bp.route("/<uuid:id>/<string:class_name>")
+def view(id, class_name = None):
     ds = get_dataset(id)
     return render_template(
         "datasets/view.html",
         dataset=ds,
         author=db.user.get(ds["author"]),
+        class_name=class_name,
     )
 
 
@@ -95,12 +97,14 @@ def accuracy():
 
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluation")
-def eval_info(dataset_id):
+@datasets_bp.route("/<uuid:dataset_id>/evaluation/<uuid:job_id>")
+def eval_info(dataset_id, job_id = None):
     ds = get_dataset(dataset_id)
     return render_template(
         "datasets/eval-info.html",
         dataset=ds,
         author=db.user.get(ds["author"]),
+        job_id=job_id,
     )
 
 

@@ -6,7 +6,7 @@
   <div id="evaluation-results">
     {% from 'datasets/macros.html' import print_header %}
     {{ print_header(dataset, author, current_user, 'evaluation') }}
-    <div id="eval-viewer-container" data-dataset-id="{{ dataset['id'] }}"></div>
+    <div id="eval-viewer-container" data-dataset-id="{{ dataset['id'] }}" data-job-id="{{ job_id if job_id != None else ''}}"></div>
   </div>
 {% endblock %}
 

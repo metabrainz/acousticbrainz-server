@@ -11,9 +11,9 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app)
 
 
 @cli.command('hl_extractor', help='High-level extractor tool')
-@click.option('-t', default=1, type=int)
-def command_hl_extractor(t=1):
-    hl_extractor.hl_calc.main(t)
+@click.option('--threads', '-t', default=1, type=int)
+def command_hl_extractor(threads=1):
+    hl_extractor.hl_calc.main(threads)
 
 
 @cli.command('dataset_evaluator', help='Evaluate pending datasets')

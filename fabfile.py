@@ -1,24 +1,5 @@
-from __future__ import with_statement
-
-import os
-
 from fabric.api import local
 from fabric.colors import green
-
-
-def vpsql():
-    """Connect to the acousticbrainz database running on vagrant."""
-    local("psql -h localhost -p 15432 -U postgres acousticbrainz")
-
-
-def vssh():
-    """SSH to a running vagrant host."""
-    curdir = os.path.dirname(os.path.abspath(__file__))
-    configfile = os.path.join(curdir, '.vagrant', 'ssh_config')
-    if not os.path.exists(configfile):
-        local('vagrant ssh-config acousticbrainz > .vagrant/ssh_config')
-
-    local("ssh -F .vagrant/ssh_config -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/ab_vagrant_control' -o 'ControlPersist 4h' acousticbrainz")
 
 
 def git_pull():

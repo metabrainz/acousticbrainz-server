@@ -130,9 +130,9 @@ def add_admin(username, force=False):
     """Make user an admin."""
     try:
         db.user.set_admin(username, admin=True, force=force)
+        click.echo("Made %s an admin." % username)
     except db.exceptions.DatabaseException as e:
         click.echo("Error: %s" % e, err=True)
-    click.echo("Made %s an admin." % username)
 
 
 @cli.command()

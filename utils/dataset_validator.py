@@ -65,7 +65,7 @@ def _validate_dataset_name(name):
     """ Validate the name field of a dataset """
     if not isinstance(name, string_types):
         raise ValidationException("Field `name` must be a string.")
-    if not (DATASET_NAME_LEN_MIN < len(name) < DATASET_NAME_LEN_MAX):
+    if not (DATASET_NAME_LEN_MIN <= len(name) <= DATASET_NAME_LEN_MAX):
         raise ValidationException("Class name must be between %s and %s characters" %
                                   (DATASET_NAME_LEN_MIN, DATASET_NAME_LEN_MAX))
 
@@ -139,7 +139,7 @@ def validate_class(cls, idx=None, recordings_required=True):
     # Name
     if not isinstance(cls["name"], string_types):
         raise ValidationException("Field `name` of class%s is not a string." % class_number_text)
-    if not (CLASS_NAME_LEN_MIN < len(cls["name"]) < CLASS_NAME_LEN_MAX):
+    if not (CLASS_NAME_LEN_MIN <= len(cls["name"]) <= CLASS_NAME_LEN_MAX):
         raise ValidationException("Length of the `name` field in class%s doesn't fit the limits. "
                                   "Class name must be between %s and %s characters" %
                                   (class_number_text, CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
@@ -181,7 +181,7 @@ def validate_class_update(cls):
         raise ValidationException("Field `name` of class is not a string.")
     if "new_name" in cls and not isinstance(cls["new_name"], string_types):
         raise ValidationException("Field `new_name` of class is not a string.")
-    if "new_name" in cls and not (CLASS_NAME_LEN_MIN < len(cls["new_name"]) < CLASS_NAME_LEN_MAX):
+    if "new_name" in cls and not (CLASS_NAME_LEN_MIN <= len(cls["new_name"]) <= CLASS_NAME_LEN_MAX):
         raise ValidationException("Length of the `new_name` field in class doesn't fit the limits. "
                                   "Class name must be between %s and %s characters" %
                                   (CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))

@@ -130,9 +130,10 @@ def add_admin(username, force=False):
     """Make user an admin."""
     try:
         db.user.set_admin(username, admin=True, force=force)
+        click.echo("Made %s an admin." % username)
     except db.exceptions.DatabaseException as e:
         click.echo("Error: %s" % e, err=True)
-    click.echo("Made %s an admin." % username)
+        sys.exit(-1)
 
 
 @cli.command()
@@ -141,9 +142,10 @@ def remove_admin(username):
     """Remove admin privileges from a user."""
     try:
         db.user.set_admin(username, admin=False)
+        click.echo("Removed admin privileges from %s." % username)
     except db.exceptions.DatabaseException as e:
         click.echo("Error: %s" % e, err=True)
-    click.echo("Removed admin privileges from %s." % username)
+        sys.exit(-1)
 
 
 # Please keep additional sets of commands down there

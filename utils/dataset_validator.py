@@ -142,7 +142,7 @@ def validate_class(cls, idx=None, recordings_required=True):
     if not (CLASS_NAME_LEN_MIN <= len(cls["name"]) <= CLASS_NAME_LEN_MAX):
         raise ValidationException("Length of the `name` field in class%s doesn't fit the limits. "
                                   "Class name must be between %s and %s characters" %
-                                  (class_number_text, CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
+                                  (class_number_text, CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MAX))
 
     # Description (optional)
     if "description" in cls and cls["description"] is not None:
@@ -184,7 +184,7 @@ def validate_class_update(cls):
     if "new_name" in cls and not (CLASS_NAME_LEN_MIN <= len(cls["new_name"]) <= CLASS_NAME_LEN_MAX):
         raise ValidationException("Length of the `new_name` field in class doesn't fit the limits. "
                                   "Class name must be between %s and %s characters" %
-                                  (CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MIN))
+                                  (CLASS_NAME_LEN_MIN, CLASS_NAME_LEN_MAX))
 
     # Description (optional)
     if "description" in cls and cls["description"] is not None:

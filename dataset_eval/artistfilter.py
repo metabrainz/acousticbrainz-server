@@ -143,7 +143,7 @@ def recordings_to_artists_sub(mbids):
             notincache.append(m)
 
     q = text(
-       """SELECT mbid::text, data->'metadata'->'tags'->'musicbrainz_artistid'->>0
+       """SELECT gid::text, data->'metadata'->'tags'->'musicbrainz_artistid'->>0
             FROM lowlevel ll
             JOIN lowlevel_json llj
               ON ll.id = llj.id

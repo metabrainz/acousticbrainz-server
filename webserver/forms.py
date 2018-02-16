@@ -1,5 +1,5 @@
-
-from wtforms import BooleanField, SelectField, StringField, TextAreaField
+from wtforms import BooleanField, SelectField, StringField, TextAreaField, \
+    validators, SelectMultipleField, widgets
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -14,6 +14,17 @@ DATASET_PENDING = "pending"
 DATASET_RUNNING = "running"
 DATASET_DONE = "done"
 DATASET_ALL = "all"
+
+
+DATASET_C_VALUE = ' -5, -3, -1, 1, 3, 5, 7, 9, 11 '
+DATASET_GAMMA_VALUE = '3, 1, -1, -3, -5, -7, -9, -11'
+PREPROCESSING_VALUES = [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized' ]
+PREPROCESSING_VALUES = [(value, value) for value in PREPROCESSING_VALUES]
+
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
 
 
 class DatasetCSVImportForm(FlaskForm):
@@ -37,3 +48,16 @@ class DatasetEvaluationForm(FlaskForm):
         default = DATASET_EVAL_LOCAL
     )
     normalize = BooleanField("Normalize classes")
+
+    """
+    Adding three more preferences for c, gamma and preprocessing values
+    """
+    c_value = TextAreaField('C Values',
+        default=DATASET_C_VALUE
+    )
+    gamma_value = TextAreaField('Gamma Values',
+        default=DATASET_GAMMA_VALUE
+    )
+    preprocessing_values = MultiCheckboxField('Preprocessing Values',
+        choices=PREPROCESSING_VALUES
+    )

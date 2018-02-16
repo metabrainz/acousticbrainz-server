@@ -233,10 +233,18 @@ def evaluate(dataset_id):
         try:
             if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
                 form.filter_type.data = None
+            #Converting unicode format string type
+            form.c_value.data = str(form.c_value.data)
+            form.gamma_value.data = str(form.gamma_value.data)
+            preprocessing_values = [str(value) for value in form.preprocessing_values.data]
+            form.preprocessing_values.data = ' '.join(preprocessing_values)
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
+                c_value=form.c_value.data,
+                gamma_value=form.gamma_value.data,
+                preprocessing_values=form.preprocessing_values.data,
                 filter_type=form.filter_type.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])

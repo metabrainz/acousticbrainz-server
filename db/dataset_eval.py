@@ -25,7 +25,10 @@ EVAL_COLUMNS = ["dataset_eval_jobs.id::text",
                 "dataset_eval_jobs.testing_snapshot", 
                 "dataset_eval_jobs.created", 
                 "dataset_eval_jobs.updated", 
-                "dataset_eval_jobs.eval_location"]
+                "dataset_eval_jobs.eval_location",
+                "dataset_eval_jobs.c_value",
+                "dataset_eval_jobs.gamma_value",
+                "dataset_eval_jobs.preprocessing_values"]
 EVAL_COLUMNS_COMMA_SEPARATED = ", ".join(EVAL_COLUMNS)
 
 VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
@@ -40,7 +43,9 @@ VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
 FILTER_ARTIST = "artist"
 
 
-def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
+def evaluate_dataset(dataset_id, normalize, eval_location, c_value, gamma_value,
+    preprocessing_values, filter_type=None
+    ):
     """Add dataset into evaluation queue.
 
     Args:
@@ -69,7 +74,8 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
 
         # Validate dataset contents
         validate_dataset_contents(db.dataset.get(dataset_id))
-        return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
+        return _create_job(connection, dataset_id, normalize, eval_location,  c_value,
+            gamma_value, preprocessing_values, filter_type)
 
 
 def job_exists(dataset_id):
@@ -308,7 +314,9 @@ def add_dataset_eval_set(connection, data):
     return snapshot_id
 
 
-def _create_job(connection, dataset_id, normalize, eval_location, filter_type=None):
+def _create_job(connection, dataset_id, normalize, eval_location, c_value, gamma_value,
+    preprocessing_values, filter_type=None
+    ):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -318,8 +326,12 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
         raise ValueError("Incorrect 'eval_location'. Must be one of %s" % VALID_EVAL_LOCATION)
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
-                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location)
-                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options, :eval_location)
+                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location,
+                    c_value, gamma_value, preprocessing_values
+                )
+                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options, :eval_location,
+                        :c_value, :gamma_value, :preprocessing_values
+                     )
                   RETURNING id
             """)
     result = connection.execute(query, {
@@ -329,7 +341,10 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
             "normalize": normalize,
             "filter_type": filter_type,
         }),
-        "eval_location": eval_location
+        "eval_location": eval_location,
+        "c_value": c_value,
+        "gamma_value": gamma_value,
+        "preprocessing_values": preprocessing_values
     })
     job_id = result.fetchone()[0]
     return job_id

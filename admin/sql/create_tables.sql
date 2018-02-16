@@ -106,17 +106,20 @@ CREATE TABLE dataset_snapshot (
 );
 
 CREATE TABLE dataset_eval_jobs (
-  id                UUID,
-  snapshot_id       UUID                     NOT NULL, -- FK to snapshot
-  status            eval_job_status          NOT NULL DEFAULT 'pending',
-  status_msg        VARCHAR,
-  options           JSONB,
-  training_snapshot INT,                     -- FK to dataset_eval_sets
-  testing_snapshot  INT,                     -- FK to dataset_eval_sets
-  created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  result            JSONB,
-  eval_location     eval_location_type       NOT NULL DEFAULT 'local'
+  id                   UUID,
+  snapshot_id          UUID                     NOT NULL, -- FK to snapshot
+  status               eval_job_status          NOT NULL DEFAULT 'pending',
+  status_msg           VARCHAR,
+  options              JSONB,
+  training_snapshot    INT,                     -- FK to dataset_eval_sets
+  testing_snapshot     INT,                     -- FK to dataset_eval_sets
+  created              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  result               JSONB,
+  eval_location        eval_location_type       NOT NULL DEFAULT 'local',
+  c_value              VARCHAR,
+  gamma_value          VARCHAR,
+  preprocessing_values VARCHAR
 );
 
 CREATE TABLE dataset_eval_sets (

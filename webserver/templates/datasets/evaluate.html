@@ -39,6 +39,22 @@
       </div>
       {% endif %}
     </fieldset>
+    <fieldset>
+      {% if config.get('FEATURE_MODEL_SELECTION') %}
+      <div class="form-group">
+        <label class="col-sm-2 control-label">{{ form.c_value.label.text }}</label>
+        <div class="col-sm-4">{{ form.c_value(class="form-control", required="required") }}</div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">{{ form.gamma_value.label.text }}</label>
+        <div class="col-sm-4">{{ form.gamma_value(class="form-control", required="required") }}</div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">{{ form.preprocessing_values.label.text }}</label>
+        <div class="col-sm-4">{{ form.preprocessing_values(required="required") }}</div>
+      </div>
+      {% endif %}
+    </fieldset>
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-4">
         <button type="submit" class="btn btn-primary">Evaluate</button>

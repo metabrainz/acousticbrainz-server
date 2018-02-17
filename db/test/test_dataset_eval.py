@@ -85,7 +85,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
     def test_create_job_nonormalize(self):
         # No dataset normalization
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, False, dataset_eval.EVAL_LOCAL)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, False, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         job = dataset_eval.get_job(job_id)
 
         self.assertIsNotNone(job)
@@ -94,7 +96,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
     def test_create_job_normalize(self):
         # dataset normalization
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         job = dataset_eval.get_job(job_id)
 
         self.assertIsNotNone(job)
@@ -103,7 +107,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
     def test_create_job_artistfilter(self):
         # Artist filtering as an option
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, False, dataset_eval.EVAL_LOCAL, dataset_eval.FILTER_ARTIST)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, False, dataset_eval.EVAL_LOCAL,
+            dataset_eval.C, dataset_eval.gamma, dataset_eval.preprocessing, dataset_eval.FILTER_ARTIST
+        )
         job = dataset_eval.get_job(job_id)
 
         self.assertIsNotNone(job)
@@ -113,12 +119,16 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
     def test_create_job_badfilter(self):
         # An unknown filter type
         with self.assertRaises(ValueError):
-            job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, "test")
+            job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
+                dataset_eval.C, dataset_eval.gamma, dataset_eval.preprocessing, "test"
+            )
 
     def test_create_job_badlocation(self):
         # an invalid eval_location
         with self.assertRaises(ValueError):
-            job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, "not_a_location")
+            job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, "not_a_location", dataset_eval.C,
+                dataset_eval.gamma, dataset_eval.preprocessing
+            )
 
     def test_job_exists(self):
         self.assertFalse(dataset_eval.job_exists(self.test_dataset_id))
@@ -127,7 +137,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         self.assertTrue(dataset_eval.job_exists(self.test_dataset_id))
 
     def test_get_job(self):
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         random_id = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
         # just in case
         self.assertNotEqual(random_id, job_id)
@@ -135,7 +147,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         self.assertIsNone(dataset_eval.get_job(random_id))
 
     def test_set_job_result(self):
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
 
         result = {
             u"accuracy": 1,
@@ -151,7 +165,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         self.assertEqual(job["result"], result)
 
     def test_set_job_status(self):
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         job = dataset_eval.get_job(job_id)
         self.assertEqual(job["status"], dataset_eval.STATUS_PENDING)
 
@@ -164,10 +180,14 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
     def test_get_next_pending_job(self):
         self.maxDiff = None
-        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         job1 = dataset_eval.get_job(job1_id)
 
-        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         job2 = dataset_eval.get_job(job2_id)
 
         next_pending = dataset_eval.get_next_pending_job()
@@ -182,10 +202,14 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
     def test_get_next_pending_job_remote(self):
         # If we have a remote pending job with the most recent timestamp, skip it
-        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE)
+        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         job1 = dataset_eval.get_job(job1_id)
 
-        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         job2 = dataset_eval.get_job(job2_id)
 
         next_pending = dataset_eval.get_next_pending_job()
@@ -195,7 +219,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         with self.assertRaises(dataset_eval.JobNotFoundException):
             dataset_eval.delete_job(self.test_uuid)
 
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing
+        )
         snapshots = dataset.get_snapshots_for_dataset(self.test_dataset_id)
         self.assertEqual(len(snapshots), 1)
         self.assertIsNotNone(dataset_eval.get_job(job_id))
@@ -205,18 +231,24 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         self.assertIsNone(dataset_eval.get_job(job_id))
 
     def test_eval_job_location(self):
-        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+        job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing, None
+        )
         job1 = dataset_eval.get_job(job1_id)
         self.assertEqual(job1["eval_location"], dataset_eval.EVAL_REMOTE)
 
-        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, None)
+        job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing, None
+        )
         job2 = dataset_eval.get_job(job2_id)
         self.assertEqual(job2["eval_location"], dataset_eval.EVAL_LOCAL)
 
     def test_get_remote_pending_jobs_for_user(self):
         """ Check that we get remote pending jobs for a user """
 
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing, None
+        )
         job_details = db.dataset_eval.get_job(job_id)
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
@@ -229,7 +261,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
     def test_get_pending_jobs_for_user_local(self):
         """ Check that a local eval dataset for this user doesn't show """
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, None)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing, None
+        )
         job_details = db.dataset_eval.get_job(job_id)
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
@@ -240,14 +274,18 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
         another_user_id = user.create("another user")
         another_dataset_id = dataset.create_from_dict(self.test_data, author_id=another_user_id)
-        job_id = dataset_eval._create_job(self.conn, another_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+        job_id = dataset_eval._create_job(self.conn, another_dataset_id, True, dataset_eval.EVAL_REMOTE, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing, None
+        )
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
         self.assertEqual(response, [])
 
     def test_get_pending_jobs_for_user_done(self):
         """ Check that a remote eval job with a done status doesn't show """
-        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, None)
+        job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE, dataset_eval.C,
+            dataset_eval.gamma, dataset_eval.preprocessing, None
+        )
         db.dataset_eval.set_job_status(job_id, db.dataset_eval.STATUS_DONE)
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)

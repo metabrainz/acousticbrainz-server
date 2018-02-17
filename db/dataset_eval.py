@@ -41,6 +41,9 @@ VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
 
 # Filter types are defined in `eval_filter_type` type. See schema definition.
 FILTER_ARTIST = "artist"
+C = ' -5, -3, -1, 1, 3, 5, 7, 9, 11 '
+gamma = '3, 1, -1, -3, -5, -7, -9, -11'
+preprocessing = 'basic lowlevel nobands normalized gaussianized' 
 
 
 def evaluate_dataset(dataset_id, normalize, eval_location, c_value, gamma_value,

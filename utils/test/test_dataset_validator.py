@@ -297,7 +297,14 @@ class DatasetValidatorTestCase(unittest.TestCase):
         # Incorrect lengths
         with self.assertRaises(dataset_validator.ValidationException):
             dataset_validator.validate({
-                "name": "",  # incorrect
+                "name": "",  # Smaller than Min Len
+                "classes": [],
+                "public": False,
+            })
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate({
+                "name": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv \
+                wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghj",  # Greater than Max Len
                 "classes": [],
                 "public": False,
             })
@@ -306,7 +313,19 @@ class DatasetValidatorTestCase(unittest.TestCase):
                 "name": "this dataset",
                 "classes": [
                     {
-                        "name": "",  # incorrect
+                        "name": "",  # Smaller than Min Len
+                        "recordings": [],
+                    },
+                ],
+                "public": False,
+            })
+        with self.assertRaises(dataset_validator.ValidationException):
+            dataset_validator.validate({
+                "name": "this dataset",
+                "classes": [
+                    {
+                        "name": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl \
+                mnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghj", #Greater than Max Len
                         "recordings": [],
                     },
                 ],

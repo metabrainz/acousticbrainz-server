@@ -1,12 +1,14 @@
 from __future__ import print_function
+from flask.cli import FlaskGroup
 from db import dump
 import shutil
 import click
 import re
 import os
+import webserver
 
 
-cli = click.Group()
+cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app)
 
 
 @cli.command()

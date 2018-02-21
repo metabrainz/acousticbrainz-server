@@ -109,7 +109,7 @@ def import_data(archive):
 @click.argument("archive", type=click.Path(exists=True))
 def import_dataset_data(archive):
     """Imports dataset dump into the database."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+
     print('Importing dataset data...')
     db.dump.import_datasets_dump(archive)
     print('Done!')

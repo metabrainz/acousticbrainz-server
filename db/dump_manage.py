@@ -182,7 +182,6 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
               help="Directory where dumps need to be created")
 @click.option("--threads", "-t", type=int)
 def full_dataset_dump(location, threads):
-    create_app()
     print("Creating full datasets dump...")
     path = dump.dump_dataset_tables(location, threads)
     print("Done! Created:", path)

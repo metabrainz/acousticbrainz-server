@@ -41,14 +41,15 @@ VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
 
 # Filter types are defined in `eval_filter_type` type. See schema definition.
 FILTER_ARTIST = "artist"
-C = ' -5, -3, -1, 1, 3, 5, 7, 9, 11 '
+
+# Below values are defined in 'classification_project_template.yaml' file.
+C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
 gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 preprocessing = 'basic lowlevel nobands normalized gaussianized' 
 
 
 def evaluate_dataset(dataset_id, normalize, eval_location, c_value, gamma_value,
-    preprocessing_values, filter_type=None
-    ):
+                     preprocessing_values, filter_type=None):
     """Add dataset into evaluation queue.
 
     Args:
@@ -318,8 +319,7 @@ def add_dataset_eval_set(connection, data):
 
 
 def _create_job(connection, dataset_id, normalize, eval_location, c_value, gamma_value,
-    preprocessing_values, filter_type=None
-    ):
+                preprocessing_values, filter_type=None):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -329,12 +329,8 @@ def _create_job(connection, dataset_id, normalize, eval_location, c_value, gamma
         raise ValueError("Incorrect 'eval_location'. Must be one of %s" % VALID_EVAL_LOCATION)
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
-                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location,
-                    c_value, gamma_value, preprocessing_values
-                )
-                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options, :eval_location,
-                        :c_value, :gamma_value, :preprocessing_values
-                     )
+                INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location, c_value, gamma_value, preprocessing_values)
+                     VALUES (uuid_generate_v4(), :snapshot_id, :status, :options, :eval_location, :c_value, :gamma_value, :preprocessing_values)
                   RETURNING id
             """)
     result = connection.execute(query, {

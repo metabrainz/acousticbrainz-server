@@ -16,13 +16,11 @@ from gaia2 import DataSet, transform
 import os
 import os.path
 
-
 PROJECT_FILE_NAME = "project.yaml"
 
 
 def train_model(project_dir, groundtruth_file, filelist_file, c_value, gamma_value,
-    preprocessing_values
-    ):
+                preprocessing_values):
     """Trains best model for classification based on provided dataset.
 
     Args:
@@ -46,26 +44,32 @@ def train_model(project_dir, groundtruth_file, filelist_file, c_value, gamma_val
         datasets_dir=os.path.join(project_dir, "datasets"),
         results_dir=os.path.join(project_dir, "results"),
     )
-    """
-    Converting the preferences from string type to list
-    """
+    # skip invalid non-numerical c, gamma & preprocessing values
     c_value = [int(value) for value in c_value.split(',')]
     gamma_value = [int(s) for s in gamma_value.split(',')]
     preprocessing_values = [str(value) for value in preprocessing_values.split()]
-    """
-    Updating C, Gamma, and preprocessing values in the project file which were
-    taken as input by the user
-    """
+    # Update the project file with user-provided C, gamma, and preprocessing values
     update_parameters(project_file, c_value, gamma_value, preprocessing_values)
     run_tests(project_file)
     return select_best_model(project_dir)
 
 def update_parameters(project_file, c_value, gamma_value, preprocessing_values):
+    """Update the project file.
+
+    An optional, more detailed description of this function if needed.
+
+    Args:
+        project_file: The file to be updated.
+        c_value: C value to be updated.
+        gamma_value: gamma value to be updated.
+        preprocessing_values: preprocessing values to be updated.
+    """
     with open(project_file, "r") as pfile:
         project = yaml.load(pfile)
     for pref in project['classifiers']['svm']:
-        pref['gamma'], pref['C'], pref['preprocessing'] = gamma_value, c_value, \
-                                                            preprocessing_values
+        pref['C'] = c_value
+        pref['gamma'] = gamma_value
+        pref['preprocessing'] = preprocessing_values
     with open(project_file, "w") as pfile:
         yaml.dump(project, pfile)
 

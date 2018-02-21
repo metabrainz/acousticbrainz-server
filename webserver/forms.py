@@ -15,11 +15,12 @@ DATASET_RUNNING = "running"
 DATASET_DONE = "done"
 DATASET_ALL = "all"
 
-
-DATASET_C_VALUE = ' -5, -3, -1, 1, 3, 5, 7, 9, 11 '
+DATASET_C_VALUE = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
 DATASET_GAMMA_VALUE = '3, 1, -1, -3, -5, -7, -9, -11'
-PREPROCESSING_VALUES = [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized' ]
-PREPROCESSING_VALUES = [(value, value) for value in PREPROCESSING_VALUES]
+# MultiCheckboxField take multiple field values
+PREPROCESSING_VALUES = [('basic', 'basic'), ('lowlevel', 'lowlevel'), ('nobands', 'nobands'),
+                        ('normalized', 'normalized'), ('gaussianized', 'gaussianized')
+]
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -49,9 +50,7 @@ class DatasetEvaluationForm(FlaskForm):
     )
     normalize = BooleanField("Normalize classes")
 
-    """
-    Adding three more preferences for c, gamma and preprocessing values
-    """
+    # Add three more preferences for c, gamma and preprocessing values
     c_value = TextAreaField('C Values',
         default=DATASET_C_VALUE
     )

@@ -631,7 +631,6 @@ def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, en
         end_t (datetime): End time of the frame that will be used for data selection.
     """
     archive_name = os.path.basename(archive_path).split('.')[0]
-    print(archive_name)
     with open(archive_path, "w") as archive:
 
         pxz_command = ["pxz", "--compress"]

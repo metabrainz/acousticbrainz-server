@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from webserver import create_app
 from webserver.testing import ServerTestCase
 from flask import url_for
 
@@ -24,3 +25,15 @@ class IndexViewsTestCase(ServerTestCase):
     def test_faq(self):
         resp = self.client.get(url_for('index.faq'))
         self.assert200(resp)
+
+    def test_flask_debugtoolbar(self):
+        """ Test if flask debugtoolbar is loaded correctly
+
+        Creating an app with default config so that debug is True
+        and SECRET_KEY is defined.
+        """
+        app = create_app(debug=True)
+        client = app.test_client()
+        resp = client.get(url_for('index.goals'))
+        self.assert200(resp)
+        self.assertIn('flDebug', str(resp.data))

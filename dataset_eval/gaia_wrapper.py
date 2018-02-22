@@ -54,9 +54,7 @@ def train_model(project_dir, groundtruth_file, filelist_file, c_value, gamma_val
     return select_best_model(project_dir)
 
 def update_parameters(project_file, c_value, gamma_value, preprocessing_values):
-    """Update the project file.
-
-    An optional, more detailed description of this function if needed.
+    """Update the project file with user-provided preferences 
 
     Args:
         project_file: The file to be updated.

@@ -8,7 +8,7 @@ import os
 import webserver
 
 
-cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app)
+cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 
 
 @cli.command()

@@ -19,7 +19,7 @@ from db.testing import DatabaseTestCase
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
-cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app)
+cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 cli.add_command(shell_command)
 
 

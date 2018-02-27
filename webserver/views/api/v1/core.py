@@ -155,10 +155,23 @@ def _parse_bulk_params(params):
     return [x for x in ret if not (x in seen or seen.add(x))]
 
 
-@bp_core.route("/low-level", methods=["GET"])
-@crossdomain()
-def get_many_lowlevel():
-    """Get low-level data for many recordings at once.
+def check_bad_request_for_multiple_recordings():
+    """Checking whether the recording ids throw exceptions
+    """
+    recording_ids = request.args.get("recording_ids")
+
+    if not recording_ids:
+        raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
+
+    recordings = _parse_bulk_params(recording_ids)
+    if len(recordings) > 200:
+        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
+
+    return recordings
+
+
+def get_data_for_multiple_recordings(collect_data):
+    """Gets low-level and high-level data using the function collect_data
 
     **Example response**:
 
@@ -176,82 +189,43 @@ def get_many_lowlevel():
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
     in the returned data.
- 
+
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
 
     :resheader Content-Type: *application/json*
-   """
-    recording_ids = request.args.get("recording_ids")
-
-    if not recording_ids:
-        raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
-
-    recordings = _parse_bulk_params(recording_ids)
-    if len(recordings) > 200:
-        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
+    """
+    recordings = check_bad_request_for_multiple_recordings()
 
     recording_details = {}
 
-    # TODO: This should use a bulk get method for speed
     for recording_id, offset in recordings:
         try:
-            recording_details.setdefault(recording_id, {})[offset] = db.data.load_low_level(recording_id, offset)
+            recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
         except NoDataFoundException:
             pass
 
     return jsonify(recording_details)
+
+
+@bp_core.route("/low-level", methods=["GET"])
+@crossdomain()
+def get_many_lowlevel():
+    """Get low-level data for many recordings at once.
+    """
+    recording_details = get_data_for_multiple_recordings(db.data.load_low_level)
+    return recording_details
 
 
 @bp_core.route("/high-level", methods=["GET"])
 @crossdomain()
 def get_many_highlevel():
     """Get high-level data for many recordings at once.
-
-    **Example response**:
-
-    .. sourcecode:: json
-
-       {"mbid1": {"offset1": {document},
-                  "offset2": {document}},
-        "mbid2": {"offset1": {document}}
-       }
-
-    Offset keys are returned as strings, as per JSON encoding rules.
-    If an offset was not specified in the request for an mbid, the offset
-    will be 0.
-
-    If the list of MBIDs in the query string has a recording which is not
-    present in the database, then it is silently ignored and will not appear
-    in the returned data.
-
-    :query recording_ids: *Required.* A list of recording MBIDs to retrieve
-
-      Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
-      be >= 0
-
-    :resheader Content-Type: *application/json*
-   """
-    recording_ids = request.args.get("recording_ids")
-
-    if not recording_ids:
-        raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
-
-    recordings = _parse_bulk_params(recording_ids)
-    if len(recordings) > 200:
-        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
-
-    recording_details = {}
-
-    for recording_id, offset in recordings:
-        try:
-            recording_details.setdefault(recording_id, {})[offset] = db.data.load_high_level(recording_id, offset)
-        except NoDataFoundException:
-            pass
-
-    return jsonify(recording_details)
+    """
+    recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
+    return recording_details
 
 
 @bp_core.route("/count", methods=["GET"])
@@ -274,16 +248,7 @@ def get_many_count():
 
     :resheader Content-Type: *application/json*
     """
-    recording_ids = request.args.get("recording_ids")
-
-    if not recording_ids:
-        raise webserver.views.api.exceptions.APIBadRequest(
-            "Missing `recording_ids` parameter")
-
-    recordings = _parse_bulk_params(recording_ids)
-    if len(recordings) > 200:
-        raise webserver.views.api.exceptions.APIBadRequest(
-            "More than 200 recordings not allowed per request")
+    recordings = check_bad_request_for_multiple_recordings()
 
     mbids = [mbid for (mbid, offset) in recordings]
     return jsonify(db.data.count_many_lowlevel(mbids))

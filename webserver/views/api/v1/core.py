@@ -172,6 +172,24 @@ def check_bad_request_for_multiple_recordings():
 
 def get_data_for_multiple_recordings(collect_data):
     """Gets low-level and high-level data using the function collect_data
+    """
+    recordings = check_bad_request_for_multiple_recordings()
+
+    recording_details = {}
+
+    for recording_id, offset in recordings:
+        try:
+            recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
+        except NoDataFoundException:
+            pass
+
+    return jsonify(recording_details)
+
+
+@bp_core.route("/low-level", methods=["GET"])
+@crossdomain()
+def get_many_lowlevel():
+    """Get low-level data for many recordings at once.
 
     **Example response**:
 
@@ -197,24 +215,6 @@ def get_data_for_multiple_recordings(collect_data):
 
     :resheader Content-Type: *application/json*
     """
-    recordings = check_bad_request_for_multiple_recordings()
-
-    recording_details = {}
-
-    for recording_id, offset in recordings:
-        try:
-            recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
-        except NoDataFoundException:
-            pass
-
-    return jsonify(recording_details)
-
-
-@bp_core.route("/low-level", methods=["GET"])
-@crossdomain()
-def get_many_lowlevel():
-    """Get low-level data for many recordings at once.
-    """
     recording_details = get_data_for_multiple_recordings(db.data.load_low_level)
     return recording_details
 
@@ -223,6 +223,30 @@ def get_many_lowlevel():
 @crossdomain()
 def get_many_highlevel():
     """Get high-level data for many recordings at once.
+    
+    **Example response**:
+
+    .. sourcecode:: json
+
+       {"mbid1": {"offset1": {document},
+                  "offset2": {document}},
+        "mbid2": {"offset1": {document}}
+       }
+
+    Offset keys are returned as strings, as per JSON encoding rules.
+    If an offset was not specified in the request for an mbid, the offset
+    will be 0.
+
+    If the list of MBIDs in the query string has a recording which is not
+    present in the database, then it is silently ignored and will not appear
+    in the returned data.
+
+    :query recording_ids: *Required.* A list of recording MBIDs to retrieve
+
+      Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
+      be >= 0
+
+    :resheader Content-Type: *application/json*
     """
     recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
     return recording_details

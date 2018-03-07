@@ -191,7 +191,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertRedirects(resp, url_for("user.profile", musicbrainz_id=self.test_user_mb_name))
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 0)
 
-    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    @mock.patch('webserver.external.musicbrainz_database.recording.get_recording_by_id')
     def test_recording_info(self, get_recording_by_id):
         get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
 
@@ -211,7 +211,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.recording_info", mbid=self.test_uuid))
         self.assert404(resp)
 
-    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    @mock.patch('webserver.external.musicbrainz_database.recording.get_recording_by_id')
     def test_recording_info_in_dataset(self, get_recording_by_id):
         """ Tests views.datasets.recording_info_in_dataset.
 

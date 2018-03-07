@@ -1,9 +1,9 @@
 from brainzutils import cache
 from mbdata import models
 from mbdata import utils
+from sqlalchemy.orm import joinedload
 from webserver.external.musicbrainz_database import musicbrainz_session
 import exceptions as mb_exceptions
-import logging
 
 CACHE_TIMEOUT = 86400  # 1 day
 
@@ -24,10 +24,6 @@ def _get_recording_by_id(mbid, includes=[]):
     includes_data = {}
     with musicbrainz_session() as session:
         query = session.query(models.Recording)
-        # recording = utils.get_something_by_gid(query, models.RecordingGIDRedirect, mbid)
-        if not recording:
-            raise mb_exceptions.NoDataFoundException("Couldn't find a recording with id: {mbid}".format(mbid=mbid))
-
         if 'artists' in includes:
             # Fetch artist with artist credits
             query = query.options(joinedload("artist_credit")).\

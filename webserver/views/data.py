@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template, redirect, url_for, request
-from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 import webserver.external.musicbrainz_database.recording as mb_recording
+import webserver.external.musicbrainz_database.exceptions as mb_exceptions
 from six.moves.urllib.parse import quote_plus
 import db.data
 import db.exceptions
@@ -148,7 +148,7 @@ def _get_recording_info(mbid, metadata):
     # Getting good metadata from MusicBrainz
     try:
         good_metadata = mb_recording.get_recording_by_id(mbid)
-    except musicbrainz.DataUnavailable:
+    except mb_exceptions.NoDataFoundException:
         good_metadata = None
 
     if good_metadata:

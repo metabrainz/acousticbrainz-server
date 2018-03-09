@@ -3,6 +3,11 @@ import os
 
 API_PREFIX = '/api/'
 
+def create_app_flaskgroup(script_info):
+    """Factory function that accepts script_info and creates a Flask application"""
+    return create_app()
+
+
 def create_app_with_configuration(config_path=None):
     """Create a Flask application and load all configuration files"""
 

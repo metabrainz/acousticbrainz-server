@@ -40,10 +40,11 @@
         </li>
       </ul>
 
-      {% if code != 500 %}
         <ul class="nav navbar-nav navbar-right">
-          {% if not current_user or current_user.is_anonymous %}
-            <li><a href="{{ url_for('login.index', next=request.path) }}">Sign in</a></li>
+          {% if hide_navbar_user_menu or not current_user or current_user.is_anonymous %}
+            <li>
+              <a href="{{ url_for('login.index', next=request.path) }}">Sign in</a>
+            </li>
           {% else %}
             <li class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#">
@@ -54,15 +55,8 @@
                 <li><a href="{{ url_for('login.logout', next=request.path) }}">Sign out</a></li>
               </ul>
             </li>
-          {% endif %}
+          {%- endif -%}
         </ul>
-      {% else %}
-        {% if not current_user or current_user.is_anonymous %}
-       <ul class="nav navbar-nav navbar-right">
-            <li><a href="{{ url_for('login.index', next=request.path) }}">Sign in</a></li>
-      </ul>
-        {% endif %}
-      {%- endif -%}
     </div>
 
   </div>

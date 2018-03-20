@@ -2,11 +2,12 @@ from __future__ import absolute_import
 from webserver import create_app
 from webserver.testing import ServerTestCase
 
-import mock
-from flask import url_for
+from unittest import mock
 
+from flask import url_for
 from flask_login import login_required, AnonymousUserMixin
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
+
 import db.user as db_user
 import webserver.login
 

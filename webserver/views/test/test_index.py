@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from webserver import create_app
 from webserver.testing import ServerTestCase
 
-from unittest import mock
+import mock
 
 from flask import url_for
 from flask_login import login_required, AnonymousUserMixin
@@ -52,7 +52,7 @@ class IndexViewsTestCase(ServerTestCase):
         data = resp.data.decode('utf-8')
         self.assertIn('Sign in', data)
         # item in user menu doesn't exist
-        self.assertNotIn('Your Profile', data)
+        self.assertNotIn('Your profile', data)
         mock_user_get.assert_not_called()
 
     @mock.patch('db.user.get')
@@ -67,7 +67,7 @@ class IndexViewsTestCase(ServerTestCase):
         # username (menu header)
         self.assertIn('little_rsh', data)
         # item in user menu
-        self.assertIn('Your Profile', data)
+        self.assertIn('Your profile', data)
         mock_user_get.assert_called_with(user['id'])
 
     @mock.patch('db.user.get')
@@ -91,7 +91,7 @@ class IndexViewsTestCase(ServerTestCase):
         # username (menu header)
         self.assertIn('little_rsh', data)
         # item in user menu
-        self.assertIn('Your Profile', data)
+        self.assertIn('Your profile', data)
         mock_user_get.assert_called_with(user['id'])
 
         resp = self.client.get('/page_that_returns_404')
@@ -100,7 +100,7 @@ class IndexViewsTestCase(ServerTestCase):
         # username (menu header)
         self.assertIn('little_rsh', data)
         # item in user menu
-        self.assertIn('Your Profile', data)
+        self.assertIn('Your profile', data)
         mock_user_get.assert_called_with(user['id'])
 
     @mock.patch('db.user.get')
@@ -117,7 +117,7 @@ class IndexViewsTestCase(ServerTestCase):
         resp = self.client.get('/page_that_returns_500')
         data = resp.data.decode('utf-8')
         # item not in user menu
-        self.assertNotIn('Your Profile', data)
+        self.assertNotIn('Your profile', data)
         self.assertIn('Sign in', data)
         mock_user_get.assert_not_called()
         self.assertIsInstance(self.get_context_variable('current_user'), AnonymousUserMixin)
@@ -142,9 +142,8 @@ class IndexViewsTestCase(ServerTestCase):
         resp = self.client.get('/page_that_returns_500')
         data = resp.data.decode('utf-8')
         # item not in user menu
-        self.assertNotIn('Your Profile', data)
+        self.assertNotIn('Your profile', data)
         self.assertIn('Sign in', data)
         # Even after rendering the template, the database has only been queried once (before the exception)
-        mock_user_get.assert_called_once()
+        mock_user_get.assert_called_once_with(user['id'])
         self.assertIsInstance(self.get_context_variable('current_user'), webserver.login.User)
-

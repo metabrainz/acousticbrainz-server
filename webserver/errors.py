@@ -1,4 +1,5 @@
-from flask import render_template, jsonify, request
+from flask import render_template, jsonify, request, has_request_context, _request_ctx_stack, current_app
+
 import webserver
 from webserver.views.api import exceptions as api_exceptions
 
@@ -41,7 +42,15 @@ def init_error_handlers(app):
             error = Exception("An unknown error occurred")
             error.code = 500
             return jsonify_error(error)
-        return render_template('errors/500.html', error=error), 500
+        # On an HTTP500 page we want to make sure we don't do any more database queries
+        # in case the error was caused by an un-rolled-back database exception.
+        # flask-login will do a query to add `current_user` to the template if it's not
+        # already in the request context, so we override it with AnonymousUser to prevent it from doing so
+        # Ideally we wouldn't do this, and we would catch and roll back all database exceptions
+        if has_request_context() and not hasattr(_request_ctx_stack.top, 'user'):
+            _request_ctx_stack.top.user = current_app.login_manager.anonymous_user()
+        hide_navbar_user_menu = True
+        return render_template('errors/500.html', error=error, hide_navbar_user_menu=hide_navbar_user_menu), 500
 
     @app.errorhandler(503)
     def service_unavailable(error):

@@ -242,7 +242,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.dataset.get")
-    def test_update_dataset_details_bad_uuid(self, dataset_get):
+    def test_update_dataset_details_unknown_error(self, dataset_get):
         self.temporary_login(self.test_user_id)
         dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
 
@@ -577,7 +577,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.json, expected)
 
     @mock.patch("db.dataset.get")
-    def test_add_recordings_invalid_data(self, dataset_get):
+    def test_delete_recordings_invalid_data(self, dataset_get):
         """ Invalid data results in a 400 and query is not made """
 
         self.temporary_login(self.test_user_id)

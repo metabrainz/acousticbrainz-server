@@ -1,4 +1,4 @@
-# Docker Compose file for development
+# Docker Compose file for test
 version: "2"
 services:
 
@@ -8,13 +8,14 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "15431:5432"
+    command: postgres -F
 
   acousticbrainz:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.dev
-    ports:
-      - "8082:8080"
+    volumes:
+      - ..:/code:z
     depends_on:
       - db
       - redis

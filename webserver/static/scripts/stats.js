@@ -1,1 +1,1 @@
-require("highcharts/lib/highstock");
+require("highcharts/highstock");

@@ -340,11 +340,14 @@ def get_remote_pending_jobs_for_user(user_id):
 class IncompleteDatasetException(db.exceptions.DatabaseException):
     pass
 
+
 class IncorrectJobStatusException(db.exceptions.DatabaseException):
     pass
 
+
 class JobNotFoundException(db.exceptions.DatabaseException):
     pass
+
 
 class JobExistsException(db.exceptions.DatabaseException):
     """Should be raised when trying to add a job for dataset that already has one."""

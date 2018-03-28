@@ -8,33 +8,28 @@ class DatasetValidatorTestCase(unittest.TestCase):
         """ Validator for requests to add or delete recordings from a class """
 
         # not a dictionary
-        with self.assertRaises(dataset_validator.ValidationException) as e:
-            out = e
+        with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete("not_dictionary")
-        self.assertEqual(out.exception.message, "Request must be a dictionary.")
+        self.assertEqual(str(out.exception), "Request must be a dictionary.")
 
         # missing a required element
-        with self.assertRaises(dataset_validator.ValidationException) as e:
-            out = e
+        with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test"})
-        self.assertEqual(out.exception.message, "Field `recordings` is missing from recordings dictionary.")
+        self.assertEqual(str(out.exception), "Field `recordings` is missing from recordings dictionary.")
 
-        with self.assertRaises(dataset_validator.ValidationException) as e:
-            out = e
+        with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": [], "other": None})
-        self.assertEqual(out.exception.message, "Unexpected field `other` in recordings dictionary.")
+        self.assertEqual(str(out.exception), "Unexpected field `other` in recordings dictionary.")
 
         # recordings not a list
-        with self.assertRaises(dataset_validator.ValidationException) as e:
-            out = e
+        with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": "notlist"})
-        self.assertEqual(out.exception.message, 'Field `recordings` in class "Test" is not a list.')
+        self.assertEqual(str(out.exception), 'Field `recordings` in class "Test" is not a list.')
 
         # recording item not a uuid
-        with self.assertRaises(dataset_validator.ValidationException) as e:
-            out = e
+        with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": [1]})
-        self.assertEqual(out.exception.message, '"1" is not a valid recording MBID in class "Test".')
+        self.assertEqual(str(out.exception), '"1" is not a valid recording MBID in class "Test".')
 
         # all ok
         dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": ["cc355a8a-1cf0-4eda-a693-fd38dc1dd4e2"]})
@@ -44,10 +39,9 @@ class DatasetValidatorTestCase(unittest.TestCase):
         # Class validation is also tested in other tests below
 
         # recordings required depending on flag
-        with self.assertRaises(dataset_validator.ValidationException) as e:
-            out = e
+        with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_class({"name": "Test", "description": "Desc"}, recordings_required=True)
-        self.assertEqual(out.exception.message, "Field `recordings` is missing from class.")
+        self.assertEqual(str(out.exception), "Field `recordings` is missing from class.")
 
         # Required=False, no error
         dataset_validator.validate_class({"name": "Test", "description": "Desc"}, recordings_required=False)

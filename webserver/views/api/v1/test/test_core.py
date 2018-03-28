@@ -265,15 +265,15 @@ class GetBulkValidationTest(unittest.TestCase):
 
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another"
         with self.assertRaises(webserver.views.api.exceptions.APIBadRequest) as ex:
-            validated = core._parse_bulk_params(params)
-        self.assertEquals(ex.exception.message, "More than 1 : in 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another'")
+            core._parse_bulk_params(params)
+        self.assertEquals(str(ex.exception), "More than 1 : in 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another'")
 
     def test_validate_bulk_params_bad_mbid(self):
         # Return an error if an MBID is invalid
         params = "c5f4909e-1d7b-4f15-a6f6-1af376xxxx:1"
         with self.assertRaises(webserver.views.api.exceptions.APIBadRequest) as ex:
-            validated = core._parse_bulk_params(params)
-        self.assertEquals(ex.exception.message, "'c5f4909e-1d7b-4f15-a6f6-1af376xxxx' is not a valid UUID")
+            core._parse_bulk_params(params)
+        self.assertEquals(str(ex.exception), "'c5f4909e-1d7b-4f15-a6f6-1af376xxxx' is not a valid UUID")
 
     def test_validate_bulk_params_deduplicate(self):
         # If the same mbid:offset is provided more than once, only return one

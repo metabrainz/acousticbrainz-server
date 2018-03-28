@@ -11,6 +11,9 @@ class APIError(Exception):
         rv['message'] = self.message
         return rv
 
+    def __str__(self):
+        return self.message
+
 
 class APINotFound(APIError):
     def __init__(self, message, payload=None):

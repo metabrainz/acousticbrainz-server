@@ -175,7 +175,7 @@ def evaluate(dataset_id):
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException as e:
-            flash.error("Cannot add this dataset because of a validation error: %s" % e.message)
+            flash.error("Cannot add this dataset because of a validation error: %s" % e)
         except db.dataset_eval.JobExistsException:
             flash.warn("An evaluation job for this dataset has been already created.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))

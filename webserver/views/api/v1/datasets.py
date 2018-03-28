@@ -75,7 +75,7 @@ def create_dataset():
     try:
         dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     return jsonify(
         success=True,
@@ -127,7 +127,7 @@ def update_dataset_details(dataset_id):
     try:
         dataset_validator.validate_dataset_update(dataset_data)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     db.dataset.update_dataset_meta(ds["id"], dataset_data)
     return jsonify(
@@ -172,7 +172,7 @@ def add_class(dataset_id):
     try:
         dataset_validator.validate_class(class_dict, recordings_required=False)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     if "recordings" in class_dict:
         unique_mbids = list(set(class_dict["recordings"]))
@@ -214,7 +214,7 @@ def update_class(dataset_id):
     try:
         dataset_validator.validate_class_update(class_data)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     try:
         db.dataset.update_class(ds["id"], class_data["name"], class_data)
@@ -222,7 +222,7 @@ def update_class(dataset_id):
         # NoDataFoundException is raised if the class name doesn't exist in this dataset.
         # We treat this as a bad request, because it's based on data in the request body,
         # and not the url
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     return jsonify(
         success=True,
@@ -254,7 +254,7 @@ def delete_class(dataset_id):
     try:
         dataset_validator.validate_class(class_dict, recordings_required=False)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     db.dataset.delete_class(ds["id"], class_dict)
     return jsonify(
@@ -288,7 +288,7 @@ def add_recordings(dataset_id):
     try:
         dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids
@@ -299,7 +299,7 @@ def add_recordings(dataset_id):
         # NoDataFoundException is raised if the class name doesn't exist in this dataset.
         # We treat this as a bad request, because it's based on data in the request body,
         # and not the url
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     return jsonify(
         success=True,
@@ -332,7 +332,7 @@ def delete_recordings(dataset_id):
     try:
         dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids
@@ -343,7 +343,7 @@ def delete_recordings(dataset_id):
         # NoDataFoundException is raised if the class name doesn't exist in this dataset.
         # We treat this as a bad request, because it's based on data in the request body,
         # and not the url
-        raise api_exceptions.APIBadRequest(e.message)
+        raise api_exceptions.APIBadRequest(str(e))
 
     return jsonify(
         success=True,

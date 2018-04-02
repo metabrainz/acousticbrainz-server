@@ -66,9 +66,9 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             project_dir=eval_location,
             groundtruth_file=groundtruth_path,
             filelist_file=filelist_path,
-            c_value=eval_job["c_value"],
-            gamma_value=eval_job["gamma_value"],
-            preprocessing_values=eval_job["preprocessing_values"]
+            c_value=eval_job["options"].get("c_value"),
+            gamma_value=eval_job["options"].get("gamma_value"),
+            preprocessing_values=eval_job["options"].get("preprocessing_values"),
         )
         logging.info("Saving results...")
         save_history_file(storage_dir, results["history_path"], eval_job["id"])

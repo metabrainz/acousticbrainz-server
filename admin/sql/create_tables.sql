@@ -116,10 +116,7 @@ CREATE TABLE dataset_eval_jobs (
   created              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   result               JSONB,
-  eval_location        eval_location_type       NOT NULL DEFAULT 'local',
-  c_value              VARCHAR,
-  gamma_value          VARCHAR,
-  preprocessing_values VARCHAR
+  eval_location        eval_location_type       NOT NULL DEFAULT 'local'
 );
 
 CREATE TABLE dataset_eval_sets (

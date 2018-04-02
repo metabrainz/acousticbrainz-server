@@ -18,6 +18,9 @@ import six
 import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
+# Below values are defined in 'classification_project_template.yaml' file.
+C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
+gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
 
@@ -233,17 +236,22 @@ def evaluate(dataset_id):
         try:
             if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
                 form.filter_type.data = None
-            #Converting unicode format string type
-            form.c_value.data = str(form.c_value.data)
-            form.gamma_value.data = str(form.gamma_value.data)
-            preprocessing_values = [str(value) for value in form.preprocessing_values.data]
-            form.preprocessing_values.data = ' '.join(preprocessing_values)
+            # take default value
+            # if invalid non-numerical c and gamma
+            try:
+                c_value = [int(value) for value in form.c_value.data.split(',')]
+            except:
+                c_value = C
+            try:
+                gamma_value = [int(value) for value in form.gamma_value.data.split(',')]
+            except:
+                gamma_value = gamma
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
-                c_value=form.c_value.data,
-                gamma_value=form.gamma_value.data,
+                c_value=c_value,
+                gamma_value=gamma_value,
                 preprocessing_values=form.preprocessing_values.data,
                 filter_type=form.filter_type.data,
             )

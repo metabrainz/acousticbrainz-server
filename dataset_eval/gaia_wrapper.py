@@ -44,10 +44,8 @@ def train_model(project_dir, groundtruth_file, filelist_file, c_value, gamma_val
         datasets_dir=os.path.join(project_dir, "datasets"),
         results_dir=os.path.join(project_dir, "results"),
     )
-    # skip invalid non-numerical c, gamma & preprocessing values
-    c_value = [int(value) for value in c_value.split(',')]
-    gamma_value = [int(s) for s in gamma_value.split(',')]
-    preprocessing_values = [str(value) for value in preprocessing_values.split()]
+    # Values to be defined in `string` type in project file
+    preprocessing_values = [str(value) for value in preprocessing_values]
     # Update the project file with user-provided C, gamma, and preprocessing values
     update_parameters(project_file, c_value, gamma_value, preprocessing_values)
     run_tests(project_file)

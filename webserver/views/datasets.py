@@ -1,28 +1,37 @@
 from __future__ import absolute_import
 from __future__ import division
+
+import StringIO
+import csv
+import json
+import math
+import os
+import shutil
+from collections import defaultdict
+
+import six
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
-from webserver.external import musicbrainz
-from webserver import flash, forms
-from webserver.decorators import auth_required
-from utils import dataset_validator
-from collections import defaultdict
-import db.exceptions
+
 import db.dataset
 import db.dataset_eval
+import db.exceptions
 import db.user
-import csv
-import math
-import six
-import StringIO
-
+import utils
+from utils import dataset_validator
+from webserver import flash, forms
+from webserver.decorators import auth_required
+from webserver.external import musicbrainz
 from webserver.views.api.exceptions import APIUnauthorized
+
 # Below values are defined in 'classification_project_template.yaml' file.
 C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
 gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
+
+zipped_dataset_dir = 'zipped_datasets'
 
 def _pagenum_to_offset(pagenum, limit):
     # Page number and limit to list elements
@@ -149,6 +158,37 @@ def _convert_dataset_to_csv_stringio(dataset):
 
     fp.seek(0)
     return fp
+
+
+@datasets_bp.route("/<uuid:dataset_id>/download_dataset")
+def download_dataset(dataset_id):
+    ds = get_dataset(dataset_id)
+    zip_file = create_low_level_files(ds)
+    # Download the zip file
+    return send_file(zip_file, as_attachment=True)
+
+
+def create_low_level_files(ds):
+    """Create a zip archive of all items in the dataset
+    with folders for each class and files in each folder
+    containing low-level json data
+    """
+    utils.path.create_path(zipped_dataset_dir)
+    dataset_dir = os.path.join(os.path.abspath(zipped_dataset_dir), ds["name"])
+    utils.path.create_path(dataset_dir)
+    for data in ds["classes"]:
+        class_name = data["name"]
+        class_directory = os.path.join(dataset_dir, class_name)
+        utils.path.create_path(class_directory)
+        for recording in data["recordings"]:
+            file_name = recording + '.json'
+            low_level_data = json.dumps(db.data.load_low_level(recording), indent=4, sort_keys=True)
+            with open(class_directory +'/' + file_name, "w+") as file:
+                file.write(low_level_data)
+
+    shutil.make_archive(dataset_dir, 'zip', dataset_dir)
+    utils.path.remove_path(dataset_dir)
+    return dataset_dir + '.zip'
 
 
 @datasets_bp.route("/accuracy")

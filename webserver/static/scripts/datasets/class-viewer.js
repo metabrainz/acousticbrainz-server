@@ -300,4 +300,13 @@ class Recording extends React.Component {
     }
 }
 
+
+// function to redirect to download page
+
+$(function() {
+    $("a#download_dataset").click(function() {
+        window.location = "/datasets/" + container.dataset.datasetId + "/download_dataset";
+    });
+});
+
 if (container) ReactDOM.render(<Dataset />, container);

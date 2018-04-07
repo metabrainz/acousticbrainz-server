@@ -47,7 +47,8 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
     with db.engine.begin() as connection:
         if _job_exists(connection, dataset_id):
             raise JobExistsException
-        validate_dataset(db.dataset.get(dataset_id))
+        # Validating dataset contents after submitting it
+        validate_dataset_contents(db.dataset.get(dataset_id))
         return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
 
 
@@ -78,16 +79,14 @@ def _job_exists(connection, dataset_id):
     return result.fetchone()[0] > 0
 
 
-def validate_dataset(dataset):
-    """Validate dataset by making sure that it's complete and checking if all
-    recordings referenced in classes have low-level information in the database.
+def validate_dataset_structure(dataset):
+    """Validate dataset structure by making sure that it's complete.
 
-    Raises IncompleteDatasetException if dataset is not ready for evaluation.
+    Raises IncompleteDatasetException if dataset doesn't satisfy the
+    structure needs for evaluation.
     """
     MIN_CLASSES = 2
     MIN_RECORDINGS_IN_CLASS = 2
-
-    rec_memo = {}
 
     if len(dataset["classes"]) < MIN_CLASSES:
         raise IncompleteDatasetException(
@@ -101,6 +100,18 @@ def validate_dataset(dataset):
                 "At least %s are required in each class." %
                 (cls["name"], len(cls["recordings"]), MIN_RECORDINGS_IN_CLASS)
             )
+
+
+def validate_dataset_contents(dataset):
+    """Validate dataset contents by checking if all recordings referenced
+    in classes have low-level information in the database.
+
+    Raises IncompleteDatasetException if contents of the dataset are not
+    found.
+    """
+    rec_memo = {}
+
+    for cls in dataset["classes"]:
         for recording_mbid in cls["recordings"]:
             if recording_mbid in rec_memo and rec_memo[recording_mbid]:
                 pass

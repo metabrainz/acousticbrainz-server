@@ -161,6 +161,13 @@ def evaluate(dataset_id):
         flash.warn("Evaluation job for this dataset has been already created.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
 
+    # Validate dataset structure before choosing evaluation preferences
+    try:
+        db.dataset_eval.validate_dataset_structure(ds)
+    except db.dataset_eval.IncompleteDatasetException as e:
+        flash.error("Cannot add this dataset because of a validation error: %s" % e)
+        return redirect(url_for("datasets.view", id=dataset_id))
+
     form = forms.DatasetEvaluationForm()
 
     if form.validate_on_submit():

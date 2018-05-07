@@ -156,7 +156,13 @@ def _parse_bulk_params(params):
 
 
 def check_bad_request_for_multiple_recordings():
-    """Checking whether the recording ids throw exceptions
+    """Check whether the recording ids are not more than 200 
+    and whether the recording ids are found or not.
+
+    If recording_ids are missing, an APIBadRequest Exception is
+    raised stating the missing MBIDs message.
+    If there are more than 200 recordings, then an APIBadRequest Exception is raised.
+    In both cases, no further processing is done.
     """
     recording_ids = request.args.get("recording_ids")
 

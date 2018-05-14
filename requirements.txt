@@ -24,3 +24,4 @@ six == 1.11.0
 SQLAlchemy == 1.2.5
 Werkzeug == 0.14.1
 -r docs/requirements.txt
+numpy == 1.14.3

@@ -27,21 +27,21 @@ services:
   redis:
     image: redis:4.0-alpine
 
-  hl_extractor:
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile.gaia
-    command: python2 worker_manage.py hl_extractor
-    depends_on:
-      - db
+#  hl_extractor:
+#    build:
+#      context: ..
+#      dockerfile: ./docker/Dockerfile.gaia
+#    command: python2 worker_manage.py hl_extractor
+#    depends_on:
+#      - db
 
-  dataset_evaluator:
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile.gaia
-    command: python2 worker_manage.py dataset_evaluator
-    volumes:
-      - ../data/datasets:/data/datasets
-      - ../data/files:/data/files
-    depends_on:
-      - db
+#  dataset_evaluator:
+#    build:
+#      context: ..
+#      dockerfile: ./docker/Dockerfile.gaia
+#    command: python2 worker_manage.py dataset_evaluator
+#    volumes:
+#      - ../data/datasets:/data/datasets
+#      - ../data/files:/data/files
+#    depends_on:
+#      - db

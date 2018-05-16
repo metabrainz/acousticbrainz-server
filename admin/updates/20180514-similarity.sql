@@ -2,20 +2,29 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS "cube";
 
-DROP TABLE IF EXISTS similarity_highlevel;
+DROP TABLE IF EXISTS similarity;
 
-CREATE TABLE similarity_highlevel (
-  id    INTEGER, -- PK, FK to highlevel_model
-  vector CUBE
+CREATE TABLE similarity (
+  id    INTEGER, -- PK, FK to lowlevel
+  mfcc DOUBLE PRECISION[]
 );
 
-ALTER TABLE similarity_highlevel ADD CONSTRAINT similarity_highlevel_pkey PRIMARY KEY (id);
+ALTER TABLE similarity ADD CONSTRAINT similarity_pkey PRIMARY KEY (id);
 
-ALTER TABLE similarity_highlevel
-  ADD CONSTRAINT similarity_highlevel_fk_highlevel_model
+ALTER TABLE similarity
+  ADD CONSTRAINT similarity_fk_lowlevel
   FOREIGN KEY (id)
-  REFERENCES highlevel_model (id);
+  REFERENCES lowlevel (id);
 
-CREATE INDEX vector_gist_ndx_similarity_highlevel ON similarity_highlevel USING gist(vector);
+DROP
+CREATE INDEX mfcc_ndx_similarity ON similarity USING gist(cube(mfcc));
+
+-- populate data
+
+INSERT INTO similarity (id, mfcc)
+  SELECT
+    id,
+    ARRAY(SELECT jsonb_array_elements_text(data->'lowlevel'->'mfcc'->'mean')::float)
+  FROM lowlevel_json;
 
 COMMIT;

@@ -3,7 +3,7 @@ version: "2"
 services:
 
   db:
-    image: postgres:9.5.4
+    image: postgres:10.4
     volumes:
       - ../data/pgdata:/var/lib/postgresql/data/pgdata
     environment:

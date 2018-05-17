@@ -1,5 +1,5 @@
 import db
-import numpy as np
+# import numpy as np
 
 from sqlalchemy import text
 
@@ -31,8 +31,26 @@ def populate_similarity_highlevel():
         for row in rows:
             vector = row['data']['all'].values()
             query = text("""
-                INSERT INTO similarity_highlevel (id, vector) 
+                INSERT INTO similarity (id, mfcc) 
                 VALUES (:id, cube(ARRAY[:vector]))
             """)
             connection.execute(query, {'id': row['id'], 'vector': tuple(vector)})
 
+
+def get_similar_recordings(gid, metric, limit=10):
+    with db.engine.begin() as connection:
+        return connection.execute(text("""
+            SELECT 
+              gid,
+              cube(:metric) <-> cube((
+                SELECT :metric 
+                FROM similarity
+                JOIN lowlevel on similarity.id = lowlevel.id
+                WHERE lowlevel.gid=:gid
+                LIMIT 1
+              )) as dist
+            FROM lowlevel
+            JOIN similarity ON lowlevel.id = similarity.id
+            ORDER BY dist
+            LIMIT :max
+        """), {'metric': metric, 'gid': "'{}'".format(gid), 'max': limit})

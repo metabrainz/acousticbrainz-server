@@ -3,7 +3,8 @@ from __future__ import division
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
-from webserver.external import musicbrainz
+import webserver.external.musicbrainz_database.recording as mb_recording
+import webserver.external.musicbrainz_database.exceptions as mb_exceptions
 from webserver import flash, forms
 from utils import dataset_validator
 from collections import defaultdict
@@ -323,12 +324,12 @@ def delete(dataset_id):
 
 def _get_recording_info_for_mbid(mbid):
     try:
-        recording = musicbrainz.get_recording_by_id(mbid)
+        recording = mb_recording.get_recording_by_id(mbid)
         return jsonify(recording={
             "title": recording["title"],
             "artist": recording["artist-credit-phrase"],
         })
-    except musicbrainz.DataUnavailable as e:
+    except mb_exceptions.NoDataFoundException as e:
         return jsonify(error=str(e)), 404
 
 
@@ -343,11 +344,9 @@ def recording_info(mbid):
 def recording_info_in_dataset(dataset_id, mbid):
     """Endpoint for getting information about recordings (title and artist), for the
     case when user is not logged in.
-
     Args:
         mbid (uuid): the recording mbid for which info is to be returned
         dataset_id (uuid): the dataset id to which the passed recording mbid belongs
-
     Returns:
         json: If the mbid is present in the dataset, info about the recording
               404 otherwise
@@ -359,7 +358,6 @@ def recording_info_in_dataset(dataset_id, mbid):
 
 def get_dataset(dataset_id):
     """Wrapper for `dataset.get` function in `db` package.
-
     Checks the following conditions and raises NotFound exception if they
     aren't met:
     * Specified dataset exists.
@@ -378,7 +376,6 @@ def get_dataset(dataset_id):
 
 def prepare_table_from_cm(confusion_matrix):
     """Prepares data for table to visualize confusion matrix from Gaia.
-
     This works with modified version of confusion matrix that we store in our
     database (we store number of recordings in each predicted class instead of
     actual UUIDs of recordings). See gaia_wrapper.py in dataset_eval package

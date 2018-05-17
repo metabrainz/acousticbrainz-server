@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import mock
 from flask import url_for
 
-from webserver.external import musicbrainz
+import webserver.external.musicbrainz_database.exceptions as mb_exceptions
 from webserver.testing import ServerTestCase
 
 
@@ -30,7 +30,7 @@ class DataViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for('data.view_low_level', mbid=mbid))
         self.assertEqual(resp.status_code, 200)
 
-    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    @mock.patch('webserver.external.musicbrainz_database.recording.get_recording_by_id')
     def test_summary(self, get_recording_by_id):
         get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
@@ -115,4 +115,4 @@ class FakeMusicBrainz(object):
                 ],
             }
         else:
-            raise musicbrainz.DataUnavailable("say what")
+            raise mb_exceptions.NoDataFoundException("say what")

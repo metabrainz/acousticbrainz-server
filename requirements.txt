@@ -1,4 +1,7 @@
-git+https://github.com/metabrainz/brainzutils-python.git@v1.7.0
+git+https://github.com/rsh7/brainzutils-python.git@82e0ceab9ac19a253273e6185a7bcadc7b0f3248
+click == 6.7
+coverage == 4.5.1
+Fabric == 1.14.0
 Flask-Admin == 1.5.3
 Flask-Login == 0.4.1
 Flask-SQLAlchemy == 2.3.2

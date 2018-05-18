@@ -2,10 +2,11 @@ import db
 # import numpy as np
 
 from sqlalchemy import text
+from sqlalchemy.sql.expression import literal
 
 HIGHLEVEL_MODELS_GENRE = ['genre_dortmund', 'genre_electronic']
 PROCESS_LIMIT = 100
-
+METRICS = ['mfcc']
 
 def _get_highlevel_without_similarity(connection, limit=PROCESS_LIMIT):
     query = text("""
@@ -19,9 +20,9 @@ def _get_highlevel_without_similarity(connection, limit=PROCESS_LIMIT):
 
 def _transform(vector):
     """Transform as in Pearson distance calculation: subtract mean and normalize"""
-    vector = np.array(vector)
-    vector -= np.mean(vector)
-    vector /= np.linalg.norm(vector)
+    # vector = np.array(vector)
+    # vector -= np.mean(vector)
+    # vector /= np.linalg.norm(vector)
     return list(vector)
 
 
@@ -37,20 +38,24 @@ def populate_similarity_highlevel():
             connection.execute(query, {'id': row['id'], 'vector': tuple(vector)})
 
 
-def get_similar_recordings(gid, metric, limit=10):
+def get_similar_recordings(mbid, metric=None, limit=10):
+    if metric is None:
+        return {metric: get_similar_recordings(mbid, metric) for metric in METRICS}
+
     with db.engine.begin() as connection:
-        return connection.execute(text("""
+        query = text("""
             SELECT 
-              gid,
-              cube(:metric) <-> cube((
-                SELECT :metric 
+              gid
+            FROM lowlevel
+            JOIN similarity ON lowlevel.id = similarity.id
+            ORDER BY cube(%(metric)s) <-> cube((
+                SELECT %(metric)s 
                 FROM similarity
                 JOIN lowlevel on similarity.id = lowlevel.id
                 WHERE lowlevel.gid=:gid
                 LIMIT 1
-              )) as dist
-            FROM lowlevel
-            JOIN similarity ON lowlevel.id = similarity.id
-            ORDER BY dist
+              ))
             LIMIT :max
-        """), {'metric': metric, 'gid': "'{}'".format(gid), 'max': limit})
+        """ % {'metric': metric})
+        result = connection.execute(query, {'gid': mbid, 'max': limit})
+        return result.fetchall()

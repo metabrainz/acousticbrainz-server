@@ -1,0 +1,20 @@
+{%- extends 'base.html' -%}
+
+{%- block title -%}
+    Similar recordings to - {{ mbid }} - AcousticBrainz
+{%- endblock -%}
+
+{%- block content -%}
+
+    <h2 class="page-title">Recording {{ mbid }}</h2>
+
+    {% for metric, recordings in data.items() %}
+        Most similar by {{ metric }}:
+        <ul>
+        {% for recording in recordings %}
+            <li>{{ recording['artist-credit-phrase'] }} - {{ recording['title'] }}</li>
+        {% endfor %}
+        </ul>
+    {% endfor %}
+
+{% endblock %}

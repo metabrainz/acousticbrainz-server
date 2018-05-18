@@ -24,9 +24,20 @@ services:
     depends_on:
       - db
       - redis
+      - musicbrainz_database
 
   redis:
     image: redis:4.0-alpine
+
+  musicbrainz_database:
+    image: metabrainz/musicbrainz-test-database:schema-change-2017-q2
+    volumes:
+      - ../data/mbdata:/var/lib/postgresql/data/pgdata
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      MB_IMPORT_DUMPS: "true"
+    ports:
+      - "5430:5432"
 
   hl_extractor:
     build:

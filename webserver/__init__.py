@@ -77,6 +77,10 @@ def create_app(debug=None, config_path=None):
     from db import init_db_engine
     init_db_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
+    # MusicBrainz Database
+    from brainzutils import musicbrainz_db
+    musicbrainz_db.init_db_engine(app.config.get('MB_DATABASE_URI'))
+
     # Cache
     if 'REDIS_HOST' in app.config and\
        'REDIS_PORT' in app.config and\

@@ -5,6 +5,7 @@ from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
 import db.data
 import db.exceptions
+import db.similarity
 import json
 import time
 
@@ -76,6 +77,29 @@ def view_high_level(mbid):
     except db.exceptions.NoDataFoundException:
         raise NotFound
 
+
+@data_bp.route("/<uuid:ref_mbid>/similar")
+def get_similar(ref_mbid):
+    try:
+        similar_recordings = db.similarity.get_similar_recordings(ref_mbid)
+    except db.exceptions.NoDataFoundException:
+        raise NotFound
+
+    meta_data = {}
+    for metric, mbids in similar_recordings.items():
+        meta_data[metric] = []
+        for mbid in mbids:
+            try:
+                info = musicbrainz.get_recording_by_id(mbid[0])
+                meta_data[metric].append(info)
+            except musicbrainz.DataUnavailable:
+                print('No data for {}'.format(mbid))
+
+    return render_template(
+        "data/similarity.html",
+        mbid=ref_mbid,
+        data=meta_data
+    )
 
 @data_bp.route("/<uuid:mbid>")
 def summary(mbid):

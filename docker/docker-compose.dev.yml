@@ -24,12 +24,12 @@ services:
     depends_on:
       - db
       - redis
-      - musicbrainz_database
+      - musicbrainz_db
 
   redis:
     image: redis:4.0-alpine
 
-  musicbrainz_database:
+  musicbrainz_db:
     image: metabrainz/musicbrainz-test-database:schema-change-2017-q2
     volumes:
       - ../data/mbdata:/var/lib/postgresql/data/pgdata

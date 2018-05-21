@@ -46,53 +46,51 @@ The ``mbdump-derived.tar.bz2`` archive contains annotations, user tags and searc
 These archives include all the data required for setting up an instance of
 AcousticBrainz.
 
-You can import the database dump by downloading and importing the data in
-a single command::
+You can import the database dumps by downloading and importing the data in
+a single command:
 
-    $ docker-compose -f docker/docker-compose.dev.yml run musicbrainz_db
+    docker-compose -f docker/docker-compose.dev.yml run musicbrainz_db
 
-.. note::
+**Note**
 
- One can also manually download the dumps and then import it:-
+One can also manually download the dumps and then import it:-
 
-  i. For this, you have to download the dumps ``mbdump.tar.bz2`` and ``mbdump-derived.tar.bz2``
+  1. For this, you have to download the dumps ``mbdump.tar.bz2`` and ``mbdump-derived.tar.bz2``
      from http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/.
 
-     .. warning::
+       **Warning**
 
-        Make sure to get the latest dumps
+       Make sure to get the latest dumps
 
-  ii. Then the environment variable ``DUMPS_DIR`` must be set to the path of the
-      folders containing the dumps. This can be done by::
+  2. Then the environment variable ``DUMPS_DIR`` must be set to the path of the
+     folders containing the dumps. This can be done by:
 
-        $ export DUMPS_DIR="Path of the folder containing the dumps"
+         export DUMPS_DIR="Path of the folder containing the dumps"
 
-      You can check that the variable ``DUMPS_DIR`` has been succesfully assigned or not by::
+     You can check that the variable ``DUMPS_DIR`` has been succesfully assigned or not by:
 
-        $ echo $DUMPS_DIR
+         echo $DUMPS_DIR
 
-      This must display the path of your folder containing the database dumps. The folder must contain at least the file ``mbdump.tar.bz2``.
+      This must display the path of your folder containing the database dumps. The folder must contain at least the file    ``mbdump.tar.bz2``.
 
-  iii. Then import the database dumps by this command::
+  3. Then import the database dumps by this command:
 
-        $ docker-compose -f docker/docker-compose.dev.yml run -v $DUMPS_DIR:/home/musicbrainz/dumps \
-        -v $PWD/data/mbdata:/var/lib/postgresql/data/pgdata musicbrainz_db
+         docker-compose -f docker/docker-compose.dev.yml run -v $DUMPS_DIR:/home/musicbrainz/dumps \
+         -v $PWD/data/mbdata:/var/lib/postgresql/data/pgdata musicbrainz_db
 
-.. note::
+**Note**
 
   You can also use the smaller sample dumps available at http://ftp.musicbrainz.org/pub/musicbrainz/data/sample/
   to set up the MusicBrainz database. However, note that these dumps are .tar.xz
   dumps while AcousticBrainz currently only supports import of .tar.bz2 dumps.
   So, a decompression of the sample dumps and recompression into .tar.bz2 dumps
-  will be needed. This can be done using the following command
+  will be needed. This can be done using the following command:
 
-      $ xzcat mbdump-sample.tar.xz | bzip2 > mbdump.tar.bz2
+     xzcat mbdump-sample.tar.xz | bzip2 > mbdump.tar.bz2
 
-.. warning::
+**Warning**
 
-   Keep in mind that this process is very time consuming, so make sure that you don't delete
-   the ``data/mbdata`` directory accidently. Also make sure that you have about 25GB of free
-   space to keep the MusicBrainz data.
+Keep in mind that this process is very time consuming, so make sure that you don't delete the ``data/mbdata`` directory accidently. Also make sure that you have about 25GB of free space to keep the MusicBrainz data.
 
 
 ### Running
@@ -100,8 +98,6 @@ a single command::
 Start the webserver and other required services with:
 
     ./develop.sh up
-
-You will be able to view your local AcousticBrainz server at http://localhost:8080
 
 ## Development notes
 

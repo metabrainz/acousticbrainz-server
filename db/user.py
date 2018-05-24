@@ -124,5 +124,4 @@ def agree_to_gdpr(musicbrainz_id):
                     'mb_id': musicbrainz_id,
                 })
         except sqlalchemy.exc.ProgrammingError as err:
-            logger.error(err)
-            raise DatabaseException("Couldn't update gdpr agreement for user: %s" % str(err))
+            raise db.exceptions.DatabaseException("Couldn't update gdpr agreement for user: %s" % str(err))

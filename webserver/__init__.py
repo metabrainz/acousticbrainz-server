@@ -115,6 +115,7 @@ def create_app(debug=None, config_path=None):
         # skip certain pages, static content and the API
         if request.path == url_for('index.gdpr_notice') \
           or request.path == url_for('login.logout') \
+          or request.path.startswith('/_debug') \
           or request.path.startswith('/static') \
           or request.path.startswith(API_PREFIX):
             return

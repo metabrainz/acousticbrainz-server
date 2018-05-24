@@ -19,6 +19,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         self.test_user_mb_name = "tester"
         self.test_user_id = user.create(self.test_user_mb_name)
+        user.agree_to_gdpr(self.test_user_mb_name)
 
         self.test_uuid = "123e4567-e89b-12d3-a456-426655440000"
         self.test_mbid_1 = "e8afe383-1478-497e-90b1-7885c7f37f6e"
@@ -138,6 +139,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         # Editing using another user
         another_user_id = user.create("another_tester")
+        user.agree_to_gdpr("another_tester")
         self.temporary_login(another_user_id)
         resp = self.client.get(url_for("datasets.edit", dataset_id=dataset_id))
         self.assert401(resp)
@@ -176,6 +178,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         # Deleting using another user
         another_user_id = user.create("another_tester")
+        user.agree_to_gdpr("another_tester")
         self.temporary_login(another_user_id)
         resp = self.client.get(url_for("datasets.delete", dataset_id=dataset_id))
         self.assert401(resp)

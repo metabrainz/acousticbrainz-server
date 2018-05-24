@@ -12,6 +12,7 @@ class UserViewsTestCase(ServerTestCase):
 
         self.test_user_mb_name = "tester"
         self.test_user_id = db.user.create(self.test_user_mb_name)
+        db.user.agree_to_gdpr(self.test_user_mb_name)
         self.test_user = db.user.get(self.test_user_id)
 
     def generate_api_key(self):

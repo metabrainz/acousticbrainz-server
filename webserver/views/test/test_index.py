@@ -58,6 +58,8 @@ class IndexViewsTestCase(ServerTestCase):
     def test_menu_logged_in(self, mock_user_get):
         """ If the user is logged in, check that we perform a database query to get user data """
         user = db_user.get_or_create('little_rsh')
+        db_user.agree_to_gdpr(user['musicbrainz_id'])
+        user = db_user.get_or_create('little_rsh')
         mock_user_get.return_value = user
         self.temporary_login(user['id'])
         resp = self.client.get(url_for('index.index'))
@@ -80,6 +82,8 @@ class IndexViewsTestCase(ServerTestCase):
         def view404():
             raise NotFound('not found')
 
+        user = db_user.get_or_create('little_rsh')
+        db_user.agree_to_gdpr(user['musicbrainz_id'])
         user = db_user.get_or_create('little_rsh')
         mock_user_get.return_value = user
         self.temporary_login(user['id'])
@@ -111,6 +115,8 @@ class IndexViewsTestCase(ServerTestCase):
             raise InternalServerError('error')
 
         user = db_user.get_or_create('little_rsh')
+        db_user.agree_to_gdpr(user['musicbrainz_id'])
+        user = db_user.get_or_create('little_rsh')
         mock_user_get.return_value = user
         self.temporary_login(user['id'])
         resp = self.client.get('/page_that_returns_500')
@@ -127,6 +133,8 @@ class IndexViewsTestCase(ServerTestCase):
         If the user has previously been loaded in the view, check that it's not
         loaded while rendering the template"""
 
+        user = db_user.get_or_create('little_rsh')
+        db_user.agree_to_gdpr(user['musicbrainz_id'])
         user = db_user.get_or_create('little_rsh')
         mock_user_get.return_value = user
 
@@ -146,3 +154,19 @@ class IndexViewsTestCase(ServerTestCase):
         # Even after rendering the template, the database has only been queried once (before the exception)
         mock_user_get.assert_called_once_with(user['id'])
         self.assertIsInstance(self.get_context_variable('current_user'), webserver.login.User)
+
+    def test_gdpr_redirect(self):
+        """Test that a user who logs in and hasn't agreed to the GDPR terms
+        gets redirected to the preferences page"""
+
+        user = db_user.get_or_create('newuser')
+        self.temporary_login(user['id'])
+        resp = self.client.get(url_for('index.index'))
+        self.assertStatus(resp, 302)
+        self.assertIn(url_for('index.gdpr_notice'), resp.localtion)
+
+        # User accepts
+        db_user.agree_to_gdpr(user['musicbrainz_id'])
+        resp = self.client.get(url_for('index.index'))
+        self.assert200(resp)
+        self.assertIsNone(resp.location)

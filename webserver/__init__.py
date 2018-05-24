@@ -1,4 +1,7 @@
 from brainzutils.flask import CustomFlask
+from flask import request, url_for, redirect
+from flask_login import current_user
+
 import os
 
 API_PREFIX = '/api/'
@@ -106,6 +109,19 @@ def create_app(debug=None, config_path=None):
     from webserver.admin import views as admin_views
     admin = Admin(app, index_view=admin_views.HomeView(name='Admin'))
     admin.add_view(admin_views.AdminsView(name='Admins'))
+
+    @ app.before_request
+    def before_request_gdpr_check():
+        # skip certain pages, static content and the API
+        if request.path == url_for('index.gdpr_notice') \
+          or request.path == url_for('login.logout') \
+          or request.path.startswith('/static') \
+          or request.path.startswith(API_PREFIX):
+            return
+        # otherwise if user is logged in and hasn't agreed to gdpr,
+        # redirect them to agree to terms page.
+        elif current_user.is_authenticated and current_user.gdpr_agreed is None:
+            return redirect(url_for('index.gdpr_notice', next=request.full_path))
 
     return app
 

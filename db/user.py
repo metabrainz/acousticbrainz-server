@@ -2,7 +2,7 @@ import db
 import db.exceptions
 import sqlalchemy
 
-USER_COLUMNS = ["id", "created", "musicbrainz_id", "admin"]
+USER_COLUMNS = ["id", "created", "musicbrainz_id", "admin", "gdpr_agreed"]
 ALL_USER_COLUMNS = ", ".join(['"user".%s' % c for c in USER_COLUMNS])
 
 
@@ -106,3 +106,23 @@ def set_admin(musicbrainz_id, admin, force=False):
             "musicbrainz_id": musicbrainz_id,
             "admin": admin,
         })
+
+
+def agree_to_gdpr(musicbrainz_id):
+    """ Update the gdpr_agreed column for user with specified MusicBrainz ID with current time.
+
+    Args:
+        musicbrainz_id (str): the MusicBrainz ID of the user
+    """
+    with db.engine.connect() as connection:
+        try:
+            connection.execute(sqlalchemy.text("""
+                UPDATE "user"
+                   SET gdpr_agreed = NOW()
+                 WHERE LOWER(musicbrainz_id) = LOWER(:mb_id)
+                """), {
+                    'mb_id': musicbrainz_id,
+                })
+        except sqlalchemy.exc.ProgrammingError as err:
+            logger.error(err)
+            raise DatabaseException("Couldn't update gdpr agreement for user: %s" % str(err))

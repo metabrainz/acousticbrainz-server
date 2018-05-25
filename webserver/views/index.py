@@ -39,6 +39,9 @@ def gdpr_notice():
             return redirect(url_for('index.index'))
         elif request.form.get('gdpr-options') == 'disagree':
             return redirect(url_for('login.logout', next=request.args.get('next')))
+        else:
+            flash.error('You must agree to or decline our terms')
+            return render_template('index/gdpr.html', next=request.args.get('next'))
 
 
 @index_bp.route("/download")

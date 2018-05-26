@@ -155,12 +155,8 @@ CREATE TABLE feedback (
   suggestion         TEXT
 );
 
-COMMIT;
 
-
-BEGIN;
-
-CREATE SCHEMA musicbrainz;
+CREATE SCHEMA IF NOT EXISTS musicbrainz;
 
 CREATE TABLE musicbrainz.artist (
   id                  SERIAL,
@@ -249,6 +245,15 @@ CREATE TABLE musicbrainz.area (
       )
     ),
   comment             VARCHAR(255) NOT NULL DEFAULT ''
+);
+
+CREATE TABLE musicbrainz.area_type (
+    id                  SERIAL, -- PK
+    name                VARCHAR(255) NOT NULL,
+    parent              INTEGER, -- references area_type.id
+    child_order         INTEGER NOT NULL DEFAULT 0,
+    description         TEXT,
+    gid                 uuid NOT NULL
 );
 
 CREATE TABLE musicbrainz.recording (

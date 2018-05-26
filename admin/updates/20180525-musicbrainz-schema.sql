@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE SCHEMA musicbrainz;
+CREATE SCHEMA IF NOT EXISTS musicbrainz;
 
 CREATE TABLE musicbrainz.artist (
   id                  SERIAL,

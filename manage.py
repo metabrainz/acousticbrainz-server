@@ -30,7 +30,7 @@ def runserver(host, port):
     """Run a development server."""
     reload_on_files = current_app.config['RELOAD_ON_FILES']
     current_app.run(host=host, port=port,
-                    extra_files=reload_on_files)
+                    extra_files=reload_on_files, threaded=True)
 
 
 @cli.command()

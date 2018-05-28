@@ -78,6 +78,15 @@ def view_high_level(mbid):
         raise NotFound
 
 
+def _get_extended_info(mbid):
+    info = _get_recording_info(mbid, None)
+    if not info:
+        raise NotFound('No info for the recording {}'.format(mbid))
+    info['mbid'] = mbid
+    info['youtube_query'] = _get_youtube_query(info)
+    return info
+
+
 @data_bp.route("/<uuid:ref_mbid>/similar")
 def get_similar(ref_mbid):
     try:
@@ -85,21 +94,26 @@ def get_similar(ref_mbid):
     except db.exceptions.NoDataFoundException:
         raise NotFound
 
-    meta_data = {}
-    for metric, mbids in similar_recordings.items():
-        meta_data[metric] = []
-        for mbid in mbids:
-            try:
-                info = musicbrainz.get_recording_by_id(mbid[0])
-                meta_data[metric].append(info)
-            except musicbrainz.DataUnavailable:
-                print('No data for {}'.format(mbid))
+    ref_metadata = _get_extended_info(ref_mbid)
+
+    metadata = {}
+    for metric, rows in similar_recordings.items():
+        metadata[metric] = []
+        for row in rows:
+            metadata[metric].append(_get_extended_info(row[0]))
 
     return render_template(
         "data/similarity.html",
-        mbid=ref_mbid,
-        data=meta_data
+        ref_metadata=ref_metadata,
+        metadata=metadata
     )
+
+
+@data_bp.route("/recompute_similarity")
+def recompute_similarity():
+    total = db.similarity.populate_similarity()
+    return 'Processed {} rows'.format(total)
+
 
 @data_bp.route("/<uuid:mbid>")
 def summary(mbid):

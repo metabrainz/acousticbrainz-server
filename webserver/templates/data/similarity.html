@@ -1,20 +1,41 @@
 {%- extends 'base.html' -%}
 
 {%- block title -%}
-    Similar recordings to - {{ mbid }} - AcousticBrainz
+    Similar recordings to - "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }} - AcousticBrainz
 {%- endblock -%}
 
 {%- block content -%}
 
-    <h2 class="page-title">Recording {{ mbid }}</h2>
+    <h2 class="page-title">Recording "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }}</h2>
 
-    {% for metric, recordings in data.items() %}
-        Most similar by {{ metric }}:
-        <ul>
-        {% for recording in recordings %}
-            <li>{{ recording['artist-credit-phrase'] }} - {{ recording['title'] }}</li>
-        {% endfor %}
-        </ul>
+    <div class="row">
+        <div class="col-md-8">
+            <h3>Some info (TBD)</h3>
+            <a href="{{ url_for('data.summary', mbid=ref_metadata['mbid']) }}">Return to summary</a>
+            <a href="#" class="change-youtube" data-youtube="{{ ref_metadata['youtube_query'] }}">(show)</a>
+        </div>
+        <div class="col-md-4">
+            <iframe src="https://www.youtube.com/embed?listType=search&amp;list={{ ref_metadata['youtube_query'] }}"
+                  id="youtube_iframe" width="100%" height="260" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    {% for metric, recordings in metadata.items() %}
+        <div class="row">
+            <h3>Most similar by {{ metric }}:</h3>
+            <ul>
+            {% for recording in recordings %}
+                <li><a href="{{ url_for('data.summary', mbid=recording['mbid']) }}">
+                    {{ recording['artist'] }} - {{ recording['title'] }}</a>
+                    <a href="#" class="change-youtube" data-youtube="{{ recording['youtube_query'] }}">(show)</a>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
     {% endfor %}
+{%- endblock -%}
 
-{% endblock %}
+{%- block scripts -%}
+    {{ super() }}
+    <script src="{{ get_static_path('similarity.js') }}"></script>
+{%- endblock -%}

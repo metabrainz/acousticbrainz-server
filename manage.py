@@ -14,6 +14,7 @@ import db.dump_manage
 import db.exceptions
 import db.stats
 import db.user
+import db.similarity
 import webserver
 from db.testing import DatabaseTestCase
 
@@ -151,6 +152,12 @@ def remove_admin(username):
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
+
+
+@cli.command()
+@click.option("--force", "-f", is_flag=True, help="Recompute existing metrics.")
+def compute_similarity_metrics(force=False):
+    db.similarity.populate_similarity()
 
 
 if __name__ == '__main__':

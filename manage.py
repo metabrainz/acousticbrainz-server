@@ -17,6 +17,8 @@ import db.dump_manage
 import db.exceptions
 import db.stats
 import db.user
+from brainzutils import musicbrainz_db
+import db.import_mb_data
 import webserver
 from brainzutils import musicbrainz_db
 from db.testing import DatabaseTestCase
@@ -269,6 +271,11 @@ def toggle_site_status():
         copyfile('is_down.html.sample', 'is_down.html')
         print('Done!')
 
+
+@cli.command()
+def import_musicbrainz_db():
+    print("Importing MusicBrainz data...")
+    db.import_mb_data.start_import()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

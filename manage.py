@@ -14,6 +14,8 @@ import db.dump_manage
 import db.exceptions
 import db.stats
 import db.user
+from brainzutils import musicbrainz_db
+import db.import_mb_data
 import webserver
 from brainzutils import musicbrainz_db
 from db.testing import DatabaseTestCase
@@ -178,6 +180,15 @@ def remove_admin(username):
         click.echo("Error: %s" % e, err=True)
         sys.exit(1)
 
+
+@cli.command()
+def init_mb_db():
+    musicbrainz_db.init_db_engine(current_app.config['MB_DATABASE_URI'])
+
+@cli.command()
+def import_musicbrainz_db():
+    print("Importing MusicBrainz data...")
+    db.import_mb_data.start_import()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

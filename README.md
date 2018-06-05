@@ -105,6 +105,11 @@ Start the webserver and other required services with:
 
     ./develop.sh run --rm  webserver python2 manage.py init_mb_db
 
+## Import the MusicBrainz database in AcousticBrainz database:
+
+    ./develop.sh run --rm  webserver python2 manage.py import_musicbrainz_db
+
+
 ### Database
 
 In order to load a psql session, use the following command:

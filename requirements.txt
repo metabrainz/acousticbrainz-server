@@ -1,4 +1,4 @@
-git+https://github.com/rsh7/brainzutils-python.git@7c3366d8a432afe4b04438cfb86dc004310b70dd
+git+https://github.com/metabrainz/brainzutils-python.git@v1.5.0
 click == 6.7
 coverage == 4.5.1
 Fabric == 1.14.0

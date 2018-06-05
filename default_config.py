@@ -13,6 +13,9 @@ SECRET_KEY = "CHANGE_ME"
 # Primary database
 SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@db/acousticbrainz"
 
+# MusicBrainz Database
+MB_DATABASE_URI = "postgresql://musicbrainz:musicbrainz@musicbrainz_db:5432/musicbrainz_db"
+
 # URI to connect to an empty database as the superuser
 POSTGRES_ADMIN_URI = "postgresql://postgres@db/template1"
 # URI to connect to the acousticbrainz database as the superuser (to install extensions)

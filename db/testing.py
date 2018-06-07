@@ -41,6 +41,11 @@ class DatabaseTestCase(TestCase):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_schema.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_tables.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_primary_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_foreign_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_indexes.sql'))
 
     def drop_tables(self):
         with db.engine.connect() as connection:

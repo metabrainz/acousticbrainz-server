@@ -101,6 +101,10 @@ Start the webserver and other required services with:
 
 ## Development notes
 
+## Initialize the MusicBrainz database:
+
+    ./develop.sh run --rm  webserver python2 manage.py init_mb_db
+
 ### Database
 
 In order to load a psql session, use the following command:

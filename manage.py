@@ -18,6 +18,8 @@ import db.exceptions
 import db.stats
 import db.user
 import webserver
+from brainzutils import musicbrainz_db
+from db.testing import DatabaseTestCase
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -121,6 +123,35 @@ def init_db(archive, force, skip_create_db=False):
 
     print('Creating indexes...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+
+    print("Done!")
+
+
+@cli.command(name="init_mb_db")
+def init_mb_db():
+    """Initialize the MusicBrainz database.
+
+    This process involves several steps:
+    1. MusicBrainz schema is created.
+    2. MusicBrainz Table structure is created.
+    3. Primary keys and foreign keys are created.
+    4. Indexes are created.
+    """
+
+    musicbrainz_db.init_db_engine(current_app.config['MB_DATABASE_URI'])
+
+    print('Creating MusicBrainz schema...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_schema.sql'))
+
+    print('Creating MusicBrainz tables...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_tables.sql'))
+
+    print('Creating MusicBrainz primary and foreign keys...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_primary_keys.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_foreign_keys.sql'))
+
+    print('Creating MusicBrainz indexes...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_indexes.sql'))
 
     print("Done!")
 

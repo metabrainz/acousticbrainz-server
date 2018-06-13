@@ -182,10 +182,6 @@ def remove_admin(username):
 
 
 @cli.command()
-def init_mb_db():
-    musicbrainz_db.init_db_engine(current_app.config['MB_DATABASE_URI'])
-
-@cli.command()
 def import_musicbrainz_db():
     print("\nImporting MusicBrainz data...")
     db.import_mb_data.start_import()

@@ -274,7 +274,7 @@ def toggle_site_status():
 
 @cli.command()
 def import_musicbrainz_db():
-    print("Importing MusicBrainz data...")
+    print("\nImporting MusicBrainz data...")
     db.import_mb_data.start_import()
 
 # Please keep additional sets of commands down there

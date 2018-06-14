@@ -38,13 +38,4 @@ CREATE INDEX genres_tzenakis_ndx_similarity ON similarity USING gist(cube(genres
 -- hybrid metrics
 CREATE INDEX bpm_key_ndx_similarity ON similarity USING gist(cube(array_cat(bpm, key)));
 
-
--- populate data
-
--- INSERT INTO similarity (id, mfcc)
---   SELECT
---     id,
---     ARRAY(SELECT jsonb_array_elements_text(data->'lowlevel'->'mfcc'->'mean')::float)
---   FROM lowlevel_json;
-
 COMMIT;

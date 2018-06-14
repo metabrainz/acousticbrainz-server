@@ -70,14 +70,16 @@ def _transform_instruments(data):
 
 # SQL wrappers
 
-def _get_recordings_without_similarity(connection, limit=PROCESS_LIMIT):
-    query = text("""
+def _create_column(connection, name):
+
+
+def _get_recordings_without_similarity(connection, name, limit=PROCESS_LIMIT):
+    result = connection.execute("""
         SELECT ll.id FROM lowlevel AS ll
         LEFT JOIN similarity AS s ON ll.id = s.id
-        WHERE s.key IS NULL 
-        LIMIT :limit
-    """)
-    result = connection.execute(query, {'limit': limit})
+        WHERE s.%(metric)s IS NULL 
+        LIMIT %(limit)s
+    """ % {'metric': name, 'limit': limit})
     return result.fetchall()
 
 
@@ -102,10 +104,33 @@ def _get_highlevel_models(connection):
     result = connection.execute(query)
     return result.fetchall()
 
-def populate_similarity():
+
+LL_METRICS = {
+    'mfccs': _transform_mfccs,
+    'bpm': _transform_bpm,
+    'key': _transform_key
+}
+
+HL_METRICS = {
+
+}
+
+
+def populate_similarity(name, force):
+    transform_func = LL_METRICS.get(name)
+    is_highlevel = transform_func is None
+
+    if is_highlevel:
+        transform_func = HL_METRICS.get(name)
+
+    if transform_func is None:
+        raise ValueError('Invalid metric name: {}'.format(name))
+
     total = 0
     with db.engine.begin() as connection:
-        highlevel_models = _get_highlevel_models(connection)
+        if is_highlevel:
+            highlevel_models = _get_highlevel_models(connection)
+
         rows = _get_recordings_without_similarity(connection)
 
         while len(rows) > 0:

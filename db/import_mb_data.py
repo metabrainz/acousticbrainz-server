@@ -3,10 +3,10 @@ from brainzutils import musicbrainz_db
 from sqlalchemy import text
 
 def load_artist_credit(connection, gids_in_AB, MB_release_data):
-    """Fetches artist_credit table data from MusicBrainz database for the
+    """Fetch artist_credit table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetches data corresponding to release table.
+    Also fetch data corresponding to release table.
     """
     filters = []
     filter_data = {}
@@ -46,7 +46,7 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data):
 
 
 def load_artist_type(connection, gids_in_AB):
-    """Fetches artist_type table data from MusicBrainz database for the
+    """Fetch artist_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     artist_type_query = text("""
@@ -72,7 +72,7 @@ def load_artist_type(connection, gids_in_AB):
 
 
 def load_area_type(connection, gids_in_AB):
-    """Fetches area_type table data from MusicBrainz database for the
+    """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     area_type_query =   text("""
@@ -100,7 +100,7 @@ def load_area_type(connection, gids_in_AB):
 
 
 def load_begin_area_type(connection, gids_in_AB):
-    """Fetches area_type table data from MusicBrainz database for the
+    """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the begin area column
     in artist table.
     """
@@ -129,7 +129,7 @@ def load_begin_area_type(connection, gids_in_AB):
 
 
 def load_end_area_type(connection, gids_in_AB):
-    """Fetches area_type table data from MusicBrainz database for the
+    """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the end area column in
     artist table.
     """
@@ -158,7 +158,7 @@ def load_end_area_type(connection, gids_in_AB):
 
 
 def load_release_status(connection, gids_in_AB):
-    """Fetches release_status table data from MusicBrainz database for the
+    """Fetch release_status table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     release_status_query = text("""
@@ -182,10 +182,10 @@ def load_release_status(connection, gids_in_AB):
 
 
 def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data):
-    """Fetches release_group_primary_type table data from MusicBrainz database for the
+    """Fetch release_group_primary_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetches data corresponding to release_group table.
+    Also fetch data corresponding to release_group table.
     """
     filters = []
     filter_data = {}
@@ -227,7 +227,7 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
 
 
 def load_medium_format(connection, gids_in_AB):
-    """Fetches medium_format table data from MusicBrainz database for the
+    """Fetch medium_format table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     medium_format_query = text("""
@@ -241,10 +241,10 @@ def load_medium_format(connection, gids_in_AB):
 
 
 def load_release_packaging(connection, gids_in_AB, MB_release_data):
-    """Fetches release_packaging table data from MusicBrainz database for the
+    """Fetch release_packaging table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetches data corresponding to release table.
+    Also fetch data corresponding to release table.
     """
     filters = []
     filter_data = {}
@@ -290,7 +290,7 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
 
 
 def load_language(connection, gids_in_AB):
-    """Fetches language table data from MusicBrainz database for the
+    """Fetch language table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     language_query = text("""
@@ -315,7 +315,7 @@ def load_language(connection, gids_in_AB):
 
 
 def load_script(connection, gids_in_AB):
-    """Fetches script table data from MusicBrainz database for the
+    """Fetch script table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     script_query = text("""
@@ -338,7 +338,7 @@ def load_script(connection, gids_in_AB):
 
 
 def load_gender(connection, gids_in_AB):
-    """ Fetches gender table data from MusicBrainz database for the
+    """ Fetch gender table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     gender_query = text("""
@@ -364,7 +364,7 @@ def load_gender(connection, gids_in_AB):
 
 
 def load_area(connection, gids_in_AB):
-    """ Fetches area table data from MusicBrainz database for the
+    """ Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     area_query = text("""
@@ -398,10 +398,10 @@ def load_area(connection, gids_in_AB):
 
 
 def load_begin_area(connection, gids_in_AB, MB_artist_data):
-    """Fetches area table data from MusicBrainz database for the
+    """Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for begin area column.
 
-    Also fetches data corresponding to artist table.
+    Also fetch data corresponding to artist table.
     """
     filters = []
     filter_data = {}
@@ -456,7 +456,7 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
 
 
 def load_end_area(connection, gids_in_AB):
-    """Fetches area table data from MusicBrainz database for the
+    """Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for end area column.
     """
     end_area_query = text("""
@@ -490,7 +490,7 @@ def load_end_area(connection, gids_in_AB):
 
 
 def load_artist_credit_name(connection, gids_in_AB):
-    """Fetches artist_credit_name table data from MusicBrainz database
+    """Fetch artist_credit_name table data from MusicBrainz database
     for the recording MBIDs in AcousticBrainz database.
     """
     artist_credit_name_query = text("""
@@ -513,7 +513,7 @@ def load_artist_credit_name(connection, gids_in_AB):
 
 
 def load_artist(connection, gids_in_AB, MB_artist_credit_name_data):
-    """Fetches artist table data from MusicBrainz database for the
+    """Fetch artist table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to artist_credit_name table.
@@ -559,7 +559,7 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data):
 
 
 def load_artist_gid_redirect(connection, gids_in_AB):
-    """Fetches artist_gid_redirect table data from MusicBrainz database for the
+    """Fetch artist_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     artist_gid_redirect_query = text("""
@@ -582,7 +582,7 @@ def load_artist_gid_redirect(connection, gids_in_AB):
 
 
 def load_recording(connection, gids_in_AB):
-    """Fetches recording table data from MusicBrainz database for the
+    """Fetch recording table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     recording_query = text("""
@@ -599,7 +599,7 @@ def load_recording(connection, gids_in_AB):
 
 
 def load_recording_gid_redirect(connection, gids_in_AB):
-    """Fetches recording_gid_redirect table data from MusicBrainz database for the
+    """Fetch recording_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     recording_gid_redirect_query = text("""
@@ -618,7 +618,7 @@ def load_recording_gid_redirect(connection, gids_in_AB):
 
 
 def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data):
-    """Fetches release_group table data from MusicBrainz database for the
+    """Fetch release_group table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to release_group_gid_redirect and
@@ -678,7 +678,7 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
 
 
 def load_release_group_gid_redirect(connection, gids_in_AB):
-    """Fetches release_group_gid_redirect table data from MusicBrainz database for the
+    """Fetch release_group_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     release_group_gid_redirect_query = text("""
@@ -699,7 +699,7 @@ def load_release_group_gid_redirect(connection, gids_in_AB):
 
 
 def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data):
-    """Fetches release table data from MusicBrainz database for the
+    """Fetch release table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to medium and release_gid_redirect table.
@@ -764,7 +764,7 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
 
 
 def load_release_gid_redirect(connection, gids_in_AB):
-    """Fetches release_gid_redirect table data from MusicBrainz database for the
+    """Fetch release_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     release_gid_redirect_query = text("""
@@ -785,7 +785,7 @@ def load_release_gid_redirect(connection, gids_in_AB):
 
 
 def load_medium(connection, gids_in_AB, MB_track_data):
-    """Fetches medium table data from MusicBrainz database for the
+    """Fetch medium table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to track table.
@@ -835,7 +835,7 @@ def load_medium(connection, gids_in_AB, MB_track_data):
 
 
 def load_track(connection, gids_in_AB):
-    """Fetches track table data from MusicBrainz database for the
+    """Fetch track table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
     """
     track_query = text("""

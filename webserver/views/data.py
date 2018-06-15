@@ -109,12 +109,6 @@ def get_similar(ref_mbid):
     )
 
 
-@data_bp.route("/recompute_similarity")
-def recompute_similarity():
-    total = db.similarity.populate_similarity()
-    return 'Processed {} rows'.format(total)
-
-
 @data_bp.route("/<uuid:mbid>")
 def summary(mbid):
     offset = request.args.get("n")

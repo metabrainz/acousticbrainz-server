@@ -19,6 +19,51 @@ INSTRUMENT_MODELS = [8, 10, 18]
 GENRE_MODELS = [3, 5, 6]
 
 
+# SQL wrappers
+
+def _create_column(connection, metric):
+    connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %(metric)s DOUBLE PRECISION[]" % metric)
+    connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity USING gist(cube(%(metric)s))"
+                       % metric)
+
+
+def _add_hybrid_index(connection, metrics):
+    name = '_'.join(metrics)
+    metric_str = 'array_cat({})'.format(', '.join(metrics))
+    connection.execute("CREATE INDEX IF NOT EXISTS %(name)s_ndx_similarity ON similarity USING gist(cube(%(metric)s))"
+                       % {'name': name, 'metric': metric_str})
+
+
+def _clear_column(connection, metric):
+    connection.execute("UPDATE similarity SET %(metric)s = NULL" % {'metric': metric})
+
+
+def _get_recordings_without_similarity(connection, metric, limit=PROCESS_LIMIT):
+    result = connection.execute("""
+        SELECT ll.id FROM lowlevel AS ll
+        LEFT JOIN similarity AS s ON ll.id = s.id
+        WHERE s.%(metric)s IS NULL 
+        LIMIT %(limit)s
+    """ % {'metric': metric, 'limit': limit})
+    return result.fetchall()
+
+
+def _get_lowlevel_data(connection, lowlevel_id):
+    result = connection.execute("SELECT data FROM lowlevel_json WHERE id=%s" % lowlevel_id)
+    return result.fetchone()
+
+
+def _get_highlevel_data(connection, lowlevel_id):
+    result = connection.execute("SELECT data, model FROM highlevel_model WHERE id=%s ORDER BY model ASC" % lowlevel_id)
+    return result.fetchall()
+
+
+def _get_highlevel_models(connection):
+    query = text("SELECT id, model FROM model")
+    result = connection.execute(query)
+    return result.fetchall()
+
+
 # Common transformations
 
 def _transform_circular(value):
@@ -68,96 +113,39 @@ def _transform_moods(data):
 def _transform_instruments(data):
     return _transform_unary_classifiers(data, INSTRUMENT_MODELS)
 
-# SQL wrappers
 
-def _create_column(connection, name):
-
-
-def _get_recordings_without_similarity(connection, name, limit=PROCESS_LIMIT):
-    result = connection.execute("""
-        SELECT ll.id FROM lowlevel AS ll
-        LEFT JOIN similarity AS s ON ll.id = s.id
-        WHERE s.%(metric)s IS NULL 
-        LIMIT %(limit)s
-    """ % {'metric': name, 'limit': limit})
-    return result.fetchall()
-
-
-def _get_data(connection, lowlevel_id):
-    lowlevel_query = text("SELECT data FROM lowlevel_json WHERE id=:id")
-    result = connection.execute(lowlevel_query, {'id': lowlevel_id})
-    lowlevel_data = result.fetchone()
-
-    highlevel_query = text("SELECT data, model FROM highlevel_model WHERE id=:id ORDER BY model ASC")
-    result = connection.execute(lowlevel_query, {'id': lowlevel_id})
-    highlevel_data = result.fetchall()
-
-    return lowlevel_data, highlevel_data
-
-
-def _render_sql_array(value):
-    return 'ARRAY' + str(value)
-
-
-def _get_highlevel_models(connection):
-    query = text("SELECT id, model FROM model")
-    result = connection.execute(query)
-    return result.fetchall()
-
-
-LL_METRICS = {
-    'mfccs': _transform_mfccs,
-    'bpm': _transform_bpm,
-    'key': _transform_key
-}
-
-HL_METRICS = {
-
+METRIC_FUNCS = {
+    'mfccs': (_get_lowlevel_data, _transform_mfccs),
+    'bpm': (_get_lowlevel_data, _transform_bpm),
+    'key': (_get_lowlevel_data, _transform_key),
+    'moods': (_get_highlevel_data, _transform_moods),
+    'instruments': (_get_highlevel_data, _transform_instruments),
 }
 
 
-def populate_similarity(name, force):
-    transform_func = LL_METRICS.get(name)
-    is_highlevel = transform_func is None
-
-    if is_highlevel:
-        transform_func = HL_METRICS.get(name)
-
-    if transform_func is None:
-        raise ValueError('Invalid metric name: {}'.format(name))
+def add_similarity(metric, force):
+    get_data, transform = METRIC_FUNCS.get(metric)
 
     total = 0
     with db.engine.begin() as connection:
-        if is_highlevel:
-            highlevel_models = _get_highlevel_models(connection)
+        _create_column(connection, metric)
 
-        rows = _get_recordings_without_similarity(connection)
+        if force:
+            _clear_column(connection, metric)
+
+        rows = _get_recordings_without_similarity(connection, metric)
 
         while len(rows) > 0:
             for row in rows:
                 lowlevel_id = row[0]
-                lowlevel_data, highlevel_data = _get_data(connection, lowlevel_id)
-
-                bpm = _transform_bpm(lowlevel_data[0])
-                key = _transform_key(lowlevel_data[0])
-                mfccs, mfccs_w = _transform_mfccs(lowlevel_data[0])
-
-                mood = _transform_mood(models, )
-
-                query = text("""
-                    INSERT INTO similarity (id, mfccs, mfccs_w, bpm, key) 
-                    VALUES (%(id)s, %(mfccs)s, %(mfccs_w)s, %(bpm)s, %(key)s)
-                """ % {
-                    'id': lowlevel_id,
-                    'mfccs': _render_sql_array(mfccs),
-                    'mfccs_w': _render_sql_array(mfccs_w),
-                    'bpm': _render_sql_array(bpm),
-                    'key': _render_sql_array(key)
-                })
-                connection.execute(query)
+                data = get_data(connection, lowlevel_id)
+                vector = transform(data)
+                connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
+                                   {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': lowlevel_id})
                 total += 1
 
-            rows = _get_recordings_without_similarity(connection)
+            rows = _get_recordings_without_similarity(connection, metric)
+
     return total
 
 

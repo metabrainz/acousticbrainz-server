@@ -158,7 +158,7 @@ cli.add_command(db.dump_manage.cli, name="dump")
 @click.argument("name")
 @click.option("--force", "-f", is_flag=True, help="Recompute existing metrics.")
 def compute_similarity_metrics(name, force=False):
-    db.similarity.populate_similarity(name, force)
+    db.similarity.add_similarity(name, force)
 
 
 if __name__ == '__main__':

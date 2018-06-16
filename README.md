@@ -105,6 +105,10 @@ Then you can start all the services:
 
     ./develop.sh run --rm  webserver python2 manage.py init_mb_db
 
+## Import the MusicBrainz database in AcousticBrainz database:
+
+    ./develop.sh run --rm  webserver python2 manage.py import_musicbrainz_db
+
 ### Manually
 
 Full installation instructions are available in [INSTALL.md](https://github.com/metabrainz/acousticbrainz-server/blob/master/INSTALL.md) file. After installing, continue the following steps.

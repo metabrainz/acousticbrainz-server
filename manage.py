@@ -130,7 +130,8 @@ def init_db(archive, force, skip_create_db=False):
 
 
 @cli.command(name="init_mb_db")
-def init_mb_db():
+@click.option("--force", "-f", is_flag=True, help="Drop existing musicbrainz schema and tables.")
+def init_mb_db(force):
     """Initialize the MusicBrainz database.
 
     This process involves several steps:
@@ -141,6 +142,11 @@ def init_mb_db():
     """
 
     musicbrainz_db.init_db_engine(current_app.config['MB_DATABASE_URI'])
+
+    if force:
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_musicbrainz_schema.sql'))
+        if not res:
+            raise Exception('Failed to drop existing musicbrainz schema and tables! Exit code: %i' % res)
 
     print('Creating MusicBrainz schema...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_schema.sql'))

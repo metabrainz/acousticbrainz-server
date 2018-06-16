@@ -144,6 +144,7 @@ def init_mb_db(force):
     musicbrainz_db.init_db_engine(current_app.config['MB_DATABASE_URI'])
 
     if force:
+        print('Dropping MusicBrainz schema...')
         res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_musicbrainz_schema.sql'))
         if not res:
             raise Exception('Failed to drop existing musicbrainz schema and tables! Exit code: %i' % res)

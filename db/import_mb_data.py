@@ -1,6 +1,7 @@
 import db
 from brainzutils import musicbrainz_db
 from sqlalchemy import text
+from flask import current_app
 
 def load_artist_credit(connection, gids_in_AB, MB_release_data):
     """Fetch artist_credit table data from MusicBrainz database for the
@@ -1708,7 +1709,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
 def start_import():
     with db.engine.begin() as connection:
         offset = 0
-        rows_to_fetch = 10000
+        rows_to_fetch = current_app.config['RECORDINGS_FETCHED_PER_BATCH']
         while True:
             lowlevel_query = text("""SELECT gid
                                        FROM lowlevel

@@ -157,8 +157,16 @@ cli.add_command(db.dump_manage.cli, name="dump")
 @cli.command()
 @click.argument("name")
 @click.option("--force", "-f", is_flag=True, help="Recompute existing metrics.")
-def compute_similarity_metrics(name, force=False):
+def add_similarity(name, force=False):
     db.similarity.add_similarity(name, force)
+
+
+@cli.command()
+def init_similarity():
+    print('Creating table')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_similarity.sql'))
+    print('Copying data')
+    db.similarity.init_similarity()
 
 
 if __name__ == '__main__':

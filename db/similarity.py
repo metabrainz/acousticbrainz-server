@@ -22,9 +22,9 @@ GENRE_MODELS = [3, 5, 6]
 # SQL wrappers
 
 def _create_column(connection, metric):
-    connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %(metric)s DOUBLE PRECISION[]" % metric)
+    connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %s DOUBLE PRECISION[]" % metric)
     connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity USING gist(cube(%(metric)s))"
-                       % metric)
+                       % {'metric': metric})
 
 
 def _add_hybrid_index(connection, metrics):
@@ -50,7 +50,7 @@ def _get_recordings_without_similarity(connection, metric, limit=PROCESS_LIMIT):
 
 def _get_lowlevel_data(connection, lowlevel_id):
     result = connection.execute("SELECT data FROM lowlevel_json WHERE id=%s" % lowlevel_id)
-    return result.fetchone()
+    return result.fetchone()[0]
 
 
 def _get_highlevel_data(connection, lowlevel_id):
@@ -115,13 +115,15 @@ def _transform_instruments(data):
 
 
 METRIC_FUNCS = {
-    'mfccs': (_get_lowlevel_data, _transform_mfccs),
-    'bpm': (_get_lowlevel_data, _transform_bpm),
-    'key': (_get_lowlevel_data, _transform_key),
-    'moods': (_get_highlevel_data, _transform_moods),
+    'mfccs':       (_get_lowlevel_data, _transform_mfccs),
+    'bpm':         (_get_lowlevel_data, _transform_bpm),
+    'key':         (_get_lowlevel_data, _transform_key),
+    'moods':       (_get_highlevel_data, _transform_moods),
     'instruments': (_get_highlevel_data, _transform_instruments),
 }
 
+
+# Public methods
 
 def add_similarity(metric, force):
     get_data, transform = METRIC_FUNCS.get(metric)
@@ -154,7 +156,7 @@ def get_similar_recordings(mbid, metric=None, limit=10):
         return {metric: get_similar_recordings(mbid, db_metric) for metric, db_metric in METRICS.items()}
 
     with db.engine.begin() as connection:
-        query = text("""
+        result = connection.execute("""
             SELECT 
               gid
             FROM lowlevel
@@ -164,10 +166,14 @@ def get_similar_recordings(mbid, metric=None, limit=10):
                 SELECT %(metric)s 
                 FROM similarity
                 JOIN lowlevel on similarity.id = lowlevel.id
-                WHERE lowlevel.gid=:gid
+                WHERE lowlevel.gid=%(gid)s
                 LIMIT 1
               ))
-            LIMIT :max
-        """ % {'metric': metric})
-        result = connection.execute(query, {'gid': mbid, 'max': limit})
+            LIMIT %(max)s
+        """ % {'metric': metric, 'gid': mbid, 'max': limit})
         return result.fetchall()
+
+
+def init_similarity():
+    with db.engine.begin() as connection:
+        result = connection.execute("INSERT INTO similarity(id) SELECT id FROM lowlevel")

@@ -162,6 +162,12 @@ def add_similarity(name, force=False):
 
 
 @cli.command()
+@click.argument("name")
+def add_hybrid_similarity(name):
+    db.similarity.add_hybrid_similarity(name)
+
+
+@cli.command()
 def init_similarity():
     print('Creating table')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_similarity.sql'))

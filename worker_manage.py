@@ -3,6 +3,7 @@ from __future__ import print_function
 import click
 from flask.cli import FlaskGroup
 
+import db.mb_import
 import dataset_eval.evaluate
 import hl_extractor.hl_calc
 import webserver
@@ -22,6 +23,11 @@ def command_dataset_evaluator():
     """Evaluate pending datasets."""
     dataset_eval.evaluate.main()
 
+
+@cli.command('musicbrainz_importer')
+def command_musicbrainz_importer():
+	"""Import MusicBrainz metadata"""
+	db.mb_import.main()
 
 if __name__ == '__main__':
     cli()

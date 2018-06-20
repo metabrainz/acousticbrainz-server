@@ -47,7 +47,7 @@ def _get_lowlevel_data(connection, lowlevel_id):
 
 
 def _get_highlevel_data(connection, lowlevel_id):
-    result = connection.execute("SELECT data, model FROM highlevel_model WHERE id=%s ORDER BY model ASC" % lowlevel_id)
+    result = connection.execute("SELECT data, model FROM highlevel_model WHERE highlevel=%s ORDER BY model ASC" % lowlevel_id)
     return result.fetchall()
 
 
@@ -116,8 +116,13 @@ def _transform_mfccs(data, stats):
 
 def _transform_unary_classifiers(data, model_ids):
     vector = []
-    for model_id in model_ids:
-        vector.append(data[model_id - 1][0][0])
+    for model_data, model_id in data:
+        if model_id in model_ids:
+            assert len(model_data['all']) == 2
+            for key, value in model_data['all'].items():
+                if not key.startswith('not'):
+                    vector.append(value)
+                    break
     return _transform_pearson(vector)
 
 

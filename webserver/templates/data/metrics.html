@@ -23,6 +23,9 @@
         </div>
         <div class="col-md-4">
             <h3>High-level</h3>
+            <ul>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods') }}">Moods</a></li>
+            </ul>
         </div>
 
     </div>

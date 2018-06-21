@@ -1,8 +1,6 @@
 import db
 import numpy as np
 
-from sqlalchemy import text
-
 PROCESS_LIMIT = 10
 METRICS = {
     'tempo': 'bpm',
@@ -33,9 +31,8 @@ def _clear_column(connection, metric):
 
 def _get_recordings_without_similarity(connection, metric, limit=PROCESS_LIMIT):
     result = connection.execute("""
-        SELECT ll.id FROM lowlevel AS ll
-        LEFT JOIN similarity AS s ON ll.id = s.id
-        WHERE s.%(metric)s IS NULL 
+        SELECT id FROM similarity 
+        WHERE %(metric)s IS NULL 
         LIMIT %(limit)s
     """ % {'metric': metric, 'limit': limit})
     return result.fetchall()

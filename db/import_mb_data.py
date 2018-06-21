@@ -1474,182 +1474,182 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
             print('Getting track data...')
             MB_track_data = load_track(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from track table for the recordings")
 
         # medium
         try:
             print('Getting medium data...')
             MB_medium_data = load_medium(connection, gids_in_AB, MB_track_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from medium table for the recordings")
 
         # release_gid_redirect
         try:
             print('Getting release gid redirect data...')
             MB_release_gid_redirect_data = load_release_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from release gid redirect table for the recordings")
 
         # release
         try:
             print('Getting release data...')
             MB_release_data = load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from release table for the recordings")
 
         # artist_credit
         try:
             print('Getting artist credit data...')
             MB_artist_credit_data = load_artist_credit(connection, gids_in_AB, MB_release_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from artist credit table for the recordings")
 
         # artist_credit_name
         try:
             print('Getting artist credit name data...')
             MB_artist_credit_name_data = load_artist_credit_name(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from artist credit name table for the recordings")
 
         # artist
         try:
             print('Getting artist data...')
             MB_artist_data = load_artist(connection, gids_in_AB, MB_artist_credit_name_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from artist table for the recordings")
 
         # artist_type
         try:
             print('Getting artist type data...')
             MB_artist_type_data = load_artist_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from artist type table for the recordings")
 
         # recording
         try:
             print('Getting recording data...')
             MB_recording_data = load_recording(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from recording table for the recordings")
 
         # area
         try:
             print('Getting area data...')
             MB_area_data = load_area(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from area table for the recordings")
 
         # begin_area
         try:
             print('Getting begin area data...')
             MB_begin_area_data = load_begin_area(connection, gids_in_AB, MB_artist_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from area table for the recordings")
 
         # end_area
         try:
             print('Getting end area data...')
             MB_end_area_data = load_end_area(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from area table for the recordings")
 
         # area_type
         try:
             print('Getting area type data...')
             MB_area_type_data = load_area_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from area type table for the recordings")
 
         # begin_area_type
         try:
             print('Getting begin area type data...')
             MB_begin_area_type_data = load_begin_area_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from area type table for the recordings")
 
         # end_area_type
         try:
             print('Getting end area data...')
             MB_end_area_type_data = load_end_area_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from area type table for the recordings")
 
         # artist_gid_redirect
         try:
             print('Getting artist gid redirect data...')
             MB_artist_gid_redirect_data = load_artist_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from artist gid redirect table for the recordings")
 
         # gender
         try:
             print('Getting gender data...')
             MB_gender_data = load_gender(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from gender table for the recordings")
 
         # language
         try:
             print('Getting language data...')
             MB_language_data = load_language(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from language table for the recordings")
 
         # medium_format
         try:
             print('Getting medium format data...')
             MB_medium_format_data = load_medium_format(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from medium format table for the recordings")
 
         # recording_gid_redirect
         try:
             print('Getting recording gid redirect data...')
             MB_recording_gid_redirect_data = load_recording_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from recording gid redirect table for the recordings")
 
         # release_group gid redirect
         try:
             print('Getting release group gid redirect data...')
             MB_release_group_gid_redirect_data = load_release_group_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from release group gid redirect table for the recordings")
 
         # release_group
         try:
             print('Getting release group data...')
             MB_release_group_data = load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from release group table for the recordings")
 
         # release_group_primary_type
         try:
             print('Getting release group primary type data...')
             MB_release_group_primary_type_data = load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from release group primary type table for the recordings")
 
         # release_packaging
         try:
             print('Getting release packaging data...')
             MB_release_packaging_data = load_release_packaging(connection, gids_in_AB, MB_release_data)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from release packaging table for the recordings")
 
         # release_status
         try:
             print('Getting release status data...')
             MB_release_status_data = load_release_status(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from release status table for the recordings")
 
         # script
         try:
             print('Getting script data...')
             MB_script_data = load_script(connection, gids_in_AB)
         except ValueError:
-            print("No Data found for the recordings")
+            print("No Data found from script table for the recordings")
 
         # Write MusicBrainz data into AcousticBrainz database
         print('\nInserting %d recordings data at a time...\n' % (len(gids_in_AB)))

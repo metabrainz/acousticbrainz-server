@@ -8,7 +8,7 @@ SLEEP_DURATION = 30  # number of seconds to wait between runs
 
 
 def main():
-    logging.info("Checking if any import is required...")
+    logging.info("musicbrainz importer started")
     while True:
         gids_in_AB = get_new_recordings_from_AB()
         if gids_in_AB:

@@ -1757,4 +1757,4 @@ def start_import():
                 break
         print('Done!')
         total_time_taken = time.time() - start_time
-        print('Data imported and inserted in %s seconds.' %  "{0:.2f}".format(total_time_taken))
+        print('Data imported and inserted in %.2f seconds.' %  total_time_taken)

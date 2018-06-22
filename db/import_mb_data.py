@@ -3,6 +3,7 @@ from brainzutils import musicbrainz_db
 from sqlalchemy import text
 from flask import current_app
 import time
+import logging
 
 def load_artist_credit(connection, gids_in_AB, MB_release_data):
     """Fetch artist_credit table data from MusicBrainz database for the
@@ -881,7 +882,7 @@ def write_artist_credit(connection, MB_artist_credit_data):
         "created" : value[4]} for value in MB_artist_credit_data
     ]
     connection.execute(artist_credit_query, values)
-    print('Inserted %d rows in artist credit table!' % len(MB_artist_credit_data))
+    logging.info('Inserted %d rows in artist credit table!' % len(MB_artist_credit_data))
 
 
 def write_artist_type(connection, MB_artist_type_data):
@@ -902,7 +903,7 @@ def write_artist_type(connection, MB_artist_type_data):
         "gid" : value[5]} for value in MB_artist_type_data
     ]
     connection.execute(artist_type_query, values)
-    print('Inserted %d rows in artist type table!' % len(MB_artist_type_data))
+    logging.info('Inserted %d rows in artist type table!' % len(MB_artist_type_data))
 
 
 def write_area_type(connection, MB_area_type_data):
@@ -923,7 +924,7 @@ def write_area_type(connection, MB_area_type_data):
         "gid": value[5]} for value in MB_area_type_data
     ]
     connection.execute(area_type_query, values)
-    print('Inserted %d rows in area type table!' % len(MB_area_type_data))
+    logging.info('Inserted %d rows in area type table!' % len(MB_area_type_data))
 
 
 def write_begin_area_type(connection, MB_begin_area_type_data):
@@ -944,7 +945,7 @@ def write_begin_area_type(connection, MB_begin_area_type_data):
         "gid": value[5]} for value in MB_begin_area_type_data
     ]
     connection.execute(begin_area_type_query, values)
-    print('Inserted %d rows in area type table for begin area data!' % len(MB_begin_area_type_data))
+    logging.info('Inserted %d rows in area type table for begin area data!' % len(MB_begin_area_type_data))
 
 
 def write_end_area_type(connection, MB_end_area_type_data):
@@ -965,7 +966,7 @@ def write_end_area_type(connection, MB_end_area_type_data):
         "gid": value[5]} for value in MB_end_area_type_data
     ]
     connection.execute(end_area_type_query, values)
-    print('Inserted %d rows in area type table for end area data!' % len(MB_end_area_type_data))
+    logging.info('Inserted %d rows in area type table for end area data!' % len(MB_end_area_type_data))
 
 
 def write_release_status(connection, MB_release_status_data):
@@ -986,7 +987,7 @@ def write_release_status(connection, MB_release_status_data):
         "gid": value[5]} for value in MB_release_status_data
     ]
     result = connection.execute(release_status_query, values)
-    print('Inserted %d rows in release status table!' % len(MB_release_status_data))
+    logging.info('Inserted %d rows in release status table!' % len(MB_release_status_data))
 
 
 def write_release_group_primary_type(connection, MB_release_group_primary_type_data):
@@ -1007,7 +1008,7 @@ def write_release_group_primary_type(connection, MB_release_group_primary_type_d
         "gid": value[5]} for value in MB_release_group_primary_type_data
     ]
     connection.execute(release_group_primary_type_query, values)
-    print('Inserted %d rows in release group primary type table!' % len(MB_release_group_primary_type_data))
+    logging.info('Inserted %d rows in release group primary type table!' % len(MB_release_group_primary_type_data))
 
 
 def write_medium_format(connection, MB_medium_format_data):
@@ -1031,7 +1032,7 @@ def write_medium_format(connection, MB_medium_format_data):
     ]
     connection.execute(text("""ALTER TABLE musicbrainz.medium_format DROP CONSTRAINT IF EXISTS medium_format_fk_parent"""))
     connection.execute(medium_format_query, values)
-    print('Inserted %d rows in medium format table!' % len(MB_medium_format_data))
+    logging.info('Inserted %d rows in medium format table!' % len(MB_medium_format_data))
 
 
 def write_release_packaging(connection, MB_release_packaging_data):
@@ -1052,7 +1053,7 @@ def write_release_packaging(connection, MB_release_packaging_data):
         "gid": value[5]} for value in MB_release_packaging_data
     ]
     connection.execute(release_packaging_query, values)
-    print('Inserted %d rows in release packaging table!' % len(MB_release_packaging_data))
+    logging.info('Inserted %d rows in release packaging table!' % len(MB_release_packaging_data))
 
 
 def write_language(connection, MB_language_data):
@@ -1073,7 +1074,7 @@ def write_language(connection, MB_language_data):
         "iso_code_3": value[5]} for value in MB_language_data
     ]
     connection.execute(language_query, values)
-    print('Inserted %d rows in language table!' % len(MB_language_data))
+    logging.info('Inserted %d rows in language table!' % len(MB_language_data))
 
 
 def write_script(connection, MB_script_data):
@@ -1093,7 +1094,7 @@ def write_script(connection, MB_script_data):
         "frequency": value[4]} for value in MB_script_data
     ]
     connection.execute(script_query, values)
-    print('Inserted %d rows in script table!' % len(MB_script_data))
+    logging.info('Inserted %d rows in script table!' % len(MB_script_data))
 
 
 def write_gender(connection, MB_gender_data):
@@ -1114,7 +1115,7 @@ def write_gender(connection, MB_gender_data):
         "gid": value[5]} for value in MB_gender_data
     ]
     connection.execute(gender_query, values)
-    print('Inserted %d rows in gender table!' % len(MB_gender_data))
+    logging.info('Inserted %d rows in gender table!' % len(MB_gender_data))
 
 
 def write_area(connection, MB_area_data):
@@ -1145,7 +1146,7 @@ def write_area(connection, MB_area_data):
         "comment": value[13]} for value in MB_area_data
     ]
     connection.execute(area_query, values)
-    print('Inserted %d rows in area table!' % len(MB_area_data))
+    logging.info('Inserted %d rows in area table!' % len(MB_area_data))
 
 
 def write_begin_area(connection, MB_begin_area_data):
@@ -1177,7 +1178,7 @@ def write_begin_area(connection, MB_begin_area_data):
         "comment": value[13]} for value in MB_begin_area_data
     ]
     connection.execute(begin_area_query, values)
-    print('Inserted %d rows in area table for begin area data!' % len(MB_begin_area_data))
+    logging.info('Inserted %d rows in area table for begin area data!' % len(MB_begin_area_data))
 
 def write_end_area(connection, MB_end_area_data):
     """Insert data in area table in musicbrainz schema in
@@ -1208,7 +1209,7 @@ def write_end_area(connection, MB_end_area_data):
         "comment": value[13]} for value in MB_end_area_data
     ]
     connection.execute(end_area_query, values)
-    print('Inserted %d rows in area table for end area data!' % len(MB_end_area_data))
+    logging.info('Inserted %d rows in area table for end area data!' % len(MB_end_area_data))
 
 
 def write_artist(connection, MB_artist_data):
@@ -1244,7 +1245,7 @@ def write_artist(connection, MB_artist_data):
         "end_area": value[18]} for value in MB_artist_data
     ]
     connection.execute(artist_query, values)
-    print('Inserted %d rows in artist table!' % len(MB_artist_data))
+    logging.info('Inserted %d rows in artist table!' % len(MB_artist_data))
 
 
 def write_artist_credit_name(connection, MB_artist_credit_name_data):
@@ -1264,7 +1265,7 @@ def write_artist_credit_name(connection, MB_artist_credit_name_data):
         "join_phrase": value[4]} for value in MB_artist_credit_name_data
     ]
     connection.execute(artist_credit_name_query, values)
-    print('Inserted %d rows in artist credit name table!' % len(MB_artist_credit_name_data))
+    logging.info('Inserted %d rows in artist credit name table!' % len(MB_artist_credit_name_data))
 
 
 def write_artist_gid_redirect(connection, MB_artist_gid_redirect_data):
@@ -1282,7 +1283,7 @@ def write_artist_gid_redirect(connection, MB_artist_gid_redirect_data):
         "created": value[2]} for value in MB_artist_gid_redirect_data
     ]
     connection.execute(artist_gid_redirect_query, values)
-    print('Inserted %d rows in artist gid redirect table!' % len(MB_artist_gid_redirect_data))
+    logging.info('Inserted %d rows in artist gid redirect table!' % len(MB_artist_gid_redirect_data))
 
 
 def write_recording(connection, MB_recording_data):
@@ -1306,7 +1307,7 @@ def write_recording(connection, MB_recording_data):
         "video": value[8]} for value in MB_recording_data
     ]
     connection.execute(recording_query, values)
-    print('Inserted %d rows in recording table!' % len(MB_recording_data))
+    logging.info('Inserted %d rows in recording table!' % len(MB_recording_data))
 
 
 def write_recording_gid_redirect(connection, MB_recording_gid_redirect_data):
@@ -1323,7 +1324,7 @@ def write_recording_gid_redirect(connection, MB_recording_gid_redirect_data):
         "created": value[2]} for value in MB_recording_gid_redirect_data
     ]
     connection.execute(recording_gid_redirect_query, values)
-    print('Inserted %d rows in recording gid redirect table!' % len(MB_recording_gid_redirect_data))
+    logging.info('Inserted %d rows in recording gid redirect table!' % len(MB_recording_gid_redirect_data))
 
 
 def write_release_group(connection, MB_release_group_data):
@@ -1346,7 +1347,7 @@ def write_release_group(connection, MB_release_group_data):
         "last_updated": value[7]} for value in MB_release_group_data
     ]
     connection.execute(release_group_query, values)
-    print('Inserted %d rows in release group table!' % len(MB_release_group_data))
+    logging.info('Inserted %d rows in release group table!' % len(MB_release_group_data))
 
 
 def write_release_group_gid_redirect(connection, MB_release_gid_redirect_data):
@@ -1364,7 +1365,7 @@ def write_release_group_gid_redirect(connection, MB_release_gid_redirect_data):
         "created": value[2]} for value in MB_release_gid_redirect_data
     ]
     connection.execute(release_group_gid_redirect_query, values)
-    print('Inserted %d rows in release gid redirect table!' % len(MB_release_gid_redirect_data))
+    logging.info('Inserted %d rows in release gid redirect table!' % len(MB_release_gid_redirect_data))
 
 
 def write_release(connection, MB_release_data):
@@ -1394,7 +1395,7 @@ def write_release(connection, MB_release_data):
         "last_updated": value[13]} for value in MB_release_data
     ]
     connection.execute(release_query, values)
-    print('Inserted %d rows in release table!' % len(MB_release_data))
+    logging.info('Inserted %d rows in release table!' % len(MB_release_data))
 
 
 def write_release_gid_redirect(connection, MB_release_gid_redirect_data):
@@ -1412,7 +1413,7 @@ def write_release_gid_redirect(connection, MB_release_gid_redirect_data):
         "created": value[2]} for value in MB_release_gid_redirect_data
     ]
     connection.execute(release_gid_redirect_query, values)
-    print('Inserted %d rows in release gid redirect table!' % len(MB_release_gid_redirect_data))
+    logging.info('Inserted %d rows in release gid redirect table!' % len(MB_release_gid_redirect_data))
 
 
 def write_medium(connection, MB_medium_data):
@@ -1435,7 +1436,7 @@ def write_medium(connection, MB_medium_data):
         "track_count": value[7]} for value in MB_medium_data
     ]
     connection.execute(medium_query, values)
-    print('Inserted %d rows in medium table!' % len(MB_medium_data))
+    logging.info('Inserted %d rows in medium table!' % len(MB_medium_data))
 
 
 def write_track(connection, MB_track_data):
@@ -1463,197 +1464,197 @@ def write_track(connection, MB_track_data):
         "is_data_track": value[11]} for value in MB_track_data
     ]
     connection.execute(track_query, values)
-    print('Inserted %d rows in track table!' % len(MB_track_data))
+    logging.info('Inserted %d rows in track table!' % len(MB_track_data))
 
 
 def fetch_and_insert_musicbrainz_data(gids_in_AB):
     # Get MusicBrainz data
-    print('\nGetting %d recordings data at a time...\n' % (len(gids_in_AB)))
+    logging.info('\nGetting %d recordings data at a time...\n' % (len(gids_in_AB)))
     with musicbrainz_db.engine.begin() as connection:
         # track
         try:
-            print('Getting track data...')
+            logging.info('Getting track data...')
             MB_track_data = load_track(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from track table for the recordings")
+            logging.info("No Data found from track table for the recordings")
 
         # medium
         try:
-            print('Getting medium data...')
+            logging.info('Getting medium data...')
             MB_medium_data = load_medium(connection, gids_in_AB, MB_track_data)
         except ValueError:
-            print("No Data found from medium table for the recordings")
+            logging.info("No Data found from medium table for the recordings")
 
         # release_gid_redirect
         try:
-            print('Getting release gid redirect data...')
+            logging.info('Getting release gid redirect data...')
             MB_release_gid_redirect_data = load_release_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from release gid redirect table for the recordings")
+            logging.info("No Data found from release gid redirect table for the recordings")
 
         # release
         try:
-            print('Getting release data...')
+            logging.info('Getting release data...')
             MB_release_data = load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data)
         except ValueError:
-            print("No Data found from release table for the recordings")
+            logging.info("No Data found from release table for the recordings")
 
         # artist_credit
         try:
-            print('Getting artist credit data...')
+            logging.info('Getting artist credit data...')
             MB_artist_credit_data = load_artist_credit(connection, gids_in_AB, MB_release_data)
         except ValueError:
-            print("No Data found from artist credit table for the recordings")
+            logging.info("No Data found from artist credit table for the recordings")
 
         # artist_credit_name
         try:
-            print('Getting artist credit name data...')
+            logging.info('Getting artist credit name data...')
             MB_artist_credit_name_data = load_artist_credit_name(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from artist credit name table for the recordings")
+            logging.info("No Data found from artist credit name table for the recordings")
 
         # artist
         try:
-            print('Getting artist data...')
+            logging.info('Getting artist data...')
             MB_artist_data = load_artist(connection, gids_in_AB, MB_artist_credit_name_data)
         except ValueError:
-            print("No Data found from artist table for the recordings")
+            logging.info("No Data found from artist table for the recordings")
 
         # artist_type
         try:
-            print('Getting artist type data...')
+            logging.info('Getting artist type data...')
             MB_artist_type_data = load_artist_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from artist type table for the recordings")
+            logging.info("No Data found from artist type table for the recordings")
 
         # recording
         try:
-            print('Getting recording data...')
+            logging.info('Getting recording data...')
             MB_recording_data = load_recording(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from recording table for the recordings")
+            logging.info("No Data found from recording table for the recordings")
 
         # area
         try:
-            print('Getting area data...')
+            logging.info('Getting area data...')
             MB_area_data = load_area(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from area table for the recordings")
+            logging.info("No Data found from area table for the recordings")
 
         # begin_area
         try:
-            print('Getting begin area data...')
+            logging.info('Getting begin area data...')
             MB_begin_area_data = load_begin_area(connection, gids_in_AB, MB_artist_data)
         except ValueError:
-            print("No Data found from area table for the recordings")
+            logging.info("No Data found from area table for the recordings")
 
         # end_area
         try:
-            print('Getting end area data...')
+            logging.info('Getting end area data...')
             MB_end_area_data = load_end_area(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from area table for the recordings")
+            logging.info("No Data found from area table for the recordings")
 
         # area_type
         try:
-            print('Getting area type data...')
+            logging.info('Getting area type data...')
             MB_area_type_data = load_area_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from area type table for the recordings")
+            logging.info("No Data found from area type table for the recordings")
 
         # begin_area_type
         try:
-            print('Getting begin area type data...')
+            logging.info('Getting begin area type data...')
             MB_begin_area_type_data = load_begin_area_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from area type table for the recordings")
+            logging.info("No Data found from area type table for the recordings")
 
         # end_area_type
         try:
-            print('Getting end area data...')
+            logging.info('Getting end area data...')
             MB_end_area_type_data = load_end_area_type(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from area type table for the recordings")
+            logging.info("No Data found from area type table for the recordings")
 
         # artist_gid_redirect
         try:
-            print('Getting artist gid redirect data...')
+            logging.info('Getting artist gid redirect data...')
             MB_artist_gid_redirect_data = load_artist_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from artist gid redirect table for the recordings")
+            logging.info("No Data found from artist gid redirect table for the recordings")
 
         # gender
         try:
-            print('Getting gender data...')
+            logging.info('Getting gender data...')
             MB_gender_data = load_gender(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from gender table for the recordings")
+            logging.info("No Data found from gender table for the recordings")
 
         # language
         try:
-            print('Getting language data...')
+            logging.info('Getting language data...')
             MB_language_data = load_language(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from language table for the recordings")
+            logging.info("No Data found from language table for the recordings")
 
         # medium_format
         try:
-            print('Getting medium format data...')
+            logging.info('Getting medium format data...')
             MB_medium_format_data = load_medium_format(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from medium format table for the recordings")
+            logging.info("No Data found from medium format table for the recordings")
 
         # recording_gid_redirect
         try:
-            print('Getting recording gid redirect data...')
+            logging.info('Getting recording gid redirect data...')
             MB_recording_gid_redirect_data = load_recording_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from recording gid redirect table for the recordings")
+            logging.info("No Data found from recording gid redirect table for the recordings")
 
         # release_group gid redirect
         try:
-            print('Getting release group gid redirect data...')
+            logging.info('Getting release group gid redirect data...')
             MB_release_group_gid_redirect_data = load_release_group_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from release group gid redirect table for the recordings")
+            logging.info("No Data found from release group gid redirect table for the recordings")
 
         # release_group
         try:
-            print('Getting release group data...')
+            logging.info('Getting release group data...')
             MB_release_group_data = load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data)
         except ValueError:
-            print("No Data found from release group table for the recordings")
+            logging.info("No Data found from release group table for the recordings")
 
         # release_group_primary_type
         try:
-            print('Getting release group primary type data...')
+            logging.info('Getting release group primary type data...')
             MB_release_group_primary_type_data = load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data)
         except ValueError:
-            print("No Data found from release group primary type table for the recordings")
+            logging.info("No Data found from release group primary type table for the recordings")
 
         # release_packaging
         try:
-            print('Getting release packaging data...')
+            logging.info('Getting release packaging data...')
             MB_release_packaging_data = load_release_packaging(connection, gids_in_AB, MB_release_data)
         except ValueError:
-            print("No Data found from release packaging table for the recordings")
+            logging.info("No Data found from release packaging table for the recordings")
 
         # release_status
         try:
-            print('Getting release status data...')
+            logging.info('Getting release status data...')
             MB_release_status_data = load_release_status(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from release status table for the recordings")
+            logging.info("No Data found from release status table for the recordings")
 
         # script
         try:
-            print('Getting script data...')
+            logging.info('Getting script data...')
             MB_script_data = load_script(connection, gids_in_AB)
         except ValueError:
-            print("No Data found from script table for the recordings")
+            logging.info("No Data found from script table for the recordings")
 
         # Write MusicBrainz data into AcousticBrainz database
-        print('\nInserting %d recordings data at a time...\n' % (len(gids_in_AB)))
+        logging.info('\nInserting %d recordings data at a time...\n' % (len(gids_in_AB)))
         with db.engine.begin() as connection:
             if MB_artist_credit_data:
                 write_artist_credit(connection, MB_artist_credit_data)
@@ -1755,6 +1756,6 @@ def start_import():
                 fetch_and_insert_musicbrainz_data(gids_in_AB)
             else:
                 break
-        print('Done!')
         total_time_taken = time.time() - start_time
         print('Data imported and inserted in %.2f seconds.' %  total_time_taken)
+        logging.info('Done!')

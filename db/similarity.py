@@ -99,10 +99,9 @@ def _transform_pearson(vector):
 
 def _transform_bpm(data):
     bpm = data['rhythm']['bpm']
-    try:
-        return _transform_circular(np.log2(bpm))
-    except RuntimeWarning:
+    if not bpm:
         return [0, 0]
+    return _transform_circular(np.log2(bpm))
 
 
 def _transform_key(data):
@@ -160,6 +159,43 @@ def _hybridize(metric):
 # Public methods
 
 def add_similarity(metric, force):
+    get_data, transform, get_stats = METRIC_FUNCS.get(metric)
+
+    connection = db.engine.connect()
+
+    _create_column(connection, metric)
+
+    if force:
+        _clear_column(connection, metric)
+
+    result = connection.execute("SELECT count(*), count(%s) FROM similarity" % metric)
+    total, current = result.fetchone()
+
+    stats = get_stats(connection) if get_stats else None
+
+    rows = _get_recordings_without_similarity(connection, metric)
+
+    while len(rows) > 0:
+        for row in rows:
+            lowlevel_id = row[0]
+            data = get_data(connection, lowlevel_id)
+            try:
+                vector = transform(data, stats) if get_stats else transform(data)
+                connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
+                                   {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': lowlevel_id})
+            except RuntimeWarning as e:
+                print('Encountered error in transformation: {} (id={})'.format(e, lowlevel_id))
+            current += 1
+
+        print('Processing {} / {} ({}%)'.format(current, total, float(current) / total * 100))
+        rows = _get_recordings_without_similarity(connection, metric)
+
+    connection.close()
+
+    return current
+
+
+def add_similarity_fast(metric, force):
     get_data, transform, get_stats = METRIC_FUNCS.get(metric)
 
     connection = db.engine.connect()

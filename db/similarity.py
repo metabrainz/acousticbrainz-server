@@ -1,7 +1,7 @@
 import db
 import numpy as np
 
-PROCESS_LIMIT = 10
+PROCESS_LIMIT = 1000
 METRICS = {
     'tempo': 'bpm',
     'key': 'key',
@@ -23,6 +23,11 @@ def _create_column(connection, metric):
     connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %s DOUBLE PRECISION[]" % metric)
     connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity USING gist(cube(%(metric)s))"
                        % {'metric': metric})
+
+
+def _delete_column(connection, metric):
+    connection.execute("DROP INDEX IF EXISTS %s_ndx_similarity" % metric)
+    connection.execute("ALTER TABLE similarity DROP COLUMN IF EXISTS %s " % metric)
 
 
 def _clear_column(connection, metric):
@@ -174,9 +179,15 @@ def add_similarity(metric, force):
                                    {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': lowlevel_id})
                 total += 1
 
+            print('Processing... ({})'.format(total))
             rows = _get_recordings_without_similarity(connection, metric)
 
     return total
+
+
+def remove_similarity(metric):
+    with db.engine.begin() as connection:
+        _delete_column(connection, metric)
 
 
 def get_similar_recordings(mbid, metric, limit=10):

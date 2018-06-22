@@ -1,7 +1,7 @@
 import db
 import numpy as np
 
-PROCESS_LIMIT = 1000
+PROCESS_LIMIT = 100
 METRICS = {
     'tempo': 'bpm',
     'key': 'key',
@@ -99,7 +99,10 @@ def _transform_pearson(vector):
 
 def _transform_bpm(data):
     bpm = data['rhythm']['bpm']
-    return _transform_circular(np.log2(bpm))
+    try:
+        return _transform_circular(np.log2(bpm))
+    except RuntimeWarning:
+        return [0, 0]
 
 
 def _transform_key(data):
@@ -159,30 +162,38 @@ def _hybridize(metric):
 def add_similarity(metric, force):
     get_data, transform, get_stats = METRIC_FUNCS.get(metric)
 
-    total = 0
-    with db.engine.begin() as connection:
-        _create_column(connection, metric)
+    connection = db.engine.connect()
 
-        if force:
-            _clear_column(connection, metric)
+    _create_column(connection, metric)
 
-        stats = get_stats(connection) if get_stats else None
+    if force:
+        _clear_column(connection, metric)
 
-        rows = _get_recordings_without_similarity(connection, metric)
+    result = connection.execute("SELECT count(*), count(%s) FROM similarity" % metric)
+    total, current = result.fetchone()
 
-        while len(rows) > 0:
-            for row in rows:
-                lowlevel_id = row[0]
-                data = get_data(connection, lowlevel_id)
+    stats = get_stats(connection) if get_stats else None
+
+    rows = _get_recordings_without_similarity(connection, metric)
+
+    while len(rows) > 0:
+        for row in rows:
+            lowlevel_id = row[0]
+            data = get_data(connection, lowlevel_id)
+            try:
                 vector = transform(data, stats) if get_stats else transform(data)
                 connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
                                    {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': lowlevel_id})
-                total += 1
+            except RuntimeWarning as e:
+                print('Encountered error in transformation: {} (id={})'.format(e, lowlevel_id))
+            current += 1
 
-            print('Processing... ({})'.format(total))
-            rows = _get_recordings_without_similarity(connection, metric)
+        print('Processing {} / {} ({}%)'.format(current, total, float(current) / total * 100))
+        rows = _get_recordings_without_similarity(connection, metric)
 
-    return total
+    connection.close()
+
+    return current
 
 
 def remove_similarity(metric):

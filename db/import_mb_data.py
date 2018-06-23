@@ -1756,6 +1756,6 @@ def start_import():
                 fetch_and_insert_musicbrainz_data(gids_in_AB)
             else:
                 break
-        total_time_taken = time.time() - start_time
-        print('Data imported and inserted in %.2f seconds.' %  total_time_taken)
         logging.info('Done!')
+        total_time_taken = time.time() - start_time
+        logging.info('Data imported and inserted in %.2f seconds.' %  total_time_taken)

@@ -2,6 +2,7 @@ import db
 from brainzutils import musicbrainz_db
 from sqlalchemy import text
 from flask import current_app
+import time
 
 def load_artist_credit(connection, gids_in_AB, MB_release_data):
     """Fetch artist_credit table data from MusicBrainz database for the
@@ -1737,6 +1738,7 @@ def start_import():
     with db.engine.begin() as connection:
         offset = 0
         rows_to_fetch = current_app.config['RECORDINGS_FETCHED_PER_BATCH']
+        start_time = time.time()
         while True:
             lowlevel_query = text("""SELECT gid
                                        FROM lowlevel
@@ -1754,3 +1756,5 @@ def start_import():
             else:
                 break
         print('Done!')
+        total_time_taken = time.time() - start_time
+        print('Data imported and inserted in %.2f seconds.' %  total_time_taken)

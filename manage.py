@@ -106,11 +106,16 @@ def import_data(archive):
 
 
 @cli.command()
-def compute_stats():
+@click.option('--dummy', '-d', is_flag=True, help="Skip hourly computation, just compute totals")
+def compute_stats(dummy=False):
     """Compute outstanding hourly statistics."""
     import datetime
     import pytz
-    db.stats.compute_stats(datetime.datetime.now(pytz.utc))
+    now = datetime.datetime.now(pytz.utc)
+    if dummy:
+        db.stats.compute_stats_dummy(now)
+    else:
+        db.stats.compute_stats(now)
 
 
 @cli.command()
@@ -171,8 +176,9 @@ def add_hybrid_similarity(name):
 
 @cli.command()
 @click.argument("name")
-def remove_similarity(name):
-    db.similarity.remove_similarity(name)
+@click.option("--leave-stats", "-s", is_flag=True, help="Recompute existing metrics.")
+def remove_similarity(name, leave_stats=False):
+    db.similarity.remove_similarity(name, leave_stats)
 
 
 @cli.command()

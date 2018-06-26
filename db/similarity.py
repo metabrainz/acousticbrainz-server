@@ -2,11 +2,7 @@ import db
 import numpy as np
 
 PROCESS_LIMIT = 100
-METRICS = {
-    'tempo': 'bpm',
-    'key': 'key',
-    'tempo and key': 'array_cat(bpm, key)'
-}
+STATS_SAMPLE = 10000
 
 KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']
 KEYS_MAP = {KEYS[i]: float(i) / 12 for i in range(12)}
@@ -59,8 +55,10 @@ def _get_lowlevel_data(connection, ids):
     return result.fetchall()
 
 
-def _get_highlevel_data(connection, lowlevel_id):
-    result = connection.execute("SELECT data, model FROM highlevel_model WHERE highlevel=%s ORDER BY model ASC" % lowlevel_id)
+def _get_highlevel_data(connection, ids):
+    result = connection.execute("SELECT highlevel, jsonb_object_agg(model, data) "
+                                "FROM highlevel_model WHERE highlevel IN %s "
+                                "GROUP BY highlevel" % str(ids))
     return result.fetchall()
 
 
@@ -70,25 +68,40 @@ def _get_highlevel_models(connection):
 
 
 def _compute_global_stats(connection, metric, field, indices):
+    result = connection.execute("SELECT means, stddevs FROM similarity_stats WHERE metric='%s'" % metric)
+    row = result.fetchone()
+    print(row)
+    if row:
+        print('Global stats already calculated')
+        return row
+
+    print('Calculating global stats for {}'.format(metric))
     means = []
     stddevs = []
     for i in indices:
-        result = connection.execute("SELECT avg(%(field)s), stddev_pop(%(field)s) FROM lowlevel_json" %
-                                    {'field': '({}->>{})::double precision'.format(field, i)})
+        print('Index {} (out of {})'.format(i, len(indices)))
+        result = connection.execute("SELECT avg(x), stddev_pop(x)"
+                                    "FROM (SELECT (%(field)s->>%(i)s)::double precision as x "
+                                    "FROM lowlevel_json "
+                                    "LIMIT %(limit)s) as res" %
+                                    {'field': field, 'i': i, 'limit': STATS_SAMPLE})
         mean, stddev = result.fetchone()
         means.append(mean)
         stddevs.append(stddev)
 
-    connection.execute("DELETE FROM similarity_stats WHERE metric='%s'" % metric)
     connection.execute("INSERT INTO similarity_stats (metric, means, stddevs) "
                        "VALUES (%(metric)s, %(means)s, %(stddevs)s)"
                        % {'metric': "'{}'".format(metric), 'means': 'ARRAY' + str(means), 'stddevs': 'ARRAY' + str(stddevs)})
     return means, stddevs
 
 
-def _calculate_mfcc_stats(connection):
-    print('Calculating global stats')
-    return _compute_global_stats(connection, 'mfcc', "data->'lowlevel'->'mfcc'->'mean'", range(1, 13))
+def _delete_global_stats(connection, metric):
+    print('Deleting global stats')
+    connection.execute("DELETE FROM similarity_stats WHERE metric='%s'" % metric)
+
+
+def _calculate_mfccs_stats(connection):
+    return _compute_global_stats(connection, 'mfccs', "data->'lowlevel'->'mfcc'->'mean'", range(1, 13))
 
 
 # Common transformations
@@ -132,14 +145,14 @@ def _transform_mfccs(data, stats):
 
 def _transform_unary_classifiers(data, model_ids):
     vector = []
-    for model_data, model_id in data:
-        if model_id in model_ids:
-            assert len(model_data['all']) == 2
-            for key, value in model_data['all'].items():
-                if not key.startswith('not'):
-                    vector.append(value)
-                    break
-    return _transform_pearson(vector)
+    for model_id in model_ids:
+        model_data = data[str(model_id)]['all']
+        assert len(model_data) == 2
+        for key, value in model_data.items():
+            if not key.startswith('not'):
+                vector.append(value)
+                break
+    return vector
 
 
 def _transform_moods(data):
@@ -151,7 +164,7 @@ def _transform_instruments(data):
 
 
 METRIC_FUNCS = {
-    'mfccs':       (_get_lowlevel_data, _transform_mfccs, _calculate_mfcc_stats),
+    'mfccs':       (_get_lowlevel_data, _transform_mfccs, _calculate_mfccs_stats),
     'bpm':         (_get_lowlevel_data, _transform_bpm, None),
     'key':         (_get_lowlevel_data, _transform_key, None),
     'moods':       (_get_highlevel_data, _transform_moods, None),
@@ -210,9 +223,11 @@ def add_similarity(metric, force, total_limit, proc_limit):
     return current
 
 
-def remove_similarity(metric):
+def remove_similarity(metric, leave_stats):
     with db.engine.begin() as connection:
         _delete_column(connection, metric)
+        if not leave_stats:
+            _delete_global_stats(connection, metric)
 
 
 def get_similar_recordings(mbid, metric, limit=10):

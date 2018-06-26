@@ -104,6 +104,13 @@ def compute_stats(to_date):
             next_date = _get_next_hour(next_date)
 
 
+def compute_stats_dummy(to_date):
+    """Compute statistic without hourly iteration"""
+    with db.engine.connect() as connection:
+        stats = _count_submissions_to_date(connection, to_date)
+        _write_stats(connection, to_date, stats)
+
+
 def _write_stats(connection, date, stats):
     """Records a value with a given name and current timestamp."""
     for name, value in six.iteritems(stats):

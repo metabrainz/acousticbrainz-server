@@ -10,16 +10,18 @@
 
     <div class="row">
         <div class="col-md-4">
-            <h3>Low-level</h3>
+            <h3>Rhytm</h3>
             <ul>
                 <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm') }}">BPM</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='key') }}">Key</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm_key') }}">BPM + key</a></li>
+{#                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='key') }}">Key</a></li>#}
+{#                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm_key') }}">BPM + key</a></li>#}
             </ul>
         </div>
         <div class="col-md-4">
             <h3>Timbre</h3>
-                <a href="similar/mfccs">MFCCs</a>
+            <ul>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='mfccs') }}">MFCCs</a></li>
+            </ul>
         </div>
         <div class="col-md-4">
             <h3>High-level</h3>

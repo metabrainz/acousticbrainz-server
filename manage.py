@@ -157,8 +157,10 @@ cli.add_command(db.dump_manage.cli, name="dump")
 @cli.command()
 @click.argument("name")
 @click.option("--force", "-f", is_flag=True, help="Recompute existing metrics.")
-def add_similarity(name, force=False):
-    db.similarity.add_similarity(name, force)
+@click.option("--total", "-t", type=int, help="Only process limited number of rows")
+@click.option("--limit", "-l", type=int, help="Override processing limit")
+def add_similarity(name, force=False, total=None, limit=None):
+    db.similarity.add_similarity(name, force, total, limit)
 
 
 @cli.command()

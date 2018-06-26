@@ -16,8 +16,10 @@ MOOD_MODELS = [11, 14, 9, 13, 12]
 INSTRUMENT_MODELS = [8, 10, 18]
 GENRE_MODELS = [3, 5, 6]
 
+DUPLICATE_SAFEGUARD = 3
 
 # SQL wrappers
+
 
 def _create_column(connection, metric):
     connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %s DOUBLE PRECISION[]" % metric)
@@ -40,12 +42,21 @@ def _get_recordings_without_similarity(connection, metric, limit=PROCESS_LIMIT):
         WHERE %(metric)s IS NULL 
         LIMIT %(limit)s
     """ % {'metric': metric, 'limit': limit})
+    rows = result.fetchall()
+    if not rows:
+        return []
+    ids = zip(*rows)[0]
+    return ids
+
+
+def _update_similarity(connection, metric, row_id, vector):
+    connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
+                       {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': row_id})
+
+
+def _get_lowlevel_data(connection, ids):
+    result = connection.execute("SELECT id, data FROM lowlevel_json WHERE id IN %s" % str(ids))
     return result.fetchall()
-
-
-def _get_lowlevel_data(connection, lowlevel_id):
-    result = connection.execute("SELECT data FROM lowlevel_json WHERE id=%s" % lowlevel_id)
-    return result.fetchone()[0]
 
 
 def _get_highlevel_data(connection, lowlevel_id):
@@ -76,6 +87,7 @@ def _compute_global_stats(connection, metric, field, indices):
 
 
 def _calculate_mfcc_stats(connection):
+    print('Calculating global stats')
     return _compute_global_stats(connection, 'mfcc', "data->'lowlevel'->'mfcc'->'mean'", range(1, 13))
 
 
@@ -158,7 +170,7 @@ def _hybridize(metric):
 
 # Public methods
 
-def add_similarity(metric, force):
+def add_similarity(metric, force, total_limit, proc_limit):
     get_data, transform, get_stats = METRIC_FUNCS.get(metric)
 
     connection = db.engine.connect()
@@ -169,63 +181,29 @@ def add_similarity(metric, force):
         _clear_column(connection, metric)
 
     result = connection.execute("SELECT count(*), count(%s) FROM similarity" % metric)
-    total, current = result.fetchone()
-
+    total, past = result.fetchone()
+    current = past
     stats = get_stats(connection) if get_stats else None
 
-    rows = _get_recordings_without_similarity(connection, metric)
+    proc_limit = proc_limit or PROCESS_LIMIT
 
-    while len(rows) > 0:
-        for row in rows:
-            lowlevel_id = row[0]
-            data = get_data(connection, lowlevel_id)
-            try:
-                vector = transform(data, stats) if get_stats else transform(data)
-                connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
-                                   {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': lowlevel_id})
-            except RuntimeWarning as e:
-                print('Encountered error in transformation: {} (id={})'.format(e, lowlevel_id))
-            current += 1
+    print('Started processing, {} / {} ({:.3f}%) already processed'.format(
+        current, total, float(current) / total * 100))
+    ids = _get_recordings_without_similarity(connection, metric, proc_limit)
 
-        print('Processing {} / {} ({}%)'.format(current, total, float(current) / total * 100))
-        rows = _get_recordings_without_similarity(connection, metric)
+    while len(ids) > 0 and (total_limit is None or current - past < total_limit):
+        with connection.begin():
+            for row_id, data in get_data(connection, ids):
+                try:
+                    vector = transform(data, stats) if get_stats else transform(data)
+                    _update_similarity(connection, metric, row_id, vector)
+                except RuntimeWarning as e:
+                    print('Encountered error in transformation: {} (id={})'.format(e, row_id))
 
-    connection.close()
+        current += len(ids)
 
-    return current
-
-
-def add_similarity_fast(metric, force):
-    get_data, transform, get_stats = METRIC_FUNCS.get(metric)
-
-    connection = db.engine.connect()
-
-    _create_column(connection, metric)
-
-    if force:
-        _clear_column(connection, metric)
-
-    result = connection.execute("SELECT count(*), count(%s) FROM similarity" % metric)
-    total, current = result.fetchone()
-
-    stats = get_stats(connection) if get_stats else None
-
-    rows = _get_recordings_without_similarity(connection, metric)
-
-    while len(rows) > 0:
-        for row in rows:
-            lowlevel_id = row[0]
-            data = get_data(connection, lowlevel_id)
-            try:
-                vector = transform(data, stats) if get_stats else transform(data)
-                connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
-                                   {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': lowlevel_id})
-            except RuntimeWarning as e:
-                print('Encountered error in transformation: {} (id={})'.format(e, lowlevel_id))
-            current += 1
-
-        print('Processing {} / {} ({}%)'.format(current, total, float(current) / total * 100))
-        rows = _get_recordings_without_similarity(connection, metric)
+        print('Processing {0} / {1} ({2:.3f}%)'.format(current, total, float(current) / total * 100))
+        ids = _get_recordings_without_similarity(connection, metric, proc_limit)
 
     connection.close()
 
@@ -242,20 +220,24 @@ def get_similar_recordings(mbid, metric, limit=10):
 
     with db.engine.begin() as connection:
         result = connection.execute("""
+          SELECT DISTINCT gid, dist FROM (
             SELECT 
-              gid
-            FROM lowlevel
-            JOIN similarity ON lowlevel.id = similarity.id
-            WHERE gid != '%(gid)s'
-            ORDER BY cube(%(metric)s) <-> cube((
+              gid,
+              cube(%(metric)s) <-> cube((
                 SELECT %(metric)s 
                 FROM similarity
                 JOIN lowlevel on similarity.id = lowlevel.id
                 WHERE lowlevel.gid='%(gid)s'
                 LIMIT 1
-              ))
-            LIMIT %(max)s
-        """ % {'metric': metric, 'gid': mbid, 'max': limit})
+              )) as dist
+            FROM lowlevel
+            JOIN similarity ON lowlevel.id = similarity.id
+            WHERE gid != '%(gid)s'
+            ORDER BY dist
+              LIMIT %(max_extra)s) AS res
+          ORDER BY dist
+          LIMIT %(max)s
+        """ % {'metric': metric, 'gid': mbid, 'max': limit, 'max_extra': limit * DUPLICATE_SAFEGUARD})
         return result.fetchall()
 
 

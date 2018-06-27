@@ -104,7 +104,7 @@ def get_similar(mbid, metric):
         raise NotFound
 
     ref_metadata = _get_extended_info(mbid)
-    metadata = [_get_extended_info(row[0]) for row in similar_recordings]
+    metadata = [_get_extended_info(row) for row in similar_recordings]
 
     return render_template(
         "data/similar.html",

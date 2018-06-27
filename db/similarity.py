@@ -235,25 +235,23 @@ def get_similar_recordings(mbid, metric, limit=10):
 
     with db.engine.begin() as connection:
         result = connection.execute("""
-          SELECT DISTINCT gid, dist FROM (
             SELECT 
-              gid,
-              cube(%(metric)s) <-> cube((
+              gid
+            FROM lowlevel
+            JOIN similarity ON lowlevel.id = similarity.id
+            WHERE gid != '%(gid)s'
+            ORDER BY cube(%(metric)s) <-> cube((
                 SELECT %(metric)s 
                 FROM similarity
                 JOIN lowlevel on similarity.id = lowlevel.id
                 WHERE lowlevel.gid='%(gid)s'
                 LIMIT 1
-              )) as dist
-            FROM lowlevel
-            JOIN similarity ON lowlevel.id = similarity.id
-            WHERE gid != '%(gid)s'
-            ORDER BY dist
-              LIMIT %(max_extra)s) AS res
-          ORDER BY dist
-          LIMIT %(max)s
-        """ % {'metric': metric, 'gid': mbid, 'max': limit, 'max_extra': limit * DUPLICATE_SAFEGUARD})
-        return result.fetchall()
+              )) 
+            LIMIT %(max)s)
+        """ % {'metric': metric, 'gid': mbid, 'max': limit * DUPLICATE_SAFEGUARD})
+        rows = result.fetchall()
+        rows = zip(*rows)
+        return np.unique(rows)[:limit]
 
 
 def init_similarity():

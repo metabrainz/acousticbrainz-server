@@ -5,6 +5,7 @@ import os.path
 import json
 import mock
 import copy
+import uuid
 
 
 class DataDBTestCase(DatabaseTestCase):
@@ -344,6 +345,19 @@ class DataDBTestCase(DatabaseTestCase):
 
     def test_get_summary_data(self):
         pass
+
+
+    def test_load_new_recordings_from_lowlevel(self):
+        """Two mbids are inserted into lowlevel table and then fetch a list of newly added mbids
+        and then check if both the lists contain similar items"""
+        recording_mbids = [uuid.UUID('ceec2751-44fe-44ff-b281-de00df9117d8'), uuid.UUID('575519b3-c06b-4157-b172-5d7ca80a8382')]
+        one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        db.data.write_low_level(recording_mbids[0], one, gid_types.GID_TYPE_MBID)
+        db.data.write_low_level(recording_mbids[1], two, gid_types.GID_TYPE_MBID)
+
+        self.assertEqual(recording_mbids, db.data.get_new_recordings_from_lowlevel())
+
 
 class DataUtilTestCase(DatabaseTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """

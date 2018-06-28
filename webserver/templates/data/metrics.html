@@ -13,20 +13,32 @@
             <h3>Rhytm</h3>
             <ul>
                 <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm') }}">BPM</a></li>
-{#                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='key') }}">Key</a></li>#}
-{#                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm_key') }}">BPM + key</a></li>#}
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm_onsetrate') }}">BPM + onset rate</a></li>
+                <li>BPM + onset rate + danceability</li>
+                <li>BPM + onset rate + danceability + beat timbre</li>
+                <li>BPM + key</li>
             </ul>
         </div>
         <div class="col-md-4">
             <h3>Timbre</h3>
             <ul>
                 <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='mfccs') }}">MFCCs</a></li>
+                <li>MFCCs (weighted)</li>
+                <li>GFCCs</li>
+                <li>GFCCs (weighted)</li>
+                <li>MFCCs (weighted) + spectral complexity + flux</li>
             </ul>
         </div>
         <div class="col-md-4">
             <h3>High-level</h3>
             <ul>
+                <li>Genres (dortmund)</li>
+                <li>Genres (rosamerica)</li>
+                <li>Genres (tzanetakis)</li>
                 <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods') }}">Moods</a></li>
+                <li>Instruments</li>
+                <li>Moods + instruments</li>
+                <li>Moods + instruments + genre (dortmund)</li>
             </ul>
         </div>
 

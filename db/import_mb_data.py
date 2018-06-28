@@ -7,7 +7,7 @@ from flask import current_app
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data):
+def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording):
     """Fetch artist_credit table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -40,9 +40,9 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
     # Get data corresponding to artist_credit column in artist_credit_name table
     MB_artist_credit_name_fk_artist_credit = list({value['artist_credit'] for value in MB_artist_credit_name_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("artist_credit.id in :ids")
+        filter_data["ids"] = tuple(artist_credit_from_recording)
 
     if MB_release_data:
         filters.append("artist_credit.id in :release_data")
@@ -65,11 +65,9 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
         filterstr = " WHERE " + filterstr
 
     artist_credit_query = text("""
-        SELECT DISTINCT artist_credit.id, artist_credit.name, artist_credit.artist_count,
+        SELECT artist_credit.id, artist_credit.name, artist_credit.artist_count,
                 artist_credit.ref_count, artist_credit.created
            FROM artist_credit
-     INNER JOIN recording
-             ON artist_credit.id = recording.artist_credit
              {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -80,7 +78,7 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
     return MB_artist_credit_data
 
 
-def load_artist_type(connection, gids_in_AB, MB_artist_data):
+def load_artist_type(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
     """Fetch artist_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -99,9 +97,9 @@ def load_artist_type(connection, gids_in_AB, MB_artist_data):
     # Get data corresponding to type column in artist table
     MB_artist_fk_artist_type = list({value['type'] for value in MB_artist_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("artist_credit.id in :ids")
+        filter_data["ids"] = tuple(artist_credit_from_recording)
 
     if MB_artist_data:
         filters.append("artist_type.id in :artist_data")
@@ -112,7 +110,7 @@ def load_artist_type(connection, gids_in_AB, MB_artist_data):
         filterstr = " WHERE " + filterstr
 
     artist_type_query = text("""
-        SELECT DISTINCT artist_type.id,
+        SELECT artist_type.id,
                artist_type.name,
                artist_type.parent,
                artist_type.child_order,
@@ -123,8 +121,6 @@ def load_artist_type(connection, gids_in_AB, MB_artist_data):
             ON artist.type = artist_type.id
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-             ON artist_credit.id = recording.artist_credit
              {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -134,7 +130,7 @@ def load_artist_type(connection, gids_in_AB, MB_artist_data):
     return MB_artist_type_data
 
 
-def load_area_type(connection, gids_in_AB, MB_area_data):
+def load_area_type(connection, gids_in_AB, MB_area_data, artist_credit_from_recording):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -153,9 +149,9 @@ def load_area_type(connection, gids_in_AB, MB_area_data):
     # Get data corresponding to type column in area table
     MB_area_fk_area_type = list({value['type'] for value in MB_area_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("artist_credit.id in :ids")
+        filter_data["ids"] = tuple(artist_credit_from_recording)
 
     if MB_area_data:
         filters.append("area_type.id in :area_data")
@@ -166,7 +162,7 @@ def load_area_type(connection, gids_in_AB, MB_area_data):
         filterstr = " WHERE " + filterstr
 
     area_type_query =   text("""
-        SELECT DISTINCT area_type.id,
+        SELECT area_type.id,
                area_type.name,
                area_type.parent,
                area_type.child_order,
@@ -179,8 +175,6 @@ def load_area_type(connection, gids_in_AB, MB_area_data):
             ON area.id = artist.area
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-             ON artist_credit.id = recording.artist_credit
              {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -190,7 +184,7 @@ def load_area_type(connection, gids_in_AB, MB_area_data):
     return MB_area_type_data
 
 
-def load_begin_area_type(connection, gids_in_AB):
+def load_begin_area_type(connection, gids_in_AB, artist_credit_from_recording):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the begin area column
     in artist table.
@@ -201,7 +195,7 @@ def load_begin_area_type(connection, gids_in_AB):
         begin_area_type data fetched from MusicBrainz database.
     """
     begin_area_type_query =   text("""
-        SELECT DISTINCT area_type.id,
+        SELECT area_type.id,
                area_type.name,
                area_type.parent,
                area_type.child_order,
@@ -214,17 +208,15 @@ def load_begin_area_type(connection, gids_in_AB):
             ON area.id = artist.begin_area
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
-         WHERE recording.gid in :gids
+         WHERE artist_credit.id in :data
     """)
-    result = connection.execute(begin_area_type_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(begin_area_type_query, {'data': tuple(artist_credit_from_recording)})
     MB_begin_area_type_data = result.fetchall()
 
     return MB_begin_area_type_data
 
 
-def load_end_area_type(connection, gids_in_AB):
+def load_end_area_type(connection, gids_in_AB, artist_credit_from_recording):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the end area column in
     artist table.
@@ -235,7 +227,7 @@ def load_end_area_type(connection, gids_in_AB):
         end_area_type data fetched from MusicBrainz database.
     """
     end_area_type_query =   text("""
-        SELECT DISTINCT area_type.id,
+        SELECT area_type.id,
                area_type.name,
                area_type.parent,
                area_type.child_order,
@@ -248,17 +240,15 @@ def load_end_area_type(connection, gids_in_AB):
             ON area.id = artist.end_area
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
-         WHERE recording.gid in :gids
+         WHERE artist_credit.id in :data
     """)
-    result = connection.execute(end_area_type_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(end_area_type_query, {'data': tuple(artist_credit_from_recording)})
     MB_end_area_type_data = result.fetchall()
 
     return MB_end_area_type_data
 
 
-def load_release_status(connection, gids_in_AB, MB_release_data):
+def load_release_status(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
     """Fetch release_status table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -275,9 +265,9 @@ def load_release_status(connection, gids_in_AB, MB_release_data):
     # Get data corresponding to status column in release table
     MB_release_fk_status = list({value['status'] for value in MB_release_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("release.artist_credit in :ids")
+        filter_data["ids"] = tuple(artist_credit_from_recording)
 
     if MB_release_data:
         filters.append("release_status.id in :data")
@@ -288,7 +278,7 @@ def load_release_status(connection, gids_in_AB, MB_release_data):
         filterstr = " WHERE " + filterstr
 
     release_status_query = text("""
-        SELECT DISTINCT release_status.id,
+        SELECT release_status.id,
                release_status.name,
                release_status.parent,
                release_status.child_order,
@@ -297,8 +287,6 @@ def load_release_status(connection, gids_in_AB, MB_release_data):
           FROM release_status
     INNER JOIN release
             ON release.status = release_status.id
-        INNER JOIN recording
-            ON recording.artist_credit = release.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -308,7 +296,7 @@ def load_release_status(connection, gids_in_AB, MB_release_data):
     return MB_release_status_data
 
 
-def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data):
+def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data, artist_credit_from_recording):
     """Fetch release_group_primary_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -328,9 +316,9 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
     # Get data corresponding to release_group_primary_type column in release_group table
     MB_release_group_fk_type = list({value['type'] for value in MB_release_group_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("release_group.artist_credit in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_release_group_data:
         filters.append("release_group_primary_type.id in :data")
@@ -341,13 +329,12 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
         filterstr = " WHERE " + filterstr
 
     release_group_primary_type_query = text("""
-        SELECT DISTINCT release_group_primary_type.id, release_group_primary_type.name,
+        SELECT release_group_primary_type.id, release_group_primary_type.name,
                release_group_primary_type.parent, release_group_primary_type.child_order,
                release_group_primary_type.description, release_group_primary_type.gid
-          FROM release_group_primary_type INNER JOIN release_group
+          FROM release_group_primary_type
+    INNER JOIN release_group
             ON release_group_primary_type.id = release_group.type
-    INNER JOIN recording
-            ON recording.artist_credit = release_group.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -377,7 +364,7 @@ def load_medium_format(connection, gids_in_AB):
     return MB_medium_format_data
 
 
-def load_release_packaging(connection, gids_in_AB, MB_release_data):
+def load_release_packaging(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
     """Fetch release_packaging table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -396,9 +383,9 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
     # Get data corresponding to release_packaging column in release table
     MB_release_fk_packaging = list({value['packaging'] for value in MB_release_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("release.artist_credit in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_release_data:
         filters.append("release_packaging.id in :data")
@@ -409,7 +396,7 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
         filterstr = " WHERE " + filterstr
 
     release_packaging_query = text("""
-        SELECT DISTINCT release_packaging.id,
+        SELECT release_packaging.id,
                release_packaging.name,
                release_packaging.parent,
                release_packaging.child_order,
@@ -418,8 +405,6 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
           FROM release_packaging
     INNER JOIN release
             ON release.packaging = release_packaging.id
-    INNER JOIN recording
-            ON recording.artist_credit = release.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -430,7 +415,7 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
     return MB_release_packaging_data
 
 
-def load_language(connection, gids_in_AB, MB_release_data):
+def load_language(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
     """Fetch language table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -449,9 +434,9 @@ def load_language(connection, gids_in_AB, MB_release_data):
     # Get data corresponding to language column in release table
     MB_release_fk_language = list({value['language'] for value in MB_release_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("release.artist_credit in :ids")
+        filter_data["ids"] = tuple(artist_credit_from_recording)
 
     if MB_release_data:
         filters.append("language.id in :data")
@@ -462,7 +447,7 @@ def load_language(connection, gids_in_AB, MB_release_data):
         filterstr = " WHERE " + filterstr
 
     language_query = text("""
-        SELECT DISTINCT language.id,
+        SELECT language.id,
                language.iso_code_2t,
                language.iso_code_2b,
                language.iso_code_1,
@@ -472,8 +457,6 @@ def load_language(connection, gids_in_AB, MB_release_data):
           FROM language
     INNER JOIN release
             ON release.language = language.id
-    INNER JOIN recording
-            ON recording.artist_credit = release.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -483,7 +466,7 @@ def load_language(connection, gids_in_AB, MB_release_data):
     return MB_language_data
 
 
-def load_script(connection, gids_in_AB, MB_release_data):
+def load_script(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
     """Fetch script table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -502,9 +485,9 @@ def load_script(connection, gids_in_AB, MB_release_data):
     # Get data corresponding to language column in release table
     MB_release_fk_script = list({value['script'] for value in MB_release_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("release.artist_credit in :ids")
+        filter_data["ids"] = tuple(artist_credit_from_recording)
 
     if MB_release_data:
         filters.append("script.id in :data")
@@ -515,7 +498,7 @@ def load_script(connection, gids_in_AB, MB_release_data):
         filterstr = " WHERE " + filterstr
 
     script_query = text("""
-        SELECT DISTINCT script.id,
+        SELECT script.id,
                script.iso_code,
                script.iso_number,
                script.name,
@@ -523,8 +506,6 @@ def load_script(connection, gids_in_AB, MB_release_data):
           FROM script
     INNER JOIN release
             ON release.script = script.id
-    INNER JOIN recording
-            ON recording.artist_credit = release.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -534,7 +515,7 @@ def load_script(connection, gids_in_AB, MB_release_data):
     return MB_script_data
 
 
-def load_gender(connection, gids_in_AB):
+def load_gender(connection, gids_in_AB, artist_credit_from_recording):
     """ Fetch gender table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -544,7 +525,7 @@ def load_gender(connection, gids_in_AB):
         gender data fetched from MusicBrainz database.
     """
     gender_query = text("""
-        SELECT DISTINCT gender.id,
+        SELECT gender.id,
                gender.name,
                gender.parent,
                gender.child_order,
@@ -555,17 +536,15 @@ def load_gender(connection, gids_in_AB):
             ON artist.gender = gender.id
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
-         WHERE recording.gid in :gids
+         WHERE artist_credit.id in :data
     """)
-    result = connection.execute(gender_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(gender_query, {'data': tuple(artist_credit_from_recording)})
     MB_gender_data = result.fetchall()
 
     return MB_gender_data
 
 
-def load_area(connection, gids_in_AB, MB_artist_data):
+def load_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
     """ Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -584,9 +563,9 @@ def load_area(connection, gids_in_AB, MB_artist_data):
     # Get data corresponding to area column in artist table
     MB_artist_fk_area = list({value['area'] for value in MB_artist_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("artist_credit.id in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_artist_data:
         filters.append("area.id in :data")
@@ -597,7 +576,7 @@ def load_area(connection, gids_in_AB, MB_artist_data):
         filterstr = " WHERE " + filterstr
 
     area_query = text("""
-        SELECT DISTINCT area.id,
+        SELECT area.id,
                area.gid,
                area.name,
                area.type,
@@ -616,8 +595,6 @@ def load_area(connection, gids_in_AB, MB_artist_data):
             ON area.id = artist.area
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
              {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -628,7 +605,7 @@ def load_area(connection, gids_in_AB, MB_artist_data):
     return MB_area_data
 
 
-def load_begin_area(connection, gids_in_AB, MB_artist_data):
+def load_begin_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
     """Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for begin area column.
 
@@ -647,9 +624,9 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
     # Get data corresponding to begin_area column in artist table
     MB_artist_fk_begin_area = list({value['begin_area'] for value in MB_artist_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("artist_credit.id in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_artist_data:
         filters.append("area.id in :data")
@@ -660,7 +637,7 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
         filterstr = " WHERE " + filterstr
 
     begin_area_query = text("""
-        SELECT DISTINCT area.id,
+        SELECT area.id,
                area.gid,
                area.name,
                area.type,
@@ -679,8 +656,6 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
             ON area.id = artist.begin_area
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -691,7 +666,7 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
     return MB_begin_area_data
 
 
-def load_end_area(connection, gids_in_AB, MB_artist_data):
+def load_end_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
     """Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for end area column.
 
@@ -708,9 +683,9 @@ def load_end_area(connection, gids_in_AB, MB_artist_data):
     # Get data corresponding to end_area column in artist table
     MB_artist_fk_end_area = list({value['end_area'] for value in MB_artist_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("artist_credit.id in :ids")
+        filter_data["ids"] = tuple(artist_credit_from_recording)
 
     if MB_artist_data:
         filters.append("area.id in :data")
@@ -721,7 +696,7 @@ def load_end_area(connection, gids_in_AB, MB_artist_data):
         filterstr = " WHERE " + filterstr
 
     end_area_query = text("""
-        SELECT DISTINCT area.id,
+        SELECT area.id,
                area.gid,
                area.name,
                area.type,
@@ -740,8 +715,6 @@ def load_end_area(connection, gids_in_AB, MB_artist_data):
             ON area.id = artist.end_area
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -751,7 +724,7 @@ def load_end_area(connection, gids_in_AB, MB_artist_data):
     return MB_end_area_data
 
 
-def load_artist_credit_name(connection, gids_in_AB):
+def load_artist_credit_name(connection, gids_in_AB, artist_credit_from_recording):
     """Fetch artist_credit_name table data from MusicBrainz database
     for the recording MBIDs in AcousticBrainz database.
 
@@ -761,7 +734,7 @@ def load_artist_credit_name(connection, gids_in_AB):
         artist_credit_name data fetched from MusicBrainz database.
     """
     artist_credit_name_query = text("""
-        SELECT DISTINCT artist_credit_name.artist_credit,
+        SELECT artist_credit_name.artist_credit,
                artist_credit_name.position,
                artist_credit_name.artist,
                artist_credit_name.name,
@@ -769,17 +742,15 @@ def load_artist_credit_name(connection, gids_in_AB):
           FROM artist_credit_name
     INNER JOIN artist_credit
             ON artist_credit_name.artist_credit = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
-         WHERE recording.gid in :gids
+         WHERE artist_credit.id in :data
     """)
-    result = connection.execute(artist_credit_name_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(artist_credit_name_query, {'data': tuple(artist_credit_from_recording)})
     MB_artist_credit_name_data = result.fetchall()
 
     return MB_artist_credit_name_data
 
 
-def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gid_redirect_data):
+def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gid_redirect_data, artist_credit_from_recording):
     """Fetch artist table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -803,9 +774,9 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gi
     # Get data corresponding to new_id column in artist_gid_redirect table.
     MB_artist_gid_redirect_fk_artist = list({value['new_id'] for value in MB_artist_gid_redirect_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("artist_credit.id in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_artist_credit_name_data:
         filters.append("artist.id in :data")
@@ -820,15 +791,13 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gi
         filterstr = " WHERE " + filterstr
 
     artist_query = text("""
-        SELECT DISTINCT artist.id, artist.gid, artist.name, artist.sort_name, artist.begin_date_year,
+        SELECT artist.id, artist.gid, artist.name, artist.sort_name, artist.begin_date_year,
                artist.begin_date_month, artist.begin_date_day, artist.end_date_year, artist.end_date_month,
                artist.end_date_day, artist.type, artist.area, artist.gender, artist.comment, artist.edits_pending,
                artist.last_updated, artist.ended, artist.begin_area, artist.end_area
           FROM artist
     INNER JOIN artist_credit
             ON artist_credit.id = artist.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -839,7 +808,7 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gi
     return MB_artist_data
 
 
-def load_artist_gid_redirect(connection, gids_in_AB):
+def load_artist_gid_redirect(connection, gids_in_AB, artist_credit_from_recording):
     """Fetch artist_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -849,7 +818,7 @@ def load_artist_gid_redirect(connection, gids_in_AB):
         artist_gid_redirect data fetched from MusicBrainz database.
     """
     artist_gid_redirect_query = text("""
-        SELECT DISTINCT artist_gid_redirect.gid,
+        SELECT artist_gid_redirect.gid,
                artist_gid_redirect.new_id,
                artist_gid_redirect.created
           FROM artist_gid_redirect
@@ -857,11 +826,9 @@ def load_artist_gid_redirect(connection, gids_in_AB):
             ON artist.id = artist_gid_redirect.new_id
     INNER JOIN artist_credit
             ON artist.id = artist_credit.id
-    INNER JOIN recording
-            ON artist_credit.id = recording.artist_credit
-         WHERE recording.gid in :gids
+         WHERE artist_credit.id in :data
     """)
-    result = connection.execute(artist_gid_redirect_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(artist_gid_redirect_query, {'data': tuple(artist_credit_from_recording)})
     MB_artist_gid_redirect_data = result.fetchall()
 
     return MB_artist_gid_redirect_data
@@ -895,7 +862,7 @@ def load_recording(connection, gids_in_AB, MB_recording_gid_redirect_data):
         filterstr = " WHERE " + filterstr
 
     recording_query = text("""
-        SELECT DISTINCT recording.id, recording.gid, recording.name, recording.artist_credit,
+        SELECT recording.id, recording.gid, recording.name, recording.artist_credit,
                recording.length, recording.comment, recording.edits_pending, recording.last_updated,
                recording.video
          FROM  recording
@@ -908,7 +875,7 @@ def load_recording(connection, gids_in_AB, MB_recording_gid_redirect_data):
     return MB_recording_data
 
 
-def load_recording_gid_redirect(connection, gids_in_AB):
+def load_recording_gid_redirect(connection, gids_in_AB, id_from_recording):
     """Fetch recording_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -918,21 +885,19 @@ def load_recording_gid_redirect(connection, gids_in_AB):
         recording_gid_redirect data fetched from MusicBrainz database.
     """
     recording_gid_redirect_query = text("""
-        SELECT DISTINCT recording_gid_redirect.gid,
+        SELECT recording_gid_redirect.gid,
                recording_gid_redirect.new_id,
                recording_gid_redirect.created
           FROM recording_gid_redirect
-    INNER JOIN recording
-            ON recording.id = recording_gid_redirect.new_id
-         WHERE recording.gid in :gids
+         WHERE recording_gid_redirect.new_id in :data
     """)
-    result = connection.execute(recording_gid_redirect_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(recording_gid_redirect_query, {'data': tuple(id_from_recording)})
     MB_recording_gid_redirect_data = result.fetchall()
 
     return MB_recording_gid_redirect_data
 
 
-def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data):
+def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data, artist_credit_from_recording):
     """Fetch release_group table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -959,8 +924,8 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
     MB_release_fk_release_group = list({value['release_group'] for value in MB_release_data})
 
     if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+        filters.append("release_group.artist_credit in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_release_group_gid_redirect_data:
         filters.append("release_group.id in :redirect_data")
@@ -975,7 +940,7 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
         filterstr = " WHERE " + filterstr
 
     release_group_query = text("""
-        SELECT DISTINCT release_group.id,
+        SELECT release_group.id,
                release_group.gid,
                release_group.name,
                release_group.artist_credit,
@@ -984,8 +949,6 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
                release_group.edits_pending,
                release_group.last_updated
           FROM release_group
-    INNER JOIN recording
-            ON recording.artist_credit = release_group.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -996,7 +959,7 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
     return MB_release_group_data
 
 
-def load_release_group_gid_redirect(connection, gids_in_AB):
+def load_release_group_gid_redirect(connection, gids_in_AB, artist_credit_from_recording):
     """Fetch release_group_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1006,23 +969,21 @@ def load_release_group_gid_redirect(connection, gids_in_AB):
         release_group_gid_redirect data fetched from MusicBrainz database.
     """
     release_group_gid_redirect_query = text("""
-        SELECT DISTINCT release_group_gid_redirect.gid,
+        SELECT release_group_gid_redirect.gid,
                release_group_gid_redirect.new_id,
                release_group_gid_redirect.created
           FROM release_group_gid_redirect
     INNER JOIN release_group
             ON release_group.id = release_group_gid_redirect.new_id
-    INNER JOIN recording
-            ON recording.artist_credit = release_group.artist_credit
-         WHERE recording.gid in :gids
+         WHERE release_group.artist_credit in :data
     """)
-    result = connection.execute(release_group_gid_redirect_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(release_group_gid_redirect_query, {'data': tuple(artist_credit_from_recording)})
     MB_release_group_gid_redirect_data = result.fetchall()
 
     return MB_release_group_gid_redirect_data
 
 
-def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data):
+def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data, artist_credit_from_recording):
     """Fetch release table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1047,9 +1008,9 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
     # Get data corresponding to new_id column in release_gid_redirect table.
     MB_release_gid_redirect_fk_release = list({value['new_id'] for value in MB_release_gid_redirect_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("release.artist_credit in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_medium_data:
         filters.append("release.id in :medium_data")
@@ -1064,7 +1025,7 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
         filterstr = " WHERE " + filterstr
 
     release_query = text("""
-        SELECT DISTINCT release.id,
+        SELECT release.id,
                release.gid,
                release.name,
                release.artist_credit,
@@ -1079,8 +1040,6 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
                release.quality,
                release.last_updated
           FROM release
-    INNER JOIN recording
-            ON recording.artist_credit = release.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -1091,7 +1050,7 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
     return MB_release_data
 
 
-def load_release_gid_redirect(connection, gids_in_AB):
+def load_release_gid_redirect(connection, gids_in_AB, artist_credit_from_recording):
     """Fetch release_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1101,23 +1060,21 @@ def load_release_gid_redirect(connection, gids_in_AB):
         release_gid_redirect data fetched from MusicBrainz database.
     """
     release_gid_redirect_query = text("""
-        SELECT DISTINCT release_gid_redirect.gid,
+        SELECT release_gid_redirect.gid,
                release_gid_redirect.new_id,
                release_gid_redirect.created
           FROM release_gid_redirect
     INNER JOIN release
             ON release.id = release_gid_redirect.new_id
-    INNER JOIN recording
-            ON recording.artist_credit = release.artist_credit
-         WHERE recording.gid in :gids
+         WHERE release.artist_credit in :data
     """)
-    result = connection.execute(release_gid_redirect_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(release_gid_redirect_query, {'data': tuple(artist_credit_from_recording)})
     MB_release_gid_redirect_data = result.fetchall()
 
     return MB_release_gid_redirect_data
 
 
-def load_medium(connection, gids_in_AB, MB_track_data):
+def load_medium(connection, gids_in_AB, MB_track_data, artist_credit_from_recording):
     """Fetch medium table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1136,9 +1093,9 @@ def load_medium(connection, gids_in_AB, MB_track_data):
     # Get data corresponding to medium column in track table.
     MB_track_fk_medium = list({value['medium'] for value in MB_track_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if artist_credit_from_recording:
+        filters.append("release.artist_credit in :credit")
+        filter_data["credit"] = tuple(artist_credit_from_recording)
 
     if MB_track_data:
         filters.append("medium.id in :data")
@@ -1149,7 +1106,7 @@ def load_medium(connection, gids_in_AB, MB_track_data):
         filterstr = " WHERE " + filterstr
 
     medium_query = text("""
-        SELECT DISTINCT medium.id,
+        SELECT medium.id,
                medium.release,
                medium.position,
                medium.format,
@@ -1160,8 +1117,6 @@ def load_medium(connection, gids_in_AB, MB_track_data):
           FROM medium
     INNER JOIN release
             ON release.id = medium.release
-    INNER JOIN recording
-            ON recording.artist_credit=release.artist_credit
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -1172,7 +1127,7 @@ def load_medium(connection, gids_in_AB, MB_track_data):
     return MB_medium_data
 
 
-def load_track(connection, gids_in_AB, MB_track_gid_redirect_data):
+def load_track(connection, gids_in_AB, MB_track_gid_redirect_data, id_from_recording):
     """Fetch track table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1191,9 +1146,9 @@ def load_track(connection, gids_in_AB, MB_track_gid_redirect_data):
     # Get data corresponding to new_id column in track_gid_redirect table.
     MB_track_gid_redirect_fk_track = list({value['new_id'] for value in MB_track_gid_redirect_data})
 
-    if gids_in_AB:
-        filters.append("recording.gid in :gids")
-        filter_data["gids"] = tuple(gids_in_AB)
+    if id_from_recording:
+        filters.append("track.recording in :ids")
+        filter_data["ids"] = tuple(id_from_recording)
 
     if MB_track_gid_redirect_data:
         filters.append("track.id in :redirect_data")
@@ -1204,7 +1159,7 @@ def load_track(connection, gids_in_AB, MB_track_gid_redirect_data):
         filterstr = " WHERE " + filterstr
 
     track_query = text("""
-        SELECT DISTINCT track.id,
+        SELECT track.id,
                track.gid,
                track.recording,
                track.medium,
@@ -1217,8 +1172,6 @@ def load_track(connection, gids_in_AB, MB_track_gid_redirect_data):
                track.last_updated,
                track.is_data_track
           FROM track
-    INNER JOIN recording
-            ON track.recording = recording.id
             {filterstr}
     """.format(filterstr=filterstr)
     )
@@ -1228,7 +1181,7 @@ def load_track(connection, gids_in_AB, MB_track_gid_redirect_data):
     return MB_track_data
 
 
-def load_track_gid_redirect(connection, gids_in_AB):
+def load_track_gid_redirect(connection, gids_in_AB, id_from_recording):
     """Fetch track_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1244,11 +1197,9 @@ def load_track_gid_redirect(connection, gids_in_AB):
           FROM track_gid_redirect
     INNER JOIN track
             ON track.id = track_gid_redirect.new_id
-    INNER JOIN recording
-            ON recording.id = track.recording
-         WHERE recording.gid in :gids
+         WHERE track.recording in :ids
     """)
-    result = connection.execute(track_gid_redirect_query, {'gids': tuple(gids_in_AB)})
+    result = connection.execute(track_gid_redirect_query, {'ids': tuple(id_from_recording)})
     MB_track_gid_redirect_data = result.fetchall()
 
     return MB_track_gid_redirect_data
@@ -1993,59 +1944,69 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         except ValueError:
             logging.info("No Data found from track gid redirect table for the recordings")
 
+        # recording
+        try:
+            logging.info('Getting recording data...')
+            MB_recording_data = load_recording(connection, gids_in_AB)
+            artist_credit_from_recording = [value[3] for value in MB_recording_data]
+            id_from_recording = [value[0] for value in MB_recording_data]
+        except ValueError:
+            logging.info("No Data found from recording table for the recordings")
+
         # track
         try:
             logging.info('Getting track data...')
-            MB_track_data = load_track(connection, gids_in_AB, MB_track_gid_redirect_data)
+            MB_track_data = load_track(connection, gids_in_AB, id_from_recording, MB_track_gid_redirect_data)
         except ValueError:
             logging.info("No Data found from track table for the recordings")
 
         # medium
         try:
             logging.info('Getting medium data...')
-            MB_medium_data = load_medium(connection, gids_in_AB, MB_track_data)
+            MB_medium_data = load_medium(connection, gids_in_AB, MB_track_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from medium table for the recordings")
 
         # release_gid_redirect
         try:
             logging.info('Getting release gid redirect data...')
-            MB_release_gid_redirect_data = load_release_gid_redirect(connection, gids_in_AB)
+            MB_release_gid_redirect_data = load_release_gid_redirect(connection, gids_in_AB, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release gid redirect table for the recordings")
 
         # release
         try:
             logging.info('Getting release data...')
-            MB_release_data = load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data)
+            MB_release_data = load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release table for the recordings")
 
         # artist_credit_name
         try:
             logging.info('Getting artist credit name data...')
-            MB_artist_credit_name_data = load_artist_credit_name(connection, gids_in_AB)
+            MB_artist_credit_name_data = load_artist_credit_name(connection, gids_in_AB, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist credit name table for the recordings")
 
         # artist_gid_redirect
         try:
             logging.info('Getting artist gid redirect data...')
-            MB_artist_gid_redirect_data = load_artist_gid_redirect(connection, gids_in_AB)
+            MB_artist_gid_redirect_data = load_artist_gid_redirect(connection, gids_in_AB, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist gid redirect table for the recordings")
 
         # artist
         try:
             logging.info('Getting artist data...')
-            MB_artist_data = load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gid_redirect_data)
+            MB_artist_data = load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gid_redirect_data, artist_credit_from_recording)
+            artist_type_from_artist = [value[10] for value in MB_artist_data]
         except ValueError:
             logging.info("No Data found from artist table for the recordings")
 
         # artist_type
         try:
             logging.info('Getting artist type data...')
-            MB_artist_type_data = load_artist_type(connection, gids_in_AB, MB_artist_data)
+            MB_artist_type_data = load_artist_type(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist type table for the recordings")
 
@@ -2053,7 +2014,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # recording_gid_redirect
         try:
             logging.info('Getting recording gid redirect data...')
-            MB_recording_gid_redirect_data = load_recording_gid_redirect(connection, gids_in_AB)
+            MB_recording_gid_redirect_data = load_recording_gid_redirect(connection, gids_in_AB, id_from_recording)
         except ValueError:
             logging.info("No Data found from recording gid redirect table for the recordings")
 
@@ -2067,56 +2028,56 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # area
         try:
             logging.info('Getting area data...')
-            MB_area_data = load_area(connection, gids_in_AB, MB_artist_data)
+            MB_area_data = load_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area table for the recordings")
 
         # begin_area
         try:
             logging.info('Getting begin area data...')
-            MB_begin_area_data = load_begin_area(connection, gids_in_AB, MB_artist_data)
+            MB_begin_area_data = load_begin_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area table for the recordings")
 
         # end_area
         try:
             logging.info('Getting end area data...')
-            MB_end_area_data = load_end_area(connection, gids_in_AB, MB_artist_data)
+            MB_end_area_data = load_end_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area table for the recordings")
 
         # area_type
         try:
             logging.info('Getting area type data...')
-            MB_area_type_data = load_area_type(connection, gids_in_AB, MB_area_data)
+            MB_area_type_data = load_area_type(connection, gids_in_AB, MB_area_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area type table for the recordings")
 
         # begin_area_type
         try:
             logging.info('Getting begin area type data...')
-            MB_begin_area_type_data = load_begin_area_type(connection, gids_in_AB)
+            MB_begin_area_type_data = load_begin_area_type(connection, gids_in_AB, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area type table for the recordings")
 
         # end_area_type
         try:
             logging.info('Getting end area data...')
-            MB_end_area_type_data = load_end_area_type(connection, gids_in_AB)
+            MB_end_area_type_data = load_end_area_type(connection, gids_in_AB, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area type table for the recordings")
 
         # gender
         try:
             logging.info('Getting gender data...')
-            MB_gender_data = load_gender(connection, gids_in_AB)
+            MB_gender_data = load_gender(connection, gids_in_AB, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from gender table for the recordings")
 
         # language
         try:
             logging.info('Getting language data...')
-            MB_language_data = load_language(connection, gids_in_AB, MB_release_data)
+            MB_language_data = load_language(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from language table for the recordings")
 
@@ -2130,49 +2091,49 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # release_group gid redirect
         try:
             logging.info('Getting release group gid redirect data...')
-            MB_release_group_gid_redirect_data = load_release_group_gid_redirect(connection, gids_in_AB)
+            MB_release_group_gid_redirect_data = load_release_group_gid_redirect(connection, gids_in_AB, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release group gid redirect table for the recordings")
 
         # release_group
         try:
             logging.info('Getting release group data...')
-            MB_release_group_data = load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data)
+            MB_release_group_data = load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release group table for the recordings")
 
         # artist_credit
         try:
             logging.info('Getting artist credit data...')
-            MB_artist_credit_data = load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data)
+            MB_artist_credit_data = load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist credit table for the recordings")
 
         # release_group_primary_type
         try:
             logging.info('Getting release group primary type data...')
-            MB_release_group_primary_type_data = load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data)
+            MB_release_group_primary_type_data = load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release group primary type table for the recordings")
 
         # release_packaging
         try:
             logging.info('Getting release packaging data...')
-            MB_release_packaging_data = load_release_packaging(connection, gids_in_AB, MB_release_data)
+            MB_release_packaging_data = load_release_packaging(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release packaging table for the recordings")
 
         # release_status
         try:
             logging.info('Getting release status data...')
-            MB_release_status_data = load_release_status(connection, gids_in_AB, MB_release_data)
+            MB_release_status_data = load_release_status(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release status table for the recordings")
 
         # script
         try:
             logging.info('Getting script data...\n')
-            MB_script_data = load_script(connection, gids_in_AB, MB_release_data)
+            MB_script_data = load_script(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from script table for the recordings")
 

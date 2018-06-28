@@ -129,6 +129,13 @@ def _transform_bpm(data):
     return _transform_circular(np.log2(bpm))
 
 
+def _transform_onset_rate(data):
+    onset_rate = data['rhythm']['onset_rate']
+    if not onset_rate:
+        return [0, 0]
+    return _transform_circular(np.log2(onset_rate))
+
+
 def _transform_key(data):
     data = data['tonal']
     key_value = KEYS_MAP.get(data['key_key'], None)
@@ -164,11 +171,12 @@ def _transform_instruments(data):
 
 
 METRIC_FUNCS = {
-    'mfccs':       (_get_lowlevel_data, _transform_mfccs, _calculate_mfccs_stats),
-    'bpm':         (_get_lowlevel_data, _transform_bpm, None),
-    'key':         (_get_lowlevel_data, _transform_key, None),
-    'moods':       (_get_highlevel_data, _transform_moods, None),
-    'instruments': (_get_highlevel_data, _transform_instruments, None),
+    'mfccs':        (_get_lowlevel_data, _transform_mfccs, _calculate_mfccs_stats),
+    'bpm':          (_get_lowlevel_data, _transform_bpm, None),
+    'onsetrate':    (_get_lowlevel_data, _transform_onset_rate, None),
+    'key':          (_get_lowlevel_data, _transform_key, None),
+    'moods':        (_get_highlevel_data, _transform_moods, None),
+    'instruments':  (_get_highlevel_data, _transform_instruments, None),
 }
 
 
@@ -247,7 +255,7 @@ def get_similar_recordings(mbid, metric, limit=10):
                 WHERE lowlevel.gid='%(gid)s'
                 LIMIT 1
               )) 
-            LIMIT %(max)s)
+            LIMIT %(max)s
         """ % {'metric': metric, 'gid': mbid, 'max': limit * DUPLICATE_SAFEGUARD})
         rows = result.fetchall()
         rows = zip(*rows)

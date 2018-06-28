@@ -5,11 +5,11 @@ from flask import current_app
 import time
 import logging
 
-def load_artist_credit(connection, gids_in_AB, MB_release_data):
+def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data):
     """Fetch artist_credit table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetch data corresponding to release table.
+    Also fetch data corresponding to release, release_group and track table.
     """
     filters = []
     filter_data = {}
@@ -20,13 +20,33 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data):
         MB_release_fk_artist_credit.append(value[3])
     MB_release_fk_artist_credit = list(set(MB_release_fk_artist_credit))
 
+    # Get data corresponding to artist_credit column in release_group table
+    MB_release_group_fk_artist_credit = []
+    for value in MB_release_group_data:
+        MB_release_group_fk_artist_credit.append(value[3])
+    MB_release_group_fk_artist_credit = list(set(MB_release_group_fk_artist_credit))
+
+    # Get data corresponding to artist_credit column in track table
+    MB_track_fk_artist_credit = []
+    for value in MB_track_data:
+        MB_track_fk_artist_credit.append(value[7])
+    MB_track_fk_artist_credit = list(set(MB_track_fk_artist_credit))
+
     if gids_in_AB:
         filters.append("recording.gid in :gids")
         filter_data["gids"] = tuple(gids_in_AB)
 
     if MB_release_data:
-        filters.append("artist_credit.id in :data")
-        filter_data["data"] = tuple(MB_release_fk_artist_credit)
+        filters.append("artist_credit.id in :release_data")
+        filter_data["release_data"] = tuple(MB_release_fk_artist_credit)
+
+    if MB_release_group_data:
+        filters.append("artist_credit.id in :release_group_data")
+        filter_data["release_group_data"] = tuple(MB_release_group_fk_artist_credit)
+
+    if MB_track_data:
+        filters.append("artist_credit.id in :track_data")
+        filter_data["track_data"] = tuple(MB_track_fk_artist_credit)
 
     filterstr = " OR ".join(filters)
     if filterstr:
@@ -366,10 +386,33 @@ def load_gender(connection, gids_in_AB):
     return MB_gender_data
 
 
-def load_area(connection, gids_in_AB):
+def load_area(connection, gids_in_AB, MB_artist_data):
     """ Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Also fetch data corresponding to artist table.
     """
+    filters = []
+    filter_data = {}
+
+    # Get data corresponding to area column in artist table
+    MB_artist_fk_area = []
+    for value in MB_artist_data:
+        MB_artist_fk_area.append(value[11])
+    MB_artist_fk_area = list(set(MB_artist_fk_area))
+
+    if gids_in_AB:
+        filters.append("recording.gid in :gids")
+        filter_data["gids"] = tuple(gids_in_AB)
+
+    if MB_artist_data:
+        filters.append("area.id in :data")
+        filter_data["data"] = tuple(MB_artist_fk_area)
+
+    filterstr = " OR ".join(filters)
+    if filterstr:
+        filterstr = " WHERE " + filterstr
+
     area_query = text("""
         SELECT DISTINCT area.id,
                area.gid,
@@ -392,9 +435,11 @@ def load_area(connection, gids_in_AB):
             ON artist.id = artist_credit.id
     INNER JOIN recording
             ON artist_credit.id = recording.artist_credit
-         WHERE recording.gid in :gids
-    """)
-    result = connection.execute(area_query, {'gids': tuple(gids_in_AB)})
+             {filterstr}
+    """.format(filterstr=filterstr)
+    )
+
+    result = connection.execute(area_query, filter_data)
     MB_area_data = result.fetchall()
 
     return MB_area_data
@@ -1499,13 +1544,6 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         except ValueError:
             logging.info("No Data found from release table for the recordings")
 
-        # artist_credit
-        try:
-            logging.info('Getting artist credit data...')
-            MB_artist_credit_data = load_artist_credit(connection, gids_in_AB, MB_release_data)
-        except ValueError:
-            logging.info("No Data found from artist credit table for the recordings")
-
         # artist_credit_name
         try:
             logging.info('Getting artist credit name data...')
@@ -1537,7 +1575,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # area
         try:
             logging.info('Getting area data...')
-            MB_area_data = load_area(connection, gids_in_AB)
+            MB_area_data = load_area(connection, gids_in_AB, MB_artist_data)
         except ValueError:
             logging.info("No Data found from area table for the recordings")
 
@@ -1624,6 +1662,13 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
             MB_release_group_data = load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data)
         except ValueError:
             logging.info("No Data found from release group table for the recordings")
+
+        # artist_credit
+        try:
+            logging.info('Getting artist credit data...')
+            MB_artist_credit_data = load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data)
+        except ValueError:
+            logging.info("No Data found from artist credit table for the recordings")
 
         # release_group_primary_type
         try:

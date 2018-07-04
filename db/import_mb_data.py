@@ -15,22 +15,13 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
     filter_data = {}
 
     # Get data corresponding to artist_credit column in release table
-    MB_release_fk_artist_credit = []
-    for value in MB_release_data:
-        MB_release_fk_artist_credit.append(value[3])
-    MB_release_fk_artist_credit = list(set(MB_release_fk_artist_credit))
+    MB_release_fk_artist_credit = list({value['artist_credit'] for value in MB_release_data if value['artist_credit'] == value[3]})
 
     # Get data corresponding to artist_credit column in release_group table
-    MB_release_group_fk_artist_credit = []
-    for value in MB_release_group_data:
-        MB_release_group_fk_artist_credit.append(value[3])
-    MB_release_group_fk_artist_credit = list(set(MB_release_group_fk_artist_credit))
+    MB_release_group_fk_artist_credit = list({value['artist_credit'] for value in MB_release_group_data if value['artist_credit'] == value[3]})
 
     # Get data corresponding to artist_credit column in track table
-    MB_track_fk_artist_credit = []
-    for value in MB_track_data:
-        MB_track_fk_artist_credit.append(value[7])
-    MB_track_fk_artist_credit = list(set(MB_track_fk_artist_credit))
+    MB_track_fk_artist_credit = list({value['artist_credit'] for value in MB_track_data if value['artist_credit'] == value[7]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -214,10 +205,7 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
     filter_data = {}
 
     # Get data corresponding to release_group_primary_type column in release_group table
-    MB_release_group_fk_type = []
-    for value in MB_release_group_data:
-        MB_release_group_fk_type.append(value[4])
-    MB_release_group_fk_type = list(set(MB_release_group_fk_type))
+    MB_release_group_fk_type = list({value['type'] for value in MB_release_group_data if value['type'] == value[4]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -273,10 +261,7 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
     filter_data = {}
 
     # Get data corresponding to release_packaging column in release table
-    MB_release_fk_packaging = []
-    for value in MB_release_data:
-        MB_release_fk_packaging.append(value[6])
-    MB_release_fk_packaging = list(set(MB_release_fk_packaging))
+    MB_release_fk_packaging = list({value['packaging'] for value in MB_release_data if value['packaging'] == value[6]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -396,10 +381,7 @@ def load_area(connection, gids_in_AB, MB_artist_data):
     filter_data = {}
 
     # Get data corresponding to area column in artist table
-    MB_artist_fk_area = []
-    for value in MB_artist_data:
-        MB_artist_fk_area.append(value[11])
-    MB_artist_fk_area = list(set(MB_artist_fk_area))
+    MB_artist_fk_area = list({value['area'] for value in MB_artist_data if value['area'] == value[11]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -455,9 +437,7 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
     filter_data = {}
 
     # Get data corresponding to begin_area column in artist table
-    MB_artist_fk_begin_area = []
-    for value in MB_artist_data:
-        MB_artist_fk_begin_area.append(value[17])
+    MB_artist_fk_begin_area = list({value['begin_area'] for value in MB_artist_data if value['begin_area'] == value[17]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -570,9 +550,7 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data):
     filter_data = {}
 
     # Get data corresponding to artist column in artist_credit_name table.
-    MB_artist_credit_name_fk_artist = []
-    for value in MB_artist_credit_name_data:
-        MB_artist_credit_name_fk_artist.append(value[2])
+    MB_artist_credit_name_fk_artist = list({value['artist'] for value in MB_artist_credit_name_data if value['artist'] == value[2]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -676,16 +654,10 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
     filter_data = {}
 
     # Get data corresponding to release_group column in release_group_gid_redirect table.
-    MB_release_group_gid_redirect_fk_release_group = []
-    for value in MB_release_group_gid_redirect_data:
-        MB_release_group_gid_redirect_fk_release_group.append(value[1])
-    MB_release_group_gid_redirect_fk_release_group = list(set(MB_release_group_gid_redirect_fk_release_group))
+    MB_release_group_gid_redirect_fk_release_group = list({value['new_id'] for value in MB_release_group_gid_redirect_data if value['new_id'] == value[1]})
 
     # Get data corresponding to release_group column in release table.
-    MB_release_fk_release_group = []
-    for value in MB_release_data:
-        MB_release_fk_release_group.append(value[4])
-    MB_release_fk_release_group = list(set(MB_release_fk_release_group))
+    MB_release_fk_release_group = list({value['release_group'] for value in MB_release_data if value['release_group'] == value[4]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -756,16 +728,10 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
     filter_data = {}
 
     # Get data corresponding to release column in medium table.
-    MB_medium_fk_release = []
-    for value in MB_medium_data:
-        MB_medium_fk_release.append(value[1])
-    MB_medium_fk_release = list(set(MB_medium_fk_release))
+    MB_medium_fk_release = list({value['release'] for value in MB_medium_data if value['release'] == value[1]})
 
     # Get data corresponding to release column in release_gid_redirect table.
-    MB_release_gid_redirect_fk_release = []
-    for value in MB_release_gid_redirect_data:
-        MB_release_gid_redirect_fk_release.append(value[1])
-    MB_release_gid_redirect_fk_release = list(set(MB_release_gid_redirect_fk_release))
+    MB_release_gid_redirect_fk_release = list({value['new_id'] for value in MB_release_gid_redirect_data if value['new_id'] == value[1]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")
@@ -842,9 +808,7 @@ def load_medium(connection, gids_in_AB, MB_track_data):
     filter_data = {}
 
     # Get data corresponding to medium column in track table.
-    MB_track_fk_medium = []
-    for value in MB_track_data:
-        MB_track_fk_medium.append(value[3])
+    MB_track_fk_medium = list({value['medium'] for value in MB_track_data if value['medium'] == value[3]})
 
     if gids_in_AB:
         filters.append("recording.gid in :gids")

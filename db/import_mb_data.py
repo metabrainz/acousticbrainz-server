@@ -10,6 +10,14 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to release, release_group and track table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_data: release data fetched from MusicBrainz database.
+        MB_release_group_data: release_group data fetched from MusicBrainz database.
+        MB_track_data: track data fetched from MusicBrainz database.
+    Returns:
+        artist_credit data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -62,6 +70,11 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
 def load_artist_type(connection, gids_in_AB):
     """Fetch artist_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        artist_type data fetched from MusicBrainz database.
     """
     artist_type_query = text("""
         SELECT DISTINCT artist_type.id,
@@ -88,6 +101,11 @@ def load_artist_type(connection, gids_in_AB):
 def load_area_type(connection, gids_in_AB):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        area_type data fetched from MusicBrainz database.
     """
     area_type_query =   text("""
         SELECT DISTINCT area_type.id,
@@ -117,6 +135,11 @@ def load_begin_area_type(connection, gids_in_AB):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the begin area column
     in artist table.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        begin_area_type data fetched from MusicBrainz database.
     """
     begin_area_type_query =   text("""
         SELECT DISTINCT area_type.id,
@@ -146,6 +169,11 @@ def load_end_area_type(connection, gids_in_AB):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the end area column in
     artist table.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        end_area_type data fetched from MusicBrainz database.
     """
     end_area_type_query =   text("""
         SELECT DISTINCT area_type.id,
@@ -174,6 +202,11 @@ def load_end_area_type(connection, gids_in_AB):
 def load_release_status(connection, gids_in_AB):
     """Fetch release_status table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        release_status data fetched from MusicBrainz database.
     """
     release_status_query = text("""
         SELECT DISTINCT release_status.id,
@@ -200,6 +233,12 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to release_group table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_group_data: release group data fetched from MusicBrainz database.
+    Returns:
+       release_group_primary_type data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -240,6 +279,11 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
 def load_medium_format(connection, gids_in_AB):
     """Fetch medium_format table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        medium_format data fetched from MusicBrainz database.
     """
     medium_format_query = text("""
         SELECT * FROM medium_format
@@ -256,6 +300,12 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to release table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_data: release data fetched from MusicBrainz database.
+    Returns:
+        release_packaging data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -300,6 +350,11 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
 def load_language(connection, gids_in_AB):
     """Fetch language table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        language data fetched from MusicBrainz database.
     """
     language_query = text("""
         SELECT DISTINCT language.id,
@@ -325,6 +380,11 @@ def load_language(connection, gids_in_AB):
 def load_script(connection, gids_in_AB):
     """Fetch script table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        script data fetched from MusicBrainz database.
     """
     script_query = text("""
         SELECT DISTINCT script.id,
@@ -348,6 +408,11 @@ def load_script(connection, gids_in_AB):
 def load_gender(connection, gids_in_AB):
     """ Fetch gender table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        gender data fetched from MusicBrainz database.
     """
     gender_query = text("""
         SELECT DISTINCT gender.id,
@@ -376,6 +441,12 @@ def load_area(connection, gids_in_AB, MB_artist_data):
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to artist table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_data: artist data fetched from MusicBrainz database.
+    Returns:
+        area data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -432,6 +503,12 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
     recording MBIDs in AcousticBrainz database for begin area column.
 
     Also fetch data corresponding to artist table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_data: artist data fetched from MusicBrainz database.
+    Returns:
+        begin_area data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -486,6 +563,11 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
 def load_end_area(connection, gids_in_AB):
     """Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for end area column.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        end_area data fetched from MusicBrainz database.
     """
     end_area_query = text("""
         SELECT DISTINCT area.id,
@@ -520,6 +602,11 @@ def load_end_area(connection, gids_in_AB):
 def load_artist_credit_name(connection, gids_in_AB):
     """Fetch artist_credit_name table data from MusicBrainz database
     for the recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        artist_credit_name data fetched from MusicBrainz database.
     """
     artist_credit_name_query = text("""
         SELECT DISTINCT artist_credit_name.artist_credit,
@@ -545,6 +632,12 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data):
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to artist_credit_name table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_credit_name_data: artist credit name data fetched from MusicBrainz database.
+    Returns:
+        artist data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -587,6 +680,11 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data):
 def load_artist_gid_redirect(connection, gids_in_AB):
     """Fetch artist_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        artist_gid_redirect data fetched from MusicBrainz database.
     """
     artist_gid_redirect_query = text("""
         SELECT DISTINCT artist_gid_redirect.gid,
@@ -610,6 +708,11 @@ def load_artist_gid_redirect(connection, gids_in_AB):
 def load_recording(connection, gids_in_AB):
     """Fetch recording table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        recording data fetched from MusicBrainz database.
     """
     recording_query = text("""
         SELECT DISTINCT recording.id, recording.gid, recording.name, recording.artist_credit,
@@ -627,6 +730,11 @@ def load_recording(connection, gids_in_AB):
 def load_recording_gid_redirect(connection, gids_in_AB):
     """Fetch recording_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        recording_gid_redirect data fetched from MusicBrainz database.
     """
     recording_gid_redirect_query = text("""
         SELECT DISTINCT recording_gid_redirect.gid,
@@ -649,6 +757,13 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
 
     Also fetch data corresponding to release_group_gid_redirect and
     release table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_group_gid_redirect_data: release group gid redirect data fetched from MusicBrainz database.
+        MB_release_data: release data fetched from MusicBrainz database.
+    Returns:
+        release_group data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -700,6 +815,11 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
 def load_release_group_gid_redirect(connection, gids_in_AB):
     """Fetch release_group_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        release_group_gid_redirect data fetched from MusicBrainz database.
     """
     release_group_gid_redirect_query = text("""
         SELECT DISTINCT release_group_gid_redirect.gid,
@@ -723,6 +843,13 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to medium and release_gid_redirect table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_medium_data: medium data fetched from MusicBrainz database.
+        MB_release_gid_redirect_data: release_gid_redirect data fetched from MusicBrainz database.
+    Returns:
+        release data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -780,6 +907,11 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
 def load_release_gid_redirect(connection, gids_in_AB):
     """Fetch release_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        release_gid_redirect data fetched from MusicBrainz database.
     """
     release_gid_redirect_query = text("""
         SELECT DISTINCT release_gid_redirect.gid,
@@ -803,6 +935,12 @@ def load_medium(connection, gids_in_AB, MB_track_data):
     recording MBIDs in AcousticBrainz database.
 
     Also fetch data corresponding to track table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_track_data: track data fetched from MusicBrainz database.
+    Returns:
+        medium data fetched from MusicBrainz database.
     """
     filters = []
     filter_data = {}
@@ -849,6 +987,11 @@ def load_medium(connection, gids_in_AB, MB_track_data):
 def load_track(connection, gids_in_AB):
     """Fetch track table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        track data fetched from MusicBrainz database.
     """
     track_query = text("""
         SELECT DISTINCT track.id,
@@ -877,6 +1020,10 @@ def load_track(connection, gids_in_AB):
 def write_artist_credit(connection, MB_artist_credit_data):
     """Insert data into artist_credit table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_credit_data: artist_credit data fetched from MusicBrainz database.
     """
     artist_credit_query = text("""
         INSERT INTO musicbrainz.artist_credit
@@ -897,6 +1044,10 @@ def write_artist_credit(connection, MB_artist_credit_data):
 def write_artist_type(connection, MB_artist_type_data):
     """Insert data in artist_type table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_type_data: artist_type data fetched from MusicBrainz database.
     """
     artist_type_query = text("""
         INSERT INTO musicbrainz.artist_type(id, name, parent, child_order, description, gid)
@@ -918,6 +1069,10 @@ def write_artist_type(connection, MB_artist_type_data):
 def write_area_type(connection, MB_area_type_data):
     """Insert data in area_type table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_area_type_data: area_type data fetched from MusicBrainz database.
     """
     area_type_query = text("""
         INSERT INTO musicbrainz.area_type
@@ -939,6 +1094,10 @@ def write_area_type(connection, MB_area_type_data):
 def write_begin_area_type(connection, MB_begin_area_type_data):
     """Insert data in area_type table in musicbrainz schema in
     AcousticBrainz database for begin_area column in artist table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_begin_area_type_data: begin_area_type data fetched from MusicBrainz database.
     """
     begin_area_type_query = text("""
         INSERT INTO musicbrainz.area_type
@@ -960,6 +1119,10 @@ def write_begin_area_type(connection, MB_begin_area_type_data):
 def write_end_area_type(connection, MB_end_area_type_data):
     """Insert data in area_type table in musicbrainz schema in
     AcousticBrainz database for end area column in artist table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_end_area_type_data: end_area_type data fetched from MusicBrainz database.
     """
     end_area_type_query = text("""
         INSERT INTO musicbrainz.area_type(id, name, parent, child_order, description, gid)
@@ -981,6 +1144,10 @@ def write_end_area_type(connection, MB_end_area_type_data):
 def write_release_status(connection, MB_release_status_data):
     """Insert data in release_status table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_status_data: release_status data fetched from MusicBrainz database.
     """
     release_status_query = text("""
         INSERT INTO musicbrainz.release_status
@@ -1002,6 +1169,10 @@ def write_release_status(connection, MB_release_status_data):
 def write_release_group_primary_type(connection, MB_release_group_primary_type_data):
     """Insert data in release_group_primary_type table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_group_primary_type_data: release_group_primary_type data fetched from MusicBrainz database.
     """
     release_group_primary_type_query = text("""
         INSERT INTO musicbrainz.release_group_primary_type
@@ -1023,6 +1194,10 @@ def write_release_group_primary_type(connection, MB_release_group_primary_type_d
 def write_medium_format(connection, MB_medium_format_data):
     """Insert data in medium_format table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_medium_format_data: medium_format data fetched from MusicBrainz database.
     """
     medium_format_query = text("""
         INSERT INTO musicbrainz.medium_format
@@ -1047,6 +1222,10 @@ def write_medium_format(connection, MB_medium_format_data):
 def write_release_packaging(connection, MB_release_packaging_data):
     """Insert data in release_packaging table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_packaging_data: release_packaging data fetched from MusicBrainz database.
     """
     release_packaging_query = text("""
         INSERT INTO musicbrainz.release_packaging
@@ -1068,6 +1247,10 @@ def write_release_packaging(connection, MB_release_packaging_data):
 def write_language(connection, MB_language_data):
     """Insert data in language table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_language_data: language data fetched from MusicBrainz database.
     """
     language_query = text("""
         INSERT INTO musicbrainz.language
@@ -1089,6 +1272,10 @@ def write_language(connection, MB_language_data):
 def write_script(connection, MB_script_data):
     """Insert data in script table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_script_data: script data fetched from MusicBrainz database.
     """
     script_query = text("""
         INSERT INTO musicbrainz.script
@@ -1109,6 +1296,10 @@ def write_script(connection, MB_script_data):
 def write_gender(connection, MB_gender_data):
     """Insert data in gender table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_gender_data: gender data fetched from MusicBrainz database.
     """
     gender_query = text("""
         INSERT INTO musicbrainz.gender
@@ -1130,6 +1321,10 @@ def write_gender(connection, MB_gender_data):
 def write_area(connection, MB_area_data):
     """Insert data in area table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_area_data: area data fetched from MusicBrainz database.
     """
     area_query = text("""
         INSERT INTO musicbrainz.area
@@ -1162,6 +1357,10 @@ def write_begin_area(connection, MB_begin_area_data):
     """Insert data in area table in musicbrainz schema in
     AcousticBrainz database for begin_area column in artist
     table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_begin_area_data: begin_area data fetched from MusicBrainz database.
     """
     begin_area_query = text("""
         INSERT INTO musicbrainz.area
@@ -1193,6 +1392,10 @@ def write_end_area(connection, MB_end_area_data):
     """Insert data in area table in musicbrainz schema in
     AcousticBrainz database for end_area column in artist
     table.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_end_area_data: end_area data fetched from MusicBrainz database.
     """
     end_area_query = text("""
         INSERT INTO musicbrainz.area
@@ -1224,6 +1427,10 @@ def write_end_area(connection, MB_end_area_data):
 def write_artist(connection, MB_artist_data):
     """Insert data in artist table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_data: artist data fetched from MusicBrainz database.
     """
     artist_query = text("""
       INSERT INTO musicbrainz.artist
@@ -1260,6 +1467,10 @@ def write_artist(connection, MB_artist_data):
 def write_artist_credit_name(connection, MB_artist_credit_name_data):
     """Insert data in artist_credit_name table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_credit_name_data: artist_credit_name data fetched from MusicBrainz database.
     """
     artist_credit_name_query = text("""
         INSERT INTO musicbrainz.artist_credit_name
@@ -1280,6 +1491,10 @@ def write_artist_credit_name(connection, MB_artist_credit_name_data):
 def write_artist_gid_redirect(connection, MB_artist_gid_redirect_data):
     """Insert data in artist_gid_redirect table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_artist_gid_redirect_data: artist_gid_redirect data fetched from MusicBrainz database.
     """
     artist_gid_redirect_query = text("""
         INSERT INTO musicbrainz.artist_gid_redirect
@@ -1298,6 +1513,10 @@ def write_artist_gid_redirect(connection, MB_artist_gid_redirect_data):
 def write_recording(connection, MB_recording_data):
     """Insert data in recording table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_recording_data: recording data fetched from MusicBrainz database.
     """
     recording_query = text("""
         INSERT INTO musicbrainz.recording
@@ -1322,6 +1541,10 @@ def write_recording(connection, MB_recording_data):
 def write_recording_gid_redirect(connection, MB_recording_gid_redirect_data):
     """Insert data in recording_gid_redirect table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_recording_gid_redirect_data: recording_gid_redirect data fetched from MusicBrainz database.
     """
     recording_gid_redirect_query = text("""
         INSERT INTO musicbrainz.recording_gid_redirect
@@ -1339,6 +1562,10 @@ def write_recording_gid_redirect(connection, MB_recording_gid_redirect_data):
 def write_release_group(connection, MB_release_group_data):
     """Insert data in release_group table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_group_data: release_group data fetched from MusicBrainz database.
     """
     release_group_query = text("""
         INSERT INTO musicbrainz.release_group
@@ -1362,6 +1589,10 @@ def write_release_group(connection, MB_release_group_data):
 def write_release_group_gid_redirect(connection, MB_release_gid_redirect_data):
     """Insert data in release_group_gid_redirect table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_group_gid_redirect_data: release_group_gid_redirect data fetched from MusicBrainz database.
     """
     release_group_gid_redirect_query = text("""
         INSERT INTO musicbrainz.release_group_gid_redirect
@@ -1380,6 +1611,10 @@ def write_release_group_gid_redirect(connection, MB_release_gid_redirect_data):
 def write_release(connection, MB_release_data):
     """Insert data in release table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_data: release data fetched from MusicBrainz database.
     """
     release_query = text("""
         INSERT INTO musicbrainz.release
@@ -1410,6 +1645,10 @@ def write_release(connection, MB_release_data):
 def write_release_gid_redirect(connection, MB_release_gid_redirect_data):
     """Insert data in release_gid_redirect table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_release_gid_redirect_data: release_gid_redirect data fetched from MusicBrainz database.
     """
     release_gid_redirect_query = text("""
         INSERT INTO musicbrainz.release_gid_redirect
@@ -1428,6 +1667,10 @@ def write_release_gid_redirect(connection, MB_release_gid_redirect_data):
 def write_medium(connection, MB_medium_data):
     """Insert data in medium table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_medium_data: medium data fetched from MusicBrainz database.
     """
     medium_query = text("""
         INSERT INTO musicbrainz.medium
@@ -1451,6 +1694,10 @@ def write_medium(connection, MB_medium_data):
 def write_track(connection, MB_track_data):
     """Insert data in track table in musicbrainz schema in
     AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_track_data: track data fetched from MusicBrainz database.
     """
     track_query = text("""
         INSERT INTO musicbrainz.track

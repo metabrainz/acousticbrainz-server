@@ -22,6 +22,7 @@ import db.import_mb_data
 import webserver
 from brainzutils import musicbrainz_db
 from db.testing import DatabaseTestCase
+import musicbrainz_importer.apply_replication_changes
 
 import webserver.external.get_entities
 
@@ -291,6 +292,11 @@ def import_musicbrainz_db():
 def get_entities():
     print('Redirecting mbids to original entities...')
     webserver.external.get_entities.get_original_entity()
+
+
+def apply_replication_changes():
+    print("\nUpdating musicbrainz schema by applying replication packets...")
+    musicbrainz_importer.apply_replication_changes.main()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

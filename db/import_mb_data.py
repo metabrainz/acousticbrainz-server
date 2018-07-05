@@ -1,9 +1,9 @@
 import db
 from brainzutils import musicbrainz_db
 from sqlalchemy import text
-from flask import current_app
 import time
 import logging
+from flask import current_app
 
 def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data):
     """Fetch artist_credit table data from MusicBrainz database for the

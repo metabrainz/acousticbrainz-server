@@ -22,6 +22,7 @@ def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_tr
         MB_track_data (of type - sqlalchemy.resultproxy): data retrieved from the track table of the
             MusicBrainz database (should contain artist credit values).
         MB_artist_credit_name_data: artist_credit_name_data fetched from MusicBrainz database.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         artist_credit data fetched from MusicBrainz database.
     """
@@ -88,6 +89,7 @@ def load_artist_type(connection, MB_artist_data, artist_credit_from_recording):
         connection: database connection to execute the query.
         MB_artist_data (of type - sqlalchemy.resultproxy): data retrieved from the artist
             table of the MusicBrainz database (should contain artist type values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         artist_type data fetched from MusicBrainz database.
     """
@@ -140,6 +142,7 @@ def load_area_type(connection, MB_area_data, artist_credit_from_recording):
         connection: database connection to execute the query.
         MB_area_data (of type - sqlalchemy.resultproxy): data retrieved from the area table
             of the MusicBrainz database(should contain area type values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         area_type data fetched from MusicBrainz database.
     """
@@ -191,6 +194,7 @@ def load_begin_area_type(connection, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         begin_area_type data fetched from MusicBrainz database.
     """
@@ -223,6 +227,7 @@ def load_end_area_type(connection, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         end_area_type data fetched from MusicBrainz database.
     """
@@ -256,6 +261,7 @@ def load_release_status(connection, MB_release_data, artist_credit_from_recordin
         connection: database connection to execute the query.
         MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the release table
             of the MusicBrainz database (should contain release_status values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release_status data fetched from MusicBrainz database.
     """
@@ -307,6 +313,7 @@ def load_release_group_primary_type(connection, MB_release_group_data, artist_cr
         MB_release_group_data (of type - sqlalchemy.resultproxy): data retrieved from the
             release_group table of the MusicBrainz database
             (should contain release_group_primary_type values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
        release_group_primary_type data fetched from MusicBrainz database.
     """
@@ -374,6 +381,7 @@ def load_release_packaging(connection, MB_release_data, artist_credit_from_recor
         connection: database connection to execute the query.
         MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the
             release table of the MusicBrainz database (should contain release_packaging values)
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release_packaging data fetched from MusicBrainz database.
     """
@@ -425,6 +433,7 @@ def load_language(connection, MB_release_data, artist_credit_from_recording):
         connection: database connection to execute the query.
         MB_release_data(of type - sqlalchemy.resultproxy): data retrieved from the
             release table of the MusicBrainz database (should contain language values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         language data fetched from MusicBrainz database.
     """
@@ -476,6 +485,7 @@ def load_script(connection, MB_release_data, artist_credit_from_recording):
         connection: database connection to execute the query.
         MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the
             release table of the MusicBrainz database (should contain script values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         script data fetched from MusicBrainz database.
     """
@@ -544,6 +554,7 @@ def load_area(connection, MB_artist_data, artist_credit_from_recording):
         connection: database connection to execute the query.
         MB_artist_data(of type - sqlalchemy.resultproxy): data retrieved from the
             artist table of the MusicBrainz database (should contain area values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         area data fetched from MusicBrainz database.
     """
@@ -605,6 +616,7 @@ def load_begin_area(connection, MB_artist_data, artist_credit_from_recording):
         connection: database connection to execute the query.
         MB_artist_data (of type - sqlalchemy.resultproxy): data retrieved from the
             artist table of the MusicBrainz database (should contain begin_area values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         begin_area data fetched from MusicBrainz database.
     """
@@ -664,6 +676,8 @@ def load_end_area(connection, MB_artist_data, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        MB_artist_data: list of artist data fetched from MusicBrainz database.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         end_area data fetched from MusicBrainz database.
     """
@@ -720,6 +734,7 @@ def load_artist_credit_name(connection, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         artist_credit_name data fetched from MusicBrainz database.
     """
@@ -752,6 +767,7 @@ def load_artist(connection, MB_artist_credit_name_data, MB_artist_gid_redirect_d
             artist_credit_name table of the MusicBrainz database (should contain artist values).
         MB_artist_gid_redirect_data(of type - sqlalchemy.resultproxy): data retrieved from the
             artist_gid_redirect table of the MusicBrainz database (should contain artist values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         artist data fetched from MusicBrainz database.
     """
@@ -804,6 +820,7 @@ def load_artist_gid_redirect(connection, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         artist_gid_redirect data fetched from MusicBrainz database.
     """
@@ -830,6 +847,8 @@ def load_recording(connection, gids_in_AB, MB_recording_gid_redirect_data):
 
     Args:
         connection: database connection to execute the query.
+        gids_in_AB: list of recordings mbids present in lowlevel table in AB database.
+        MB_recording_gid_redirect_data: list of recording gid redirect data fetched from MusicBrainz database.
     Returns:
         recording data fetched from MusicBrainz database.
     """
@@ -871,6 +890,7 @@ def load_recording_gid_redirect(connection, gids_in_AB):
 
     Args:
         connection: database connection to execute the query.
+        gids_in_AB: list of recordings mbids present in lowlevel table in AB database.
     Returns:
         recording_gid_redirect data fetched from MusicBrainz database.
     """
@@ -903,6 +923,7 @@ def load_release_group(connection, MB_release_group_gid_redirect_data, MB_releas
             (should contain release_group values).
         MB_release_data(of type - sqlalchemy.resultproxy): data retrieved from the
             release table of the MusicBrainz database (should contain release_group values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release_group data fetched from MusicBrainz database.
     """
@@ -957,6 +978,7 @@ def load_release_group_gid_redirect(connection, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release_group_gid_redirect data fetched from MusicBrainz database.
     """
@@ -988,6 +1010,7 @@ def load_release(connection, MB_medium_data, MB_release_gid_redirect_data, artis
         MB_release_gid_redirect_data (of type - sqlalchemy.resultproxy): data retrieved from the
             release_gid_redirect table of the MusicBrainz database
             (should contain release values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release data fetched from MusicBrainz database.
     """
@@ -1048,6 +1071,7 @@ def load_release_gid_redirect(connection, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release_gid_redirect data fetched from MusicBrainz database.
     """
@@ -1076,6 +1100,7 @@ def load_medium(connection, MB_track_data, artist_credit_from_recording):
         connection: database connection to execute the query.
         MB_track_data (of type - sqlalchemy.resultproxy): data retrieved from the
             track table of the MusicBrainz database (should contain medium values).
+        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         medium data fetched from MusicBrainz database.
     """
@@ -1129,6 +1154,7 @@ def load_track(connection, MB_track_gid_redirect_data, id_from_recording):
         connection: database connection to execute the query.
         MB_track_gid_redirect_data (of type - sqlalchemy.resultproxy): data retrieved from the
             track_gid_redirect table of the MusicBrainz database (should contain track values).
+        id_from_recording: list of recording ids from recording data fetched from MusicBrainz database.
     Returns:
         track data fetched from MusicBrainz database.
     """
@@ -1179,6 +1205,7 @@ def load_track_gid_redirect(connection, id_from_recording):
 
     Args:
         connection: database connection to execute the query.
+        id_from_recording: list of recording ids from recording data fetched from MusicBrainz database.
     Returns:
         track_gid_redirect data fetched from MusicBrainz database.
     """
@@ -1203,7 +1230,7 @@ def write_artist_credit(connection, MB_artist_credit_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_credit_data: artist_credit data fetched from MusicBrainz database.
+        MB_artist_credit_data: list of artist_credit data fetched from MusicBrainz database.
     """
     artist_credit_query = text("""
         INSERT INTO musicbrainz.artist_credit
@@ -1227,7 +1254,7 @@ def write_artist_type(connection, MB_artist_type_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_type_data: artist_type data fetched from MusicBrainz database.
+        MB_artist_type_data: list of artist_type data fetched from MusicBrainz database.
     """
     artist_type_query = text("""
         INSERT INTO musicbrainz.artist_type(id, name, parent, child_order, description, gid)
@@ -1252,7 +1279,7 @@ def write_area_type(connection, MB_area_type_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_area_type_data: area_type data fetched from MusicBrainz database.
+        MB_area_type_data: list of area_type data fetched from MusicBrainz database.
     """
     area_type_query = text("""
         INSERT INTO musicbrainz.area_type
@@ -1277,7 +1304,7 @@ def write_begin_area_type(connection, MB_begin_area_type_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_begin_area_type_data: begin_area_type data fetched from MusicBrainz database.
+        MB_begin_area_type_data: list of begin_area_type data fetched from MusicBrainz database.
     """
     begin_area_type_query = text("""
         INSERT INTO musicbrainz.area_type
@@ -1302,7 +1329,7 @@ def write_end_area_type(connection, MB_end_area_type_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_end_area_type_data: end_area_type data fetched from MusicBrainz database.
+        MB_end_area_type_data: list of end_area_type data fetched from MusicBrainz database.
     """
     end_area_type_query = text("""
         INSERT INTO musicbrainz.area_type(id, name, parent, child_order, description, gid)
@@ -1327,7 +1354,7 @@ def write_release_status(connection, MB_release_status_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_status_data: release_status data fetched from MusicBrainz database.
+        MB_release_status_data: list of release_status data fetched from MusicBrainz database.
     """
     release_status_query = text("""
         INSERT INTO musicbrainz.release_status
@@ -1352,7 +1379,7 @@ def write_release_group_primary_type(connection, MB_release_group_primary_type_d
 
     Args:
         connection: database connection to execute the query.
-        MB_release_group_primary_type_data: release_group_primary_type data fetched from MusicBrainz database.
+        MB_release_group_primary_type_data: list of release_group_primary_type data fetched from MusicBrainz database.
     """
     release_group_primary_type_query = text("""
         INSERT INTO musicbrainz.release_group_primary_type
@@ -1377,7 +1404,7 @@ def write_medium_format(connection, MB_medium_format_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_medium_format_data: medium_format data fetched from MusicBrainz database.
+        MB_medium_format_data: list of medium_format data fetched from MusicBrainz database.
     """
     medium_format_query = text("""
         INSERT INTO musicbrainz.medium_format
@@ -1405,7 +1432,7 @@ def write_release_packaging(connection, MB_release_packaging_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_packaging_data: release_packaging data fetched from MusicBrainz database.
+        MB_release_packaging_data: list of release_packaging data fetched from MusicBrainz database.
     """
     release_packaging_query = text("""
         INSERT INTO musicbrainz.release_packaging
@@ -1430,7 +1457,7 @@ def write_language(connection, MB_language_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_language_data: language data fetched from MusicBrainz database.
+        MB_language_data: list of language data fetched from MusicBrainz database.
     """
     language_query = text("""
         INSERT INTO musicbrainz.language
@@ -1456,7 +1483,7 @@ def write_script(connection, MB_script_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_script_data: script data fetched from MusicBrainz database.
+        MB_script_data: list of script data fetched from MusicBrainz database.
     """
     script_query = text("""
         INSERT INTO musicbrainz.script
@@ -1480,7 +1507,7 @@ def write_gender(connection, MB_gender_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_gender_data: gender data fetched from MusicBrainz database.
+        MB_gender_data: list of gender data fetched from MusicBrainz database.
     """
     gender_query = text("""
         INSERT INTO musicbrainz.gender
@@ -1505,7 +1532,7 @@ def write_area(connection, MB_area_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_area_data: area data fetched from MusicBrainz database.
+        MB_area_data: list of area data fetched from MusicBrainz database.
     """
     area_query = text("""
         INSERT INTO musicbrainz.area
@@ -1541,7 +1568,7 @@ def write_begin_area(connection, MB_begin_area_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_begin_area_data: begin_area data fetched from MusicBrainz database.
+        MB_begin_area_data: list of begin_area data fetched from MusicBrainz database.
     """
     begin_area_query = text("""
         INSERT INTO musicbrainz.area
@@ -1576,7 +1603,7 @@ def write_end_area(connection, MB_end_area_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_end_area_data: end_area data fetched from MusicBrainz database.
+        MB_end_area_data: list of end_area data fetched from MusicBrainz database.
     """
     end_area_query = text("""
         INSERT INTO musicbrainz.area
@@ -1611,7 +1638,7 @@ def write_artist(connection, MB_artist_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_data: artist data fetched from MusicBrainz database.
+        MB_artist_data: list of artist data fetched from MusicBrainz database.
     """
     artist_query = text("""
       INSERT INTO musicbrainz.artist
@@ -1651,7 +1678,7 @@ def write_artist_credit_name(connection, MB_artist_credit_name_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_credit_name_data: artist_credit_name data fetched from MusicBrainz database.
+        MB_artist_credit_name_data: list of artist_credit_name data fetched from MusicBrainz database.
     """
     artist_credit_name_query = text("""
         INSERT INTO musicbrainz.artist_credit_name
@@ -1675,7 +1702,7 @@ def write_artist_gid_redirect(connection, MB_artist_gid_redirect_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_gid_redirect_data: artist_gid_redirect data fetched from MusicBrainz database.
+        MB_artist_gid_redirect_data: list of artist_gid_redirect data fetched from MusicBrainz database.
     """
     artist_gid_redirect_query = text("""
         INSERT INTO musicbrainz.artist_gid_redirect
@@ -1697,7 +1724,7 @@ def write_recording(connection, MB_recording_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_recording_data: recording data fetched from MusicBrainz database.
+        MB_recording_data: list of recording data fetched from MusicBrainz database.
     """
     recording_query = text("""
         INSERT INTO musicbrainz.recording
@@ -1725,7 +1752,7 @@ def write_recording_gid_redirect(connection, MB_recording_gid_redirect_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_recording_gid_redirect_data: recording_gid_redirect data fetched from MusicBrainz database.
+        MB_recording_gid_redirect_data: list of recording_gid_redirect data fetched from MusicBrainz database.
     """
     recording_gid_redirect_query = text("""
         INSERT INTO musicbrainz.recording_gid_redirect
@@ -1746,7 +1773,7 @@ def write_release_group(connection, MB_release_group_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_group_data: release_group data fetched from MusicBrainz database.
+        MB_release_group_data: list of release_group data fetched from MusicBrainz database.
     """
     release_group_query = text("""
         INSERT INTO musicbrainz.release_group
@@ -1773,7 +1800,7 @@ def write_release_group_gid_redirect(connection, MB_release_gid_redirect_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_group_gid_redirect_data: release_group_gid_redirect data fetched from MusicBrainz database.
+        MB_release_group_gid_redirect_data: list of release_group_gid_redirect data fetched from MusicBrainz database.
     """
     release_group_gid_redirect_query = text("""
         INSERT INTO musicbrainz.release_group_gid_redirect
@@ -1795,7 +1822,7 @@ def write_release(connection, MB_release_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_data: release data fetched from MusicBrainz database.
+        MB_release_data: list of release data fetched from MusicBrainz database.
     """
     release_query = text("""
         INSERT INTO musicbrainz.release
@@ -1829,7 +1856,7 @@ def write_release_gid_redirect(connection, MB_release_gid_redirect_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_gid_redirect_data: release_gid_redirect data fetched from MusicBrainz database.
+        MB_release_gid_redirect_data: list of release_gid_redirect data fetched from MusicBrainz database.
     """
     release_gid_redirect_query = text("""
         INSERT INTO musicbrainz.release_gid_redirect
@@ -1851,7 +1878,7 @@ def write_medium(connection, MB_medium_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_medium_data: medium data fetched from MusicBrainz database.
+        MB_medium_data: list of medium data fetched from MusicBrainz database.
     """
     medium_query = text("""
         INSERT INTO musicbrainz.medium
@@ -1878,7 +1905,7 @@ def write_track(connection, MB_track_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_track_data: track data fetched from MusicBrainz database.
+        MB_track_data: list of track data fetched from MusicBrainz database.
     """
     track_query = text("""
         INSERT INTO musicbrainz.track
@@ -1910,7 +1937,7 @@ def write_track_gid_redirect(connection, MB_track_gid_redirect_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_track_gid_redirect_data: track_gid_redirect data fetched from MusicBrainz database.
+        MB_track_gid_redirect_data: list of track_gid_redirect data fetched from MusicBrainz database.
     """
     track_gid_redirect_query = text("""
         INSERT INTO musicbrainz.track_gid_redirect

@@ -865,7 +865,7 @@ def load_recording(connection, gids_in_AB, MB_recording_gid_redirect_data):
     return MB_recording_data
 
 
-def load_recording_gid_redirect(connection, gids_in_AB, id_from_recording):
+def load_recording_gid_redirect(connection, gids_in_AB):
     """Fetch recording_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -879,9 +879,11 @@ def load_recording_gid_redirect(connection, gids_in_AB, id_from_recording):
                recording_gid_redirect.new_id,
                recording_gid_redirect.created
           FROM recording_gid_redirect
-         WHERE recording_gid_redirect.new_id in :data
+    INNER JOIN recording
+            ON recording.id = recording_gid_redirect.new_id
+         WHERE recording.gid in :gids
     """)
-    result = connection.execute(recording_gid_redirect_query, {'data': tuple(id_from_recording)})
+    result = connection.execute(recording_gid_redirect_query, {'gids': tuple(gids_in_AB)})
     MB_recording_gid_redirect_data = result.fetchall()
 
     return MB_recording_gid_redirect_data
@@ -1451,6 +1453,7 @@ def write_script(connection, MB_script_data):
     """Insert data in script table in musicbrainz schema in
     AcousticBrainz database.
 
+
     Args:
         connection: database connection to execute the query.
         MB_script_data: script data fetched from MusicBrainz database.
@@ -1927,26 +1930,33 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
     # Get MusicBrainz data
     logging.info('Getting %d recordings data at a time...\n' % (len(gids_in_AB)))
     with musicbrainz_db.engine.begin() as connection:
-        # track_gid_redirect
+        # recording_gid_redirect
         try:
-            logging.info('Getting track gid redirect data...')
-            MB_track_gid_redirect_data = load_track_gid_redirect(connection, gids_in_AB)
+            logging.info('Getting recording gid redirect data...')
+            MB_recording_gid_redirect_data = load_recording_gid_redirect(connection, gids_in_AB)
         except ValueError:
-            logging.info("No Data found from track gid redirect table for the recordings")
+            logging.info("No Data found from recording gid redirect table for the recordings")
 
         # recording
         try:
             logging.info('Getting recording data...')
-            MB_recording_data = load_recording(connection, gids_in_AB)
+            MB_recording_data = load_recording(connection, gids_in_AB, MB_recording_gid_redirect_data)
             artist_credit_from_recording = [value[3] for value in MB_recording_data]
             id_from_recording = [value[0] for value in MB_recording_data]
         except ValueError:
             logging.info("No Data found from recording table for the recordings")
 
+        # track_gid_redirect
+        try:
+            logging.info('Getting track gid redirect data...')
+            MB_track_gid_redirect_data = load_track_gid_redirect(connection, gids_in_AB, id_from_recording)
+        except ValueError:
+            logging.info("No Data found from track gid redirect table for the recordings")
+
         # track
         try:
             logging.info('Getting track data...')
-            MB_track_data = load_track(connection, gids_in_AB, id_from_recording, MB_track_gid_redirect_data)
+            MB_track_data = load_track(connection, gids_in_AB, MB_track_gid_redirect_data, id_from_recording)
         except ValueError:
             logging.info("No Data found from track table for the recordings")
 
@@ -1999,21 +2009,6 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
             MB_artist_type_data = load_artist_type(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist type table for the recordings")
-
-
-        # recording_gid_redirect
-        try:
-            logging.info('Getting recording gid redirect data...')
-            MB_recording_gid_redirect_data = load_recording_gid_redirect(connection, gids_in_AB, id_from_recording)
-        except ValueError:
-            logging.info("No Data found from recording gid redirect table for the recordings")
-
-        # recording
-        try:
-            logging.info('Getting recording data...')
-            MB_recording_data = load_recording(connection, gids_in_AB, MB_recording_gid_redirect_data)
-        except ValueError:
-            logging.info("No Data found from recording table for the recordings")
 
         # area
         try:

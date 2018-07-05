@@ -356,7 +356,7 @@ def load_medium_format(connection, gids_in_AB):
     """
     medium_format_query = text("""
         SELECT * FROM medium_format
-        ORDER BY id
+             ORDER BY id
     """)
     result = connection.execute(medium_format_query)
     MB_medium_format_data = result.fetchall()
@@ -515,7 +515,7 @@ def load_script(connection, gids_in_AB, MB_release_data, artist_credit_from_reco
     return MB_script_data
 
 
-def load_gender(connection, gids_in_AB, artist_credit_from_recording):
+def load_gender(connection, gids_in_AB):
     """ Fetch gender table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -525,20 +525,10 @@ def load_gender(connection, gids_in_AB, artist_credit_from_recording):
         gender data fetched from MusicBrainz database.
     """
     gender_query = text("""
-        SELECT gender.id,
-               gender.name,
-               gender.parent,
-               gender.child_order,
-               gender.description,
-               gender.gid
-          FROM gender
-    INNER JOIN artist
-            ON artist.gender = gender.id
-    INNER JOIN artist_credit
-            ON artist.id = artist_credit.id
-         WHERE artist_credit.id in :data
+        SELECT * FROM gender
+             ORDER BY id
     """)
-    result = connection.execute(gender_query, {'data': tuple(artist_credit_from_recording)})
+    result = connection.execute(gender_query)
     MB_gender_data = result.fetchall()
 
     return MB_gender_data
@@ -1191,7 +1181,7 @@ def load_track_gid_redirect(connection, gids_in_AB, id_from_recording):
         track_gid_redirect data fetched from MusicBrainz database.
     """
     track_gid_redirect_query = text("""
-        SELECT DISTINCT track_gid_redirect.gid,
+        SELECT track_gid_redirect.gid,
                track_gid_redirect.new_id,
                track_gid_redirect.created
           FROM track_gid_redirect
@@ -2070,7 +2060,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # gender
         try:
             logging.info('Getting gender data...')
-            MB_gender_data = load_gender(connection, gids_in_AB, artist_credit_from_recording)
+            MB_gender_data = load_gender(connection, gids_in_AB)
         except ValueError:
             logging.info("No Data found from gender table for the recordings")
 

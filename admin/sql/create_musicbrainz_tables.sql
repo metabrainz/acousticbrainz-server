@@ -266,4 +266,10 @@ CREATE TABLE musicbrainz.artist_type (
   gid                 uuid NOT NULL
 );
 
+CREATE TABLE musicbrainz.replication_control (
+  id                              SERIAL,
+  current_replication_sequence    INTEGER,
+  last_replication_date           TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 COMMIT;

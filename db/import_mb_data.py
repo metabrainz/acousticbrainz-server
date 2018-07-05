@@ -1148,15 +1148,36 @@ def load_medium(connection, gids_in_AB, MB_track_data):
     return MB_medium_data
 
 
-def load_track(connection, gids_in_AB):
+def load_track(connection, gids_in_AB, MB_track_gid_redirect_data):
     """Fetch track table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
+    Also fetch data corresponding to track_gid_redirect table.
+
     Args:
         connection: database connection to execute the query.
+        MB_track_gid_redirect_data: track gid redirect data fetched from MusicBrainz database
     Returns:
         track data fetched from MusicBrainz database.
     """
+    filters = []
+    filter_data = {}
+
+    # Get data corresponding to new_id column in track_gid_redirect table.
+    MB_track_gid_redirect_fk_track = list({value['new_id'] for value in MB_track_gid_redirect_data})
+
+    if gids_in_AB:
+        filters.append("recording.gid in :gids")
+        filter_data["gids"] = tuple(gids_in_AB)
+
+    if MB_track_gid_redirect_data:
+        filters.append("track.id in :redirect_data")
+        filter_data["redirect_data"] = tuple(MB_track_gid_redirect_fk_track)
+
+    filterstr = " OR ".join(filters)
+    if filterstr:
+        filterstr = " WHERE " + filterstr
+
     track_query = text("""
         SELECT DISTINCT track.id,
                track.gid,
@@ -1173,9 +1194,10 @@ def load_track(connection, gids_in_AB):
           FROM track
     INNER JOIN recording
             ON track.recording = recording.id
-         WHERE recording.gid in :gids
-    """)
-    result = connection.execute(track_query, {'gids': tuple(gids_in_AB)})
+            {filterstr}
+    """.format(filterstr=filterstr)
+    )
+    result = connection.execute(track_query, filter_data)
     MB_track_data = result.fetchall()
 
     return MB_track_data
@@ -1949,7 +1971,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # track
         try:
             logging.info('Getting track data...')
-            MB_track_data = load_track(connection, gids_in_AB)
+            MB_track_data = load_track(connection, gids_in_AB, MB_track_gid_redirect_data)
         except ValueError:
             logging.info("No Data found from track table for the recordings")
 

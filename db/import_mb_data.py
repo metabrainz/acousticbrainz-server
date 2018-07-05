@@ -7,7 +7,7 @@ from flask import current_app
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording):
+def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording):
     """Fetch artist_credit table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -78,7 +78,7 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
     return MB_artist_credit_data
 
 
-def load_artist_type(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
+def load_artist_type(connection, MB_artist_data, artist_credit_from_recording):
     """Fetch artist_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -130,7 +130,7 @@ def load_artist_type(connection, gids_in_AB, MB_artist_data, artist_credit_from_
     return MB_artist_type_data
 
 
-def load_area_type(connection, gids_in_AB, MB_area_data, artist_credit_from_recording):
+def load_area_type(connection, MB_area_data, artist_credit_from_recording):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -184,7 +184,7 @@ def load_area_type(connection, gids_in_AB, MB_area_data, artist_credit_from_reco
     return MB_area_type_data
 
 
-def load_begin_area_type(connection, gids_in_AB, artist_credit_from_recording):
+def load_begin_area_type(connection, artist_credit_from_recording):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the begin area column
     in artist table.
@@ -216,7 +216,7 @@ def load_begin_area_type(connection, gids_in_AB, artist_credit_from_recording):
     return MB_begin_area_type_data
 
 
-def load_end_area_type(connection, gids_in_AB, artist_credit_from_recording):
+def load_end_area_type(connection, artist_credit_from_recording):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for the end area column in
     artist table.
@@ -248,7 +248,7 @@ def load_end_area_type(connection, gids_in_AB, artist_credit_from_recording):
     return MB_end_area_type_data
 
 
-def load_release_status(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
+def load_release_status(connection, MB_release_data, artist_credit_from_recording):
     """Fetch release_status table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -296,7 +296,7 @@ def load_release_status(connection, gids_in_AB, MB_release_data, artist_credit_f
     return MB_release_status_data
 
 
-def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data, artist_credit_from_recording):
+def load_release_group_primary_type(connection, MB_release_group_data, artist_credit_from_recording):
     """Fetch release_group_primary_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -345,7 +345,7 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
     return MB_release_group_primary_type_data
 
 
-def load_medium_format(connection, gids_in_AB):
+def load_medium_format(connection):
     """Fetch medium_format table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -364,7 +364,7 @@ def load_medium_format(connection, gids_in_AB):
     return MB_medium_format_data
 
 
-def load_release_packaging(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
+def load_release_packaging(connection, MB_release_data, artist_credit_from_recording):
     """Fetch release_packaging table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -415,7 +415,7 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data, artist_credi
     return MB_release_packaging_data
 
 
-def load_language(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
+def load_language(connection, MB_release_data, artist_credit_from_recording):
     """Fetch language table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -466,7 +466,7 @@ def load_language(connection, gids_in_AB, MB_release_data, artist_credit_from_re
     return MB_language_data
 
 
-def load_script(connection, gids_in_AB, MB_release_data, artist_credit_from_recording):
+def load_script(connection, MB_release_data, artist_credit_from_recording):
     """Fetch script table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -515,7 +515,7 @@ def load_script(connection, gids_in_AB, MB_release_data, artist_credit_from_reco
     return MB_script_data
 
 
-def load_gender(connection, gids_in_AB):
+def load_gender(connection):
     """ Fetch gender table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -534,7 +534,7 @@ def load_gender(connection, gids_in_AB):
     return MB_gender_data
 
 
-def load_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
+def load_area(connection, MB_artist_data, artist_credit_from_recording):
     """ Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -595,7 +595,7 @@ def load_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recordi
     return MB_area_data
 
 
-def load_begin_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
+def load_begin_area(connection, MB_artist_data, artist_credit_from_recording):
     """Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for begin area column.
 
@@ -656,7 +656,7 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_r
     return MB_begin_area_data
 
 
-def load_end_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording):
+def load_end_area(connection, MB_artist_data, artist_credit_from_recording):
     """Fetch area table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database for end area column.
 
@@ -714,7 +714,7 @@ def load_end_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_rec
     return MB_end_area_data
 
 
-def load_artist_credit_name(connection, gids_in_AB, artist_credit_from_recording):
+def load_artist_credit_name(connection, artist_credit_from_recording):
     """Fetch artist_credit_name table data from MusicBrainz database
     for the recording MBIDs in AcousticBrainz database.
 
@@ -740,7 +740,7 @@ def load_artist_credit_name(connection, gids_in_AB, artist_credit_from_recording
     return MB_artist_credit_name_data
 
 
-def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gid_redirect_data, artist_credit_from_recording):
+def load_artist(connection, MB_artist_credit_name_data, MB_artist_gid_redirect_data, artist_credit_from_recording):
     """Fetch artist table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -798,7 +798,7 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gi
     return MB_artist_data
 
 
-def load_artist_gid_redirect(connection, gids_in_AB, artist_credit_from_recording):
+def load_artist_gid_redirect(connection, artist_credit_from_recording):
     """Fetch artist_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -889,7 +889,7 @@ def load_recording_gid_redirect(connection, gids_in_AB):
     return MB_recording_gid_redirect_data
 
 
-def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data, artist_credit_from_recording):
+def load_release_group(connection, MB_release_group_gid_redirect_data, MB_release_data, artist_credit_from_recording):
     """Fetch release_group table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -915,7 +915,7 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
     # Get data corresponding to release_group column in release table.
     MB_release_fk_release_group = list({value['release_group'] for value in MB_release_data})
 
-    if gids_in_AB:
+    if artist_credit_from_recording:
         filters.append("release_group.artist_credit in :credit")
         filter_data["credit"] = tuple(artist_credit_from_recording)
 
@@ -951,7 +951,7 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
     return MB_release_group_data
 
 
-def load_release_group_gid_redirect(connection, gids_in_AB, artist_credit_from_recording):
+def load_release_group_gid_redirect(connection, artist_credit_from_recording):
     """Fetch release_group_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -975,7 +975,7 @@ def load_release_group_gid_redirect(connection, gids_in_AB, artist_credit_from_r
     return MB_release_group_gid_redirect_data
 
 
-def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data, artist_credit_from_recording):
+def load_release(connection, MB_medium_data, MB_release_gid_redirect_data, artist_credit_from_recording):
     """Fetch release table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1042,7 +1042,7 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
     return MB_release_data
 
 
-def load_release_gid_redirect(connection, gids_in_AB, artist_credit_from_recording):
+def load_release_gid_redirect(connection, artist_credit_from_recording):
     """Fetch release_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1066,7 +1066,7 @@ def load_release_gid_redirect(connection, gids_in_AB, artist_credit_from_recordi
     return MB_release_gid_redirect_data
 
 
-def load_medium(connection, gids_in_AB, MB_track_data, artist_credit_from_recording):
+def load_medium(connection, MB_track_data, artist_credit_from_recording):
     """Fetch medium table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1119,7 +1119,7 @@ def load_medium(connection, gids_in_AB, MB_track_data, artist_credit_from_record
     return MB_medium_data
 
 
-def load_track(connection, gids_in_AB, MB_track_gid_redirect_data, id_from_recording):
+def load_track(connection, MB_track_gid_redirect_data, id_from_recording):
     """Fetch track table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1173,7 +1173,7 @@ def load_track(connection, gids_in_AB, MB_track_gid_redirect_data, id_from_recor
     return MB_track_data
 
 
-def load_track_gid_redirect(connection, gids_in_AB, id_from_recording):
+def load_track_gid_redirect(connection, id_from_recording):
     """Fetch track_gid_redirect table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
@@ -1949,56 +1949,56 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # track_gid_redirect
         try:
             logging.info('Getting track gid redirect data...')
-            MB_track_gid_redirect_data = load_track_gid_redirect(connection, gids_in_AB, id_from_recording)
+            MB_track_gid_redirect_data = load_track_gid_redirect(connection, id_from_recording)
         except ValueError:
             logging.info("No Data found from track gid redirect table for the recordings")
 
         # track
         try:
             logging.info('Getting track data...')
-            MB_track_data = load_track(connection, gids_in_AB, MB_track_gid_redirect_data, id_from_recording)
+            MB_track_data = load_track(connection, MB_track_gid_redirect_data, id_from_recording)
         except ValueError:
             logging.info("No Data found from track table for the recordings")
 
         # medium
         try:
             logging.info('Getting medium data...')
-            MB_medium_data = load_medium(connection, gids_in_AB, MB_track_data, artist_credit_from_recording)
+            MB_medium_data = load_medium(connection, MB_track_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from medium table for the recordings")
 
         # release_gid_redirect
         try:
             logging.info('Getting release gid redirect data...')
-            MB_release_gid_redirect_data = load_release_gid_redirect(connection, gids_in_AB, artist_credit_from_recording)
+            MB_release_gid_redirect_data = load_release_gid_redirect(connection, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release gid redirect table for the recordings")
 
         # release
         try:
             logging.info('Getting release data...')
-            MB_release_data = load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect_data, artist_credit_from_recording)
+            MB_release_data = load_release(connection, MB_medium_data, MB_release_gid_redirect_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release table for the recordings")
 
         # artist_credit_name
         try:
             logging.info('Getting artist credit name data...')
-            MB_artist_credit_name_data = load_artist_credit_name(connection, gids_in_AB, artist_credit_from_recording)
+            MB_artist_credit_name_data = load_artist_credit_name(connection, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist credit name table for the recordings")
 
         # artist_gid_redirect
         try:
             logging.info('Getting artist gid redirect data...')
-            MB_artist_gid_redirect_data = load_artist_gid_redirect(connection, gids_in_AB, artist_credit_from_recording)
+            MB_artist_gid_redirect_data = load_artist_gid_redirect(connection, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist gid redirect table for the recordings")
 
         # artist
         try:
             logging.info('Getting artist data...')
-            MB_artist_data = load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gid_redirect_data, artist_credit_from_recording)
+            MB_artist_data = load_artist(connection, MB_artist_credit_name_data, MB_artist_gid_redirect_data, artist_credit_from_recording)
             artist_type_from_artist = [value[10] for value in MB_artist_data]
         except ValueError:
             logging.info("No Data found from artist table for the recordings")
@@ -2006,119 +2006,119 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # artist_type
         try:
             logging.info('Getting artist type data...')
-            MB_artist_type_data = load_artist_type(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
+            MB_artist_type_data = load_artist_type(connection, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist type table for the recordings")
 
         # area
         try:
             logging.info('Getting area data...')
-            MB_area_data = load_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
+            MB_area_data = load_area(connection, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area table for the recordings")
 
         # begin_area
         try:
             logging.info('Getting begin area data...')
-            MB_begin_area_data = load_begin_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
+            MB_begin_area_data = load_begin_area(connection, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area table for the recordings")
 
         # end_area
         try:
             logging.info('Getting end area data...')
-            MB_end_area_data = load_end_area(connection, gids_in_AB, MB_artist_data, artist_credit_from_recording)
+            MB_end_area_data = load_end_area(connection, MB_artist_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area table for the recordings")
 
         # area_type
         try:
             logging.info('Getting area type data...')
-            MB_area_type_data = load_area_type(connection, gids_in_AB, MB_area_data, artist_credit_from_recording)
+            MB_area_type_data = load_area_type(connection, MB_area_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area type table for the recordings")
 
         # begin_area_type
         try:
             logging.info('Getting begin area type data...')
-            MB_begin_area_type_data = load_begin_area_type(connection, gids_in_AB, artist_credit_from_recording)
+            MB_begin_area_type_data = load_begin_area_type(connection, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area type table for the recordings")
 
         # end_area_type
         try:
             logging.info('Getting end area data...')
-            MB_end_area_type_data = load_end_area_type(connection, gids_in_AB, artist_credit_from_recording)
+            MB_end_area_type_data = load_end_area_type(connection, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from area type table for the recordings")
 
         # gender
         try:
             logging.info('Getting gender data...')
-            MB_gender_data = load_gender(connection, gids_in_AB)
+            MB_gender_data = load_gender(connection)
         except ValueError:
             logging.info("No Data found from gender table for the recordings")
 
         # language
         try:
             logging.info('Getting language data...')
-            MB_language_data = load_language(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
+            MB_language_data = load_language(connection, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from language table for the recordings")
 
         # medium_format
         try:
             logging.info('Getting medium format data...')
-            MB_medium_format_data = load_medium_format(connection, gids_in_AB)
+            MB_medium_format_data = load_medium_format(connection)
         except ValueError:
             logging.info("No Data found from medium format table for the recordings")
 
         # release_group gid redirect
         try:
             logging.info('Getting release group gid redirect data...')
-            MB_release_group_gid_redirect_data = load_release_group_gid_redirect(connection, gids_in_AB, artist_credit_from_recording)
+            MB_release_group_gid_redirect_data = load_release_group_gid_redirect(connection, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release group gid redirect table for the recordings")
 
         # release_group
         try:
             logging.info('Getting release group data...')
-            MB_release_group_data = load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_data, MB_release_data, artist_credit_from_recording)
+            MB_release_group_data = load_release_group(connection, MB_release_group_gid_redirect_data, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release group table for the recordings")
 
         # artist_credit
         try:
             logging.info('Getting artist credit data...')
-            MB_artist_credit_data = load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording)
+            MB_artist_credit_data = load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from artist credit table for the recordings")
 
         # release_group_primary_type
         try:
             logging.info('Getting release group primary type data...')
-            MB_release_group_primary_type_data = load_release_group_primary_type(connection, gids_in_AB, MB_release_group_data, artist_credit_from_recording)
+            MB_release_group_primary_type_data = load_release_group_primary_type(connection, MB_release_group_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release group primary type table for the recordings")
 
         # release_packaging
         try:
             logging.info('Getting release packaging data...')
-            MB_release_packaging_data = load_release_packaging(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
+            MB_release_packaging_data = load_release_packaging(connection, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release packaging table for the recordings")
 
         # release_status
         try:
             logging.info('Getting release status data...')
-            MB_release_status_data = load_release_status(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
+            MB_release_status_data = load_release_status(connection, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from release status table for the recordings")
 
         # script
         try:
             logging.info('Getting script data...\n')
-            MB_script_data = load_script(connection, gids_in_AB, MB_release_data, artist_credit_from_recording)
+            MB_script_data = load_script(connection, MB_release_data, artist_credit_from_recording)
         except ValueError:
             logging.info("No Data found from script table for the recordings")
 

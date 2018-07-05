@@ -1181,6 +1181,32 @@ def load_track(connection, gids_in_AB):
     return MB_track_data
 
 
+def load_track_gid_redirect(connection, gids_in_AB):
+    """Fetch track_gid_redirect table data from MusicBrainz database for the
+    recording MBIDs in AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+    Returns:
+        track_gid_redirect data fetched from MusicBrainz database.
+    """
+    track_gid_redirect_query = text("""
+        SELECT DISTINCT track_gid_redirect.gid,
+               track_gid_redirect.new_id,
+               track_gid_redirect.created
+          FROM track_gid_redirect
+    INNER JOIN track
+            ON track.id = track_gid_redirect.new_id
+    INNER JOIN recording
+            ON recording.id = track.recording
+         WHERE recording.gid in :gids
+    """)
+    result = connection.execute(track_gid_redirect_query, {'gids': tuple(gids_in_AB)})
+    MB_track_gid_redirect_data = result.fetchall()
+
+    return MB_track_gid_redirect_data
+
+
 def write_artist_credit(connection, MB_artist_credit_data):
     """Insert data into artist_credit table in musicbrainz schema in
     AcousticBrainz database.
@@ -1887,10 +1913,39 @@ def write_track(connection, MB_track_data):
     logging.info('Inserted %d rows in track table!' % len(MB_track_data))
 
 
+def write_track_gid_redirect(connection, MB_track_gid_redirect_data):
+    """Insert data in track_gid_redirect table in musicbrainz schema in
+    AcousticBrainz database.
+
+    Args:
+        connection: database connection to execute the query.
+        MB_track_gid_redirect_data: track_gid_redirect data fetched from MusicBrainz database.
+    """
+    track_gid_redirect_query = text("""
+        INSERT INTO musicbrainz.track_gid_redirect
+             VALUES (:gid, :new_id, :created)
+                 ON CONFLICT (gid) DO NOTHING
+    """)
+    values = [{
+        "gid": value[0],
+        "new_id": value[1],
+        "created": value[2]} for value in MB_track_gid_redirect_data
+    ]
+    connection.execute(track_gid_redirect_query, values)
+    logging.info('Inserted %d rows in track gid redirect table!' % len(MB_track_gid_redirect_data))
+
+
 def fetch_and_insert_musicbrainz_data(gids_in_AB):
     # Get MusicBrainz data
     logging.info('\nGetting %d recordings data at a time...\n' % (len(gids_in_AB)))
     with musicbrainz_db.engine.begin() as connection:
+        # track_gid_redirect
+        try:
+            logging.info('Getting track gid redirect data...')
+            MB_track_gid_redirect_data = load_track_gid_redirect(connection, gids_in_AB)
+        except ValueError:
+            logging.info("No Data found from track gid redirect table for the recordings")
+
         # track
         try:
             logging.info('Getting track data...')
@@ -2154,6 +2209,9 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
 
             if MB_track_data:
                 write_track(connection, MB_track_data)
+
+            if MB_track_gid_redirect_data:
+                write_track_gid_redirect(connection, MB_track_gid_redirect_data)
 
 
 def start_import():

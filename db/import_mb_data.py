@@ -676,7 +676,7 @@ def load_end_area(connection, MB_artist_data, artist_credit_from_recording):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_data: list of artist data fetched from MusicBrainz database.
+        MB_artist_data: artist data fetched from MusicBrainz database.
         artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         end_area data fetched from MusicBrainz database.

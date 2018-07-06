@@ -79,109 +79,39 @@ def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_tr
     return MB_artist_credit_data
 
 
-def load_artist_type(connection, MB_artist_data, artist_credit_from_recording):
+def load_artist_type(connection):
     """Fetch artist_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetch data corresponding to artist table.
-
     Args:
         connection: database connection to execute the query.
-        MB_artist_data (of type - sqlalchemy.resultproxy): data retrieved from the artist
-            table of the MusicBrainz database (should contain artist type values).
-        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         artist_type data fetched from MusicBrainz database.
     """
-    filters = []
-    filter_data = {}
-
-    # Get data corresponding to type column in artist table
-    MB_artist_fk_artist_type = list({value['type'] for value in MB_artist_data})
-
-    if artist_credit_from_recording:
-        filters.append("artist_credit.id in :ids")
-        filter_data["ids"] = tuple(artist_credit_from_recording)
-
-    if MB_artist_data:
-        filters.append("artist_type.id in :artist_data")
-        filter_data["artist_data"] = tuple(MB_artist_fk_artist_type)
-
-    filterstr = " OR ".join(filters)
-    if filterstr:
-        filterstr = " WHERE " + filterstr
-
     artist_type_query = text("""
-        SELECT artist_type.id,
-               artist_type.name,
-               artist_type.parent,
-               artist_type.child_order,
-               artist_type.description,
-               artist_type.gid
-          FROM artist_type
-    INNER JOIN artist
-            ON artist.type = artist_type.id
-    INNER JOIN artist_credit
-            ON artist.id = artist_credit.id
-             {filterstr}
-    """.format(filterstr=filterstr)
-    )
-    result = connection.execute(artist_type_query, filter_data)
+        SELECT * FROM artist_type
+             ORDER BY id
+    """)
+    result = connection.execute(artist_type_query)
     MB_artist_type_data = result.fetchall()
 
     return MB_artist_type_data
 
 
-def load_area_type(connection, MB_area_data, artist_credit_from_recording):
+def load_area_type(connection):
     """Fetch area_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetch data corresponding to area table.
-
     Args:
         connection: database connection to execute the query.
-        MB_area_data (of type - sqlalchemy.resultproxy): data retrieved from the area table
-            of the MusicBrainz database(should contain area type values).
-        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         area_type data fetched from MusicBrainz database.
     """
-    filters = []
-    filter_data = {}
-
-    # Get data corresponding to type column in area table
-    MB_area_fk_area_type = list({value['type'] for value in MB_area_data})
-
-    if artist_credit_from_recording:
-        filters.append("artist_credit.id in :ids")
-        filter_data["ids"] = tuple(artist_credit_from_recording)
-
-    if MB_area_data:
-        filters.append("area_type.id in :area_data")
-        filter_data["area_data"] = tuple(MB_area_fk_area_type)
-
-    filterstr = " OR ".join(filters)
-    if filterstr:
-        filterstr = " WHERE " + filterstr
-
-    area_type_query =   text("""
-        SELECT area_type.id,
-               area_type.name,
-               area_type.parent,
-               area_type.child_order,
-               area_type.description,
-               area_type.gid
-          FROM area_type
-    INNER JOIN area
-            ON area.type = area_type.id
-    INNER JOIN artist
-            ON area.id = artist.area
-    INNER JOIN artist_credit
-            ON artist.id = artist_credit.id
-             {filterstr}
-    """.format(filterstr=filterstr)
-    )
-    result = connection.execute(area_type_query, filter_data)
+    area_type_query = text("""
+        SELECT * FROM area_type
+             ORDER BY id
+    """)
+    result = connection.execute(area_type_query)
     MB_area_type_data = result.fetchall()
 
     return MB_area_type_data
@@ -253,100 +183,39 @@ def load_end_area_type(connection, artist_credit_from_recording):
     return MB_end_area_type_data
 
 
-def load_release_status(connection, MB_release_data, artist_credit_from_recording):
+def load_release_status(connection):
     """Fetch release_status table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
     Args:
         connection: database connection to execute the query.
-        MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the release table
-            of the MusicBrainz database (should contain release_status values).
-        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release_status data fetched from MusicBrainz database.
     """
-    filters = []
-    filter_data = {}
-
-    # Get data corresponding to status column in release table
-    MB_release_fk_status = list({value['status'] for value in MB_release_data})
-
-    if artist_credit_from_recording:
-        filters.append("release.artist_credit in :ids")
-        filter_data["ids"] = tuple(artist_credit_from_recording)
-
-    if MB_release_data:
-        filters.append("release_status.id in :data")
-        filter_data["data"] = tuple(MB_release_fk_status)
-
-    filterstr = " OR ".join(filters)
-    if filterstr:
-        filterstr = " WHERE " + filterstr
-
     release_status_query = text("""
-        SELECT release_status.id,
-               release_status.name,
-               release_status.parent,
-               release_status.child_order,
-               release_status.description,
-               release_status.gid
-          FROM release_status
-    INNER JOIN release
-            ON release.status = release_status.id
-            {filterstr}
-    """.format(filterstr=filterstr)
-    )
-    result = connection.execute(release_status_query, filter_data)
+        SELECT * FROM release_status
+             ORDER BY id
+    """)
+    result = connection.execute(release_status_query)
     MB_release_status_data = result.fetchall()
 
     return MB_release_status_data
 
 
-def load_release_group_primary_type(connection, MB_release_group_data, artist_credit_from_recording):
+def load_release_group_primary_type(connection):
     """Fetch release_group_primary_type table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetch data corresponding to release_group table.
-
     Args:
         connection: database connection to execute the query.
-        MB_release_group_data (of type - sqlalchemy.resultproxy): data retrieved from the
-            release_group table of the MusicBrainz database
-            (should contain release_group_primary_type values).
-        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
        release_group_primary_type data fetched from MusicBrainz database.
     """
-    filters = []
-    filter_data = {}
-
-    # Get data corresponding to release_group_primary_type column in release_group table
-    MB_release_group_fk_type = list({value['type'] for value in MB_release_group_data})
-
-    if artist_credit_from_recording:
-        filters.append("release_group.artist_credit in :credit")
-        filter_data["credit"] = tuple(artist_credit_from_recording)
-
-    if MB_release_group_data:
-        filters.append("release_group_primary_type.id in :data")
-        filter_data["data"] = tuple(MB_release_group_fk_type)
-
-    filterstr = " OR ".join(filters)
-    if filterstr:
-        filterstr = " WHERE " + filterstr
-
-    release_group_primary_type_query = text("""
-        SELECT release_group_primary_type.id, release_group_primary_type.name,
-               release_group_primary_type.parent, release_group_primary_type.child_order,
-               release_group_primary_type.description, release_group_primary_type.gid
-          FROM release_group_primary_type
-    INNER JOIN release_group
-            ON release_group_primary_type.id = release_group.type
-            {filterstr}
-    """.format(filterstr=filterstr)
-    )
-
-    result = connection.execute(release_group_primary_type_query, filter_data)
+    release_status_query = text("""
+        SELECT * FROM release_group_primary_type
+             ORDER BY id
+    """)
+    result = connection.execute(release_status_query)
     MB_release_group_primary_type_data = result.fetchall()
 
     return MB_release_group_primary_type_data
@@ -371,53 +240,20 @@ def load_medium_format(connection):
     return MB_medium_format_data
 
 
-def load_release_packaging(connection, MB_release_data, artist_credit_from_recording):
+def load_release_packaging(connection):
     """Fetch release_packaging table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
 
-    Also fetch data corresponding to release table.
-
     Args:
         connection: database connection to execute the query.
-        MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the
-            release table of the MusicBrainz database (should contain release_packaging values)
-        artist_credit_from_recording: list of artist_credit data from recording data fetched from MusicBrainz database.
     Returns:
         release_packaging data fetched from MusicBrainz database.
     """
-    filters = []
-    filter_data = {}
-
-    # Get data corresponding to release_packaging column in release table
-    MB_release_fk_packaging = list({value['packaging'] for value in MB_release_data})
-
-    if artist_credit_from_recording:
-        filters.append("release.artist_credit in :credit")
-        filter_data["credit"] = tuple(artist_credit_from_recording)
-
-    if MB_release_data:
-        filters.append("release_packaging.id in :data")
-        filter_data["data"] = tuple(MB_release_fk_packaging)
-
-    filterstr = " OR ".join(filters)
-    if filterstr:
-        filterstr = " WHERE " + filterstr
-
     release_packaging_query = text("""
-        SELECT release_packaging.id,
-               release_packaging.name,
-               release_packaging.parent,
-               release_packaging.child_order,
-               release_packaging.description,
-               release_packaging.gid
-          FROM release_packaging
-    INNER JOIN release
-            ON release.packaging = release_packaging.id
-            {filterstr}
-    """.format(filterstr=filterstr)
-    )
-
-    result = connection.execute(release_packaging_query, filter_data)
+        SELECT * FROM release_packaging
+             ORDER BY id
+    """)
+    result = connection.execute(release_packaging_query)
     MB_release_packaging_data = result.fetchall()
 
     return MB_release_packaging_data
@@ -2033,7 +1869,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # artist_type
         try:
             logging.info('Getting artist type data...')
-            MB_artist_type_data = load_artist_type(connection, MB_artist_data, artist_credit_from_recording)
+            MB_artist_type_data = load_artist_type(connection)
         except ValueError:
             logging.info("No Data found from artist type table for the recordings")
 
@@ -2061,7 +1897,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # area_type
         try:
             logging.info('Getting area type data...')
-            MB_area_type_data = load_area_type(connection, MB_area_data, artist_credit_from_recording)
+            MB_area_type_data = load_area_type(connection)
         except ValueError:
             logging.info("No Data found from area type table for the recordings")
 
@@ -2124,21 +1960,21 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # release_group_primary_type
         try:
             logging.info('Getting release group primary type data...')
-            MB_release_group_primary_type_data = load_release_group_primary_type(connection, MB_release_group_data, artist_credit_from_recording)
+            MB_release_group_primary_type_data = load_release_group_primary_type(connection)
         except ValueError:
             logging.info("No Data found from release group primary type table for the recordings")
 
         # release_packaging
         try:
             logging.info('Getting release packaging data...')
-            MB_release_packaging_data = load_release_packaging(connection, MB_release_data, artist_credit_from_recording)
+            MB_release_packaging_data = load_release_packaging(connection)
         except ValueError:
             logging.info("No Data found from release packaging table for the recordings")
 
         # release_status
         try:
             logging.info('Getting release status data...')
-            MB_release_status_data = load_release_status(connection, MB_release_data, artist_credit_from_recording)
+            MB_release_status_data = load_release_status(connection)
         except ValueError:
             logging.info("No Data found from release status table for the recordings")
 

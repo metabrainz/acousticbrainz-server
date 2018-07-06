@@ -23,22 +23,22 @@
             <h3>Timbre</h3>
             <ul>
                 <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='mfccs') }}">MFCCs</a></li>
-                <li>MFCCs (weighted)</li>
-                <li>GFCCs</li>
-                <li>GFCCs (weighted)</li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='mfccsw') }}">MFCCs (weighted)</a></li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='gfccs') }}">GFCCs</a></li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='gfccsw') }}">GFCCs (weighted)</a></li>
                 <li>MFCCs (weighted) + spectral complexity + flux</li>
             </ul>
         </div>
         <div class="col-md-4">
             <h3>High-level</h3>
             <ul>
-                <li>Genres (dortmund)</li>
-                <li>Genres (rosamerica)</li>
-                <li>Genres (tzanetakis)</li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='dortmund') }}">Genres (dortmund)</a></li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='rosamerica') }}">Genres (rosamerica)</a></li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='tzanetakis') }}">Genres (tzanetakis)</a></li>
                 <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods') }}">Moods</a></li>
-                <li>Instruments</li>
-                <li>Moods + instruments</li>
-                <li>Moods + instruments + genre (dortmund)</li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='instruments') }}">Instruments</a></li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods_instruments') }}">Moods + instruments</a></li>
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods_instruments_rosamerica') }}">Moods + instruments + genres (rosamerica)</a></li>
             </ul>
         </div>
 

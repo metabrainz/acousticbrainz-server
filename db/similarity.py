@@ -7,10 +7,15 @@ STATS_SAMPLE = 10000
 KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']
 KEYS_MAP = {KEYS[i]: float(i) / 12 for i in range(12)}
 SCALES_MAP = {'major': 0, 'minor': -3.0 / 12}
+MFCC_WEIGHT = 0.95
+FCC_WEIGHT_VECTOR = np.array([MFCC_WEIGHT ** i for i in range(0, 12)])
 
 MOOD_MODELS = [11, 14, 9, 13, 12]
 INSTRUMENT_MODELS = [8, 10, 18]
 GENRE_MODELS = [3, 5, 6]
+DORTMUND_MODEL = 3
+ROSAMERICA_MODEL = 5
+TZANETAKIS_MODEL = 6
 
 DUPLICATE_SAFEGUARD = 3
 
@@ -47,7 +52,7 @@ def _get_recordings_without_similarity(connection, metric, limit=PROCESS_LIMIT):
 
 def _update_similarity(connection, metric, row_id, vector):
     connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
-                       {'metric': metric, 'value': 'ARRAY' + str(vector), 'id': row_id})
+                       {'metric': metric, 'value': 'ARRAY' + str(list(vector)), 'id': row_id})
 
 
 def _get_lowlevel_data(connection, ids):
@@ -66,42 +71,6 @@ def _get_highlevel_models(connection):
     result = connection.execute("SELECT id, model FROM model")
     return result.fetchall()
 
-
-def _compute_global_stats(connection, metric, field, indices):
-    result = connection.execute("SELECT means, stddevs FROM similarity_stats WHERE metric='%s'" % metric)
-    row = result.fetchone()
-    print(row)
-    if row:
-        print('Global stats already calculated')
-        return row
-
-    print('Calculating global stats for {}'.format(metric))
-    means = []
-    stddevs = []
-    for i in indices:
-        print('Index {} (out of {})'.format(i, len(indices)))
-        result = connection.execute("SELECT avg(x), stddev_pop(x)"
-                                    "FROM (SELECT (%(field)s->>%(i)s)::double precision as x "
-                                    "FROM lowlevel_json "
-                                    "LIMIT %(limit)s) as res" %
-                                    {'field': field, 'i': i, 'limit': STATS_SAMPLE})
-        mean, stddev = result.fetchone()
-        means.append(mean)
-        stddevs.append(stddev)
-
-    connection.execute("INSERT INTO similarity_stats (metric, means, stddevs) "
-                       "VALUES (%(metric)s, %(means)s, %(stddevs)s)"
-                       % {'metric': "'{}'".format(metric), 'means': 'ARRAY' + str(means), 'stddevs': 'ARRAY' + str(stddevs)})
-    return means, stddevs
-
-
-def _delete_global_stats(connection, metric):
-    print('Deleting global stats')
-    connection.execute("DELETE FROM similarity_stats WHERE metric='%s'" % metric)
-
-
-def _calculate_mfccs_stats(connection):
-    return _compute_global_stats(connection, 'mfccs', "data->'lowlevel'->'mfcc'->'mean'", range(1, 13))
 
 
 # Common transformations
@@ -143,11 +112,28 @@ def _transform_key(data):
     return _transform_circular(key_value)
 
 
-def _transform_mfccs(data, stats):
+def _transform_fccs(data, stats):
     means, stddevs = stats
-    values = np.array(data['lowlevel']['mfcc']['mean'])[1:13]
-    norms = (values - np.array(means)) / np.array(stddevs)
-    return list(norms)
+    values = np.array(data)[1:13]
+    return (values - np.array(means)) / np.array(stddevs)
+
+
+def _transform_mfccs(data, stats):
+    return _transform_fccs(data['lowlevel']['mfcc']['mean'], stats)
+
+
+def _transform_gfccs(data, stats):
+    return _transform_fccs(data['lowlevel']['gfcc']['mean'], stats)
+
+
+def _transform_mfccs_w(data, stats):
+    mfccs = _transform_mfccs(data, stats)
+    return mfccs * FCC_WEIGHT_VECTOR
+
+
+def _transform_gfccs_w(data, stats):
+    gfccs = _transform_gfccs(data, stats)
+    return gfccs * FCC_WEIGHT_VECTOR
 
 
 def _transform_unary_classifiers(data, model_ids):
@@ -162,21 +148,26 @@ def _transform_unary_classifiers(data, model_ids):
     return vector
 
 
-def _transform_moods(data):
-    return _transform_unary_classifiers(data, MOOD_MODELS)
-
-
-def _transform_instruments(data):
-    return _transform_unary_classifiers(data, INSTRUMENT_MODELS)
+def _transform_classifier(data, model_id):
+    return data[str(model_id)]['all'].values()
 
 
 METRIC_FUNCS = {
-    'mfccs':        (_get_lowlevel_data, _transform_mfccs, _calculate_mfccs_stats),
     'bpm':          (_get_lowlevel_data, _transform_bpm, None),
     'onsetrate':    (_get_lowlevel_data, _transform_onset_rate, None),
     'key':          (_get_lowlevel_data, _transform_key, None),
-    'moods':        (_get_highlevel_data, _transform_moods, None),
-    'instruments':  (_get_highlevel_data, _transform_instruments, None),
+
+    'mfccs':        (_get_lowlevel_data, _transform_mfccs, _calculate_mfccs_stats),
+    'mfccsw':       (_get_lowlevel_data, _transform_mfccs_w, _calculate_mfccs_stats),
+    'gfccs':        (_get_lowlevel_data, _transform_gfccs, _calculate_gfccs_stats),
+    'gfccsw':       (_get_lowlevel_data, _transform_gfccs_w, _calculate_gfccs_stats),
+
+    'dortmund':     (_get_highlevel_data, lambda(data): _transform_classifier(data, DORTMUND_MODEL), None),
+    'tzanetakis':   (_get_highlevel_data, lambda(data): _transform_classifier(data, TZANETAKIS_MODEL), None),
+    'rosamerica':   (_get_highlevel_data, lambda(data): _transform_classifier(data, ROSAMERICA_MODEL), None),
+
+    'moods':        (_get_highlevel_data, lambda(data): _transform_unary_classifiers(data, MOOD_MODELS), None),
+    'instruments':  (_get_highlevel_data, lambda(data): _transform_unary_classifiers(data, INSTRUMENT_MODELS), None),
 }
 
 

@@ -66,8 +66,8 @@ def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_tr
         filterstr = " WHERE " + filterstr
 
     artist_credit_query = text("""
-        SELECT artist_credit.id, artist_credit.name, artist_credit.artist_count,
-                artist_credit.ref_count, artist_credit.created
+        SELECT DISTINCT artist_credit.id, artist_credit.name, artist_credit.artist_count,
+               artist_credit.ref_count, artist_credit.created
            FROM artist_credit
              {filterstr}
     """.format(filterstr=filterstr)
@@ -129,7 +129,7 @@ def load_begin_area_type(connection, artist_credit_from_recording):
         begin_area_type data fetched from MusicBrainz database.
     """
     begin_area_type_query =   text("""
-        SELECT area_type.id,
+        SELECT DISTINCT area_type.id,
                area_type.name,
                area_type.parent,
                area_type.child_order,
@@ -162,7 +162,7 @@ def load_end_area_type(connection, artist_credit_from_recording):
         end_area_type data fetched from MusicBrainz database.
     """
     end_area_type_query =   text("""
-        SELECT area_type.id,
+        SELECT DISTINCT area_type.id,
                area_type.name,
                area_type.parent,
                area_type.child_order,
@@ -292,7 +292,7 @@ def load_language(connection, MB_release_data, artist_credit_from_recording):
         filterstr = " WHERE " + filterstr
 
     language_query = text("""
-        SELECT language.id,
+        SELECT DISTINCT language.id,
                language.iso_code_2t,
                language.iso_code_2b,
                language.iso_code_1,
@@ -344,7 +344,7 @@ def load_script(connection, MB_release_data, artist_credit_from_recording):
         filterstr = " WHERE " + filterstr
 
     script_query = text("""
-        SELECT script.id,
+        SELECT DISTINCT script.id,
                script.iso_code,
                script.iso_number,
                script.name,
@@ -413,7 +413,7 @@ def load_area(connection, MB_artist_data, artist_credit_from_recording):
         filterstr = " WHERE " + filterstr
 
     area_query = text("""
-        SELECT area.id,
+        SELECT DISTINCT area.id,
                area.gid,
                area.name,
                area.type,
@@ -475,7 +475,7 @@ def load_begin_area(connection, MB_artist_data, artist_credit_from_recording):
         filterstr = " WHERE " + filterstr
 
     begin_area_query = text("""
-        SELECT area.id,
+        SELECT DISTINCT area.id,
                area.gid,
                area.name,
                area.type,
@@ -536,7 +536,7 @@ def load_end_area(connection, MB_artist_data, artist_credit_from_recording):
         filterstr = " WHERE " + filterstr
 
     end_area_query = text("""
-        SELECT area.id,
+        SELECT DISTINCT area.id,
                area.gid,
                area.name,
                area.type,
@@ -575,7 +575,7 @@ def load_artist_credit_name(connection, artist_credit_from_recording):
         artist_credit_name data fetched from MusicBrainz database.
     """
     artist_credit_name_query = text("""
-        SELECT artist_credit_name.artist_credit,
+        SELECT DISTINCT artist_credit_name.artist_credit,
                artist_credit_name.position,
                artist_credit_name.artist,
                artist_credit_name.name,
@@ -633,7 +633,7 @@ def load_artist(connection, MB_artist_credit_name_data, MB_artist_gid_redirect_d
         filterstr = " WHERE " + filterstr
 
     artist_query = text("""
-        SELECT artist.id, artist.gid, artist.name, artist.sort_name, artist.begin_date_year,
+        SELECT DISTINCT artist.id, artist.gid, artist.name, artist.sort_name, artist.begin_date_year,
                artist.begin_date_month, artist.begin_date_day, artist.end_date_year, artist.end_date_month,
                artist.end_date_day, artist.type, artist.area, artist.gender, artist.comment, artist.edits_pending,
                artist.last_updated, artist.ended, artist.begin_area, artist.end_area
@@ -661,7 +661,7 @@ def load_artist_gid_redirect(connection, artist_credit_from_recording):
         artist_gid_redirect data fetched from MusicBrainz database.
     """
     artist_gid_redirect_query = text("""
-        SELECT artist_gid_redirect.gid,
+        SELECT DISTINCT artist_gid_redirect.gid,
                artist_gid_redirect.new_id,
                artist_gid_redirect.created
           FROM artist_gid_redirect
@@ -707,7 +707,7 @@ def load_recording(connection, gids_in_AB, MB_recording_gid_redirect_data):
         filterstr = " WHERE " + filterstr
 
     recording_query = text("""
-        SELECT recording.id, recording.gid, recording.name, recording.artist_credit,
+        SELECT DISTINCT recording.id, recording.gid, recording.name, recording.artist_credit,
                recording.length, recording.comment, recording.edits_pending, recording.last_updated,
                recording.video
          FROM  recording
@@ -731,7 +731,7 @@ def load_recording_gid_redirect(connection, gids_in_AB):
         recording_gid_redirect data fetched from MusicBrainz database.
     """
     recording_gid_redirect_query = text("""
-        SELECT recording_gid_redirect.gid,
+        SELECT DISTINCT recording_gid_redirect.gid,
                recording_gid_redirect.new_id,
                recording_gid_redirect.created
           FROM recording_gid_redirect
@@ -789,7 +789,7 @@ def load_release_group(connection, MB_release_group_gid_redirect_data, MB_releas
         filterstr = " WHERE " + filterstr
 
     release_group_query = text("""
-        SELECT release_group.id,
+        SELECT DISTINCT release_group.id,
                release_group.gid,
                release_group.name,
                release_group.artist_credit,
@@ -819,7 +819,7 @@ def load_release_group_gid_redirect(connection, artist_credit_from_recording):
         release_group_gid_redirect data fetched from MusicBrainz database.
     """
     release_group_gid_redirect_query = text("""
-        SELECT release_group_gid_redirect.gid,
+        SELECT DISTINCT release_group_gid_redirect.gid,
                release_group_gid_redirect.new_id,
                release_group_gid_redirect.created
           FROM release_group_gid_redirect
@@ -876,7 +876,7 @@ def load_release(connection, MB_medium_data, MB_release_gid_redirect_data, artis
         filterstr = " WHERE " + filterstr
 
     release_query = text("""
-        SELECT release.id,
+        SELECT DISTINCT release.id,
                release.gid,
                release.name,
                release.artist_credit,
@@ -912,7 +912,7 @@ def load_release_gid_redirect(connection, artist_credit_from_recording):
         release_gid_redirect data fetched from MusicBrainz database.
     """
     release_gid_redirect_query = text("""
-        SELECT release_gid_redirect.gid,
+        SELECT DISTINCT release_gid_redirect.gid,
                release_gid_redirect.new_id,
                release_gid_redirect.created
           FROM release_gid_redirect
@@ -959,7 +959,7 @@ def load_medium(connection, MB_track_data, artist_credit_from_recording):
         filterstr = " WHERE " + filterstr
 
     medium_query = text("""
-        SELECT medium.id,
+        SELECT DISTINCT medium.id,
                medium.release,
                medium.position,
                medium.format,
@@ -1013,7 +1013,7 @@ def load_track(connection, MB_track_gid_redirect_data, id_from_recording):
         filterstr = " WHERE " + filterstr
 
     track_query = text("""
-        SELECT track.id,
+        SELECT DISTINCT track.id,
                track.gid,
                track.recording,
                track.medium,
@@ -1046,7 +1046,7 @@ def load_track_gid_redirect(connection, id_from_recording):
         track_gid_redirect data fetched from MusicBrainz database.
     """
     track_gid_redirect_query = text("""
-        SELECT track_gid_redirect.gid,
+        SELECT DISTINCT track_gid_redirect.gid,
                track_gid_redirect.new_id,
                track_gid_redirect.created
           FROM track_gid_redirect

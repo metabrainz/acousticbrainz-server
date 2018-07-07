@@ -14,6 +14,34 @@ def load_musicbrainz_schema_data(connection, table_name):
     result = connection.execute(query)
     return result.fetchall()
 
+def join_columns(columns):
+    columns[0] = ':' + columns[0]
+    return ',:'.join(columns)
+
+def insert_data_into_musicbrainz_schema(connection, transaction, table_name, columns, values):
+        trans = connection.begin()
+        query = text("""
+            INSERT INTO musicbrainz.{table_name} ({columns})
+                 VALUES ({value_str})
+        """.format(table_name=table_name,
+                   columns=','.join(columns),
+                   value_str=join_columns(columns)))
+
+        result = connection.execute(query, values)
+        transaction.commit()
+
+def get_data_from_musicbrainz(table_name, data, column='id'):
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM %s
+             WHERE %s=%s
+        """ % (table_name, column, data))
+
+        result = connection.execute(query)
+        values = dict(result.fetchone())
+        columns = [key for key in values]
+        return table_name, columns, value
 
 def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording):
     """Fetch artist_credit table data from MusicBrainz database for the

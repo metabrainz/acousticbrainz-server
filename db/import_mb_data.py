@@ -13,9 +13,12 @@ def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group
 
     Args:
         connection: database connection to execute the query.
-        MB_release_data: release data fetched from MusicBrainz database.
-        MB_release_group_data: release_group data fetched from MusicBrainz database.
-        MB_track_data: track data fetched from MusicBrainz database.
+        MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the release table
+            of the MusicBrainz database (should contain artist credit values).
+        MB_release_group_data (of type - sqlalchemy.resultproxy): data retrieved from the release_group
+            table of the MusicBrainz database (should contain artist credit values).
+        MB_track_data (of type - sqlalchemy.resultproxy): data retrieved from the track table of the
+            MusicBrainz database (should contain artist credit values).
         MB_artist_credit_name_data: artist_credit_name_data fetched from MusicBrainz database.
     Returns:
         artist_credit data fetched from MusicBrainz database.
@@ -83,7 +86,8 @@ def load_artist_type(connection, gids_in_AB, MB_artist_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_data: artist data fetched from MusicBrainz database.
+        MB_artist_data (of type - sqlalchemy.resultproxy): data retrieved from the artist
+            table of the MusicBrainz database (should contain artist type values).
     Returns:
         artist_type data fetched from MusicBrainz database.
     """
@@ -136,7 +140,8 @@ def load_area_type(connection, gids_in_AB, MB_area_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_area_data: area data fetched from MusicBrainz database.
+        MB_area_data (of type - sqlalchemy.resultproxy): data retrieved from the area table
+            of the MusicBrainz database(should contain area type values).
     Returns:
         area_type data fetched from MusicBrainz database.
     """
@@ -257,7 +262,8 @@ def load_release_status(connection, gids_in_AB, MB_release_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_data: release data fetched from MusicBrainz database.
+        MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the release table
+            of the MusicBrainz database (should contain release_status values).
     Returns:
         release_status data fetched from MusicBrainz database.
     """
@@ -308,7 +314,9 @@ def load_release_group_primary_type(connection, gids_in_AB, MB_release_group_dat
 
     Args:
         connection: database connection to execute the query.
-        MB_release_group_data: release group data fetched from MusicBrainz database.
+        MB_release_group_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            release_group table of the MusicBrainz database
+            (should contain release_group_primary_type values).
     Returns:
        release_group_primary_type data fetched from MusicBrainz database.
     """
@@ -375,7 +383,8 @@ def load_release_packaging(connection, gids_in_AB, MB_release_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_data: release data fetched from MusicBrainz database.
+        MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            release table of the MusicBrainz database (should contain release_packaging values)
     Returns:
         release_packaging data fetched from MusicBrainz database.
     """
@@ -427,7 +436,8 @@ def load_language(connection, gids_in_AB, MB_release_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_data: release data fetched from MusicBrainz database.
+        MB_release_data(of type - sqlalchemy.resultproxy): data retrieved from the
+            release table of the MusicBrainz database (should contain language values).
     Returns:
         language data fetched from MusicBrainz database.
     """
@@ -479,7 +489,8 @@ def load_script(connection, gids_in_AB, MB_release_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_release_data: release data fetched from MusicBrainz database.
+        MB_release_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            release table of the MusicBrainz database (should contain script values).
     Returns:
         script data fetched from MusicBrainz database.
     """
@@ -560,7 +571,8 @@ def load_area(connection, gids_in_AB, MB_artist_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_data: artist data fetched from MusicBrainz database.
+        MB_artist_data(of type - sqlalchemy.resultproxy): data retrieved from the
+            artist table of the MusicBrainz database (should contain area values).
     Returns:
         area data fetched from MusicBrainz database.
     """
@@ -622,7 +634,8 @@ def load_begin_area(connection, gids_in_AB, MB_artist_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_data: artist data fetched from MusicBrainz database.
+        MB_artist_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            artist table of the MusicBrainz database (should contain begin_area values).
     Returns:
         begin_area data fetched from MusicBrainz database.
     """
@@ -772,8 +785,10 @@ def load_artist(connection, gids_in_AB, MB_artist_credit_name_data, MB_artist_gi
 
     Args:
         connection: database connection to execute the query.
-        MB_artist_credit_name_data: artist credit name data fetched from MusicBrainz database.
-        MB_artist_gid_redirect_data: artist_gid_redirect_data fetched from MusicBrainz database.
+        MB_artist_credit_name_data(of type - sqlalchemy.resultproxy): data retrieved from the
+            artist_credit_name table of the MusicBrainz database (should contain artist values).
+        MB_artist_gid_redirect_data(of type - sqlalchemy.resultproxy): data retrieved from the
+            artist_gid_redirect table of the MusicBrainz database (should contain artist values).
     Returns:
         artist data fetched from MusicBrainz database.
     """
@@ -924,8 +939,11 @@ def load_release_group(connection, gids_in_AB, MB_release_group_gid_redirect_dat
 
     Args:
         connection: database connection to execute the query.
-        MB_release_group_gid_redirect_data: release group gid redirect data fetched from MusicBrainz database.
-        MB_release_data: release data fetched from MusicBrainz database.
+        MB_release_group_gid_redirect_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            release_group_gid_redirect table of the MusicBrainz database
+            (should contain release_group values).
+        MB_release_data(of type - sqlalchemy.resultproxy): data retrieved from the
+            release table of the MusicBrainz database (should contain release_group values).
     Returns:
         release_group data fetched from MusicBrainz database.
     """
@@ -1010,8 +1028,11 @@ def load_release(connection, gids_in_AB, MB_medium_data, MB_release_gid_redirect
 
     Args:
         connection: database connection to execute the query.
-        MB_medium_data: medium data fetched from MusicBrainz database.
-        MB_release_gid_redirect_data: release_gid_redirect data fetched from MusicBrainz database.
+        MB_medium_data(of type - sqlalchemy.resultproxy): data retrieved from the
+            medium table of the MusicBrainz database (should contain release values).
+        MB_release_gid_redirect_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            release_gid_redirect table of the MusicBrainz database
+            (should contain release values).
     Returns:
         release data fetched from MusicBrainz database.
     """
@@ -1102,7 +1123,8 @@ def load_medium(connection, gids_in_AB, MB_track_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_track_data: track data fetched from MusicBrainz database.
+        MB_track_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            track table of the MusicBrainz database (should contain medium values).
     Returns:
         medium data fetched from MusicBrainz database.
     """
@@ -1156,7 +1178,8 @@ def load_track(connection, gids_in_AB, MB_track_gid_redirect_data):
 
     Args:
         connection: database connection to execute the query.
-        MB_track_gid_redirect_data: track gid redirect data fetched from MusicBrainz database
+        MB_track_gid_redirect_data (of type - sqlalchemy.resultproxy): data retrieved from the
+            track_gid_redirect table of the MusicBrainz database (should contain track values).
     Returns:
         track data fetched from MusicBrainz database.
     """

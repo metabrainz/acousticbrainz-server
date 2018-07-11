@@ -2172,7 +2172,7 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
         # script
         try:
             logging.info('Getting script data...\n')
-            MB_script_data = load_script(connection, MB_release_data, artist_credit_from_recording)
+            MB_script_data = load_script(connection, gids_in_AB, MB_release_data)
         except ValueError:
             logging.info("No Data found from script table for the recordings")
 

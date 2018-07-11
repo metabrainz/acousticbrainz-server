@@ -5,6 +5,8 @@ import time
 import logging
 from flask import current_app
 
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+
 def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data):
     """Fetch artist_credit table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.
@@ -1982,7 +1984,7 @@ def write_track_gid_redirect(connection, MB_track_gid_redirect_data):
 
 def fetch_and_insert_musicbrainz_data(gids_in_AB):
     # Get MusicBrainz data
-    logging.info('\nGetting %d recordings data at a time...\n' % (len(gids_in_AB)))
+    logging.info('Getting %d recordings data at a time...\n' % (len(gids_in_AB)))
     with musicbrainz_db.engine.begin() as connection:
         # track_gid_redirect
         try:
@@ -2169,13 +2171,13 @@ def fetch_and_insert_musicbrainz_data(gids_in_AB):
 
         # script
         try:
-            logging.info('Getting script data...')
+            logging.info('Getting script data...\n')
             MB_script_data = load_script(connection, gids_in_AB, MB_release_data)
         except ValueError:
             logging.info("No Data found from script table for the recordings")
 
         # Write MusicBrainz data into AcousticBrainz database
-        logging.info('\nInserting %d recordings data at a time...\n' % (len(gids_in_AB)))
+        logging.info('Inserting %d recordings data at a time...\n' % (len(gids_in_AB)))
         with db.engine.begin() as connection:
             if MB_artist_credit_data:
                 write_artist_credit(connection, MB_artist_credit_data)

@@ -154,4 +154,14 @@ CREATE TABLE feedback (
   suggestion         TEXT
 );
 
+CREATE TABLE similarity (
+  id INTEGER -- PK, FK to lowlevel
+);
+
+CREATE TABLE similarity_stats (
+  metric TEXT,
+  means DOUBLE PRECISION[],
+  stddevs DOUBLE PRECISION[]
+);
+
 COMMIT;

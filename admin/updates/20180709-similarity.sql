@@ -2,8 +2,6 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS "cube";
 
-DROP TABLE IF EXISTS similarity;
-
 CREATE TABLE similarity (
   id INTEGER -- PK, FK to lowlevel
 );
@@ -15,8 +13,6 @@ ALTER TABLE similarity
   FOREIGN KEY (id)
   REFERENCES lowlevel (id);
 
-
-DROP TABLE IF EXISTS similarity_stats;
 
 CREATE TABLE similarity_stats (
   metric TEXT,

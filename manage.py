@@ -16,7 +16,7 @@ import db.stats
 import db.user
 import db.similarity
 import webserver
-from db.testing import DatabaseTestCase
+import similarity.manage
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -157,36 +157,7 @@ def remove_admin(username):
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
-
-
-@cli.command()
-@click.argument("name")
-@click.option("--force", "-f", is_flag=True, help="Recompute existing metrics.")
-@click.option("--total", "-t", type=int, help="Only process limited number of rows")
-@click.option("--limit", "-l", type=int, help="Override processing limit")
-def add_similarity(name, force=False, total=None, limit=None):
-    db.similarity.add_similarity(name, force, total, limit)
-
-
-@cli.command()
-@click.argument("name")
-def add_hybrid_similarity(name):
-    db.similarity.add_hybrid_similarity(name)
-
-
-@cli.command()
-@click.argument("name")
-@click.option("--leave-stats", "-s", is_flag=True, help="Recompute existing metrics.")
-def remove_similarity(name, leave_stats=False):
-    db.similarity.remove_similarity(name, leave_stats)
-
-
-@cli.command()
-def init_similarity():
-    print('Creating table')
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_similarity.sql'))
-    print('Copying data')
-    db.similarity.init_similarity()
+cli.add_command(similarity.manage.cli, name="similarity")
 
 
 if __name__ == '__main__':

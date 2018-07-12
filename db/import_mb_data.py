@@ -82,8 +82,9 @@ def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_tr
 
 
 def load_artist_type(connection):
-    """Fetch artist_type table data from MusicBrainz database for the
-    recording MBIDs in AcousticBrainz database.
+    """Fetch artist_type table data from MusicBrainz database for the recording MBIDs in
+    AcousticBrainz database. Retrieving complete data because the rows in MusicBrainz database
+    for this table are much less in number.
 
     Args:
         connection: database connection to execute the query.
@@ -102,8 +103,9 @@ def load_artist_type(connection):
 
 
 def load_area_type(connection):
-    """Fetch area_type table data from MusicBrainz database for the
-    recording MBIDs in AcousticBrainz database.
+    """Fetch area_type table data from MusicBrainz database for the recording MBIDs in
+    AcousticBrainz database. Retrieving complete data because the rows in MusicBrainz database
+    for this table are much less in number.
 
     Args:
         connection: database connection to execute the query.
@@ -190,8 +192,9 @@ def load_end_area_type(connection, artist_credit_from_recording):
 
 
 def load_release_status(connection):
-    """Fetch release_status table data from MusicBrainz database for the
-    recording MBIDs in AcousticBrainz database.
+    """Fetch release_status table data from MusicBrainz database for the recording MBID
+    in AcousticBrainz database. Retrieving complete data because the rows in MusicBrainz database
+    for this table are much less in number.
 
     Args:
         connection: database connection to execute the query.
@@ -211,7 +214,8 @@ def load_release_status(connection):
 
 def load_release_group_primary_type(connection):
     """Fetch release_group_primary_type table data from MusicBrainz database for the
-    recording MBIDs in AcousticBrainz database.
+    recording MBIDs in AcousticBrainz database. Retrieving complete data because the rows
+    in MusicBrainz database for this table are much less in number.
 
     Args:
         connection: database connection to execute the query.
@@ -230,8 +234,9 @@ def load_release_group_primary_type(connection):
 
 
 def load_medium_format(connection):
-    """Fetch medium_format table data from MusicBrainz database for the
-    recording MBIDs in AcousticBrainz database.
+    """Fetch medium_format table data from MusicBrainz database for the recording MBIDs in
+    AcousticBrainz database. Retrieving complete data because the rows in
+    MusicBrainz database for this table are much less in number.
 
     Args:
         connection: database connection to execute the query.
@@ -250,8 +255,9 @@ def load_medium_format(connection):
 
 
 def load_release_packaging(connection):
-    """Fetch release_packaging table data from MusicBrainz database for the
-    recording MBIDs in AcousticBrainz database.
+    """Fetch release_packaging table data from MusicBrainz database for the recording MBIDs in
+    AcousticBrainz database. Retrieving complete data because the rows in MusicBrainz database
+    for this table are much less in number.
 
     Args:
         connection: database connection to execute the query.
@@ -374,8 +380,9 @@ def load_script(connection, MB_release_data, artist_credit_from_recording):
 
 
 def load_gender(connection):
-    """ Fetch gender table data from MusicBrainz database for the
-    recording MBIDs in AcousticBrainz database.
+    """ Fetch gender table data from MusicBrainz database for the recording MBIDs in
+    AcousticBrainz database. Retrieving complete data because the rows in MusicBrainz
+    database for this table are much less in number.
 
     Args:
         connection: database connection to execute the query.

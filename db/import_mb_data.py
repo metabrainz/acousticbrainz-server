@@ -91,8 +91,9 @@ def load_artist_type(connection):
         artist_type data fetched from MusicBrainz database.
     """
     artist_type_query = text("""
-        SELECT * FROM artist_type
-             ORDER BY id
+        SELECT *
+          FROM artist_type
+      ORDER BY id
     """)
     result = connection.execute(artist_type_query)
     MB_artist_type_data = result.fetchall()
@@ -110,8 +111,9 @@ def load_area_type(connection):
         area_type data fetched from MusicBrainz database.
     """
     area_type_query = text("""
-        SELECT * FROM area_type
-             ORDER BY id
+        SELECT *
+          FROM area_type
+      ORDER BY id
     """)
     result = connection.execute(area_type_query)
     MB_area_type_data = result.fetchall()
@@ -197,8 +199,9 @@ def load_release_status(connection):
         release_status data fetched from MusicBrainz database.
     """
     release_status_query = text("""
-        SELECT * FROM release_status
-             ORDER BY id
+        SELECT *
+          FROM release_status
+      ORDER BY id
     """)
     result = connection.execute(release_status_query)
     MB_release_status_data = result.fetchall()
@@ -216,8 +219,9 @@ def load_release_group_primary_type(connection):
        release_group_primary_type data fetched from MusicBrainz database.
     """
     release_status_query = text("""
-        SELECT * FROM release_group_primary_type
-             ORDER BY id
+        SELECT *
+          FROM release_group_primary_type
+      ORDER BY id
     """)
     result = connection.execute(release_status_query)
     MB_release_group_primary_type_data = result.fetchall()
@@ -235,8 +239,9 @@ def load_medium_format(connection):
         medium_format data fetched from MusicBrainz database.
     """
     medium_format_query = text("""
-        SELECT * FROM medium_format
-             ORDER BY id
+        SELECT *
+          FROM medium_format
+      ORDER BY id
     """)
     result = connection.execute(medium_format_query)
     MB_medium_format_data = result.fetchall()
@@ -254,8 +259,9 @@ def load_release_packaging(connection):
         release_packaging data fetched from MusicBrainz database.
     """
     release_packaging_query = text("""
-        SELECT * FROM release_packaging
-             ORDER BY id
+        SELECT *
+          FROM release_packaging
+      ORDER BY id
     """)
     result = connection.execute(release_packaging_query)
     MB_release_packaging_data = result.fetchall()
@@ -377,8 +383,9 @@ def load_gender(connection):
         gender data fetched from MusicBrainz database.
     """
     gender_query = text("""
-        SELECT * FROM gender
-             ORDER BY id
+        SELECT *
+          FROM gender
+      ORDER BY id
     """)
     result = connection.execute(gender_query)
     MB_gender_data = result.fetchall()

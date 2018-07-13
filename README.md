@@ -13,7 +13,7 @@ Please report issues here: http://tickets.musicbrainz.org/browse/AB
 You can use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server. Make sure docker and docker-compose are installed.
 Then copy two config files:
 
-1. `custom_config.py.example` to `custom_config.py` *(you don't need to modify this file)*
+1. `config.py.example` to `config.py` *(you don't need to modify this file)*
 2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
   In `profile.conf.in` you need to set the `models_essentia_git_sha` value.
   Unless you know what you are doing, this value should be **v2.1_beta1**
@@ -74,7 +74,7 @@ Choose a name (for example, "AcousticBrainz development"), set Type to "Web Appl
 and set the Callback URL to http://localhost:8080/login/musicbrainz/post
 
 Copy the OAuth Client ID and OAuth Client Secret values to
-`custom_config.py` as `MUSICBRAINZ_CLIENT_ID` and `MUSICBRAINZ_CLIENT_SECRET`.
+`config.py` as `MUSICBRAINZ_CLIENT_ID` and `MUSICBRAINZ_CLIENT_SECRET`.
 
 You should now be able to use the menu in the top corner of your AcousticBrainz server
 to log in.

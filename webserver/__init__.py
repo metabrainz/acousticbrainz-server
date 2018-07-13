@@ -1,10 +1,20 @@
+from __future__ import print_function
+
 from brainzutils.flask import CustomFlask
 from flask import request, url_for, redirect
 from flask_login import current_user
 
 import os
+import sys
+import time
 
 API_PREFIX = '/api/'
+
+
+# Check to see if we're running under a docker deployment. If so, don't second guess
+# the config file setup and just wait for the correct configuration to be generated.
+deploy_env = os.environ.get('DEPLOY_ENV', '')
+CONSUL_CONFIG_FILE_RETRY_COUNT = 10
 
 def create_app_flaskgroup(script_info):
     """Factory function that accepts script_info and creates a Flask application"""
@@ -20,15 +30,19 @@ def create_app_with_configuration(config_path=None):
     )
 
     # Configuration
-    root_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-    app.config.from_pyfile(os.path.join(
-        root_path,
-        'default_config.py'
-    ))
-    app.config.from_pyfile(os.path.join(
-        root_path,
-        'custom_config.py'
-    ), silent=True)
+    if deploy_env and not config_path:
+        config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
+        print("Checking if consul generated config file exists: $s" % config_file)
+        for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
+            if not os.path.exists(config_file):
+                time.sleep(1)
+
+        if not os.path.exists(config_file):
+            print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
+            sys.exit(-1)
+
+        print("loading consul config file %s" % config_file)
+        app.config.from_pyfile(config_file)
 
     if config_path:
         app.config.from_pyfile(config_path)
@@ -47,7 +61,7 @@ def create_app(debug=None, config_path=None):
 
     # Logging
     from webserver.loggers import init_loggers
-    init_loggers(app)
+    init_loggers(app) # TODO: use CustomFlask.init_loggers here instead
 
     # Database connection
     from db import init_db_engine

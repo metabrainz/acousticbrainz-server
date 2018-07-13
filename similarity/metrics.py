@@ -1,6 +1,6 @@
-from flask import current_app
-
 import numpy as np
+
+NORMALIZATION_SAMPLE_SIZE = 10000
 
 
 class Metric(object):
@@ -20,22 +20,20 @@ class LowLevelMetric(Metric):
                                          {'ids': str(ids), 'path': self.path})
         return result.fetchall()
 
-    def get_nan(self):
-        size = len(self.indices) if self.indices else 1
-        return ['NaN'] * size
+    def length(self):
+        return len(self.indices) if self.indices else 1
 
 
 class NormalizedLowLevelMetric(LowLevelMetric):
     means = None
     stddevs = None
-    sample_size = current_app.config["NORMALIZATION_SAMPLE_SIZE"]
 
     def _calculate_stats_for(self, path):
         result = self.connection.execute("SELECT avg(x), stddev_pop(x) "
                                          "FROM (SELECT (%(path)s)::double precision as x "
                                          "FROM lowlevel_json "
                                          "LIMIT %(limit)s) as res" %
-                                         {'path': path, 'limit': self.sample_size})
+                                         {'path': path, 'limit': NORMALIZATION_SAMPLE_SIZE})
         return result.fetchone()
 
     def calculate_stats(self):
@@ -115,8 +113,8 @@ class WeightedGfccsMetric(WeightedNormalizedLowLevelMetric, GfccsMetric):
 
 
 class CircularMetric(LowLevelMetric):
-    def get_nan(self):
-        return ['NaN'] * 2
+    def length(self):
+        return 2
 
     def transform(self, data):
         """Wrap the value that around circle with overlaps on integers"""
@@ -124,17 +122,19 @@ class CircularMetric(LowLevelMetric):
         return np.array([np.cos(value), np.sin(value)])
 
 
-class KeyMetric(CircularMetric):
-    keys = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']
-    keys_map = {keys[i]: float(i) / 12 for i in range(12)}
-    scales_map = {'major': 0, 'minor': -3.0 / 12}
+KEYS_CIRCLE = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']
+KEYS_MAP = {KEYS_CIRCLE[i]: float(i) / 12 for i in range(12)}
+SCALES_MAP = {'major': 0.0, 'minor': -3.0 / 12}
 
-    path = 'data->tonal'
+
+class KeyMetric(CircularMetric):
+    name = 'key'
+    path = "data->'tonal'"
 
     def transform(self, data):
         try:
-            key_value = self.keys[data['key_key']]
-            key_value += self.scales_map[data['key_scale']]
+            key_value = KEYS_MAP[data['key_key']]
+            key_value += SCALES_MAP[data['key_scale']]
             return super(KeyMetric, self).transform(key_value)
         except KeyError:
             raise ValueError('Invalid key/scale values: {}, {}'.format(data['key_key'], data['key_scale']))
@@ -150,28 +150,116 @@ class LogCircularMetric(CircularMetric):
 class BpmMetric(LogCircularMetric):
     name = 'bpm'
     description = 'BPM'
-    path = "data->rhythm->>bpm"
+    path = "data->'rhythm'->'bpm'"
 
 
 class OnsetRateMetric(LogCircularMetric):
     name = 'onsetrate'
     description = 'Onset rate'
-    path = "data->rhythm->>onset_rate"
+    path = "data->'rhythm'->'onset_rate'"
 
 
 class HighLevelMetric(Metric):
-    def get_data_batch(cls, connection, ids):
-        result = connection.execute("SELECT highlevel, jsonb_object_agg(model, data) "
-                                    "FROM highlevel_model WHERE highlevel IN %s "
-                                    "GROUP BY highlevel" % str(ids))
+    def get_data_batch(self, ids):
+        result = self.connection.execute("SELECT highlevel, jsonb_object_agg(model, data) "
+                                         "FROM highlevel_model WHERE highlevel IN %s "
+                                         "GROUP BY highlevel" % str(ids))
         return result.fetchall()
 
 
+class BinaryCollectiveMetric(HighLevelMetric):
+    models = None
+
+    def transform(self, data):
+        if not data:
+            raise ValueError('Invalid data value: {}'.format(data))
+
+        vector = []
+        try:
+            for model_id in self.models:
+                model_data = data[str(model_id)]['all']
+                assert len(model_data) == 2
+                for key, value in model_data.items():
+                    if not key.startswith('not'):
+                        vector.append(value)
+                        break
+            return vector
+        except KeyError:
+            raise ValueError('Invalid data value: {}'.format(data))
+
+    def length(self):
+        return len(self.models)
+
+
+class MoodsMetric(BinaryCollectiveMetric):
+    name = 'moods'
+    description = 'Moods'
+    models = [
+        11,  # mood_happy
+        14,  # mood_sad
+        9,   # mood_aggressive
+        13,  # mood_relaxed
+        12   # mood_party
+    ]
+
+
+class InstrumentsMetric(BinaryCollectiveMetric):
+    name = 'instruments'
+    description = 'Instruments'
+    models = [
+        8,   # mood_acoustic
+        10,  # mood_electronic
+        18   # voice_instrumental
+    ]
+
+
+class SingleClassifierMetric(HighLevelMetric):
+    model = None
+    size = None
+
+    def transform(self, data):
+        return data[str(self.model)]['all'].values()
+
+    def length(self):
+        return self.size
+
+
+class DortmundGenreMetric(SingleClassifierMetric):
+    name = 'dortmund'
+    description = 'Genre (dortmund)'
+    model = 3
+    size = 9
+
+
+class RosamericaGenreMetric(SingleClassifierMetric):
+    name = 'rosamerica'
+    description = 'Genre (rosamerica)'
+    model = 5
+    size = 8
+
+
+class TzanetakisGenreMetric(SingleClassifierMetric):
+    name = 'tzanetakis'
+    description = 'Genre (tzanetakis)'
+    model = 6
+    size = 10
+
+
 _BASE_METRICS_LIST = [
+    # Low-level
     MfccsMetric,
     WeightedMfccsMetric,
     GfccsMetric,
-    WeightedGfccsMetric
+    WeightedGfccsMetric,
+    KeyMetric,
+    BpmMetric,
+    OnsetRateMetric,
+    # High-level
+    MoodsMetric,
+    InstrumentsMetric,
+    DortmundGenreMetric,
+    RosamericaGenreMetric,
+    TzanetakisGenreMetric
 ]
 
 BASE_METRICS = {cls.name: cls for cls in _BASE_METRICS_LIST}

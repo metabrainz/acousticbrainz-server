@@ -5,6 +5,7 @@ from flask import request, url_for, redirect
 from flask_login import current_user
 
 import os
+import pprint
 import sys
 import time
 
@@ -30,8 +31,9 @@ def create_app_with_configuration(config_path=None):
     )
 
     # Configuration
+    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
+    print(config_file)
     if deploy_env and not config_path:
-        config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
         print("Checking if consul generated config file exists: $s" % config_file)
         for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
             if not os.path.exists(config_file):
@@ -41,17 +43,18 @@ def create_app_with_configuration(config_path=None):
             print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
             sys.exit(-1)
 
-        print("loading consul config file %s" % config_file)
-        app.config.from_pyfile(config_file)
+    app.config.from_pyfile(config_file)
 
     if config_path:
-        app.config.from_pyfile(config_path)
+        app.config.from_pyfile(config_path, silent=True)
 
     return app
 
 
 def create_app(debug=None, config_path=None):
     app = create_app_with_configuration(config_path)
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(app.config)
 
     if debug is not None:
         app.debug = debug

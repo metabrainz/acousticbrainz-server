@@ -5,6 +5,7 @@ import time
 import logging
 from flask import current_app
 
+BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 def load_artist_credit(connection, gids_in_AB, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data):
@@ -2280,6 +2281,8 @@ def start_import():
 
             if gids_in_AB:
                 fetch_and_insert_musicbrainz_data(gids_in_AB)
+                logging.info("Sleeping %s seconds to start next batch of import." % BATCH_SLEEP_DURATION)
+                time.sleep(BATCH_SLEEP_DURATION)
             else:
                 break
         logging.info('Done!')

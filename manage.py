@@ -14,7 +14,6 @@ import db.dump_manage
 import db.exceptions
 import db.stats
 import db.user
-import db.similarity
 import webserver
 import similarity.manage
 

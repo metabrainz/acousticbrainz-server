@@ -5,7 +5,8 @@ from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
 import db.data
 import db.exceptions
-import db.similarity
+import similarity.api
+
 import json
 import time
 
@@ -99,7 +100,7 @@ def metrics(mbid):
 @data_bp.route("/<uuid:mbid>/similar/<string:metric>")
 def get_similar(mbid, metric):
     try:
-        similar_recordings = db.similarity.get_similar_recordings(mbid, metric)
+        similar_recordings = similarity.api.get_similar_recordings(mbid, metric)
     except db.exceptions.NoDataFoundException:
         raise NotFound
 

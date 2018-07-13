@@ -6,6 +6,9 @@ import click
 import webserver
 import metrics
 import db
+from utils import to_db_column
+
+PROCESS_BATCH_SIZE = 10000
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 
@@ -48,9 +51,10 @@ def _get_recordings_without_similarity(connection, name, batch_size):
     return ids
 
 
-def _update_similarity(connection, name, row_id, vector):
+def _update_similarity(connection, name, row_id, vector, isnan=False):
+    value = '[' + ', '.join(["'NaN'::double precision"] * len(vector)) + ']' if isnan else str(list(vector))
     connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
-                       {'metric': name, 'value': 'ARRAY' + str(list(vector)), 'id': row_id})
+                       {'metric': name, 'value': 'ARRAY' + value, 'id': row_id})
 
 
 @cli.command()
@@ -58,7 +62,7 @@ def _update_similarity(connection, name, row_id, vector):
 @click.option("--force", "-f", is_flag=True, help="Recompute existing metrics.")
 @click.option("--to-process", "-t", type=int, help="Only process limited number of rows")
 @click.option("--batch-size", "-b", type=int, help="Override processing batch size")
-def add_similarity(name, force=False, to_process=None, batch_size=None):
+def add(name, force=False, to_process=None, batch_size=None):
     try:
         metric_cls = metrics.BASE_METRICS[name]
     except KeyError:
@@ -79,10 +83,10 @@ def add_similarity(name, force=False, to_process=None, batch_size=None):
 
         try:
             metric.calculate_stats()
-        except NameError:
+        except AttributeError:
             pass
 
-        batch_size = batch_size or current_app.config["PROCESS_BATCH_SIZE"]
+        batch_size = batch_size or PROCESS_BATCH_SIZE
 
         click.echo('Started processing, {} / {} ({:.3f}%) already processed'.format(
             current, total, float(current) / total * 100))
@@ -90,12 +94,14 @@ def add_similarity(name, force=False, to_process=None, batch_size=None):
 
         while len(ids) > 0 and (current - past < to_process):
             with connection.begin():
-                for row_id, data in metric.get_data_batch(connection, ids):
+                for row_id, data in metric.get_data_batch(ids):
                     try:
                         vector = metric.transform(data)
+                        isnan = False
                     except ValueError:
-                        vector = metric.get_nan()
-                    _update_similarity(connection, name, row_id, vector)
+                        vector = [None] * metric.length()
+                        isnan = True
+                    _update_similarity(connection, name, row_id, vector, isnan=isnan)
 
             current += len(ids)
 
@@ -122,22 +128,15 @@ def remove(name, leave_stats=False):
             metric = metric_cls(connection)
             try:
                 metric.delete_stats()
-            except NameError:
+            except AttributeError:
                 pass
-
-
-def _hybridize(metric):
-    metrics = metric.split('_')
-    if len(metrics) > 1:
-        return 'array_cat({})'.format(', '.join(metrics))
-    return metric
 
 
 @cli.command()
 @click.argument("name")
 def add_hybrid(name):
-    metric_str = _hybridize(metric)
+    metric_str = to_db_column(name)
     with db.engine.begin() as connection:
         connection.execute("CREATE INDEX IF NOT EXISTS %(name)s_ndx_similarity ON similarity "
-                           "USING gist(cube(%(metric)s))" % {'name': metric, 'metric': metric_str})
+                           "USING gist(cube(%(metric)s))" % {'name': name, 'metric': metric_str})
 

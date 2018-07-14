@@ -73,7 +73,7 @@ RUN mkdir /tmp/models \
 # Python dependencies
 RUN mkdir /code/docs/
 COPY docs/requirements.txt /code/docs/requirements.txt
-COPY requirements.txt /code/acousticbrainz/requirements.txt
+COPY requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Consul template service is already set up, just need to copy the configuration

@@ -45,7 +45,7 @@ LOG_FILE = "./acousticbrainz.log"
 LOG_SENTRY_ENABLED = True
 SENTRY_DSN = '''{{template "KEY" "sentry_dsn"}}'''
 
-DATASET_DIR = "/data/datasets"
-FILE_STORAGE_DIR = "/data/files"
+DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
+FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
 
 FEATURE_EVAL_LOCATION = False

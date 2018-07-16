@@ -13,7 +13,7 @@ import os
 DEBUG = False
 SECRET_KEY = '''{{template "KEY" "secret_key"}}'''
 
-{{if service "pgbouncer-master"}}
+{{if service "acousticbrainz-pgbouncer"}}
 {{with index (service "pgbouncer-master") 0}}
 SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz:acousticbrainz@{{.Address}}:{{.Port}}/acousticbrainz"
 POSTGRES_ADMIN_URI="postgresql://postgres@{{.Address}}:{{.Port}}/template1"

@@ -37,6 +37,7 @@ class NormalizedLowLevelMetric(LowLevelMetric):
         return result.fetchone()
 
     def calculate_stats(self):
+        # TODO: use same stats for weighted and normal metrics (e.g. mfccs and mfccsw)
         result = self.connection.execute("SELECT means, stddevs FROM similarity_stats WHERE metric='%s'" % self.name)
         row = result.fetchone()
 

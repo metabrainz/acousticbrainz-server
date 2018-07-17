@@ -161,6 +161,7 @@ def summary(mbid):
     else:  # Recording doesn't exist in MusicBrainz
         raise NotFound("MusicBrainz does not have data for this track.")
 
+
 def _get_youtube_query(metadata):
     """Generates a query string to search youtube for this song
 

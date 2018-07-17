@@ -164,7 +164,12 @@ class HighLevelMetric(Metric):
         result = self.connection.execute("SELECT highlevel, jsonb_object_agg(model, data) "
                                          "FROM highlevel_model WHERE highlevel IN %s "
                                          "GROUP BY highlevel" % str(ids))
-        return result.fetchall()
+        rows = result.fetchall()
+        if len(rows) < len(ids):
+            existing_ids = [row[0] for row in rows]
+            for row_id in set(ids) - set(existing_ids):
+                rows.append((row_id, None))
+        return rows
 
 
 class BinaryCollectiveMetric(HighLevelMetric):
@@ -218,6 +223,9 @@ class SingleClassifierMetric(HighLevelMetric):
     size = None
 
     def transform(self, data):
+        if not data:
+            raise ValueError('Invalid data value: {}'.format(data))
+
         return data[str(self.model)]['all'].values()
 
     def length(self):

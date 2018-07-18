@@ -31,10 +31,11 @@ def create_app_with_configuration(config_path=None):
     )
 
     # Configuration
-    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
-    print(config_file)
+
+    # if deploying in a production docker environment, load consul_config.py
     if deploy_env and not config_path:
         print("Checking if consul generated config file exists: $s" % config_file)
+        consul_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "consul_config.py")
         for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
             if not os.path.exists(config_file):
                 time.sleep(1)
@@ -43,6 +44,10 @@ def create_app_with_configuration(config_path=None):
             print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
             sys.exit(-1)
 
+        app.config.from_pyfile(consul_config)
+        return app
+
+    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
     app.config.from_pyfile(config_file)
 
     if config_path:

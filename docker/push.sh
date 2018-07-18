@@ -18,21 +18,11 @@ ENV=${1:-beta}
 TAG=${2:-beta}
 
 echo "Building AcousticBrainz web image with env $ENV tag $TAG..."
-docker build -t metabrainz/acousticbrainz-web:$TAG \
+docker build -t metabrainz/acousticbrainz:$TAG \
         -f Dockerfile.prod \
         --build-arg GIT_COMMIT_SHA=$(git rev-parse HEAD) \
         --build-arg deploy_env=$ENV .
 echo "Done!"
 echo "Pushing image to docker hub metabrainz/acousticbrainz-web:$TAG..."
-docker push metabrainz/acousticbrainz-web:$TAG
-echo "Done!"
-
-echo "Building AcousticBrainz gaia image with env $ENV tag $TAG..."
-docker build -t metabrainz/acousticbrainz-gaia:$TAG \
-        -f Dockerfile.gaia.prod \
-        --build-arg GIT_COMMIT_SHA=$(git rev-parse HEAD) \
-        --build-arg deploy_env=$ENV .
-echo "Done!"
-echo "Pushing image to docker hub metabrainz/acousticbrainz-gaia:$TAG..."
-docker push metabrainz/acousticbrainz-gaia:$TAG
+docker push metabrainz/acousticbrainz:$TAG
 echo "Done!"

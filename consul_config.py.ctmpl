@@ -39,7 +39,7 @@ MUSICBRAINZ_CLIENT_SECRET = '''{{template "KEY" "musicbrainz/client_secret"}}'''
 # Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
 COMPILE_LESS = False
 
-LOG_FILE_ENABLED = True
+LOG_FILE_ENABLED = False
 LOG_FILE = "./acousticbrainz.log"
 
 LOG_SENTRY_ENABLED = True

@@ -18,11 +18,7 @@ class DatabaseTestCase(TestCase):
 
     @staticmethod
     def create_app():
-        root_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
-        app = create_app(config_path=os.path.join(
-            root_dir,
-            'test_config.py'))
-        return app
+        return create_app()
 
     def setUp(self):
         self.reset_db()

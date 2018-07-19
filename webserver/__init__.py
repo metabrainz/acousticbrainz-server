@@ -34,8 +34,8 @@ def create_app_with_configuration(config_path=None):
 
     # if deploying in a production docker environment, load consul_config.py
     if deploy_env and not config_path:
-        print("Checking if consul generated config file exists: $s" % config_file)
         consul_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "consul_config.py")
+        print("Checking if consul generated config file exists: %s" % consul_config)
         for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
             if not os.path.exists(consul_config):
                 time.sleep(1)

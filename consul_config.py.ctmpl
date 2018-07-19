@@ -21,8 +21,8 @@ POSTGRES_ADMIN_AB_URI="postgresql://postgres@{{.Address}}:{{.Port}}/acousticbrai
 {{end}}
 {{end}}
 
-{{if service "acousticbrainz-redis"}}
-{{with index (service "acousticbrainz-redis") 0}}
+{{if service "listenbrainz-redis"}}
+{{with index (service "listenbrainz-redis") 0}}
 REDIS_HOST = "{{.Address}}"
 REDIS_PORT = {{.Port}}
 REDIS_NAMESPACE = "acousticbrainz"

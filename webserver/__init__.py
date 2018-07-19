@@ -37,16 +37,18 @@ def create_app_with_configuration(config_path=None):
         print("Checking if consul generated config file exists: $s" % config_file)
         consul_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "consul_config.py")
         for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
-            if not os.path.exists(config_file):
+            if not os.path.exists(consul_config):
                 time.sleep(1)
 
-        if not os.path.exists(config_file):
+        if not os.path.exists(consul_config):
             print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
             sys.exit(-1)
 
+        print('Loading consul_config.py...')
         app.config.from_pyfile(consul_config)
         return app
 
+    print('Loading config.py...')
     config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
     app.config.from_pyfile(config_file)
 

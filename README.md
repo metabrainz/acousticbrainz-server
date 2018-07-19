@@ -13,7 +13,7 @@ Please report issues here: http://tickets.musicbrainz.org/browse/AB
 You can use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server. Make sure docker and docker-compose are installed.
 Then copy two config files:
 
-1. `config.py.example` to `config.py` *(you don't need to modify this file)*
+1. `config.py.example` to `config.py`, you'll need to add your custom configs to this file.
 2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
   In `profile.conf.in` you need to set the `models_essentia_git_sha` value.
   Unless you know what you are doing, this value should be **v2.1_beta1**

@@ -1,17 +1,10 @@
 import numpy as np
+from operations import BaseMetric
 
 NORMALIZATION_SAMPLE_SIZE = 10000
 
 
-class Metric(object):
-    name = ''
-    description = ''
-
-    def __init__(self, connection):
-        self.connection = connection
-
-
-class LowLevelMetric(Metric):
+class LowLevelMetric(BaseMetric):
     path = ''
     indices = None
 
@@ -94,23 +87,27 @@ class WeightedNormalizedLowLevelMetric(NormalizedLowLevelMetric):
 class MfccsMetric(NormalizedLowLevelMetric):
     name = 'mfccs'
     description = 'MFCCs'
+    category = 'timbre'
     path = "data->'lowlevel'->'mfcc'->'mean'"
     indices = range(1, 13)
 
 
 class WeightedMfccsMetric(WeightedNormalizedLowLevelMetric, MfccsMetric):
     name = 'mfccsw'
+    description = 'MFCCs (weighted)'
 
 
 class GfccsMetric(NormalizedLowLevelMetric):
     name = 'gfccs'
     description = 'GFCCs'
+    category = 'timbre'
     path = "data->'lowlevel'->'gfcc'->'mean'"
     indices = range(1, 13)
 
 
 class WeightedGfccsMetric(WeightedNormalizedLowLevelMetric, GfccsMetric):
     name = 'gfccsw'
+    description = 'GFCCs (weighted)'
 
 
 class CircularMetric(LowLevelMetric):
@@ -131,6 +128,8 @@ SCALES_MAP = {'major': 0.0, 'minor': -3.0 / 12}
 class KeyMetric(CircularMetric):
     name = 'key'
     path = "data->'tonal'"
+    category = 'rhythm'
+    description = 'Key and scale'
 
     def transform(self, data):
         try:
@@ -151,16 +150,20 @@ class LogCircularMetric(CircularMetric):
 class BpmMetric(LogCircularMetric):
     name = 'bpm'
     description = 'BPM'
+    category = 'rhythm'
     path = "data->'rhythm'->'bpm'"
 
 
 class OnsetRateMetric(LogCircularMetric):
     name = 'onsetrate'
     description = 'Onset rate'
+    category = 'rhythm'
     path = "data->'rhythm'->'onset_rate'"
 
 
-class HighLevelMetric(Metric):
+class HighLevelMetric(BaseMetric):
+    category = 'high-level'
+
     def get_data_batch(self, ids):
         result = self.connection.execute("SELECT highlevel, jsonb_object_agg(model, data) "
                                          "FROM highlevel_model WHERE highlevel IN %s "

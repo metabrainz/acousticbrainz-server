@@ -15,15 +15,26 @@
                 <a href="{{ url_for('data.summary', mbid=ref_metadata['mbid']) }}">summary</a>
             </div>
 
-            <h3>Most similar by {{ metric }}:</h3>
-            <ul>
-            {% for recording in metadata %}
-                <li><a href="{{ url_for('data.summary', mbid=recording['mbid']) }}">
-                    {{ recording['artist'] }} - {{ recording['title'] }}</a>
-                    <a href="#" class="change-youtube" data-youtube="{{ recording['youtube_query'] }}">(show)</a>
-                </li>
-            {% endfor %}
-            </ul>
+            <div>
+                <h3>Most similar by {{ metric }}:</h3>
+                <ul>
+                {% for recording in metadata %}
+                    <li><a href="{{ url_for('data.summary', mbid=recording['mbid']) }}">
+                        {{ recording['artist'] }} - {{ recording['title'] }}</a>
+                        <a href="#" class="change-youtube" data-youtube="{{ recording['youtube_query'] }}">(show)</a>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+
+            <div>
+                <h3>Feedback</h3>
+                <p>When talking about {{ category }}, how similar are the result tracks to original one?</p>
+                <input type="button" value="Very similar">
+                <input type="button" value="Somewhat similar">
+                <input type="button" value="Not similar">
+            </div>
+
         </div>
         <div class="col-md-4">
             <iframe src="https://www.youtube.com/embed?listType=search&amp;list={{ ref_metadata['youtube_query'] }}"

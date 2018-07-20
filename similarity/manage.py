@@ -1,12 +1,12 @@
 from __future__ import print_function
 from flask.cli import FlaskGroup
-from flask import current_app
 import click
 
 import webserver
 import metrics
+from operations import HybridMetric
 import db
-from utils import to_db_column
+
 
 PROCESS_BATCH_SIZE = 10000
 
@@ -18,27 +18,6 @@ def init_similarity():
     click.echo('Copying data')
     with db.engine.begin() as connection:
         connection.execute("INSERT INTO similarity(id) SELECT id FROM lowlevel")
-
-
-def _is_present(connection, name):
-    result = connection.execute("SELECT column_name FROM information_schema.columns "
-                                "WHERE table_name='similarity' and column_name='%s'" % name)
-    return len(result.fetchall()) > 0
-
-
-def _create_column(connection, name):
-    connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %s DOUBLE PRECISION[]" % name)
-    connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity "
-                       "USING gist(cube(%(metric)s))" % {'metric': name})
-
-
-def _delete_column(connection, name):
-    connection.execute("DROP INDEX IF EXISTS %s_ndx_similarity" % name)
-    connection.execute("ALTER TABLE similarity DROP COLUMN IF EXISTS %s " % name)
-
-
-def _clear_column(connection, name):
-    connection.execute("UPDATE similarity SET %(metric)s = NULL" % {'metric': name})
 
 
 def _get_recordings_without_similarity(connection, name, batch_size):
@@ -71,10 +50,7 @@ def add(name, force=False, to_process=None, batch_size=None):
 
     with db.engine.connect() as connection:
         metric = metric_cls(connection)
-
-        _create_column(connection, name)
-        if force:
-            _clear_column(connection, name)
+        metric.create(clear=force)
 
         result = connection.execute("SELECT count(*), count(%s) FROM similarity" % name)
         total, past = result.fetchone()
@@ -113,8 +89,9 @@ def add(name, force=False, to_process=None, batch_size=None):
 
 @cli.command()
 @click.argument("name")
-@click.option("--leave-stats", "-s", is_flag=True, help="Don't delete computed statistics")
-def remove(name, leave_stats=False):
+@click.option("--soft", "-s", is_flag=True, help="Don't delete data")
+@click.option("--leave-stats", "-l", is_flag=True, help="Don't delete computed statistics")
+def delete(name, soft=False, leave_stats=False):
     try:
         metric_cls = metrics.BASE_METRICS[name]
     except KeyError:
@@ -122,10 +99,10 @@ def remove(name, leave_stats=False):
         return
 
     with db.engine.begin() as connection:
-        _delete_column(connection, name)
+        metric = metric_cls(connection)
+        metric.delete(soft=soft)
 
         if not leave_stats:
-            metric = metric_cls(connection)
             try:
                 metric.delete_stats()
             except AttributeError:
@@ -134,9 +111,18 @@ def remove(name, leave_stats=False):
 
 @cli.command()
 @click.argument("name")
-def add_hybrid(name):
-    metric_str = to_db_column(name)
+@click.argument("category")
+@click.option("--description", "-d", type=str, help="Description of metric")
+def add_hybrid(name, category, description=None):
+    description = description or name
     with db.engine.begin() as connection:
-        connection.execute("CREATE INDEX IF NOT EXISTS %(name)s_ndx_similarity ON similarity "
-                           "USING gist(cube(%(metric)s))" % {'name': name, 'metric': metric_str})
+        metric = HybridMetric(connection, name, category, description)
+        metric.create()
 
+
+@cli.command()
+@click.argument("name")
+def delete_hybrid(name):
+    with db.engine.begin() as connection:
+        metric = HybridMetric(connection, name)
+        metric.delete()

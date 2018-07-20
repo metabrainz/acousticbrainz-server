@@ -9,39 +9,18 @@
     <h2 class="page-title">Recording "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }}</h2>
 
     <div class="row">
-        <div class="col-md-4">
-            <h3>Rhytm</h3>
+    {% for category, metrics in metrics.items() %}
+        <div class="col-md-{{ col_width }}">
+            <h3>{{ category | capitalize }}</h3>
             <ul>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm') }}">BPM</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='bpm_onsetrate') }}">BPM + onset rate</a></li>
-                <li>BPM + onset rate + danceability</li>
-                <li>BPM + onset rate + danceability + beat timbre</li>
-                <li>BPM + key</li>
+            {% for name, description in metrics %}
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric=name) }}">
+                    {{ description }}
+                </a></li>
+            {% endfor %}
             </ul>
         </div>
-        <div class="col-md-4">
-            <h3>Timbre</h3>
-            <ul>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='mfccs') }}">MFCCs</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='mfccsw') }}">MFCCs (weighted)</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='gfccs') }}">GFCCs</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='gfccsw') }}">GFCCs (weighted)</a></li>
-                <li>MFCCs (weighted) + spectral complexity + flux</li>
-            </ul>
-        </div>
-        <div class="col-md-4">
-            <h3>High-level</h3>
-            <ul>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='dortmund') }}">Genres (dortmund)</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='rosamerica') }}">Genres (rosamerica)</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='tzanetakis') }}">Genres (tzanetakis)</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods') }}">Moods</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='instruments') }}">Instruments</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods_instruments') }}">Moods + instruments</a></li>
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric='moods_instruments_rosamerica') }}">Moods + instruments + genres (rosamerica)</a></li>
-            </ul>
-        </div>
-
+    {% endfor %}
     </div>
 
 {%- endblock -%}

@@ -91,16 +91,21 @@ def _get_extended_info(mbid):
 @data_bp.route("/<uuid:mbid>/similar")
 def metrics(mbid):
     ref_metadata = _get_extended_info(mbid)
+    metrics_map = similarity.api.get_all_metrics()
+    row_width = 12 / len(metrics_map)
+
     return render_template(
         'data/metrics.html',
-        ref_metadata=ref_metadata
+        ref_metadata=ref_metadata,
+        metrics=metrics_map,
+        col_width=row_width
     )
 
 
 @data_bp.route("/<uuid:mbid>/similar/<string:metric>")
 def get_similar(mbid, metric):
     try:
-        similar_recordings = similarity.api.get_similar_recordings(mbid, metric)
+        similar_recordings, category = similarity.api.get_similar_recordings(mbid, metric)
     except db.exceptions.NoDataFoundException:
         raise NotFound
 
@@ -112,6 +117,7 @@ def get_similar(mbid, metric):
         metric=metric,
         ref_metadata=ref_metadata,
         metadata=metadata,
+        category=category
     )
 
 

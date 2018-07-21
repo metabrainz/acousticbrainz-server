@@ -9,6 +9,12 @@ BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 
+def load_musicbrainz_schema_data(connection, table_name):
+    query = text("""SELECT * FROM musicbrainz.%s""" % (table_name))
+    result = connection.execute(query)
+    return result.fetchall()
+
+
 def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording):
     """Fetch artist_credit table data from MusicBrainz database for the
     recording MBIDs in AcousticBrainz database.

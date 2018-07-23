@@ -121,6 +121,12 @@ def get_similar(mbid, metric):
     )
 
 
+@data_bp.route("/<uuid:mbid>/similar/<string:metric>/rate/<int:rating>", methods=['GET', 'POST'])
+def rate_similar(mbid, metric, rating):
+    result_mbids = request.form['result'] if request.method == 'POST' else None
+    similarity.api.add_evaluation(None, mbid, result_mbids, metric, rating)
+
+
 @data_bp.route("/<uuid:mbid>")
 def summary(mbid):
     offset = request.args.get("n")

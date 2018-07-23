@@ -10,7 +10,7 @@ class Metric(object):
         hybrid = str(hybrid).upper()
         self.connection.execute("INSERT INTO similarity_metrics (metric, is_hybrid, description, category, visible) "
                                 "VALUES ('%(metric)s', %(hybrid)s, '%(description)s', '%(category)s', TRUE) "
-                                "ON CONFLICT DO NOTHING"
+                                "ON CONFLICT DO UPDATE SET visible=TRUE "
                                 % {'metric': self.name, 'hybrid': hybrid, 'description': self.description,
                                    'category': self.category})
         self.connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity "
@@ -29,9 +29,10 @@ class BaseMetric(Metric):
             self.connection.execute("UPDATE similarity SET %s = NULL" % self.name)
 
     def delete(self, soft=False):
-        super(BaseMetric, self).delete()
-
-        if not soft:
+        if soft:
+            self.connection.execute("UPDATE similarity_metrics SET visible=FALSE WHERE metric='%s'" % self.name)
+        else:
+            super(BaseMetric, self).delete()
             self.connection.execute("ALTER TABLE similarity DROP COLUMN IF EXISTS %s " % self.name)
 
 

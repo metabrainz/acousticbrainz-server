@@ -30,9 +30,9 @@
             <div>
                 <h3>Feedback</h3>
                 <p>When talking about {{ category }}, how similar are the result tracks to original one?</p>
-                <input type="button" value="Very similar">
-                <input type="button" value="Somewhat similar">
-                <input type="button" value="Not similar">
+                <a class="btn btn-success" href="{{ url_for('data.rate_similar', mbid=ref_metadata['mbid'], metric=metric, rating=2) }}">Very similar</a>
+                <a class="btn btn-warning" href="#">Somewhat similar</a>
+                <a class="btn btn-danger" href="#">Not similar</a>
             </div>
 
         </div>

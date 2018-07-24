@@ -15,7 +15,7 @@
             <ul>
             {% for name, description in metrics %}
                 <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric=name) }}">
-                    {{ description | capitalize }}
+                    {{ description }}
                 </a></li>
             {% endfor %}
             </ul>

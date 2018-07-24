@@ -13,7 +13,7 @@ def main():
             logging.info('Inserting data for %d recordings...' % (len(gids_in_AB)))
             db.import_mb_data.fetch_and_insert_musicbrainz_data(gids_in_AB)
             batch_sleep = current_app.config['BATCH_SLEEP_DURATION']
-            logging.info("Sleeping %s seconds to start next batch of import." % batch_sleep)
+            logging.info("Sleeping %s seconds before starting next batch's import." % batch_sleep)
             time.sleep(batch_sleep)
         else:
             sleep = current_app.config['SLEEP_DURATION']

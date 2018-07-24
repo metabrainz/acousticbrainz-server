@@ -4,6 +4,7 @@ import db.data
 import db.import_mb_data
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
+BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
 
 
 def main():
@@ -14,6 +15,8 @@ def main():
             logging.info("Importing MusicBrainz data...")
             logging.info('Inserting data for %d recordings...' % (len(gids_in_AB)))
             db.import_mb_data.fetch_and_insert_musicbrainz_data(gids_in_AB)
+            logging.info("Sleeping %s seconds to start next batch of import." % BATCH_SLEEP_DURATION)
+            time.sleep(BATCH_SLEEP_DURATION)
         else:
             logging.info("No new recording found. Sleeping %s seconds." % SLEEP_DURATION)
             time.sleep(SLEEP_DURATION)

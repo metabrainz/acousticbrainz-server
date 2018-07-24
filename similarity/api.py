@@ -25,18 +25,17 @@ def get_all_metrics():
         return metrics
 
 
-def get_similar_recordings(mbid, metric, limit=None):
-    limit = limit or QUERY_RESULT_SIZE
-
+def get_similar_recordings(mbid, metric, limit=QUERY_RESULT_SIZE):
     with db.engine.begin() as connection:
         # check both existence and if it is hybrid
-        result = connection.execute("SELECT is_hybrid, category FROM similarity_metrics WHERE metric='%s'" % metric)
+        # TODO (refactor): separate metric info from similarity
+        result = connection.execute("SELECT is_hybrid, category, description FROM similarity_metrics WHERE metric='%s'" % metric)
         row = result.fetchone()
         if not row:
             return None
 
         # translate metric name to array_cat expression if hybrid
-        is_hybrid, category = row
+        is_hybrid, category, description = row
         metric = HybridMetric.get_pseudo_column(metric) if is_hybrid else metric
 
         # actual query
@@ -57,13 +56,12 @@ def get_similar_recordings(mbid, metric, limit=None):
         """ % {'metric': metric, 'gid': mbid, 'max': limit * QUERY_PADDING_FACTOR})
         rows = result.fetchall()
         rows = zip(*rows)
-        return np.unique(rows)[:limit], category
+        return list(np.unique(rows)[:limit]), category, description
 
 
-def add_evaluation(user, query_mbid, result_mbids, metric, rating, suggestion='NULL'):
-    result_mbids_str = 'ARRAY' + str(result_mbids) if result_mbids else 'NULL'
-
-    user_id = 'NULL'  # TODO lookup id from user
+def add_evaluation(user_id, query_mbid, result_mbids, metric, rating, suggestion='NULL'):
+    result_mbids_str = 'NULL' if result_mbids is None else 'ARRAY' + str(result_mbids)
+    user_id = user_id or 'NULL'
 
     with db.engine.begin() as connection:
         connection.execute("""

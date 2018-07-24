@@ -1,7 +1,7 @@
 {%- extends 'base.html' -%}
 
 {%- block title -%}
-    Similar recordings ({{ metric }}) to - "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }} - AcousticBrainz
+    Similar recordings ({{ description }}) to - "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }} - AcousticBrainz
 {%- endblock -%}
 
 {%- block content -%}
@@ -16,7 +16,7 @@
             </div>
 
             <div>
-                <h3>Most similar by {{ metric }}:</h3>
+                <h3>Most similar by {{ description }}:</h3>
                 <ul>
                 {% for recording in metadata %}
                     <li><a href="{{ url_for('data.summary', mbid=recording['mbid']) }}">
@@ -29,10 +29,15 @@
 
             <div>
                 <h3>Feedback</h3>
-                <p>When talking about {{ category }}, how similar are the result tracks to original one?</p>
-                <a class="btn btn-success" href="{{ url_for('data.rate_similar', mbid=ref_metadata['mbid'], metric=metric, rating=2) }}">Very similar</a>
-                <a class="btn btn-warning" href="#">Somewhat similar</a>
-                <a class="btn btn-danger" href="#">Not similar</a>
+                <div id="feedback-request">
+                    <p>When talking about {{ category }}, how similar are the result tracks to original one?</p>
+                    <a class="btn-feedback btn btn-success" data-value="2" href="#">Very similar</a>
+                    <a class="btn-feedback btn btn-warning" data-value="1" href="#">Somewhat similar</a>
+                    <a class="btn-feedback btn btn-danger" data-value="0" href="#">Not similar</a>
+                </div>
+                <div id="feedback-result" hidden>
+                    <p>Thank you for your feedback!</p>
+                </div>
             </div>
 
         </div>

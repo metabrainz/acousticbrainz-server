@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify
+from flask_login import current_user
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
@@ -105,7 +106,7 @@ def metrics(mbid):
 @data_bp.route("/<uuid:mbid>/similar/<string:metric>")
 def get_similar(mbid, metric):
     try:
-        similar_recordings, category = similarity.api.get_similar_recordings(mbid, metric)
+        similar_recordings, category, description = similarity.api.get_similar_recordings(mbid, metric)
     except db.exceptions.NoDataFoundException:
         raise NotFound
 
@@ -117,14 +118,17 @@ def get_similar(mbid, metric):
         metric=metric,
         ref_metadata=ref_metadata,
         metadata=metadata,
-        category=category
+        category=category,
+        description=description
     )
 
 
-@data_bp.route("/<uuid:mbid>/similar/<string:metric>/rate/<int:rating>", methods=['GET', 'POST'])
+@data_bp.route("/<uuid:mbid>/similar/<string:metric>/rate/<int:rating>", methods=['POST'])
 def rate_similar(mbid, metric, rating):
-    result_mbids = request.form['result'] if request.method == 'POST' else None
-    similarity.api.add_evaluation(None, mbid, result_mbids, metric, rating)
+    result_mbids = request.form.get('result') or similarity.api.get_similar_recordings(mbid, metric)[0]
+    user_id = current_user.id if current_user.is_authenticated else None
+    similarity.api.add_evaluation(user_id, mbid, result_mbids, metric, rating)
+    return jsonify({'success': True}), 200
 
 
 @data_bp.route("/<uuid:mbid>")

@@ -18,6 +18,7 @@ def join_columns(columns):
     columns[0] = ':' + columns[0]
     return ',:'.join(columns)
 
+
 def insert_data_into_musicbrainz_schema(connection, transaction, table_name, columns, values):
         trans = connection.begin()
         query = text("""
@@ -29,6 +30,7 @@ def insert_data_into_musicbrainz_schema(connection, transaction, table_name, col
 
         result = connection.execute(query, values)
         transaction.commit()
+
 
 def get_data_from_musicbrainz(table_name, data, column='id'):
     with musicbrainz_db.engine.begin() as connection:
@@ -42,6 +44,7 @@ def get_data_from_musicbrainz(table_name, data, column='id'):
         values = dict(result.fetchone())
         columns = [key for key in values]
         return table_name, columns, value
+
 
 def load_artist_credit(connection, MB_release_data, MB_release_group_data, MB_track_data, MB_artist_credit_name_data, artist_credit_from_recording):
     """Fetch artist_credit table data from MusicBrainz database for the

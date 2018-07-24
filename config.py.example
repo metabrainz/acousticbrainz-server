@@ -66,3 +66,8 @@ FEATURE_EVAL_LOCATION = False
 
 # Maximum number of recordings to fetch at a time for importing MusicBrainz metadata.
 RECORDINGS_FETCHED_PER_BATCH = 10000
+
+# Sleep duration for musicbrainz importer to wait after a complete import and
+# between every 2 batches
+SLEEP_DURATION = 30  # number of seconds to wait between runs
+BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches

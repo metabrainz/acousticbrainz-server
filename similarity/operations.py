@@ -23,8 +23,8 @@ class Metric(object):
 
 class BaseMetric(Metric):
     def create(self, clear=False):
-        self._create(hybrid=False, column=self.name)
         self.connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %s DOUBLE PRECISION[]" % self.name)
+        self._create(hybrid=False, column=self.name)
         if clear:
             self.connection.execute("UPDATE similarity SET %s = NULL" % self.name)
 

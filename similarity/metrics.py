@@ -129,7 +129,7 @@ class KeyMetric(CircularMetric):
     name = 'key'
     path = "data->'tonal'"
     category = 'rhythm'
-    description = 'key and scale'
+    description = 'Key/Scale'
 
     def transform(self, data):
         try:
@@ -156,7 +156,7 @@ class BpmMetric(LogCircularMetric):
 
 class OnsetRateMetric(LogCircularMetric):
     name = 'onsetrate'
-    description = 'onset rate'
+    description = 'OnsetRate'
     category = 'rhythm'
     path = "data->'rhythm'->'onset_rate'"
 
@@ -202,7 +202,7 @@ class BinaryCollectiveMetric(HighLevelMetric):
 
 class MoodsMetric(BinaryCollectiveMetric):
     name = 'moods'
-    description = 'moods'
+    description = 'Moods'
     models = [
         11,  # mood_happy
         14,  # mood_sad
@@ -214,7 +214,7 @@ class MoodsMetric(BinaryCollectiveMetric):
 
 class InstrumentsMetric(BinaryCollectiveMetric):
     name = 'instruments'
-    description = 'instruments'
+    description = 'Instruments'
     models = [
         8,   # mood_acoustic
         10,  # mood_electronic
@@ -238,21 +238,21 @@ class SingleClassifierMetric(HighLevelMetric):
 
 class DortmundGenreMetric(SingleClassifierMetric):
     name = 'dortmund'
-    description = 'genre (dortmund model)'
+    description = 'Genre (dortmund model)'
     model = 3
     size = 9
 
 
 class RosamericaGenreMetric(SingleClassifierMetric):
     name = 'rosamerica'
-    description = 'genre (rosamerica model)'
+    description = 'Genre (rosamerica model)'
     model = 5
     size = 8
 
 
 class TzanetakisGenreMetric(SingleClassifierMetric):
     name = 'tzanetakis'
-    description = 'genre (tzanetakis model)'
+    description = 'Genre (tzanetakis model)'
     model = 6
     size = 10
 

@@ -2123,8 +2123,9 @@ def start_import():
 
             if gids_in_AB:
                 fetch_and_insert_musicbrainz_data(gids_in_AB)
-                logging.info("Sleeping %s seconds to start next batch of import." % BATCH_SLEEP_DURATION)
-                time.sleep(BATCH_SLEEP_DURATION)
+                batch_sleep = current_app.config['BATCH_SLEEP_DURATION']
+                logging.info("Sleeping %s seconds to start next batch of import." % batch_sleep)
+                time.sleep(batch_sleep)
             else:
                 break
         logging.info('Done!')

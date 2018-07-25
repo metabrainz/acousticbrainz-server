@@ -57,5 +57,5 @@ class HybridMetric(Metric):
     def get_pseudo_column(metric):
         metrics = metric.split('_')
         if len(metrics) > 1:
-            return 'array_cat({})'.format(', '.join(metrics))
+            return ' || '.join(metrics)
         return metric

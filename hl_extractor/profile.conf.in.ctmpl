@@ -1,0 +1,34 @@
+{{- define "KEY" -}}
+    {{ key (printf "docker-server-configs/AB/hl_extractor_profile.%s.json/%s" (env "DEPLOY_ENV") .) }}
+{{- end -}}
+
+indent: 0
+
+highlevel:
+   compute: 1.
+   svm_models: [ /data/svm_models/danceability.history,
+                 /data/svm_models/gender.history,
+                 /data/svm_models/genre_dortmund.history,
+                 /data/svm_models/genre_electronic.history,
+                 /data/svm_models/genre_rosamerica.history,
+                 /data/svm_models/genre_tzanetakis.history,
+                 /data/svm_models/ismir04_rhythm.history,
+                 /data/svm_models/mood_acoustic.history,
+                 /data/svm_models/mood_aggressive.history,
+                 /data/svm_models/mood_electronic.history,
+                 /data/svm_models/mood_happy.history,
+                 /data/svm_models/mood_party.history,
+                 /data/svm_models/mood_relaxed.history,
+                 /data/svm_models/mood_sad.history,
+                 /data/svm_models/moods_mirex.history,
+                 /data/svm_models/timbre.history,
+                 /data/svm_models/tonal_atonal.history,
+                 /data/svm_models/voice_instrumental.history
+               ]
+mergeValues:
+    metadata:
+        version:
+            highlevel:
+                essentia_build_sha:
+                # TODO: You must fill this out:
+                models_essentia_git_sha: {{template "KEY" "models_essentia_git_sha"}}

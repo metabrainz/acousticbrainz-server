@@ -1,3 +1,4 @@
+from __future__ import print_function
 import tarfile
 import os
 import re
@@ -123,7 +124,7 @@ class PacketImporter(object):
             stats = {}
             for xid in sorted(self._transactions.keys()):
                 transaction = self._transactions[xid]
-                print ' - Running transaction', xid
+                print (' - Running transaction', xid)
                 for id, schema, table, type in sorted(transaction):
                     trans = connection.begin()
                     if schema == 'musicbrainz' and table in include_tables:
@@ -153,22 +154,21 @@ class PacketImporter(object):
                                 try:
                                     connection.execute(sql, params)
                                     trans.commit()
-                                    print 'Deleted rows from ' + table + ' table'
+                                    print ('Deleted rows from ' + table + ' table')
                                 except IntegrityError as e:
                                     trans.rollback()
                         if type == 'u':
                             if keys or values:
                                 update_row(sql, params, connection, trans)
-                                print 'Updated rows in ' + table + ' table'
-                    print 'COMMIT; --', xid
+                                print ('Updated rows in ' + table + ' table')
+                    print ('COMMIT; --', xid)
                 # print ' - Statistics:'
                 # for table in sorted(stats.keys()):
                 #     print '   * %-30s\t%d\t%d' % (table, stats[table]['u'], stats[table]['d'])
-            print secsy
 
 
 def process_tar(fileobj, expected_schema_seq, replication_seq):
-    print "Processing", fileobj.name
+    print ("Processing", fileobj.name)
     tar = tarfile.open(fileobj=fileobj, mode='r:bz2')
     importer = PacketImporter(replication_seq)
     for member in tar:
@@ -178,7 +178,7 @@ def process_tar(fileobj, expected_schema_seq, replication_seq):
                 raise Exception("Mismatched schema sequence, %d (database) vs %d (replication packet)" % (expected_schema_seq, schema_seq))
         elif member.name == 'TIMESTAMP':
             ts = tar.extractfile(member).read().strip()
-            print ' - Packet was produced at', ts
+            print (' - Packet was produced at', ts)
         elif member.name in ('mbdump/Pending', 'mbdump/dbmirror_pending'):
             importer.load_pending(tar.extractfile(member))
         elif member.name in ('mbdump/PendingData', 'mbdump/dbmirror_pendingdata'):
@@ -190,7 +190,7 @@ def download_packet(base_url, token, replication_seq):
     url = base_url.rstrip("/") + "/replication-%d.tar.bz2" % replication_seq
     if token:
         url += '?token=' + token
-    print "Downloading", url
+    print ("Downloading", url)
     try:
         data = urllib2.urlopen(url, timeout=60)
     except urllib2.HTTPError, e:
@@ -236,7 +236,7 @@ def main():
         """)
         result = connection.execute(query)
         schema_seq, mb_replication_seq = result.fetchone()
-        print schema_seq, mb_replication_seq
+        print (schema_seq, mb_replication_seq)
 
     with db.engine.begin() as connection:
         query = text("""
@@ -256,9 +256,9 @@ def main():
         replication_seq += 1
         tmp = download_packet(base_url, token, replication_seq)
         if tmp is None:
-            print 'Not found, stopping'
+            print ('Not found, stopping')
             break
         process_tar(tmp, schema_seq, replication_seq)
         tmp.close()
         update_replication_sequence(replication_seq)
-        print 'Done applying all the replication packets till last hour'
+        print ('Done applying all the replication packets till last hour')

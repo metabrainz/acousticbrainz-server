@@ -162,9 +162,6 @@ class PacketImporter(object):
                                 update_row(sql, params, connection, trans)
                                 print ('Updated rows in ' + table + ' table')
                     print ('COMMIT; --', xid)
-                # print ' - Statistics:'
-                # for table in sorted(stats.keys()):
-                #     print '   * %-30s\t%d\t%d' % (table, stats[table]['u'], stats[table]['d'])
 
 
 def process_tar(fileobj, expected_schema_seq, replication_seq):

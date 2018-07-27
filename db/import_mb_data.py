@@ -36,9 +36,13 @@ def get_data_from_musicbrainz(table_name, data, column='id'):
     with musicbrainz_db.engine.begin() as connection:
         query = text("""
             SELECT *
-              FROM %s
-             WHERE %s=%s
-        """ % (table_name, column, data))
+              FROM :table_name
+             WHERE :column = :data
+        """), {
+            'table_name': table_name,
+            'column': column,
+            'data': data,
+        }
 
         result = connection.execute(query)
         values = dict(result.fetchone())

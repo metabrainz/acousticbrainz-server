@@ -23,6 +23,8 @@ import webserver
 from brainzutils import musicbrainz_db
 from db.testing import DatabaseTestCase
 
+import webserver.external.get_entities
+
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
@@ -283,6 +285,12 @@ def toggle_site_status():
 def import_musicbrainz_db():
     print("\nImporting MusicBrainz data...")
     db.import_mb_data.start_import()
+
+
+@cli.command()
+def get_entities():
+    print('Redirecting mbids to original entities...')
+    webserver.external.get_entities.get_mbids_from_gid_redirect_tables()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

@@ -6,6 +6,16 @@ from mbdata.models import Recording
 
 
 def get_original_entity(mbids):
+    """Get original entity information after applying MBID redirect
+    to many mbids.
+
+    Args:
+        mbids (list): list of uuid (MBID(gid)) of the recordings.
+    Returns:
+        Dictionary containing the redirected original entity ids with MBIDs as keys.
+            - mbid: Recording mbids of the entities
+            - id: Original redirected ids of the entities after mbid redirect
+    """
     with mb_session() as db:
         query = db.query(Recording)
 
@@ -24,6 +34,14 @@ def get_original_entity(mbids):
 
     
 def get_mbids_from_gid_redirect_tables():
+    """Fetch mbids from recording gid redirect table and calls function
+    get_original_entity to get the redirected result.
+
+    Returns:
+        Dictionary containing the redirected original entity ids with MBIDs as keys.
+            - mbid: Recording mbids of the entities
+            - id: Original redirected ids of the entities after mbid redirect
+    """
     with db.engine.begin() as connection:
         query = text("""
             SELECT gid

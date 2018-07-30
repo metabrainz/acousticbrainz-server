@@ -46,6 +46,14 @@ ESCAPES = (('\\b', '\b'), ('\\f', '\f'), ('\\n', '\n'), ('\\r', '\r'),
            ('\\t', '\t'), ('\\v', '\v'), ('\\\\', '\\'))
 
 def parse_name(table):
+    """Store schema name and table name separately in different variables.
+
+    Args:
+        table: A combined schema and table name of the form - schema.table
+
+    Returns:
+        separate schema and table names.
+    """
     if '.' in table:
         schema, table = table.split('.', 1)
         schema = 'musicbrainz'
@@ -86,6 +94,15 @@ def read_psql_dump(fp, types):
 
 
 def get_table_and_data(message):
+    """Get table name and data values from the IntegrityError message (if any) due to
+    foreign key constraints.
+
+    Args:
+        message: SqlAlchemy integrity error message.
+
+    Returns:
+        column name and data values to be updated for a table.
+    """
     mess = message.split(' ')
     word = mess.index('Key') + 1
     column, data = mess[word].split('=')
@@ -94,6 +111,19 @@ def get_table_and_data(message):
 
 
 def insert_new_row(table, data, main_connection, main_transaction, sql, params, todo_list=None):
+    """This function insert new rows in the tables after we get any IntegrityError due to foreign
+    key constraints.
+
+    Args:
+        table: name of the table in which the data is to be inserted.
+        data: values to be inserted.
+        main_connection: sql connection to write into the database.
+        main_transaction: transaction for every write operation.
+        sql: insert query.
+        params: values for the query.
+        todo_list: a list of tuples of type (table, data) used to insert new data
+        in the respective tables.
+    """
     if todo_list is None:
         todo_list = []
     table_name, columns, values = db.import_mb_data.get_data_from_musicbrainz(table, data)
@@ -116,6 +146,15 @@ def insert_new_row(table, data, main_connection, main_transaction, sql, params, 
 
 
 def update_row(sql, params, main_connection, main_transaction):
+    """This function is a part of processing the replication packet to update
+    the data present in database.
+
+    Args:
+        sql: update query.
+        params: parameter values for the query.
+        main_connection: sql connection to write into the database.
+        main_transaction: transaction for every write operation.
+    """
     try:
         main_connection.execute(sql, params)
         main_transaction.commit()
@@ -126,18 +165,34 @@ def update_row(sql, params, main_connection, main_transaction):
 
 
 class PacketImporter(object):
-
+    """PacketImporter class to process the replication packets for proper changes
+    in the database.
+    """
     def __init__(self, replication_seq):
+        """Initialization of the class objects.
+        """
         self._data = {}
         self._transactions = {}
         self._replication_seq = replication_seq
 
     def load_pending_data(self, fp):
+        """Load id, key and values from dbmirror_pending data files
+        and stores them in data dictionary.
+
+        Args:
+            fp: tar file of replication packet.
+        """
         dump = read_psql_dump(fp, [int, parse_bool, parse_data_fields])
         for id, key, values in dump:
             self._data[(id, key)] = values
 
     def load_pending(self, fp):
+        """Load schema name, table names from dbmirror_pending file and
+        maintain a transaction dictionary for the data specified in the files.
+
+        Args:
+            fp: tar file of replication packet.
+        """
         dump = read_psql_dump(fp, [int, str, str, int])
         for id, table, type, xid in dump:
             schema, table = parse_name(table)
@@ -145,6 +200,10 @@ class PacketImporter(object):
             transaction.append((id, schema, table, type))
 
     def process(self):
+        """Process a replication packet and apply update and deletion
+        for the data present in the database by running a acousticbrainz
+        db connection.
+        """
         with db.engine.connect() as connection:
             stats = {}
             for xid in sorted(self._transactions.keys()):
@@ -152,6 +211,8 @@ class PacketImporter(object):
                 print (' - Running transaction', xid)
                 for id, schema, table, type in sorted(transaction):
                     trans = connection.begin()
+                    # Applying the changes for the tables present in musicbrainz
+                    # schema in acousticbrainz db
                     if schema == 'musicbrainz' and table in include_tables:
                         fulltable = '%s.%s' % (schema, table)
                         if fulltable not in stats:
@@ -190,6 +251,17 @@ class PacketImporter(object):
 
 
 def process_tar(fileobj, expected_schema_seq, replication_seq):
+    """Processes the compressed replication packet, call the functions to load the data
+    from mbdump/dbmirror_pending and mbdump.dbmirror_pendingdata files.
+    Then call the 'process' function from PacketImporter class to apply the changes to
+    the database.
+
+    Args:
+        fileobj: tar file of the replication packet.
+        expected_schema_seq: The expected schema sequence that should be matched with the
+        one listed in replication packets.
+        replication_seq: The number of the replication packet.
+    """
     print ("Processing", fileobj.name)
     tar = tarfile.open(fileobj=fileobj, mode='r:bz2')
     importer = PacketImporter(replication_seq)
@@ -209,6 +281,16 @@ def process_tar(fileobj, expected_schema_seq, replication_seq):
 
 
 def download_packet(base_url, token, replication_seq):
+    """Download the replication packet for the specified replication sequence
+    and convert the packet into a tar.bz2 file.
+
+    Args:
+        base_url: The URL to download the replication packets from.
+        token: An access token to allow download of the packets from MetaBrainz
+        website. For more information, visit - https://metabrainz.org/api/
+
+    Returns: tar file of the downloaded replication packet.
+    """
     url = base_url.rstrip("/") + "/replication-%d.tar.bz2" % replication_seq
     if token:
         url += '?token=' + token
@@ -227,6 +309,12 @@ def download_packet(base_url, token, replication_seq):
 
 
 def update_replication_sequence(replication_seq):
+    """Store new replication sequence into replication_control table for future
+    updates and deletes from replication packets.
+
+    Args:
+        replication_seq: Current replication sequence to replace the old one.
+    """
     with db.engine.begin() as connection:
         query = text("""
             UPDATE musicbrainz.replication_control
@@ -236,6 +324,11 @@ def update_replication_sequence(replication_seq):
 
 
 def write_replication_control(replication_seq):
+    """Insert first replication sequence into replication_control table.
+
+    Args:
+        replication_seq: first replication sequence to start the download of packets from.
+    """
     with db.engine.begin() as connection:
         query = text("""
             INSERT INTO musicbrainz.replication_control (current_replication_sequence)
@@ -245,6 +338,10 @@ def write_replication_control(replication_seq):
 
 
 def main():
+    """Fetch the replication sequence from the database and call the function
+    to download all the replication packets from last replication sequence until
+    the previous hour.
+    """
     base_url = current_app.config['REPLICATION_PACKETS_URL']
     if current_app.config['ACCESS_TOKEN']:
         token = current_app.config['ACCESS_TOKEN']

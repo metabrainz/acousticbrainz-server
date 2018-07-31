@@ -355,7 +355,7 @@ def main():
         """)
         result = connection.execute(query)
         schema_seq, mb_replication_seq = result.fetchone()
-        print (schema_seq, mb_replication_seq)
+        print (schema_seq)
 
     with db.engine.begin() as connection:
         query = text("""
@@ -374,6 +374,7 @@ def main():
 
     while True:
         replication_seq += 1
+        print ("Replication Sequence:", replication_seq)
         tmp = download_packet(base_url, token, replication_seq)
         if tmp is None:
             print ('Not found, stopping')

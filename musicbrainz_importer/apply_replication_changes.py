@@ -62,6 +62,12 @@ def parse_name(table):
 
 
 def parse_data_fields(s):
+    """Parses the data present in mbdump files to specific variables for their use.
+    Removes useless quotes and other punctuations.
+
+    Returns:
+        Proper string with names of the data and corresponding values.
+    """
     fields = {}
     for name, value in re.findall(r'''"([^"]+)"=('(?:''|[^'])*')? ''', s):
         if not value:
@@ -77,6 +83,11 @@ def parse_bool(s):
 
 
 def unescape(s):
+    """Remove extra escapes from the data.
+
+    Returns:
+        unescaped string.
+    """
     if s == '\\N':
         return None
     for orig, repl in ESCAPES:
@@ -85,6 +96,13 @@ def unescape(s):
 
 
 def read_psql_dump(fp, types):
+    """Read mbdump data, split the values present in rows in mbdump/dbmirror_pending
+    and mbdata/dbmirror_pendingdata.
+
+    Args:
+        fp: tar file of replication packet.
+        types: data types of all data of the rows.
+    """
     for line in fp:
         values = map(unescape, line.rstrip('\r\n').split('\t'))
         for i, value in enumerate(values):
@@ -208,7 +226,7 @@ class PacketImporter(object):
             stats = {}
             for xid in sorted(self._transactions.keys()):
                 transaction = self._transactions[xid]
-                print (' - Running transaction', xid)
+                print ('Running transaction' + xid + '...')
                 for id, schema, table, type in sorted(transaction):
                     trans = connection.begin()
 

@@ -248,6 +248,8 @@ class PacketImporter(object):
                             if keys or values:
                                 update_row(sql, params, connection, trans)
                                 print ('Updated rows in ' + table + ' table')
+                        else:
+                            print ('Skipping changes, ' + table + ' table not found in the database')
 
 
 def process_tar(fileobj, expected_schema_seq, replication_seq):

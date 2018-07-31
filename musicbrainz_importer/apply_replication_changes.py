@@ -211,6 +211,7 @@ class PacketImporter(object):
                 print (' - Running transaction', xid)
                 for id, schema, table, type in sorted(transaction):
                     trans = connection.begin()
+
                     # Applying the changes for the tables present in musicbrainz
                     # schema in acousticbrainz db
                     if schema == 'musicbrainz' and table in include_tables:
@@ -247,7 +248,6 @@ class PacketImporter(object):
                             if keys or values:
                                 update_row(sql, params, connection, trans)
                                 print ('Updated rows in ' + table + ' table')
-                    print ('COMMIT; --', xid)
 
 
 def process_tar(fileobj, expected_schema_seq, replication_seq):
@@ -371,6 +371,7 @@ def main():
         write_replication_control(replication_seq)
     else:
         replication_seq = ab_replication_seq
+
     while True:
         replication_seq += 1
         tmp = download_packet(base_url, token, replication_seq)

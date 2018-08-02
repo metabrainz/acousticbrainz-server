@@ -1,7 +1,7 @@
 import db
 from sqlalchemy import text
 from brainzutils.musicbrainz_db import mb_session
-from webserver.external.mbid_redirects import get_entities_by_gids
+from brainzutils.musicbrainz_db.utils import get_entities_by_gids
 from mbdata.models import Recording
 
 

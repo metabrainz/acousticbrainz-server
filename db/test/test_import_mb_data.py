@@ -16,7 +16,158 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
         super(DataMusicBrainzDBTestCase, self).setUp()
 
 
-    def test_write_to_musicbrainz_schema_tables(self):
+    def test_load_and_write_area(self):
+
+        # area_type
+        data = [(1, u'Country', None, 1, u'Country is used for areas included (or previously included) in ISO 3166-1, e.g. United States.', uuid.UUID('06dd0ae4-8c74-30bb-b43d-95dcedf961de')),
+            (3, u'City', None, 3, u'City is used for settlements of any size, including towns and villages.', uuid.UUID('6fd8f29a-3d0a-32fc-980d-ea697b69da78'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area_type'))
+
+        # area
+        data = [(24482, uuid.UUID('915a5576-b30c-4160-93cd-e1185cebb6ac'), u'Smithville', 3, 0,
+            datetime.datetime(2013, 11, 14, 1, 33, 0, 377353, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (222, uuid.UUID('489ce91b-6658-3307-9877-795b68554c98'), u'United States', 1, 0,
+            datetime.datetime(2013, 6, 15, 18, 6, 39, 593230, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (5099, uuid.UUID('29a709d8-0320-493e-8d0c-f2c386662b7f'), u'Chicago', 3, 0,
+            datetime.datetime(2013, 5, 24, 20, 27, 13, 405462, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u'')
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area'))
+
+
+    def test_load_and_write_artist(self):
+
+        # area_type
+        data = [(1, u'Country', None, 1, u'Country is used for areas included (or previously included) in ISO 3166-1, e.g. United States.', uuid.UUID('06dd0ae4-8c74-30bb-b43d-95dcedf961de')),
+            (3, u'City', None, 3, u'City is used for settlements of any size, including towns and villages.', uuid.UUID('6fd8f29a-3d0a-32fc-980d-ea697b69da78'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area_type'))
+
+        # area
+        data = [(24482, uuid.UUID('915a5576-b30c-4160-93cd-e1185cebb6ac'), u'Smithville', 3, 0,
+            datetime.datetime(2013, 11, 14, 1, 33, 0, 377353, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (222, uuid.UUID('489ce91b-6658-3307-9877-795b68554c98'), u'United States', 1, 0,
+            datetime.datetime(2013, 6, 15, 18, 6, 39, 593230, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (5099, uuid.UUID('29a709d8-0320-493e-8d0c-f2c386662b7f'), u'Chicago', 3, 0,
+            datetime.datetime(2013, 5, 24, 20, 27, 13, 405462, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u'')
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area'))
+
+        # artist_type
+        data = [(1, u'Person', None, 1, None, uuid.UUID('b6e035f4-3ce9-331c-97df-83397230b0df')),
+            (2, u'Group', None, 2, None, uuid.UUID('e431f5f6-b5d2-343d-8b36-72607fffb74b'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_type'))
+
+        # gender
+        data = [(1, u'Male', None, 1, None, uuid.UUID('36d3d30a-839d-3eda-8cb3-29be4384e4a9')),
+            (2, u'Female', None, 2, None, uuid.UUID('93452b5a-a947-30c8-934f-6a4056b151c2'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_gender(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'gender'))
+
+        # artist
+        data = [(6747, uuid.UUID('1b62df85-00d2-464f-81bc-a5c0cdcad278'), u'Tampa Red', u'Tampa Red', 1904, 1, 8, 1981, 3, 19, 1, 222, 1, u'', 0,
+            datetime.datetime(2016, 8, 21, 5, 0, 58, 662928, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), True, 24482, 5099)
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist'))
+
+
+    def test_load_and_write_artist_gid_redirect(self):
+        # area_type
+        data = [(1, u'Country', None, 1, u'Country is used for areas included (or previously included) in ISO 3166-1, e.g. United States.', uuid.UUID('06dd0ae4-8c74-30bb-b43d-95dcedf961de')),
+            (3, u'City', None, 3, u'City is used for settlements of any size, including towns and villages.', uuid.UUID('6fd8f29a-3d0a-32fc-980d-ea697b69da78'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area_type'))
+
+        # area
+        data = [(24482, uuid.UUID('915a5576-b30c-4160-93cd-e1185cebb6ac'), u'Smithville', 3, 0,
+            datetime.datetime(2013, 11, 14, 1, 33, 0, 377353, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (222, uuid.UUID('489ce91b-6658-3307-9877-795b68554c98'), u'United States', 1, 0,
+            datetime.datetime(2013, 6, 15, 18, 6, 39, 593230, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (5099, uuid.UUID('29a709d8-0320-493e-8d0c-f2c386662b7f'), u'Chicago', 3, 0,
+            datetime.datetime(2013, 5, 24, 20, 27, 13, 405462, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u'')
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area'))
+
+        # artist_type
+        data = [(1, u'Person', None, 1, None, uuid.UUID('b6e035f4-3ce9-331c-97df-83397230b0df')),
+            (2, u'Group', None, 2, None, uuid.UUID('e431f5f6-b5d2-343d-8b36-72607fffb74b'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_type'))
+
+        # gender
+        data = [(1, u'Male', None, 1, None, uuid.UUID('36d3d30a-839d-3eda-8cb3-29be4384e4a9')),
+            (2, u'Female', None, 2, None, uuid.UUID('93452b5a-a947-30c8-934f-6a4056b151c2'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_gender(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'gender'))
+
+        # artist
+        data = [(6747, uuid.UUID('1b62df85-00d2-464f-81bc-a5c0cdcad278'), u'Tampa Red', u'Tampa Red', 1904, 1, 8, 1981, 3, 19, 1, 222, 1, u'', 0,
+            datetime.datetime(2016, 8, 21, 5, 0, 58, 662928, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), True, 24482, 5099)
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist'))
+
+        # artist_gid_redirect
+        data = [(uuid.UUID('6873559d-8cb9-494d-9f78-4c1eeab1f851'), 6747, datetime.datetime(2016, 3, 13, 23, 0, 21, 981437, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_gid_redirect(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_gid_redirect'))
+
+
+    def test_load_and_write_artist_credit(self):
+        # artist_credit
+        data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (73502, u'Georg Friedrich Handel', 1, 27041, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (831440, u'George Frideric Handel', 1, 24955, datetime.datetime(2011, 6, 19, 7, 36, 56, 8576, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (847994, u'Handel', 1, 717, datetime.datetime(2011, 8, 11, 19, 43, 1, 279447, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (6747, u'Tampa Red', 1, 1600, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_credit(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit'))
+
+
+    def test_load_and_write_artist_credit_name(self):
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -64,7 +215,79 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
         # gender
         data = [(1, u'Male', None, 1, None, uuid.UUID('36d3d30a-839d-3eda-8cb3-29be4384e4a9')),
             (2, u'Female', None, 2, None, uuid.UUID('93452b5a-a947-30c8-934f-6a4056b151c2'))
-        ] 
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_gender(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'gender'))
+
+        # artist
+        data = [(6747, uuid.UUID('1b62df85-00d2-464f-81bc-a5c0cdcad278'), u'Tampa Red', u'Tampa Red', 1904, 1, 8, 1981, 3, 19, 1, 222, 1, u'', 0,
+            datetime.datetime(2016, 8, 21, 5, 0, 58, 662928, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), True, 24482, 5099)
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist'))
+
+        # artist_credit_name
+        data = [(6747, 0, 6747, u'Tampa Red', u'')]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_credit_name(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit_name'))
+
+
+    def test_load_and_write_musicbrainz_schema_tables(self):
+
+        # artist_credit
+        data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (73502, u'Georg Friedrich Handel', 1, 27041, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (831440, u'George Frideric Handel', 1, 24955, datetime.datetime(2011, 6, 19, 7, 36, 56, 8576, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (847994, u'Handel', 1, 717, datetime.datetime(2011, 8, 11, 19, 43, 1, 279447, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (6747, u'Tampa Red', 1, 1600, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_credit(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit'))
+
+        # area_type
+        data = [(1, u'Country', None, 1, u'Country is used for areas included (or previously included) in ISO 3166-1, e.g. United States.', uuid.UUID('06dd0ae4-8c74-30bb-b43d-95dcedf961de')),
+            (3, u'City', None, 3, u'City is used for settlements of any size, including towns and villages.', uuid.UUID('6fd8f29a-3d0a-32fc-980d-ea697b69da78'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area_type'))
+
+        # area
+        data = [(24482, uuid.UUID('915a5576-b30c-4160-93cd-e1185cebb6ac'), u'Smithville', 3, 0,
+            datetime.datetime(2013, 11, 14, 1, 33, 0, 377353, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (222, uuid.UUID('489ce91b-6658-3307-9877-795b68554c98'), u'United States', 1, 0,
+            datetime.datetime(2013, 6, 15, 18, 6, 39, 593230, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u''),
+            (5099, uuid.UUID('29a709d8-0320-493e-8d0c-f2c386662b7f'), u'Chicago', 3, 0,
+            datetime.datetime(2013, 5, 24, 20, 27, 13, 405462, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)), None, None, None, None, None, None, False, u'')
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_area(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'area'))
+
+        # artist_type
+        data = [(1, u'Person', None, 1, None, uuid.UUID('b6e035f4-3ce9-331c-97df-83397230b0df')),
+            (2, u'Group', None, 2, None, uuid.UUID('e431f5f6-b5d2-343d-8b36-72607fffb74b'))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_type'))
+
+        # gender
+        data = [(1, u'Male', None, 1, None, uuid.UUID('36d3d30a-839d-3eda-8cb3-29be4384e4a9')),
+            (2, u'Female', None, 2, None, uuid.UUID('93452b5a-a947-30c8-934f-6a4056b151c2'))
+        ]
 
         with db.engine.begin() as connection:
             db.import_mb_data.write_gender(connection, data)

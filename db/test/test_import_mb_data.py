@@ -17,6 +17,7 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_area(self):
+        """Writing and loading data for area table using values from referenced area_type table"""
 
         # area_type
         data = [(1, u'Country', None, 1, u'Country is used for areas included (or previously included) in ISO 3166-1, e.g. United States.', uuid.UUID('06dd0ae4-8c74-30bb-b43d-95dcedf961de')),
@@ -42,6 +43,9 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_artist(self):
+        """Writing and loading data for artist table using values from referenced area_type, area,
+        artist_type & gender tables.
+        """
 
         # area_type
         data = [(1, u'Country', None, 1, u'Country is used for areas included (or previously included) in ISO 3166-1, e.g. United States.', uuid.UUID('06dd0ae4-8c74-30bb-b43d-95dcedf961de')),
@@ -94,6 +98,10 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_artist_gid_redirect(self):
+        """Writing and loading data for artist_gid_redirect table using values from referenced area_type,
+        area, artist_type, gender & artist tables.
+        """
+
         # area_type
         data = [(1, u'Country', None, 1, u'Country is used for areas included (or previously included) in ISO 3166-1, e.g. United States.', uuid.UUID('06dd0ae4-8c74-30bb-b43d-95dcedf961de')),
             (3, u'City', None, 3, u'City is used for settlements of any size, including towns and villages.', uuid.UUID('6fd8f29a-3d0a-32fc-980d-ea697b69da78'))
@@ -152,6 +160,8 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_artist_credit(self):
+        """Writing and loading data for artist_credit table."""
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -167,6 +177,9 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_artist_credit_name(self):
+        """Writing and loading data for artist_gid_redirect table using values from referenced area_type,
+        area, artist_type, gender & artist tables.
+        """
 
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -239,6 +252,8 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_recording(self):
+        """Writing and loading data for recording table using values from referenced artist_credit table."""
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -263,6 +278,10 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_recording_gid_redirect(self):
+        """Writing and loading data for recording_gid_redirect table using values from referenced\
+        artist_credit & recording tables.
+        """
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -294,6 +313,10 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_release_group(self):
+        """Writing and loading data for release_group table using values from referenced artist_credit
+        & release_group_primary_type tables.
+        """
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -327,6 +350,10 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_release_group_gid_redirect(self):
+        """Writing and loading data for release_group_gid_redirect table using values from referenced artist_credit,
+        release_group_primary_type & release_group tables.
+        """
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -367,6 +394,11 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_release(self):
+        """Writing and loading data for release table using values from referenced artist_credit,
+        release_group_primary_type, release_group, language, script, release_status & release_packaging
+        tables.
+        """
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -440,6 +472,11 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_release_gid_redirect(self):
+        """Writing and loading data for release_gid_redirect table using values from referenced artist_credit,
+        release_group_primary_type, release_group, language, release_status, release_packaging, script
+        & release tables.
+        """
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -513,6 +550,11 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_medium(self):
+        """Writing and loading data for medium table using values from referenced medium_format,
+        artist_credit, release_group_primary_type, release_group, language, release_status, release_packaging,
+        script & release tables.
+        """
+
         # medium_format
         data = [(1, u'CD', None, 0, 1982, True, None, uuid.UUID('9712d52a-4509-3d4b-a1a2-67c88c643e31'))]
 
@@ -600,6 +642,10 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_and_write_track(self):
+        """Writing and loading data for track table using values from referenced artist_credit,
+        recording, medium_format, release_group_primary_type, release_group, language, release_status,
+        release_packaging, script, release & medium tables.
+        """
 
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
@@ -705,6 +751,11 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
 
 
     def test_load_and_write_track_gid_redirect(self):
+        """Writing and loading data for track_gid_redirect table using values from referenced artist_credit,
+        recording, medium_format, release_group_primary_type, release_group, language, release_status,
+        release_packaging, script, release, medium & track tables.
+        """
+
         # artist_credit
         data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
             (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),

@@ -439,6 +439,79 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
             self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release'))
 
 
+    def test_load_and_write_release_group(self):
+        # artist_credit
+        data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (73502, u'Georg Friedrich Handel', 1, 27041, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (831440, u'George Frideric Handel', 1, 24955, datetime.datetime(2011, 6, 19, 7, 36, 56, 8576, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (847994, u'Handel', 1, 717, datetime.datetime(2011, 8, 11, 19, 43, 1, 279447, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (6747, u'Tampa Red', 1, 1600, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_credit(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit'))
+
+        # release_group_primary_type
+        data = [(1, u'Album', None, 1, None, uuid.UUID('f529b476-6e62-324f-b0aa-1f3e33d313fc'))]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_release_group_primary_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release_group_primary_type'))
+
+        # release_group
+        data = [(631361, uuid.UUID('2ec35fc4-6797-3324-b775-9a3df3d4723a'), u'The Masterworks', 73502, 1, u'', 0,
+            datetime.datetime(2012, 5, 15, 19, 1, 58, 718541, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (617137, uuid.UUID('c834f5ee-d362-3da7-966b-8915a86e808c'), u'1981-08-29: Tangerine Tree Volume 53: Berlin 1981', 1418, 1, u'', 0,
+            datetime.datetime(2016, 9, 21, 23, 0, 26, 94608, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_release_group(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release_group'))
+
+
+    def test_load_and_write_release_group_gid_redirect(self):
+        # artist_credit
+        data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (73502, u'Georg Friedrich Handel', 1, 27041, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (831440, u'George Frideric Handel', 1, 24955, datetime.datetime(2011, 6, 19, 7, 36, 56, 8576, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (847994, u'Handel', 1, 717, datetime.datetime(2011, 8, 11, 19, 43, 1, 279447, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (6747, u'Tampa Red', 1, 1600, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_credit(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit'))
+
+        # release_group_primary_type
+        data = [(1, u'Album', None, 1, None, uuid.UUID('f529b476-6e62-324f-b0aa-1f3e33d313fc'))]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_release_group_primary_type(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release_group_primary_type'))
+
+        # release_group
+        data = [(631361, uuid.UUID('2ec35fc4-6797-3324-b775-9a3df3d4723a'), u'The Masterworks', 73502, 1, u'', 0,
+            datetime.datetime(2012, 5, 15, 19, 1, 58, 718541, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (617137, uuid.UUID('c834f5ee-d362-3da7-966b-8915a86e808c'), u'1981-08-29: Tangerine Tree Volume 53: Berlin 1981', 1418, 1, u'', 0,
+            datetime.datetime(2016, 9, 21, 23, 0, 26, 94608, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_release_group(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release_group'))
+
+        # release_group_gid_redirect
+        data = [(uuid.UUID('21f0a3e8-c37b-33a1-b769-daf16e4e252e'), 617137, datetime.datetime(2011, 5, 16, 14, 57, 6, 530063, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_release_group_gid_redirect(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release_group_gid_redirect'))
+
+
     def test_load_and_write_musicbrainz_schema_tables(self):
 
         # artist_credit

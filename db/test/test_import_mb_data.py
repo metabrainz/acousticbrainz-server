@@ -238,6 +238,61 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
             self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit_name'))
 
 
+    def test_load_and_write_recording(self):
+        # artist_credit
+        data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (73502, u'Georg Friedrich Handel', 1, 27041, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (831440, u'George Frideric Handel', 1, 24955, datetime.datetime(2011, 6, 19, 7, 36, 56, 8576, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (847994, u'Handel', 1, 717, datetime.datetime(2011, 8, 11, 19, 43, 1, 279447, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (6747, u'Tampa Red', 1, 1600, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_credit(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit'))
+
+        # recording
+        data = [(11768371, uuid.UUID('d51cf7fb-97e1-4070-a40b-b03707f91c92'), u'(Rinaldo, HWV 7: Act I. "Combatti da forte" (Almirena)', 73502, 203000, u'', 0, None, False),
+            (8598260, uuid.UUID('9086b742-358b-4f73-9a14-84cb1a9ce4ce'), u'Love Story', 399541, 235000, u'', 0, None, False)
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_recording(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'recording'))
+
+
+    def test_load_and_write_recording_gid_redirect(self):
+        # artist_credit
+        data = [(1418, u'Tangerine Dream', 1, 13729, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (399541, u'Taylor Swift', 1, 3139, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (73502, u'Georg Friedrich Handel', 1, 27041, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (831440, u'George Frideric Handel', 1, 24955, datetime.datetime(2011, 6, 19, 7, 36, 56, 8576, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (847994, u'Handel', 1, 717, datetime.datetime(2011, 8, 11, 19, 43, 1, 279447, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None))),
+            (6747, u'Tampa Red', 1, 1600, datetime.datetime(2011, 5, 16, 16, 32, 11, 963929, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_artist_credit(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'artist_credit'))
+
+        # recording
+        data = [(11768371, uuid.UUID('d51cf7fb-97e1-4070-a40b-b03707f91c92'), u'(Rinaldo, HWV 7: Act I. "Combatti da forte" (Almirena)', 73502, 203000, u'', 0, None, False),
+            (8598260, uuid.UUID('9086b742-358b-4f73-9a14-84cb1a9ce4ce'), u'Love Story', 399541, 235000, u'', 0, None, False)
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_recording(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'recording'))
+
+        # recording_gid_redirect
+        data = [(uuid.UUID('05e1ab2e-f54f-464b-a1fd-fcc6bceaaa20'), 8598260, datetime.datetime(2011, 5, 16, 16, 8, 20, 288158, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_recording_gid_redirect(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'recording_gid_redirect'))
+
+
     def test_load_and_write_musicbrainz_schema_tables(self):
 
         # artist_credit

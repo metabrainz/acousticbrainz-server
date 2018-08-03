@@ -470,6 +470,15 @@ class DataMusicBrainzDBTestCase(DatabaseTestCase):
             db.import_mb_data.write_release(connection, data)
             self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release'))
 
+        # release_gid_redirect
+        data = [(uuid.UUID('03c44c5d-cbe5-32b2-af20-376a30fd98a0'), 692283, datetime.datetime(2011, 5, 16, 15, 59, 0, 785958,
+            tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=0, name=None)))
+        ]
+
+        with db.engine.begin() as connection:
+            db.import_mb_data.write_release_gid_redirect(connection, data)
+            self.assertEqual(data, db.import_mb_data.load_musicbrainz_schema_data(connection, 'release_gid_redirect'))
+
 
     def test_load_and_write_release_gid_redirect(self):
         """Writing and loading data for release_gid_redirect table using values from referenced artist_credit,

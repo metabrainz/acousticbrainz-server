@@ -9,17 +9,46 @@ BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 def load_musicbrainz_schema_data(connection, table_name):
+    """General function to load all the data from the specified
+    musicbrainz schema table name.
+
+    Args:
+        connection: database connection to execute the query.
+        table_name: Name of the table from musicbrainz schema.
+
+    Returns:
+        Specified table data fetched from the database.
+    """
     query = text("""SELECT * FROM musicbrainz.%s""" % (table_name))
     result = connection.execute(query)
     return result.fetchall()
 
 
 def join_columns(columns):
+    """Join the column names of the tables by a comma in between and
+    a colon as prefix to pass the values in the insert query.
+
+    Args:
+        columns: A list of all the columns of any table.
+
+    Returns:
+        A string of column names separated by commas.
+    """
     columns[0] = ':' + columns[0]
     return ',:'.join(columns)
 
 
 def insert_data_into_musicbrainz_schema(connection, transaction, table_name, columns, values):
+    """Insert data into musicbrainz schema tables whose table_name, column names and
+    data values are specified.
+
+    Args:
+        connection: database connection to execute the query.
+        transaction: transaction for every write operation.
+        table_name: Name of the table to apply the insert query on.
+        columns: Name of all the columns of the given table.
+        values: Data values of the rows to insert into the tables.
+    """
         trans = connection.begin()
         query = text("""
             INSERT INTO musicbrainz.{table_name} ({columns})
@@ -33,6 +62,19 @@ def insert_data_into_musicbrainz_schema(connection, transaction, table_name, col
 
 
 def get_data_from_musicbrainz(table_name, data, column='id'):
+    """Fetch data from main MusicBrainz database for the given column name,
+    data value and table name.
+
+    Args:
+        table_name: Table name whose data is to be fetched.
+        data: data value whose corresponding row is fetched.
+        column: Column names for the tables. Take default as 'id' if not
+            specified.
+
+    Returns:
+        Table name, columns and data values fetched from the MusicBrainz
+        database.
+    """
     with musicbrainz_db.engine.begin() as connection:
         query = text("""
             SELECT *

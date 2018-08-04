@@ -8,11 +8,11 @@ from flask import current_app
 BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-
 def load_musicbrainz_schema_data(connection, table_name):
     query = text("""SELECT * FROM musicbrainz.%s""" % (table_name))
     result = connection.execute(query)
     return result.fetchall()
+
 
 def join_columns(columns):
     columns[0] = ':' + columns[0]

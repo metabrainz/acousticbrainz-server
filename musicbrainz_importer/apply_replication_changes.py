@@ -226,7 +226,7 @@ class PacketImporter(object):
             stats = {}
             for xid in sorted(self._transactions.keys()):
                 transaction = self._transactions[xid]
-                print ('Running transaction' + xid + '...')
+                print ('Running transaction' + str(xid) + '...')
                 for id, schema, table, type in sorted(transaction):
                     trans = connection.begin()
 

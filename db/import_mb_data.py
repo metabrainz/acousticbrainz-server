@@ -49,16 +49,16 @@ def insert_data_into_musicbrainz_schema(connection, transaction, table_name, col
         columns: Name of all the columns of the given table.
         values: Data values of the rows to insert into the tables.
     """
-        trans = connection.begin()
-        query = text("""
-            INSERT INTO musicbrainz.{table_name} ({columns})
-                 VALUES ({value_str})
-        """.format(table_name=table_name,
-                   columns=','.join(columns),
-                   value_str=join_columns(columns)))
+    trans = connection.begin()
+    query = text("""
+        INSERT INTO musicbrainz.{table_name} ({columns})
+             VALUES ({value_str})
+    """.format(table_name=table_name,
+               columns=','.join(columns),
+               value_str=join_columns(columns)))
 
-        result = connection.execute(query, values)
-        transaction.commit()
+    result = connection.execute(query, values)
+    transaction.commit()
 
 
 def get_data_from_musicbrainz(table_name, data, column='id'):

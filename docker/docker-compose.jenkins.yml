@@ -24,13 +24,13 @@ services:
   hl_extractor:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.gaia
+      dockerfile: ./docker/Dockerfile.dev
     depends_on:
       - db
 
   dataset_evaluator:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.gaia
+      dockerfile: ./docker/Dockerfile.dev
     depends_on:
       - db

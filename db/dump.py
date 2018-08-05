@@ -724,6 +724,7 @@ def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, en
             shutil.rmtree(temp_dir)
 
         pxz.stdin.close()
+        pxz.wait()
 
 
 def dump_dataset_tables(location, threads=None):

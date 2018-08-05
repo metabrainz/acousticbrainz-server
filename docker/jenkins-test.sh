@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Modify these two as needed:
-COMPOSE_FILE_LOC="docker/docker-compose.test.yml"
+COMPOSE_FILE_LOC="docker/docker-compose.jenkins.yml"
 TEST_CONTAINER_NAME="acousticbrainz"
 
 COMPOSE_PROJECT_NAME_ORIGINAL="jenkinsbuild_${BUILD_TAG}"
@@ -20,7 +20,7 @@ function cleanup {
     # Shutting down all containers associated with this project
     docker-compose -f $COMPOSE_FILE_LOC \
                    -p $COMPOSE_PROJECT_NAME \
-                   down --remove-orphans
+                   down --remove-
     docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
         | awk '{print $1}' | xargs --no-run-if-empty docker stop
     docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
@@ -28,6 +28,8 @@ function cleanup {
 }
 
 function run_tests {
+
+    ls -lR
 
     # Create containers
     docker-compose -f $COMPOSE_FILE_LOC \
@@ -43,18 +45,19 @@ function run_tests {
     docker ps -a | grep $COMPOSE_PROJECT_NAME | awk '{print $0}'
 
     # create database and user once
+    echo "creating user and database"
     docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME run --rm $TEST_CONTAINER_NAME \
         dockerize \
         -wait tcp://db:5432 -timeout 60s bash -c \
-        "python manage.py init_db"
+        "cd /code && cp config.py.example config.py && ls -lR && python manage.py init_db"
 
     # run tests
+    echo "running tests"
     docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME run $TEST_CONTAINER_NAME \
                 dockerize \
                 -wait tcp://db:5432 -timeout 60s \
                 -wait tcp://redis:6379 -timeout 60s \
-                py.test --junitxml=/test_report.xml \
-                        --cov-report xml:/coverage.xml
+                bash -c "cp /code/config.py.example /code/config.py && py.test --junitxml=/test_report.xml --cov-report xml:/coverage.xml"
 }
 
 function extract_results {

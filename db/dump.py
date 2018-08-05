@@ -754,7 +754,7 @@ def import_datasets_dump(archive_path):
     pxz_command = ["pxz", "--decompress", "--stdout", archive_path]
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 
-    table_names = ['dataset', 'dataset_class', 'dataset_class_member']
+    table_names = _DATASET_TABLES.keys()
     connection = db.engine.raw_connection()
     try:
         cursor = connection.cursor()

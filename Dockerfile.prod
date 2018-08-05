@@ -1,30 +1,42 @@
 FROM metabrainz/python:2.7
 
-# Install Dockerize
+ARG deploy_env
+
+# Dockerize
 ENV DOCKERIZE_VERSION v0.2.0
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
-# Installing dependencies
-RUN apt-get update \
+# Install dependencies
+# Node
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
     && apt-get install -y --no-install-recommends \
                        build-essential \
-                       libyaml-dev \
-                       libfftw3-dev \
+                       ca-certificates \
+                       cron \
+                       git \
+                       ipython \
                        libavcodec-dev \
                        libavformat-dev \
                        libavutil-dev \
                        libavresample-dev \
+                       libffi-dev \
+                       libfftw3-dev \
+                       libpq-dev \
+                       libsamplerate0-dev \
+                       libqt4-dev \
+                       libssl-dev \
+                       libtag1-dev \
+                       libxml2-dev \
+                       libxslt1-dev \
+                       libyaml-dev \
+                       nodejs \
+                       pkg-config \
+                       pxz \
                        python-dev \
                        python-numpy-dev \
                        python-numpy \
-                       git \
-                       libsamplerate0-dev \
-                       libtag1-dev \
-                       libqt4-dev \
                        swig2.0 \
-                       pkg-config \
-                       libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /code
@@ -60,10 +72,30 @@ RUN mkdir /tmp/models \
     && mv /tmp/models/v2.1_beta1/svm_models /data/ \
     && cd / && rm -r /tmp/models
 
+
+# PostgreSQL client
+ENV PG_MAJOR 10
+RUN add-apt-repository 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main'
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-$PG_MAJOR \
+    && rm -rf /var/lib/apt/lists/*
+
 # Python dependencies
 RUN mkdir /code/docs/
 COPY docs/requirements.txt /code/docs/requirements.txt
 COPY requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY package.json /code
+RUN npm install
+
+# Consul template service is already set up, just need to copy the configuration
+COPY ./docker/consul-template.conf /etc/consul-template.conf
+
+# uwsgi service files
+COPY ./docker/$deploy_env/uwsgi/uwsgi.service /etc/service/uwsgi/run
+RUN chmod 755 /etc/service/uwsgi/run
+COPY ./docker/$deploy_env/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 
 COPY . /code

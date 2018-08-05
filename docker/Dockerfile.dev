@@ -13,18 +13,62 @@ RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
                        ca-certificates \
                        cron \
                        git \
-                       libpq-dev \
+                       ipython \
+                       libavcodec-dev \
+                       libavformat-dev \
+                       libavutil-dev \
+                       libavresample-dev \
                        libffi-dev \
+                       libfftw3-dev \
+                       libpq-dev \
+                       libsamplerate0-dev \
+                       libqt4-dev \
                        libssl-dev \
+                       libtag1-dev \
                        libxml2-dev \
                        libxslt1-dev \
-                       pxz \
-                       ipython \
+                       libyaml-dev \
                        nodejs \
+                       pkg-config \
+                       pxz \
+                       python-dev \
+                       python-numpy-dev \
+                       python-numpy \
+                       swig2.0 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /code
+RUN mkdir /code/hl_extractor
+RUN mkdir /data
 WORKDIR /code
+
+# Gaia
+# See https://github.com/MTG/gaia
+RUN git clone https://github.com/MTG/gaia /tmp/gaia \
+    && cd /tmp/gaia \
+    && ./waf configure --with-python-bindings \
+    && ./waf \
+    && ./waf install \
+    && cd / && rm -r /tmp/gaia
+
+# Essentia
+# See http://essentia.upf.edu/documentation/installing.html
+RUN git clone https://github.com/MTG/essentia /tmp/essentia \
+    && cd /tmp/essentia \
+    && ./waf configure --mode=release --with-gaia --with-example=streaming_extractor_music_svm \
+    && ./waf \
+    && ./waf install \
+    && ldconfig \
+    && cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm /code/hl_extractor/streaming_extractor_music_svm \
+    && cd / && rm -r /tmp/essentia
+
+# SVM models
+RUN mkdir /tmp/models \
+    && cd /tmp/models \
+    && curl --silent -o models.tar.gz http://essentia.upf.edu/documentation/svm_models/essentia-extractor-svm_models-v2.1_beta1.tar.gz \
+    && tar -xvzf models.tar.gz \
+    && mv /tmp/models/v2.1_beta1/svm_models /data/ \
+    && cd / && rm -r /tmp/models
 
 # Python dependencies
 RUN mkdir /code/docs/
@@ -36,4 +80,3 @@ COPY package.json /code
 RUN npm install
 
 COPY . /code/
-CMD python manage.py runserver

@@ -15,6 +15,7 @@ services:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.dev
+    command: python manage.py runserver
     volumes:
       - ../:/code
       - ../data/app:/data
@@ -30,7 +31,7 @@ services:
   hl_extractor:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.gaia
+      dockerfile: ./docker/Dockerfile.dev
     command: python2 worker_manage.py hl_extractor
     depends_on:
       - db
@@ -38,7 +39,7 @@ services:
   dataset_evaluator:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.gaia
+      dockerfile: ./docker/Dockerfile.dev
     command: python2 worker_manage.py dataset_evaluator
     volumes:
       - ../data/datasets:/data/datasets

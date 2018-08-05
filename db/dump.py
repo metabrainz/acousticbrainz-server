@@ -106,6 +106,45 @@ _DATASET_TABLES = {
         "class",
         "mbid",
     ),
+    "dataset_snapshot": (
+        "id",
+        "dataset_id",
+        "data",
+        "created",
+    ),
+    "dataset_eval_jobs": (
+        "id",
+        "snapshot_id",
+        "status",
+        "status_msg",
+        "options"
+        "training_snapshot",
+        "testing_snapshot",
+        "created",
+        "updated",
+        "result",
+        "eval_location",
+    ),
+    "dataset_eval_sets": (
+        "id",
+        "data",
+    ),
+    "challenge": (
+        "id",
+        "name",
+        "validation_snapshot",
+        "creator",
+        "created",
+        "start_time",
+        "end_time",
+        "classes",
+        "concluded",
+    ),
+    "dataset_eval_challenge":(
+        "dataset_eval_job",
+        "challenge_id",
+        "result",
+    ),
 }
 
 
@@ -197,6 +236,26 @@ def _copy_tables(location, dataset_dump, start_time=None, end_time=None):
             # dataset_class_member
             _copy_table(cursor, location, "dataset_class_member", "(SELECT %s FROM dataset_class_member)" %
                         (", ".join(_DATASET_TABLES["dataset_class_member"])))
+
+            # dataset_snapshot
+            _copy_table(cursor, location, "dataset_snapshot", "(SELECT %s FROM dataset_snapshot)" %
+                        (", ".join(_DATASET_TABLES["dataset_snapshot"])))
+
+            # dataset_eval_jobs
+            _copy_table(cursor, location, "dataset_eval_jobs", "(SELECT %s FROM dataset_eval_jobs)" %
+                        (", ".join(_DATASET_TABLES["dataset_eval_jobs"])))
+
+            # dataset_eval_sets
+            _copy_table(cursor, location, "dataset_eval_sets", "(SELECT %s FROM dataset_eval_sets)" %
+                        (", ".join(_DATASET_TABLES["dataset_eval_sets"])))
+
+            # challenge
+            _copy_table(cursor, location, "challenge", "(SELECT %s FROM challenge)" %
+                        (", ".join(_DATASET_TABLES["challenge"])))
+
+            # dataset_eval_challenge
+            _copy_table(cursor, location, "dataset_eval_challenge", "(SELECT %s FROM dataset_eval_challenge)" %
+                        (", ".join(_DATASET_TABLES["dataset_eval_challenge"])))
 
         else:
             # version

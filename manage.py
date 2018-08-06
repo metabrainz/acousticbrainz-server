@@ -290,7 +290,7 @@ def import_musicbrainz_db():
 @cli.command()
 def get_entities():
     print('Redirecting mbids to original entities...')
-    webserver.external.get_entities.get_mbids_from_gid_redirect_tables()
+    webserver.external.get_entities.get_original_entity()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

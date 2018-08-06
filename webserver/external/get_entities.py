@@ -18,8 +18,8 @@ def get_original_entity():
             - id: Original redirected ids of the entities after mbid redirect
     """
     mbids = db.data.get_mbids_from_gid_redirect_tables()
-    with mb_session() as db:
-        query = db.query(Recording)
+    with mb_session() as mb_db:
+        query = mb_db.query(Recording)
 
         recordings = get_entities_by_gids(
             query=query,

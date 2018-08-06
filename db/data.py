@@ -544,3 +544,26 @@ def get_new_recordings_from_lowlevel():
         gids_in_AB = [value[0] for value in gids]
 
         return gids_in_AB
+
+
+def get_mbids_from_gid_redirect_tables():
+    """Fetch mbids from recording gid redirect table and calls function
+    get_original_entity to get the redirected result.
+
+    Returns:
+        Dictionary containing the redirected original entity ids with MBIDs as keys.
+            - mbid: Recording mbids of the entities
+            - id: Original redirected ids of the entities after mbid redirect
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT gid
+              FROM musicbrainz.recording_gid_redirect
+        """)
+        result = connection.execute(query)
+        mbids = result.fetchall()
+
+        recording_mbids = []
+        for mbid in mbids:
+            recording_mbids.append(str(mbid[0]))
+        return recording_mbids

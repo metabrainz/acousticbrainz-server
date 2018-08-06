@@ -28,7 +28,7 @@ server {
     }
 
     location / {
-        try_files $uri @ab;
+        try_files is_down.html $uri @ab;
     }
 
     location @ab {
@@ -84,7 +84,7 @@ server {
     }
 
     location / {
-        try_files $uri @ab;
+        try_files is_down.html $uri @ab;
     }
 
     location @ab {

@@ -55,3 +55,4 @@ def get_mbids_from_gid_redirect_tables():
             recording_mbids.append(str(mbid[0]))
 
         gids_with_redirected_ids = get_original_entity(recording_mbids)
+        return gids_with_redirected_ids

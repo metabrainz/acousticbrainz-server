@@ -14,8 +14,9 @@ def get():
             SELECT *
               FROM lowlevel
         INNER JOIN musicbrainz.recording
-                ON musicbrainz.recording.gid = lowlevel.gid"""
-        )
+                ON musicbrainz.recording.gid = lowlevel.gid
+             LIMIT 10000
+        """)
         result = connection.execute(query)
         data = result.fetchall()
     print time.time()-s_t
@@ -27,6 +28,7 @@ def get():
         query = text("""
             SELECT *
               FROM lowlevel
+             LIMIT 10000
         """)
         result = connection.execute(query)
         lowlevel_data = result.fetchall()

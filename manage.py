@@ -22,7 +22,7 @@ from db.testing import DatabaseTestCase
 import musicbrainz_importer.apply_replication_changes
 
 import webserver.external.get_entities
-import webserver.external.evaluate_db
+import webserver.external.evaluate_mbdatabase_access
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -213,7 +213,7 @@ def apply_replication_changes():
 @cli.command()
 def evaluate_access_methods():
     print('Evaluating both MusicBrainz database access methods...')
-    webserver.external.evaluate_db.get()
+    webserver.external.evaluate_mbdatabase_access.get()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

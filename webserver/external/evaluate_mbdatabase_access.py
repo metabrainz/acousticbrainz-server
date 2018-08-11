@@ -7,8 +7,8 @@ import logging
 
 
 def get():
-    s_t = time.time()
-    print "Query directly from AcousticBrainz database for Import db method"
+    logging.info("Querying directly from AcousticBrainz database for import MB database method...")
+    start_time = time.time()
     with db.engine.begin() as connection:
         query = text("""
             SELECT *
@@ -19,10 +19,11 @@ def get():
         """)
         result = connection.execute(query)
         data = result.fetchall()
-    print time.time()-s_t
+    first_time_taken = time.time() - start_time
+    logging.info('Data imported from AcousticBrainz database in %.2f seconds.' %  first_time_taken)
 
-    print "Separate queries from AcousticBrainz and MusicBrainz database over the direct connection"
-    n_t = time.time()
+    logging.info("Separate queries from AcousticBrainz and MusicBrainz databases over the direct connection...")
+    start_time = time.time()
     lowlevel_data = 0
     with db.engine.begin() as connection:
         query = text("""
@@ -42,4 +43,5 @@ def get():
         """)
         result = connection.execute(query, {"gids": tuple(lowlevel_data)})
         rec_data = result.fetchall()
-    print time.time() - n_t
+    second_time_taken = time.time() - start_time
+    logging.info('Data imported from direct connection to MusicBrainz database in %.2f seconds.' %  second_time_taken)

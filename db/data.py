@@ -602,9 +602,9 @@ def update_replication_sequence(replication_seq):
     with db.engine.begin() as connection:
         query = text("""
             UPDATE musicbrainz.replication_control
-               SET current_replication_sequence = %s""" % (replication_seq)
-        )
-        connection.execute(query)
+               SET current_replication_sequence = :replication_seq
+        """)
+        connection.execute(query, {'replication_seq': replication_seq})
 
 
 def write_replication_control(replication_seq):

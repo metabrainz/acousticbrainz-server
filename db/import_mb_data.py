@@ -19,8 +19,8 @@ def load_musicbrainz_schema_data(connection, table_name):
     Returns:
         Specified table data fetched from the database.
     """
-    query = text("""SELECT * FROM musicbrainz.%s""" % (table_name))
-    result = connection.execute(query)
+    query = text("""SELECT * FROM musicbrainz.:table_name""")
+    result = connection.execute(query, {'table_name': table_name})
     return result.fetchall()
 
 
@@ -51,13 +51,14 @@ def insert_data_into_musicbrainz_schema(connection, transaction, table_name, col
     """
     trans = connection.begin()
     query = text("""
-        INSERT INTO musicbrainz.{table_name} ({columns})
-             VALUES ({value_str})
-    """.format(table_name=table_name,
-               columns=','.join(columns),
-               value_str=join_columns(columns)))
+        INSERT INTO musicbrainz.:table_name (:columns)
+             VALUES (:column_values)
+    """)
 
-    result = connection.execute(query, values)
+    result = connection.execute(query, {'table_name': table_name,
+                                        'columns': ','.join(columns),
+                                        'column_values': join_columns(columns)}
+    )
     transaction.commit()
 
 
@@ -78,14 +79,15 @@ def get_data_from_musicbrainz(table_name, data, column='id'):
     with musicbrainz_db.engine.begin() as connection:
         query = text("""
             SELECT *
-              FROM {table_name}
-             WHERE {column} = {data}
-        """.format(table_name=table_name,
-                   column=column,
-                   data=data
-        ))
+              FROM :table_name
+             WHERE :column = :data
+        """)
 
-        result = connection.execute(query)
+        result = connection.execute(query, {'table_name': table_name,
+                                            'column': column,
+                                            'data': data}
+        )
+
         values = dict(result.fetchone())
         columns = [key for key in values]
         return table_name, columns, value

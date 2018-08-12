@@ -589,3 +589,32 @@ def get_replication_sequence_from_mb_schema():
         result = connection.execute(query)
         sequence = result.fetchone()
         return sequence[0]
+
+
+def update_replication_sequence(replication_seq):
+    """Store new replication sequence into replication_control table for future
+    updates and deletes from replication packets.
+
+    Args:
+        replication_seq: Current replication sequence to replace the old one.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            UPDATE musicbrainz.replication_control
+               SET current_replication_sequence = %s""" % (replication_seq)
+        )
+        connection.execute(query)
+
+
+def write_replication_control(replication_seq):
+    """Insert first replication sequence into replication_control table.
+
+    Args:
+        replication_seq: first replication sequence to start the download of packets from.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            INSERT INTO musicbrainz.replication_control (current_replication_sequence)
+                 VALUES (:replication_seq)
+        """)
+        connection.execute(query, {'replication_seq': replication_seq})

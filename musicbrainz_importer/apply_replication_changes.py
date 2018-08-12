@@ -36,6 +36,7 @@ from brainzutils import musicbrainz_db
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 import db.import_mb_data
+import db.data
 
 include_tables = ['language', 'artist_credit_name', 'artist', 'artist_gid_redirect', 'area', 'area_type', 'recording_gid_redirect', \
                   'script', 'release_gid_redirect', 'recording', 'track', 'artist_credit', 'release_group_primary_type', 'release_group', \
@@ -298,6 +299,7 @@ def process_tar(fileobj, expected_schema_seq, replication_seq):
         elif member.name in ('mbdump/PendingData', 'mbdump/dbmirror_pendingdata'):
             importer.load_pending_data(tar.extractfile(member))
     importer.process()
+    tar.close()
 
 
 def download_packet(base_url, token, replication_seq):

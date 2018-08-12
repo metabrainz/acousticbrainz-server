@@ -375,7 +375,6 @@ def main():
         """)
         result = connection.execute(query)
         schema_seq, mb_replication_seq = result.fetchone()
-        print (schema_seq)
 
     with db.engine.begin() as connection:
         query = text("""

@@ -293,7 +293,7 @@ def get_entities():
     print('Redirecting mbids to original entities...')
     webserver.external.get_entities.get_original_entity()
 
-
+@cli.command()
 def apply_replication_changes():
     print("\nUpdating musicbrainz schema by applying replication packets...")
     musicbrainz_importer.apply_replication_changes.main()

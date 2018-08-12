@@ -10,6 +10,7 @@ from flask import current_app
 
 from sqlalchemy import text
 import sqlalchemy.exc
+from brainzutils import musicbrainz_db
 
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))

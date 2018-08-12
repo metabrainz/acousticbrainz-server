@@ -7,6 +7,7 @@ import os
 import db
 import db.exceptions
 from flask import current_app
+from brainzutils import musicbrainz_db
 
 from sqlalchemy import text
 import sqlalchemy.exc
@@ -633,3 +634,41 @@ def write_replication_control(replication_seq):
                  VALUES (:replication_seq)
         """)
         connection.execute(query, {'replication_seq': replication_seq})
+
+
+def load_lowlevel_and_recording_data():
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM lowlevel
+        INNER JOIN musicbrainz.recording
+                ON musicbrainz.recording.gid = lowlevel.gid
+             LIMIT 10000
+        """)
+        result = connection.execute(query)
+        data = result.fetchall()
+        return data
+
+
+def load_lowlevel_data():
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM lowlevel
+             LIMIT 10000
+        """)
+        result = connection.execute(query)
+        lowlevel_data = result.fetchall()
+        return lowlevel_data
+
+
+def load_recording_data_from_MB_db(lowlevel_data):
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM recording
+             WHERE recording.gid in :gids
+        """)
+        result = connection.execute(query, {"gids": tuple(lowlevel_data)})
+        rec_data = result.fetchall()
+        return rec_data

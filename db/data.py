@@ -637,6 +637,13 @@ def write_replication_control(replication_seq):
 
 
 def load_lowlevel_and_recording_data():
+    """Fetch data in which gid column value is present in both lowlevel
+    and musicbrainz.recording table from AcousticBrainz database.
+
+    Returns:
+        data (of type - sqlalchemy.resultproxy): data retrieved
+        from the lowlevel and recording table.
+    """
     with db.engine.begin() as connection:
         query = text("""
             SELECT *
@@ -651,6 +658,12 @@ def load_lowlevel_and_recording_data():
 
 
 def load_lowlevel_data():
+    """Fetch lowlevel data from AcousticBrainz database.
+
+    Returns:
+        lowlevel_data (of type - sqlalchemy.resultproxy): data retrieved
+        from lowlevel table.
+    """
     with db.engine.begin() as connection:
         query = text("""
             SELECT *
@@ -663,6 +676,17 @@ def load_lowlevel_data():
 
 
 def load_recording_data_from_MB_db(lowlevel_data):
+    """Fetch recording data from MusicBrainz database over the
+    direct connection whose gid matches with those in lowlevel
+    table in AB database.
+
+    Args:
+        lowlevel_data: list of gids of the data present in lowlevel table.
+
+    Returns:
+        rec_data (of type - sqlalchemy.resultproxy): data retrieved
+        from recording table of MusicBrainz database.
+    """
     with musicbrainz_db.engine.begin() as connection:
         query = text("""
             SELECT *

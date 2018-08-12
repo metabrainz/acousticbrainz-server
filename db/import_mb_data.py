@@ -8,6 +8,7 @@ from flask import current_app
 BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+
 def load_musicbrainz_schema_data(connection, table_name):
     """General function to load all the data from the specified
     musicbrainz schema table name.

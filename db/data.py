@@ -571,6 +571,13 @@ def get_mbids_from_gid_redirect_tables():
 
 
 def get_current_schema_and_replication_sequence():
+    """Fetch current schema sequence and current replication number
+    from the musicbrainz database.
+
+    Returns:
+        schema_seq: last schema sequence number.
+        mb_replication_seq: last updated replication sequence.
+    """
     with musicbrainz_db.engine.begin() as connection:
         query = text("""
             SELECT current_schema_sequence, current_replication_sequence
@@ -582,6 +589,13 @@ def get_current_schema_and_replication_sequence():
 
 
 def get_replication_sequence_from_mb_schema():
+    """Fetch current replication sequence last updated in replication
+    control table in musicbrainz schema in AB database.
+
+    Returns:
+        sequence[0]: current replication sequence number from a sqlachemy
+        type object.
+    """
     with db.engine.begin() as connection:
         query = text("""
             SELECT current_replication_sequence

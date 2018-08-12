@@ -20,7 +20,7 @@ def load_musicbrainz_schema_data(connection, table_name):
     Returns:
         Specified table data fetched from the database.
     """
-    query = text("""SELECT * FROM musicbrainz.:table_name""")
+    query = text("""SELECT * FROM musicbrainz.{table_name}""".format(table_name=table_name))
     result = connection.execute(query, {'table_name': table_name})
     return result.fetchall()
 
@@ -52,14 +52,13 @@ def insert_data_into_musicbrainz_schema(connection, transaction, table_name, col
     """
     trans = connection.begin()
     query = text("""
-        INSERT INTO musicbrainz.:table_name (:columns)
-             VALUES (:column_values)
-    """)
+        INSERT INTO musicbrainz.{table_name} ({columns})
+             VALUES ({column_values})
+    """.format(table_name=table_name,
+               columns=','.join(columns),
+               value_str=join_columns(columns)))
 
-    result = connection.execute(query, {'table_name': table_name,
-                                        'columns': ','.join(columns),
-                                        'column_values': join_columns(columns)}
-    )
+    result = connection.execute(query)
     transaction.commit()
 
 

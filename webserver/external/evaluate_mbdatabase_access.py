@@ -6,7 +6,7 @@ from sqlalchemy import text
 from brainzutils import musicbrainz_db
 
 
-def get():
+def get_AB_and_MB_tables_data():
     logging.info("Querying directly from AcousticBrainz database for import MB database method...")
     start_time = time.time()
 

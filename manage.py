@@ -201,7 +201,7 @@ def import_musicbrainz_db():
 @cli.command()
 def get_entities():
     print('Redirecting mbids to original entities...')
-    webserver.external.get_entities.get_original_entity()
+    webserver.external.get_entities.main()
 
 
 @cli.command()
@@ -213,7 +213,7 @@ def apply_replication_changes():
 @cli.command()
 def evaluate_access_methods():
     print('Evaluating both MusicBrainz database access methods...')
-    webserver.external.evaluate_mbdatabase_access.get()
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_tables_data()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

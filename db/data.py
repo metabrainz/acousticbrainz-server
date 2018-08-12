@@ -636,6 +636,30 @@ def write_replication_control(replication_seq):
         connection.execute(query, {'replication_seq': replication_seq})
 
 
+def get_mbids_from_gid_redirect_tables_from_MB_db():
+    """Fetch mbids from recording gid redirect table of MusicBrainz
+    database over the direct connection and calls function
+    get_original_entity to get the redirected result.
+
+    Returns:
+        Dictionary containing the redirected original entity ids with MBIDs as keys.
+            - mbid: Recording mbids of the entities
+            - id: Original redirected ids of the entities after mbid redirect
+    """
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT gid
+              FROM musicbrainz.recording_gid_redirect
+        """)
+        result = connection.execute(query)
+        mbids = result.fetchall()
+
+        recording_mbids = []
+        for mbid in mbids:
+            recording_mbids.append(str(mbid[0]))
+        return recording_mbids
+
+
 def load_lowlevel_and_recording_data():
     """Fetch data in which gid column value is present in both lowlevel
     and musicbrainz.recording table from AcousticBrainz database.

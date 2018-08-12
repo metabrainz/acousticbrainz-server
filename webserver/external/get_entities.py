@@ -41,6 +41,7 @@ def get_original_entity(database):
 
 
 def main():
+    # Testing with the MusicBrainz schema in AB
     start_time = time.time()
 
     gids_with_redirected_ids = get_original_entity('AB')
@@ -48,6 +49,7 @@ def main():
     first_time_taken = time.time() - start_time
     logging.info('Data imported from AcousticBrainz database in %.2f seconds.' %  first_time_taken)
 
+    # Testing with the original MusicBrainz database over the direct connection
     start_time = time.time()
 
     gids_with_redirected_ids = get_original_entity('AB')

@@ -7,6 +7,7 @@ from brainzutils import musicbrainz_db
 
 
 def get_AB_and_MB_tables_data():
+    # Testing with the AcousticBrainz database tables (import MB db method).
     logging.info("Querying directly from AcousticBrainz database for import MB database method...")
     start_time = time.time()
 
@@ -15,6 +16,7 @@ def get_AB_and_MB_tables_data():
     first_time_taken = time.time() - start_time
     logging.info('Data imported from AcousticBrainz database in %.2f seconds.' %  first_time_taken)
 
+    # Testing with both AcousticBrainz & MusicBrainz database tables (the direct connection method).
     logging.info("Separate queries from AcousticBrainz and MusicBrainz databases over the direct connection...")
     start_time = time.time()
 

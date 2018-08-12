@@ -368,22 +368,9 @@ def main():
     else:
         token = None
 
-    with musicbrainz_db.engine.begin() as connection:
-        query = text("""
-            SELECT current_schema_sequence, current_replication_sequence
-              FROM replication_control
-        """)
-        result = connection.execute(query)
-        schema_seq, mb_replication_seq = result.fetchone()
+    schema_seq, mb_replication_seq = get_current_schema_and_replication_sequence()
 
-    with db.engine.begin() as connection:
-        query = text("""
-            SELECT current_replication_sequence
-              FROM musicbrainz.replication_control
-        """)
-        result = connection.execute(query)
-        sequence = result.fetchone()
-        ab_replication_seq = sequence[0]
+    ab_replication_seq = get_replication_sequence_from_mb_schema()
 
     if ab_replication_seq is None or ab_replication_seq < mb_replication_seq:
         replication_seq = mb_replication_seq

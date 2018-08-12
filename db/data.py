@@ -567,3 +567,25 @@ def get_mbids_from_gid_redirect_tables():
         for mbid in mbids:
             recording_mbids.append(str(mbid[0]))
         return recording_mbids
+
+
+def get_current_schema_and_replication_sequence():
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT current_schema_sequence, current_replication_sequence
+              FROM replication_control
+        """)
+        result = connection.execute(query)
+        schema_seq, mb_replication_seq = result.fetchone()
+        return schema_seq, mb_replication_seq
+
+
+def get_replication_sequence_from_mb_schema():
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT current_replication_sequence
+              FROM musicbrainz.replication_control
+        """)
+        result = connection.execute(query)
+        sequence = result.fetchone()
+        return sequence[0]

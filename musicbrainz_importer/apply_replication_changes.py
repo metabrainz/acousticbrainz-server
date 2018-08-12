@@ -328,35 +328,6 @@ def download_packet(base_url, token, replication_seq):
     return tmp
 
 
-def update_replication_sequence(replication_seq):
-    """Store new replication sequence into replication_control table for future
-    updates and deletes from replication packets.
-
-    Args:
-        replication_seq: Current replication sequence to replace the old one.
-    """
-    with db.engine.begin() as connection:
-        query = text("""
-            UPDATE musicbrainz.replication_control
-               SET current_replication_sequence = %s""" % (replication_seq)
-        )
-        connection.execute(query)
-
-
-def write_replication_control(replication_seq):
-    """Insert first replication sequence into replication_control table.
-
-    Args:
-        replication_seq: first replication sequence to start the download of packets from.
-    """
-    with db.engine.begin() as connection:
-        query = text("""
-            INSERT INTO musicbrainz.replication_control (current_replication_sequence)
-                 VALUES (:replication_seq)
-        """)
-        connection.execute(query, {'replication_seq': replication_seq})
-
-
 def main():
     """Fetch the replication sequence from the database and call the function
     to download all the replication packets from last replication sequence until
@@ -368,13 +339,13 @@ def main():
     else:
         token = None
 
-    schema_seq, mb_replication_seq = get_current_schema_and_replication_sequence()
+    schema_seq, mb_replication_seq = db.data.get_current_schema_and_replication_sequence()
 
-    ab_replication_seq = get_replication_sequence_from_mb_schema()
+    ab_replication_seq = db.data.get_replication_sequence_from_mb_schema()
 
     if ab_replication_seq is None or ab_replication_seq < mb_replication_seq:
         replication_seq = mb_replication_seq
-        write_replication_control(replication_seq)
+        db.data.write_replication_control(replication_seq)
     else:
         replication_seq = ab_replication_seq
 
@@ -387,5 +358,5 @@ def main():
             break
         process_tar(tmp, schema_seq, replication_seq)
         tmp.close()
-        update_replication_sequence(replication_seq)
+        db.data.update_replication_sequence(replication_seq)
         print ('Done applying all the replication packets till last hour')

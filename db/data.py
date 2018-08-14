@@ -10,6 +10,7 @@ from flask import current_app
 
 from sqlalchemy import text
 import sqlalchemy.exc
+from brainzutils import musicbrainz_db
 
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
@@ -567,3 +568,68 @@ def get_mbids_from_gid_redirect_tables():
         for mbid in mbids:
             recording_mbids.append(str(mbid[0]))
         return recording_mbids
+
+
+def get_current_schema_and_replication_sequence():
+    """Fetch current schema sequence and current replication number
+    from the musicbrainz database.
+
+    Returns:
+        schema_seq: last schema sequence number.
+        mb_replication_seq: last updated replication sequence.
+    """
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT current_schema_sequence, current_replication_sequence
+              FROM replication_control
+        """)
+        result = connection.execute(query)
+        schema_seq, mb_replication_seq = result.fetchone()
+        return schema_seq, mb_replication_seq
+
+
+def get_replication_sequence_from_mb_schema():
+    """Fetch current replication sequence last updated in replication
+    control table in musicbrainz schema in AB database.
+
+    Returns:
+        sequence[0]: current replication sequence number from a sqlachemy
+        type object.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT current_replication_sequence
+              FROM musicbrainz.replication_control
+        """)
+        result = connection.execute(query)
+        sequence = result.fetchone()
+        return sequence[0]
+
+
+def update_replication_sequence(replication_seq):
+    """Store new replication sequence into replication_control table for future
+    updates and deletes from replication packets.
+
+    Args:
+        replication_seq: Current replication sequence to replace the old one.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            UPDATE musicbrainz.replication_control
+               SET current_replication_sequence = :replication_seq
+        """)
+        connection.execute(query, {'replication_seq': replication_seq})
+
+
+def write_replication_control(replication_seq):
+    """Insert first replication sequence into replication_control table.
+
+    Args:
+        replication_seq: first replication sequence to start the download of packets from.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            INSERT INTO musicbrainz.replication_control (current_replication_sequence)
+                 VALUES (:replication_seq)
+        """)
+        connection.execute(query, {'replication_seq': replication_seq})

@@ -71,3 +71,9 @@ RECORDINGS_FETCHED_PER_BATCH = 10000
 # between every 2 batches
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
+
+# Base url to download the replication packets
+REPLICATION_PACKETS_URL = "https://metabrainz.org/api/musicbrainz/"
+
+# Token to access any MetaBrainz API
+# ACCESS_TOKEN = ""

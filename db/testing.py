@@ -89,6 +89,7 @@ class DatabaseTestCase(TestCase):
             connection.execute('DROP TABLE IF EXISTS musicbrainz.script                     CASCADE;')
             connection.execute('DROP TABLE IF EXISTS musicbrainz.gender                     CASCADE;')
             connection.execute('DROP TABLE IF EXISTS musicbrainz.artist_type                CASCADE;')
+            connection.execute('DROP TABLE IF EXISTS musicbrainz.replication_control        CASCADE;')
 
     def drop_types(self):
         with db.engine.connect() as connection:

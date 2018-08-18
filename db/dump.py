@@ -18,11 +18,14 @@ import tempfile
 import logging
 import tarfile
 import shutil
+import uuid
 import os
 from sqlalchemy import text
 
 
 DUMP_CHUNK_SIZE = 1000
+COPY_ROW_LIMIT = 2
+DUMP_FILE_SIZE_LIMIT = 1024
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "licenses", "COPYING-PublicDomain")
 
@@ -186,9 +189,45 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
     return archive_path
 
 
-def _copy_table(cursor, location, table_name, query):
+def _copy_table_into_multiple_files(cursor, table_name, query, tar, archive_name):
     """Copies data from a table into a file within a specified location.
 
+    Args:
+        cursor: a psycopg2 cursor
+        table_name: the name of the table to be copied.
+        query: the select query for getting data from the table, with appropriate LIMIT and OFFSET parameters.
+        tar: the TarFile object to which the table dumps must be added
+        archive_name: the name of the archive
+    """
+    location = tempfile.mkdtemp()
+    done = False
+    offset = 0
+    while True:
+        file_name = str(uuid.uuid4())
+        path = os.path.join(location, table_name, file_name[0], file_name[0:2])
+        utils.path.create_path(path)
+        with open(os.path.join(path, file_name), "a") as f:
+            logging.info(" - Copying table {table_name} to {file_name}...".format(table_name=table_name, file_name=file_name))
+            print(" - Copying table {table_name} to {file_name}...".format(table_name=table_name, file_name=file_name))
+            while True:
+                size = f.tell()
+                cursor.copy_to(f, query.format(limit=COPY_ROW_LIMIT, offset=offset))
+                if size == f.tell():
+                    done = True
+                    break
+                offset += COPY_ROW_LIMIT
+                if f.tell() > DUMP_FILE_SIZE_LIMIT:
+                    break
+
+        tar.add(os.path.join(path, file_name),
+                arcname=os.path.join(archive_name, "abdump", table_name, file_name[0], file_name[0:2], file_name))
+        shutil.rmtree(path)
+        if done:
+            break
+
+
+def _copy_table(cursor, location, table_name, query):
+    """Copies data from a table into a file within a specified location.
     Args:
         cursor: a psycopg2 cursor
         location: the directory where the table should be copied.
@@ -197,6 +236,7 @@ def _copy_table(cursor, location, table_name, query):
     """
     with open(os.path.join(location, table_name), "w") as f:
         logging.info(" - Copying table {table_name}...".format(table_name=table_name))
+        print(" - Copying table {table_name}...".format(table_name=table_name))
         cursor.copy_to(f, query)
 
 
@@ -241,7 +281,7 @@ def _copy_dataset_tables(location, start_time=None, end_time=None):
         connection.close()
 
 
-def _copy_tables(location, start_time=None, end_time=None):
+def _copy_tables(location, tar, archive_name, start_time=None, end_time=None):
     """Copies all core tables into separate files within a specified location (directory).
 
     NOTE: only copies tables in the variable _TABLES
@@ -277,9 +317,9 @@ def _copy_tables(location, start_time=None, end_time=None):
                     (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
 
         # lowlevel_json
-        query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
+        query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s) ORDER BY id LIMIT {limit} OFFSET {offset}" \
                 % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
-        _copy_table(cursor, location, "lowlevel_json", "(%s)" % query)
+        _copy_table_into_multiple_files(cursor, "lowlevel_json", "(%s)" % query, tar, archive_name)
 
         # model
         query = "SELECT %s FROM model %s" \
@@ -297,9 +337,9 @@ def _copy_tables(location, start_time=None, end_time=None):
         _copy_table(cursor, location, "highlevel_meta", "(%s)" % query)
 
         # highlevel_model
-        query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
+        query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s) ORDER BY id LIMIT {limit} OFFSET {offset}" \
                 % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
-        _copy_table(cursor, location, "highlevel_model", "(%s)" % query)
+        _copy_table_into_multiple_files(cursor, "highlevel_model", "(%s)" % query, tar, archive_name)
 
         # statistics
         _copy_table(cursor, location, "statistics", "(SELECT %s FROM statistics %s)" %
@@ -388,7 +428,13 @@ def import_db_dump(archive_path, tables):
                         logging.info("Schema version verified.")
 
                 else:
-                    if file_name in table_names:
+                    if _is_valid_uuid(file_name):
+                        table_name = member.name.split("/")[2]
+                        logging.info(" - Importing data from file %s into %s table..." % (file_name, table_name))
+                        cursor.copy_from(tar.extractfile(member), '"%s"' % table_name,
+                                        columns=_TABLES[table_name])
+
+                    elif file_name in table_names:
                         logging.info(" - Importing data into %s table..." % file_name)
                         cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
                                          columns=tables[file_name])
@@ -729,7 +775,7 @@ def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, en
             if dataset_dump:
                 _copy_dataset_tables(archive_tables_dir, start_t, end_t)
             else:
-                _copy_tables(archive_tables_dir, start_t, end_t)
+                _copy_tables(archive_tables_dir,tar, archive_name, start_t, end_t)
             tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
 
             shutil.rmtree(temp_dir)
@@ -768,3 +814,11 @@ def import_dump(archive_path):
 def import_datasets_dump(archive_path):
     """Import datasets from .tar.xz archive into the database."""
     import_db_dump(archive_path, _DATASET_TABLES)
+
+
+def _is_valid_uuid(text):
+    try:
+        x = uuid.UUID(text)
+        return True
+    except ValueError:
+        return False

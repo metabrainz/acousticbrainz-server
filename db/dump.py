@@ -24,8 +24,8 @@ from sqlalchemy import text
 
 
 DUMP_CHUNK_SIZE = 1000
-COPY_ROW_LIMIT = 2
-DUMP_FILE_SIZE_LIMIT = 1024
+COPY_ROW_LIMIT = 500000
+DUMP_FILE_SIZE_LIMIT = 1024 * 1024 * 1024 * 10 # 10 GB
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "licenses", "COPYING-PublicDomain")
 

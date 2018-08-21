@@ -152,6 +152,17 @@ _DATASET_TABLES = {
 }
 
 
+# this tuple contains the names of all the tables which
+# are dumped into multiple file to save space while creating
+# data dumps
+# NOTE: make sure you append any tables to this when dumping them into
+# multiple files.
+PARTITIONED_TABLES = (
+    "lowlevel_json",
+    "highlevel_model",
+)
+
+
 def dump_db(location, threads=None, incremental=False, dump_id=None):
     """Create database dump in a specified location.
 
@@ -189,7 +200,7 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
 
 
 def _copy_table_into_multiple_files(cursor, table_name, query, tar, archive_name):
-    """Copies data from a table into a file within a specified location.
+    """Copies data from a table into multiple files and add them to the archive
 
     Args:
         cursor: a psycopg2 cursor
@@ -199,24 +210,28 @@ def _copy_table_into_multiple_files(cursor, table_name, query, tar, archive_name
         archive_name: the name of the archive
     """
     location = tempfile.mkdtemp()
-    done = False
     offset = 0
+    file_count = 0
+    utils.path.create_path(os.path.join(location, table_name))
     while True:
-        file_name = str(uuid.uuid4())
-        path = os.path.join(location, table_name, file_name[0], file_name[0:2])
-        utils.path.create_path(path)
-        with open(os.path.join(path, file_name), "a") as f:
+        more_rows_added = False
+        file_count += 1
+        file_name = '{table_name}-{file_number}'.format(table_name=table_name, file_number=file_count)
+        path = os.path.join(location, table_name, file_name)
+        with open(path, "a") as f:
             logging.info(" - Copying table {table_name} to {file_name}...".format(table_name=table_name, file_name=file_name))
             cursor.copy_to(f, query.format(limit=ROWS_PER_FILE, offset=offset))
             offset += ROWS_PER_FILE
-            if f.tell() == 0:
-                done = True
-        if not done:
-            tar.add(os.path.join(path, file_name),
-                    arcname=os.path.join(archive_name, "abdump", table_name, file_name[0], file_name[0:2], file_name))
-        shutil.rmtree(path)
-        if done:
+            if f.tell() > 0:
+                more_rows_added = True
+        if more_rows_added:
+            tar.add(path,
+                    arcname=os.path.join(archive_name, "abdump", table_name, file_name))
+
+        os.remove(path)
+        if not more_rows_added:
             break
+    shutil.rmtree(location)
 
 
 def _copy_table(cursor, location, table_name, query):
@@ -344,6 +359,11 @@ def _copy_tables(location, tar, archive_name, start_time=None, end_time=None):
     finally:
         connection.close()
 
+def is_partitioned_table_dump_file(file_name):
+    for table in PARTITIONED_TABLES:
+        if table in file_name:
+            return True
+    return False
 
 def update_sequence(seq_name, table_name):
     """ Update the specified sequence's value to the maximum value of ID in the table.
@@ -421,7 +441,7 @@ def import_db_dump(archive_path, tables):
                         logging.info("Schema version verified.")
 
                 else:
-                    if _is_valid_uuid(file_name):
+                    if is_partitioned_table_dump_file(file_name):
                         table_name = member.name.split("/")[2]
                         logging.info(" - Importing data from file %s into %s table..." % (file_name, table_name))
                         cursor.copy_from(tar.extractfile(member), '"%s"' % table_name,

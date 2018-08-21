@@ -28,6 +28,7 @@ ROWS_PER_FILE = 500000
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "licenses", "COPYING-PublicDomain")
 
+
 # Importing of old dumps will fail if you change
 # definition of columns below.
 _TABLES = {
@@ -359,7 +360,10 @@ def _copy_tables(location, tar, archive_name, start_time=None, end_time=None):
     finally:
         connection.close()
 
-def is_partitioned_table_dump_file(file_name):
+def _is_partitioned_table_dump_file(file_name):
+    """ Checks if the specified file contains data for some table which has been
+    dumped into multiple files.
+    """
     for table in PARTITIONED_TABLES:
         if table in file_name:
             return True
@@ -441,7 +445,7 @@ def import_db_dump(archive_path, tables):
                         logging.info("Schema version verified.")
 
                 else:
-                    if is_partitioned_table_dump_file(file_name):
+                    if _is_partitioned_table_dump_file(file_name):
                         table_name = member.name.split("/")[2]
                         logging.info(" - Importing data from file %s into %s table..." % (file_name, table_name))
                         cursor.copy_from(tar.extractfile(member), '"%s"' % table_name,

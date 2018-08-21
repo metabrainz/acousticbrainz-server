@@ -24,8 +24,7 @@ from sqlalchemy import text
 
 
 DUMP_CHUNK_SIZE = 1000
-COPY_ROW_LIMIT = 500000
-DUMP_FILE_SIZE_LIMIT = 1024 * 1024 * 1024 * 10 # 10 GB
+ROWS_PER_FILE = 500000
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "licenses", "COPYING-PublicDomain")
 
@@ -208,19 +207,13 @@ def _copy_table_into_multiple_files(cursor, table_name, query, tar, archive_name
         utils.path.create_path(path)
         with open(os.path.join(path, file_name), "a") as f:
             logging.info(" - Copying table {table_name} to {file_name}...".format(table_name=table_name, file_name=file_name))
-            print(" - Copying table {table_name} to {file_name}...".format(table_name=table_name, file_name=file_name))
-            while True:
-                size = f.tell()
-                cursor.copy_to(f, query.format(limit=COPY_ROW_LIMIT, offset=offset))
-                if size == f.tell():
-                    done = True
-                    break
-                offset += COPY_ROW_LIMIT
-                if f.tell() > DUMP_FILE_SIZE_LIMIT:
-                    break
-
-        tar.add(os.path.join(path, file_name),
-                arcname=os.path.join(archive_name, "abdump", table_name, file_name[0], file_name[0:2], file_name))
+            cursor.copy_to(f, query.format(limit=ROWS_PER_FILE, offset=offset))
+            offset += ROWS_PER_FILE
+            if f.tell() == 0:
+                done = True
+        if not done:
+            tar.add(os.path.join(path, file_name),
+                    arcname=os.path.join(archive_name, "abdump", table_name, file_name[0], file_name[0:2], file_name))
         shutil.rmtree(path)
         if done:
             break

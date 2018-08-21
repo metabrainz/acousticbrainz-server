@@ -18,7 +18,6 @@ import tempfile
 import logging
 import tarfile
 import shutil
-import uuid
 import os
 from sqlalchemy import text
 
@@ -836,11 +835,3 @@ def import_dump(archive_path):
 def import_datasets_dump(archive_path):
     """Import datasets from .tar.xz archive into the database."""
     import_db_dump(archive_path, _DATASET_TABLES)
-
-
-def _is_valid_uuid(text):
-    try:
-        x = uuid.UUID(text)
-        return True
-    except ValueError:
-        return False

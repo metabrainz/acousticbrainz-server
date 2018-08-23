@@ -378,6 +378,12 @@ var ClassDetails = React.createClass({
         autoAddRecording: React.PropTypes.bool.isRequired,
         onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
     },
+    componentDidMount() {  
+        window.history.pushState(null, 'class-details', this.props.id);
+        window.onpopstate = (event) => {
+            this.props.onReturn();
+        };
+    },
     handleClassUpdate: function() {
         this.props.onClassUpdate(
             this.props.id,

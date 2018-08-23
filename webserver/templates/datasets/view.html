@@ -6,7 +6,7 @@
   <div id="dataset-viewer">
     {% from 'datasets/macros.html' import print_header %}
     {{ print_header(dataset, author, current_user, 'view') }}
-    <div id="dataset-class-viewer" data-dataset-id="{{ dataset['id'] }}"></div>
+    <div id="dataset-class-viewer" data-dataset-id="{{ dataset['id'] }}" data-class-name="{{ class_name if class_name else ''}}" ></div>
   </div>
 {% endblock %}
 

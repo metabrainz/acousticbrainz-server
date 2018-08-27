@@ -82,6 +82,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Python dependencies
+RUN pip install uWSGI==2.0.17.1
 RUN mkdir /code/docs/
 COPY docs/requirements.txt /code/docs/requirements.txt
 COPY requirements.txt /code/requirements.txt
@@ -98,4 +99,6 @@ COPY ./docker/$deploy_env/uwsgi/uwsgi.service /etc/service/uwsgi/run
 RUN chmod 755 /etc/service/uwsgi/run
 COPY ./docker/$deploy_env/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 
+RUN mkdir /cache_namespaces
+RUN chown -R www-data:www-data /cache_namespaces
 COPY . /code

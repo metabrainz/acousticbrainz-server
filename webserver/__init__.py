@@ -33,7 +33,6 @@ def load_config(app):
         print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
         sys.exit(-1)
 
-    print('Loading config.py...')
     app.config.from_pyfile(config_file)
 
     if deploy_env:

@@ -6,7 +6,6 @@ from flask_login import current_user
 from pprint import pprint
 
 import os
-import sys
 import time
 
 API_PREFIX = '/api/'
@@ -25,13 +24,13 @@ def create_app_flaskgroup(script_info):
 def load_config(app):
     """Load configuration file for specified Flask app"""
     config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
-    for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
-        if not os.path.exists(config_file):
-            time.sleep(1)
+    if deploy_env:
+        for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
+            if not os.path.exists(config_file):
+                time.sleep(1)
 
     if not os.path.exists(config_file):
         print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
-        sys.exit(-1)
 
     app.config.from_pyfile(config_file)
 
@@ -40,7 +39,7 @@ def load_config(app):
         pprint(dict(app.config))
 
 
-def create_app(debug=None, config_path=None):
+def create_app(debug=None):
     app = CustomFlask(
         import_name=__name__,
         use_flask_uuid=True,

@@ -3,9 +3,9 @@ from __future__ import print_function
 from brainzutils.flask import CustomFlask
 from flask import request, url_for, redirect
 from flask_login import current_user
+from pprint import pprint
 
 import os
-import pprint
 import sys
 import time
 
@@ -22,46 +22,33 @@ def create_app_flaskgroup(script_info):
     return create_app()
 
 
-def create_app_with_configuration(config_path=None):
-    """Create a Flask application and load all configuration files"""
+def load_config(app):
+    """Load configuration file for specified Flask app"""
+    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
+    for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
+        if not os.path.exists(config_file):
+            time.sleep(1)
 
+    if not os.path.exists(config_file):
+        print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
+        sys.exit(-1)
+
+    print('Loading config.py...')
+    app.config.from_pyfile(config_file)
+
+    if deploy_env:
+        print('Config file loaded!')
+        pprint(dict(app.config))
+
+
+def create_app(debug=None, config_path=None):
     app = CustomFlask(
         import_name=__name__,
         use_flask_uuid=True,
     )
 
     # Configuration
-
-    # if deploying in a production docker environment, load consul_config.py
-    if deploy_env and not config_path:
-        consul_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "consul_config.py")
-        print("Checking if consul generated config file exists: %s" % consul_config)
-        for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
-            if not os.path.exists(consul_config):
-                time.sleep(1)
-
-        if not os.path.exists(consul_config):
-            print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
-            sys.exit(-1)
-
-        print('Loading consul_config.py...')
-        app.config.from_pyfile(consul_config)
-        return app
-
-    print('Loading config.py...')
-    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
-    app.config.from_pyfile(config_file)
-
-    if config_path:
-        app.config.from_pyfile(config_path, silent=True)
-
-    return app
-
-
-def create_app(debug=None, config_path=None):
-    app = create_app_with_configuration(config_path)
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(app.config)
+    load_config(app)
 
     if debug is not None:
         app.debug = debug

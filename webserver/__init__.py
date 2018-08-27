@@ -29,8 +29,8 @@ def load_config(app):
             if not os.path.exists(config_file):
                 time.sleep(1)
 
-    if not os.path.exists(config_file):
-        print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
+        if not os.path.exists(config_file):
+            print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
 
     app.config.from_pyfile(config_file)
 

@@ -22,8 +22,13 @@ import os
 from sqlalchemy import text
 
 
+# the number of rows to dump for json dumps in one batch
 DUMP_CHUNK_SIZE = 1000
+
+# Create multiple files of no more than this many rows for the
+# big tables (lowlevel_json, highlevel_model) for the database dump
 ROWS_PER_FILE = 500000
+
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "licenses", "COPYING-PublicDomain")
 

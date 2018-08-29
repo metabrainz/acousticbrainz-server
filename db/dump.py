@@ -221,12 +221,12 @@ def _copy_table_into_multiple_files(cursor, table_name, query, tar, archive_name
     while True:
         more_rows_added = False
         file_count += 1
-        file_name = '{table_name}-{file_number}'.format(table_name=table_name, file_number=file_count)
+        file_name = "{table_name}-{file_number}".format(table_name=table_name, file_number=file_count)
         path = os.path.join(location, table_name, file_name)
         with open(path, "a") as f:
             logging.info(" - Copying table {table_name} to {file_name}...".format(table_name=table_name, file_name=file_name))
             current_query = query.format(limit=ROWS_PER_FILE, offset=offset)
-            copy_query = 'COPY ({query}) TO STDOUT'.format(query=current_query)
+            copy_query = "COPY ({query}) TO STDOUT".format(query=current_query)
             cursor.copy_expert(copy_query, f)
             offset += ROWS_PER_FILE
             if f.tell() > 0:

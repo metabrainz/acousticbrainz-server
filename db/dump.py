@@ -119,7 +119,7 @@ _DATASET_TABLES = {
         "snapshot_id",
         "status",
         "status_msg",
-        "options"
+        "options",
         "training_snapshot",
         "testing_snapshot",
         "created",
@@ -200,8 +200,51 @@ def _copy_table(cursor, location, table_name, query):
         cursor.copy_to(f, query)
 
 
-def _copy_tables(location, dataset_dump, start_time=None, end_time=None):
-    """Copies all tables into separate files within a specified location (directory).
+def _copy_dataset_tables(location, start_time=None, end_time=None):
+    """ Copies datasets tables into seperate files withing a specified location (directory).
+    """
+    connection = db.engine.raw_connection()
+    try:
+        cursor = connection.cursor()
+        # dataset
+        _copy_table(cursor, location, "dataset", "(SELECT %s FROM dataset)" %
+                    (", ".join(_DATASET_TABLES["dataset"])))
+
+        # dataset_class
+        _copy_table(cursor, location, "dataset_class", "(SELECT %s FROM dataset_class)" %
+                    (", ".join(_DATASET_TABLES["dataset_class"])))
+
+        # dataset_class_member
+        _copy_table(cursor, location, "dataset_class_member", "(SELECT %s FROM dataset_class_member)" %
+                    (", ".join(_DATASET_TABLES["dataset_class_member"])))
+
+        # dataset_snapshot
+        _copy_table(cursor, location, "dataset_snapshot", "(SELECT %s FROM dataset_snapshot)" %
+                    (", ".join(_DATASET_TABLES["dataset_snapshot"])))
+
+        # dataset_eval_jobs
+        _copy_table(cursor, location, "dataset_eval_jobs", "(SELECT %s FROM dataset_eval_jobs)" %
+                    (", ".join(_DATASET_TABLES["dataset_eval_jobs"])))
+
+        # dataset_eval_sets
+        _copy_table(cursor, location, "dataset_eval_sets", "(SELECT %s FROM dataset_eval_sets)" %
+                    (", ".join(_DATASET_TABLES["dataset_eval_sets"])))
+
+        # challenge
+        _copy_table(cursor, location, "challenge", "(SELECT %s FROM challenge)" %
+                    (", ".join(_DATASET_TABLES["challenge"])))
+
+        # dataset_eval_challenge
+        _copy_table(cursor, location, "dataset_eval_challenge", "(SELECT %s FROM dataset_eval_challenge)" %
+                    (", ".join(_DATASET_TABLES["dataset_eval_challenge"])))
+    finally:
+        connection.close()
+
+
+def _copy_tables(location, start_time=None, end_time=None):
+    """Copies all core tables into separate files within a specified location (directory).
+
+    NOTE: only copies tables in the variable _TABLES
 
     You can also define time frame that will be used during data selection.
     Files in a specified directory will only contain rows that have timestamps
@@ -225,81 +268,46 @@ def _copy_tables(location, dataset_dump, start_time=None, end_time=None):
     connection = db.engine.raw_connection()
     try:
         cursor = connection.cursor()
+        # version
+        _copy_table(cursor, location, "version", "(SELECT %s FROM version %s)" %
+                    (", ".join(_TABLES["version"]), generate_where("created")))
 
-        if dataset_dump:
-            # dataset
-            _copy_table(cursor, location, "dataset", "(SELECT %s FROM dataset)" %
-                        (", ".join(_DATASET_TABLES["dataset"])))
+        # lowlevel
+        _copy_table(cursor, location, "lowlevel", "(SELECT %s FROM lowlevel %s)" %
+                    (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
 
-            # dataset_class
-            _copy_table(cursor, location, "dataset_class", "(SELECT %s FROM dataset_class)" %
-                        (", ".join(_DATASET_TABLES["dataset_class"])))
+        # lowlevel_json
+        query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
+                % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
+        _copy_table(cursor, location, "lowlevel_json", "(%s)" % query)
 
-            # dataset_class_member
-            _copy_table(cursor, location, "dataset_class_member", "(SELECT %s FROM dataset_class_member)" %
-                        (", ".join(_DATASET_TABLES["dataset_class_member"])))
-
-            # dataset_snapshot
-            _copy_table(cursor, location, "dataset_snapshot", "(SELECT %s FROM dataset_snapshot)" %
-                        (", ".join(_DATASET_TABLES["dataset_snapshot"])))
-
-            # dataset_eval_jobs
-            _copy_table(cursor, location, "dataset_eval_jobs", "(SELECT %s FROM dataset_eval_jobs)" %
-                        (", ".join(_DATASET_TABLES["dataset_eval_jobs"])))
-
-            # dataset_eval_sets
-            _copy_table(cursor, location, "dataset_eval_sets", "(SELECT %s FROM dataset_eval_sets)" %
-                        (", ".join(_DATASET_TABLES["dataset_eval_sets"])))
-
-            # challenge
-            _copy_table(cursor, location, "challenge", "(SELECT %s FROM challenge)" %
-                        (", ".join(_DATASET_TABLES["challenge"])))
-
-            # dataset_eval_challenge
-            _copy_table(cursor, location, "dataset_eval_challenge", "(SELECT %s FROM dataset_eval_challenge)" %
-                        (", ".join(_DATASET_TABLES["dataset_eval_challenge"])))
-
-        else:
-            # version
-            _copy_table(cursor, location, "version", "(SELECT %s FROM version %s)" %
-                        (", ".join(_TABLES["version"]), generate_where("created")))
-
-            # lowlevel
-            _copy_table(cursor, location, "lowlevel", "(SELECT %s FROM lowlevel %s)" %
-                        (", ".join(_TABLES["lowlevel"]), generate_where("submitted")))
-
-            # lowlevel_json
-            query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s)" \
-                    % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
-            _copy_table(cursor, location, "lowlevel_json", "(%s)" % query)
-
-            # model
-            query = "SELECT %s FROM model %s" \
-                    % (", ".join(_TABLES["model"]), generate_where("date"))
-            _copy_table(cursor, location, "model", "(%s)" % query)
+        # model
+        query = "SELECT %s FROM model %s" \
+                % (", ".join(_TABLES["model"]), generate_where("date"))
+        _copy_table(cursor, location, "model", "(%s)" % query)
 
 
-            # highlevel
-            _copy_table(cursor, location, "highlevel", "(SELECT %s FROM highlevel %s)" %
-                        (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
+        # highlevel
+        _copy_table(cursor, location, "highlevel", "(SELECT %s FROM highlevel %s)" %
+                    (", ".join(_TABLES["highlevel"]), generate_where("submitted")))
 
-            # highlevel_meta
-            query = "SELECT %s FROM highlevel_meta WHERE id IN (SELECT id FROM highlevel %s)" \
-                    % (", ".join(_TABLES["highlevel_meta"]), generate_where("submitted"))
-            _copy_table(cursor, location, "highlevel_meta", "(%s)" % query)
+        # highlevel_meta
+        query = "SELECT %s FROM highlevel_meta WHERE id IN (SELECT id FROM highlevel %s)" \
+                % (", ".join(_TABLES["highlevel_meta"]), generate_where("submitted"))
+        _copy_table(cursor, location, "highlevel_meta", "(%s)" % query)
 
-            # highlevel_model
-            query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
-                    % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
-            _copy_table(cursor, location, "highlevel_model", "(%s)" % query)
+        # highlevel_model
+        query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s)" \
+                % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
+        _copy_table(cursor, location, "highlevel_model", "(%s)" % query)
 
-            # statistics
-            _copy_table(cursor, location, "statistics", "(SELECT %s FROM statistics %s)" %
-                        (", ".join(_TABLES["statistics"]), generate_where("collected")))
+        # statistics
+        _copy_table(cursor, location, "statistics", "(SELECT %s FROM statistics %s)" %
+                    (", ".join(_TABLES["statistics"]), generate_where("collected")))
 
-            # incremental_dumps
-            _copy_table(cursor, location, "incremental_dumps", "(SELECT %s FROM incremental_dumps %s)" %
-                        (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
+        # incremental_dumps
+        _copy_table(cursor, location, "incremental_dumps", "(SELECT %s FROM incremental_dumps %s)" %
+                    (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
     finally:
         connection.close()
 
@@ -718,7 +726,10 @@ def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, en
 
             archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
             utils.path.create_path(archive_tables_dir)
-            _copy_tables(archive_tables_dir, dataset_dump, start_t, end_t)
+            if dataset_dump:
+                _copy_dataset_tables(archive_tables_dir, start_t, end_t)
+            else:
+                _copy_tables(archive_tables_dir, start_t, end_t)
             tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
 
             shutil.rmtree(temp_dir)

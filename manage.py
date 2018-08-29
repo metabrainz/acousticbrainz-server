@@ -78,7 +78,7 @@ def init_db(archive, force, skip_create_db=False):
 
     if archive:
         print('Importing data...')
-        db.dump.import_db_dump(archive)
+        db.dump.import_dump(archive)
     else:
         print('Skipping data importing.')
         print('Loading fixtures...')

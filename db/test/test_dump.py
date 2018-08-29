@@ -1,5 +1,6 @@
 from db.testing import DatabaseTestCase
 from db import dump
+from db.dump import _TABLES
 import os.path
 import tempfile
 import shutil
@@ -23,7 +24,7 @@ class DatabaseDumpTestCase(DatabaseTestCase):
     def test_import_db_dump(self):
         path = dump.dump_db(self.temp_dir)
         self.reset_db()
-        dump.import_db_dump(path)
+        dump.import_db_dump(path, _TABLES)
 
     def test_dump_lowlevel_json(self):
         path = dump.dump_lowlevel_json(self.temp_dir)

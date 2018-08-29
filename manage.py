@@ -78,7 +78,7 @@ def init_db(archive, force, skip_create_db=False):
 
     if archive:
         print('Importing data...')
-        db.dump.import_db_dump(archive)
+        db.dump.import_dump(archive)
     else:
         print('Skipping data importing.')
         print('Loading fixtures...')
@@ -102,6 +102,17 @@ def import_data(archive):
 
     print('Importing data...')
     db.dump.import_db_dump(archive)
+    print('Done!')
+
+
+@cli.command()
+@click.argument("archive", type=click.Path(exists=True))
+def import_dataset_data(archive):
+    """Imports dataset dump into the database."""
+
+    print('Importing dataset data...')
+    db.dump.import_datasets_dump(archive)
+    print('Done!')
 
 
 @cli.command()

@@ -303,17 +303,16 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
         connection = db.engine.raw_connection()
         try:
-            cursor = connection.cursor()
-
+            cursor = connection.cursor(name="server_side_cursor")
             mbid_occurences = defaultdict(int)
 
             # Need to count how many duplicate MBIDs are there before start_time
             if start_time:
                 cursor.execute("""
                     SELECT gid, count(id)
-                    FROM lowlevel
-                    WHERE submitted <= %s
-                    GROUP BY gid
+                      FROM lowlevel
+                     WHERE submitted <= %s
+                  GROUP BY gid
                     """, (start_time,))
                 counts = cursor.fetchall()
                 for mbid, count in counts:
@@ -328,6 +327,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     where = "WHERE %s%s" % (start_cond, end_cond)
             else:
                 where = ""
+
             cursor.execute("""
                 SELECT gid::text, llj.data::text
                   FROM lowlevel ll

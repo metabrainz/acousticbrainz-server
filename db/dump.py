@@ -328,47 +328,33 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     where = "WHERE %s%s" % (start_cond, end_cond)
             else:
                 where = ""
-            cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY gid" % where)
-
-            cursor_inner = connection.cursor()
+            cursor.execute("""
+                SELECT gid::text, llj.data::text
+                  FROM lowlevel ll
+                  JOIN lowlevel_json llj
+                    ON ll.id = llj.id
+                    %s
+              ORDER BY ll.gid
+            """ % where)
 
             temp_dir = tempfile.mkdtemp()
-
             dumped_count = 0
-
             while True:
-                id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
-                if not id_list:
+                row = cursor.fetchone()
+                if not row:
                     break
-                id_list = tuple([i[0] for i in id_list])
+                mbid, json = row
 
-                query = text("""
-                   SELECT gid::text
-                        , llj.data::text
-                     FROM lowlevel ll
-                     JOIN lowlevel_json llj
-                       ON ll.id = llj.id
-                    WHERE ll.id IN :id_list
-                """)
+                json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
+                dump_tempfile = os.path.join(temp_dir, json_filename)
+                with open(dump_tempfile, "w") as f:
+                    f.write(json)
+                tar.add(dump_tempfile, arcname=os.path.join(
+                    archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
+                os.unlink(dump_tempfile)
 
-                cursor_inner.execute(query, {"id_list": id_list})
-
-                while True:
-                    row = cursor_inner.fetchone()
-                    if not row:
-                        break
-                    mbid, json = row
-
-                    json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
-                    dump_tempfile = os.path.join(temp_dir, json_filename)
-                    with open(dump_tempfile, "w") as f:
-                        f.write(json)
-                    tar.add(dump_tempfile, arcname=os.path.join(
-                        archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
-                    os.unlink(dump_tempfile)
-
-                    mbid_occurences[mbid] += 1
-                    dumped_count += 1
+                mbid_occurences[mbid] += 1
+                dumped_count += 1
         finally:
             connection.close()
 

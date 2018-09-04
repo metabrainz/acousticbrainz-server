@@ -318,6 +318,9 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 for mbid, count in counts:
                     mbid_occurences[mbid] = count
 
+            if not end_time:
+                end_time = datetime.now()
+
             if start_time or end_time:
                 start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
                 end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""

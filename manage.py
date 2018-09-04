@@ -7,6 +7,7 @@ import click
 from brainzutils import cache
 from flask import current_app
 from flask.cli import FlaskGroup, shell_command
+from shutil import copyfile
 
 import db
 import db.dump
@@ -153,6 +154,24 @@ def update_sequences():
     print('Updating database sequences...')
     db.dump.update_sequences()
     print('Done!')
+
+
+@cli.command()
+def toggle_site_status():
+    """ Bring the site down if it is up, bring it up if down.
+
+    Note: We use nginx configs to set AB up/down status. If the file `is_down.html`
+    exists, then it is rendered by default for all pages. Create the file to bring AB down,
+    remove it to bring it up.
+    """
+    if os.path.exists('is_down.html'):
+        print('Removing is_down.html...')
+        os.remove('is_down.html')
+        print('Done!')
+    else:
+        print('Creating is_down.html from is_down.html.sample')
+        copyfile('is_down.html.sample', 'is_down.html')
+        print('Done!')
 
 
 # Please keep additional sets of commands down there

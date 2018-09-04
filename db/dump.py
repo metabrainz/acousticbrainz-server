@@ -453,7 +453,7 @@ def import_db_dump(archive_path, tables):
                         logging.info("Schema version verified.")
 
                 else:
-                    if _is_partitioned_table_dump_file(file_name):
+                    if member.isfile() and _is_partitioned_table_dump_file(file_name):
                         table_name = member.name.split("/")[2]
                         logging.info(" - Importing data from file %s into %s table..." % (file_name, table_name))
                         cursor.copy_from(tar.extractfile(member), '"%s"' % table_name,

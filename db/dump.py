@@ -350,7 +350,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 with open(dump_tempfile, "w") as f:
                     f.write(json)
                 tar.add(dump_tempfile, arcname=os.path.join(
-                    archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
+                    archive_name, "lowlevel", mbid[0:2], mbid[2:4], json_filename))
                 os.unlink(dump_tempfile)
 
                 mbid_occurences[mbid] += 1

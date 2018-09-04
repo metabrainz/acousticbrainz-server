@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import logging
 import os
 import sys
 
@@ -23,6 +24,7 @@ ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 cli.add_command(shell_command)
 
+logging.basicConfig(level=logging.INFO)
 
 @cli.command()
 @click.option("--host", "-h", default="0.0.0.0", show_default=True)

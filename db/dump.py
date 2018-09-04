@@ -251,7 +251,6 @@ def _copy_table(cursor, location, table_name, query):
     """
     with open(os.path.join(location, table_name), "w") as f:
         logging.info(" - Copying table {table_name}...".format(table_name=table_name))
-        print(" - Copying table {table_name}...".format(table_name=table_name))
         copy_query = 'COPY ({query}) TO STDOUT'.format(query=query)
         cursor.copy_expert(copy_query, f)
 

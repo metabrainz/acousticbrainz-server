@@ -433,7 +433,7 @@ def import_db_dump(archive_path, tables):
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 
     table_names = tables.keys()
-
+    latest_file_num_imported = {}
     connection = db.engine.raw_connection()
     try:
         cursor = connection.cursor()
@@ -454,7 +454,10 @@ def import_db_dump(archive_path, tables):
 
                 else:
                     if member.isfile() and _is_partitioned_table_dump_file(file_name):
-                        table_name = member.name.split("/")[2]
+                        archive_name, _, table_name, file_name = member.name.split("/")
+                        file_num = int(file_name.split("-")[-1])
+                        assert(table_name not in latest_file_num_imported or latest_file_num_imported[table_name] < file_num)
+                        latest_file_num_imported[table_name] = file_num
                         logging.info(" - Importing data from file %s into %s table..." % (file_name, table_name))
                         cursor.copy_from(tar.extractfile(member), '"%s"' % table_name,
                                         columns=_TABLES[table_name])

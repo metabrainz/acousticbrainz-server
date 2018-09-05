@@ -1,5 +1,6 @@
 from db.testing import DatabaseTestCase
 from db import dump
+import db
 import os.path
 import tempfile
 import shutil

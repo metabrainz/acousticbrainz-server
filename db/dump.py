@@ -346,12 +346,12 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                 row = cursor.fetchone()
                 if not row:
                     break
-                mbid, json = row
+                mbid, json_doc = row
 
                 json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
                 dump_tempfile = os.path.join(temp_dir, json_filename)
                 with open(dump_tempfile, "w") as f:
-                    f.write(json)
+                    f.write(json_doc.encode("utf-8"))
                 tar.add(dump_tempfile, arcname=os.path.join(
                     archive_name, "lowlevel", mbid[0:2], mbid[2:4], json_filename))
                 os.unlink(dump_tempfile)

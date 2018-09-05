@@ -20,6 +20,9 @@ import shutil
 import os
 from sqlalchemy import text
 
+
+logging.basicConfig(level=logging.INFO)
+
 DUMP_CHUNK_SIZE = 1000
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "licenses", "COPYING-PublicDomain")
@@ -256,27 +259,35 @@ def update_sequences():
     """ Update all sequences to the maximum value of id in the table.
     """
     # lowlevel_id_seq
+    logging.info('Updating lowlevel_id_seq...')
     update_sequence('lowlevel_id_seq', 'lowlevel')
 
     # highlevel_model_id_seq
+    logging.info('Updating highlevel_model_id_seq...')
     update_sequence('highlevel_model_id_seq', 'highlevel')
 
     # version_id_seq
+    logging.info('Updating version_id_seq...')
     update_sequence('version_id_seq', 'version')
 
     # model_id_seq
+    logging.info('Updating model_id_seq...')
     update_sequence('model_id_seq', 'model')
 
     # incremental_dumps_id_seq
+    logging.info('Updating incremental_dumps_id_seq...')
     update_sequence('incremental_dumps_id_seq', 'incremental_dumps')
 
     # user_id_seq
+    logging.info('Updating user_id_seq...')
     update_sequence('user_id_seq', '"user"')
 
     # dataset_class_id_seq
+    logging.info('Updating dataset_class_id_seq...')
     update_sequence('dataset_class_id_seq', 'dataset_class')
 
     # dataset_eval_sets_id_seq
+    logging.info('Updating dataset_eval_sets_id_seq...')
     update_sequence('dataset_eval_sets_id_seq', 'dataset_eval_sets')
 
 

@@ -552,7 +552,7 @@ def list_incremental_dumps():
         return result.fetchall()
 
 
-def prepare_incremental_dump(dump_id=None):
+def prepare_incremental_dump(dump_id=None, full=False):
     if dump_id:  # getting existing
         existing_dumps = list_incremental_dumps()
         start_t, end_t = None, None
@@ -568,10 +568,10 @@ def prepare_incremental_dump(dump_id=None):
                             " Please check if it exists or create a new one.")
 
     else:  # creating new
-        start_t = _get_incremental_dump_timestamp()
+        start_t = _get_incremental_dump_timestamp() if not full else None
         if start_t and not _any_new_data(start_t):
             raise NoNewData("No new data since the last incremental dump!")
-        dump_id, end_t = _create_new_inc_dump_record()
+        dump_id, end_t = _create_new_inc_dump_record(full=full)
 
     return dump_id, start_t, end_t
 
@@ -592,10 +592,16 @@ def _any_new_data(from_time):
     return lowlevel_count > 0 or highlevel_count > 0
 
 
-def _create_new_inc_dump_record():
+def _create_new_inc_dump_record(full=False):
     """Creates new record for incremental dump and returns its ID and creation time."""
     with db.engine.connect() as connection:
-        result = connection.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
+        result = connection.execute(text("""
+            INSERT INTO data_dump (created, dump_type)
+                 VALUES (now(), :dump_type)
+              RETURNING id, created
+            """), {
+                "dump_type": "full" if full else "partial",
+            })
         row = result.fetchone()
     logging.info("Created new incremental dump record (ID: %s)." % row[0])
     return row

@@ -82,9 +82,10 @@ _TABLES = {
         "value",
         "collected",
     ),
-    "incremental_dumps": (
+    "data_dump": (
         "id",
         "created",
+        "dump_type",
     ),
 }
 

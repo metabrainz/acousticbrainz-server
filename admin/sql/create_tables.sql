@@ -61,9 +61,10 @@ CREATE TABLE statistics (
   value     INTEGER                  NOT NULL
 );
 
-CREATE TABLE incremental_dumps (
-  id      SERIAL,
-  created TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE data_dump (
+  id        SERIAL,
+  created   TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  dump_type dump_type
 );
 
 CREATE TABLE "user" (

@@ -233,10 +233,10 @@ def _copy_tables(location, start_time=None, end_time=None):
                            (", ".join(_TABLES["statistics"]), generate_where("collected")))
 
         # incremental_dumps
-        with open(os.path.join(location, "incremental_dumps"), "w") as f:
-            logging.info(" - Copying table incremental_dumps...")
-            cursor.copy_to(f, "(SELECT %s FROM incremental_dumps %s)" %
-                           (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
+        with open(os.path.join(location, "data_dump"), "w") as f:
+            logging.info(" - Copying table data_dump...")
+            cursor.copy_to(f, "(SELECT %s FROM data_dump %s)" %
+                           (", ".join(_TABLES["data_dump"]), generate_where("created")))
     finally:
         connection.close()
 
@@ -628,9 +628,9 @@ def _create_new_inc_dump_record(full=False):
 def _get_incremental_dump_timestamp(dump_id=None):
     with db.engine.connect() as connection:
         if dump_id:
-            result = connection.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
+            result = connection.execute("SELECT created FROM data_dump WHERE id = %s", (dump_id,))
         else:
-            result = connection.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
+            result = connection.execute("SELECT created FROM data_dump ORDER BY id DESC")
         row = result.fetchone()
     return row[0] if row else None
 

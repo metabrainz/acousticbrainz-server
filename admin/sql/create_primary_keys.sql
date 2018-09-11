@@ -8,7 +8,7 @@ ALTER TABLE highlevel_model ADD CONSTRAINT highlevel_model_pkey PRIMARY KEY (id)
 ALTER TABLE model ADD CONSTRAINT model_pkey PRIMARY KEY (id);
 ALTER TABLE version ADD CONSTRAINT version_pkey PRIMARY KEY (id);
 ALTER TABLE statistics ADD CONSTRAINT statistics_pkey PRIMARY KEY (name, collected);
-ALTER TABLE incremental_dumps ADD CONSTRAINT incremental_dumps_pkey PRIMARY KEY (id);
+ALTER TABLE data_dump ADD CONSTRAINT data_dump_pkey PRIMARY KEY (id);
 ALTER TABLE "user" ADD CONSTRAINT user_pkey PRIMARY KEY (id);
 ALTER TABLE dataset ADD CONSTRAINT dataset_pkey PRIMARY KEY (id);
 ALTER TABLE dataset_class ADD CONSTRAINT dataset_class_pkey PRIMARY KEY (id);

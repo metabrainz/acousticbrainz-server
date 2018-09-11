@@ -90,14 +90,14 @@ _TABLES = {
 }
 
 
-def dump_db(location, threads=None, incremental=False, dump_id=None):
+def dump_db(location, threads=None, full=False, dump_id=None):
     """Create database dump in a specified location.
 
     Args:
         location: Directory where archive will be created.
         threads: Maximal number of threads to run during compression.
-        incremental: False if resulting data dump should be complete, True if
-            it needs to be incremental.
+        full (bool): True if you want to dump the entire db from the beginning of time, False if
+                only need to dump new data since the last dump.
         dump_id: If you need to reproduce previously created incremental dump,
             its identifier (integer) can be specified there.
 
@@ -105,14 +105,13 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
         Path to created dump.
     """
     utils.path.create_path(location)
-    time_now = datetime.today()
 
-    if incremental:
-        dump_id, start_t, end_t = prepare_dump(dump_id)
-        archive_name = "acousticbrainz-dump-incr-%s" % dump_id
+    dump_id, start_t, end_t = prepare_dump(full)
+    if full:
+        archive_name = "acousticbrainz-dump-full-%s-%s" % (dump_id, end_t.strftime("%Y%m%d-%H%M%S"))
     else:
-        start_t, end_t = None, None  # full
-        archive_name = "acousticbrainz-dump-%s" % time_now.strftime("%Y%m%d-%H%M%S")
+        full_dump_timestamp = _get_last_full_dump_timestamp(dump_id)
+        archive_name = "acousticbrainz-dump-incr-%s-%s" % (dump_id, full_dump_timestamp.strftime("%Y%m%d-%H%M%S"))
 
     archive_path = os.path.join(location, archive_name + ".tar.xz")
     with open(archive_path, "w") as archive:
@@ -333,11 +332,13 @@ def import_db_dump(archive_path):
     logging.info('Done!')
 
 
-def dump_lowlevel_json(location, incremental=False, dump_id=None):
+def dump_lowlevel_json(location, full=False, dump_id=None):
     """Create JSON dump with low level data.
 
     Args:
         location: Directory where archive will be created.
+        full (bool): True if you want to dump the entire db from the beginning of time, False if
+                only need to dump new data since the last dump.
         incremental: False if resulting JSON dump should be complete, False if
             it needs to be incremental.
         dump_id: If you need to reproduce previously created incremental dump,
@@ -348,13 +349,12 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
     """
     utils.path.create_path(location)
 
-    if incremental:
-        dump_id, start_time, end_time = prepare_dump(dump_id)
-        archive_name = "acousticbrainz-lowlevel-json-incr-%s" % dump_id
+    dump_id, start_t, end_t = prepare_dump(full)
+    if full:
+        archive_name = "acousticbrainz-lowlevel-json-full-%s-%s" % (dump_id, end_t.strftime("%Y%m%d-%H%M%S"))
     else:
-        start_time, end_time = None, None  # full
-        archive_name = "acousticbrainz-lowlevel-json-%s" % \
-                       datetime.today().strftime("%Y%m%d")
+        full_dump_timestamp = _get_last_full_dump_timestamp(dump_id)
+        archive_name = "acousticbrainz-highlevel-json-incr-%s-%s" % (dump_id, full_dump_timestamp.strftime("%Y%m%d-%H%M%S"))
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
@@ -446,8 +446,8 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
     Args:
         location: Directory where archive will be created.
-        incremental: False if resulting JSON dump should be complete, False if
-            it needs to be incremental.
+        full (bool): True if you want to dump the entire db from the beginning of time, False if
+                only need to dump new data since the last dump.
         dump_id: If you need to reproduce previously created incremental dump,
             its identifier (integer) can be specified there.
 
@@ -456,13 +456,12 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     """
     utils.path.create_path(location)
 
-    if incremental:
-        dump_id, start_time, end_time = prepare_dump(dump_id)
-        archive_name = "acousticbrainz-highlevel-json-incr-%s" % dump_id
+    dump_id, start_t, end_t = prepare_dump(full)
+    if full:
+        archive_name = "acousticbrainz-highlevel-json-full-%s-%s" % (dump_id, end_t.strftime("%Y%m%d-%H%M%S"))
     else:
-        start_time, end_time = None, None  # full
-        archive_name = "acousticbrainz-highlevel-json-%s" % \
-                       datetime.today().strftime("%Y%m%d")
+        full_dump_timestamp = _get_last_full_dump_timestamp(dump_id)
+        archive_name = "acousticbrainz-highlevel-json-incr-%s-%s" % (dump_id, full_dump_timestamp.strftime("%Y%m%d-%H%M%S"))
 
     archive_path = os.path.join(location, archive_name + ".tar.bz2")
     with tarfile.open(archive_path, "w:bz2") as tar:
@@ -633,6 +632,20 @@ def _get_dump_timestamp(dump_id=None):
             result = connection.execute("SELECT created FROM data_dump ORDER BY id DESC")
         row = result.fetchone()
     return row[0] if row else None
+
+def _get_last_full_dump_timestamp(dump_id):
+    with db.engine.connect() as connection:
+        result = connection.execute(text("""
+            SELECT created
+              FROM data_dump
+             WHERE id < :dump_id
+               AND dump_type = 'full'
+          ORDER BY id DESC
+             LIMIT 1
+        """), {
+            "dump_id": dump_id,
+        })
+        return result.fetchone()[0]
 
 
 class NoNewData(Exception):

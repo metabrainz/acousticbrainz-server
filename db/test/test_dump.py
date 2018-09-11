@@ -42,6 +42,13 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         id_1 = dump._create_new_inc_dump_record()[0]
         id_2 = dump._create_new_inc_dump_record()[0]
         self.assertTrue(id_1 < id_2)
+        dump_1 = dump.get_dump_info(id_1)
+        dump_2 = dump.get_dump_info(id_2)
+        self.assertEqual(dump_1["dump_type"], "partial")
+        self.assertEqual(dump_2["dump_type"], "partial")
+        id_3 = dump._create_new_inc_dump_record(full=True)[0]
+        dump_3 = dump.get_dump_info(id_3)
+        self.assertEqual(dump_3["dump_type"], "full")
 
     def test_get_last_inc_dump_info(self):
         dump_id, dump_time = dump._create_new_inc_dump_record()
@@ -50,7 +57,7 @@ class DatabaseDumpTestCase(DatabaseTestCase):
     def test_prepare_incremental_dump(self):
         self.reset_db()
 
-        dump_id_first, start_t_first, end_t_first = dump.prepare_incremental_dump()
+        dump_id_first, start_t_first, end_t_first = dump.prepare_incremental_dump(full=True)
         self.assertIsNone(start_t_first)
         self.assertIsNotNone(end_t_first)
 
@@ -68,3 +75,10 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         self.assertNotEqual(dump_id_last, dump_id_first)
         self.assertNotEqual(start_t_last, start_t_first)
         self.assertNotEqual(end_t_last, end_t_first)
+
+        self.load_low_level_data("e8afe383-1478-497e-90b1-7885c7f37f6e")
+
+        dump_id_full, start_t_full, end_t_full = dump.prepare_incremental_dump(full=True)
+        self.assertNotEqual(dump_id_full, dump_id_last)
+        self.assertIsNone(start_t_full)
+        self.assertNotEqual(end_t_full, end_t_first)

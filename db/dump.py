@@ -548,8 +548,23 @@ def list_incremental_dumps():
         there are no incremental dumps yet.
     """
     with db.engine.connect() as connection:
-        result = connection.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
+        result = connection.execute("SELECT id, created, dump_type FROM data_dump ORDER BY id DESC")
         return result.fetchall()
+
+
+def get_dump_info(dump_id):
+    with db.engine.connect() as connection:
+        result = connection.execute(text("""
+            SELECT id, created, dump_type
+              FROM data_dump
+             WHERE id = :dump_id
+        """), {
+            "dump_id": dump_id,
+        })
+        if result.rowcount > 0:
+            return dict(result.fetchone())
+        else:
+            return None
 
 
 def prepare_incremental_dump(dump_id=None, full=False):
@@ -558,10 +573,13 @@ def prepare_incremental_dump(dump_id=None, full=False):
         start_t, end_t = None, None
         if existing_dumps:
             for i, dump_info in enumerate(existing_dumps):
-                if dump_info[0] == dump_id:
-                    end_t = dump_info[1]
-                    # Getting info about the dump before that specified
-                    start_t = existing_dumps[i+1][1] if i+1 < len(existing_dumps) else None
+                if dump_info["id"] == dump_id:
+                    end_t = dump_info["created"]
+                    if dump_info["dump_type"] == "full":
+                        start_t = None
+                    else:
+                        # Getting info about the dump before that specified
+                        start_t = existing_dumps[i+1]["created"] if i+1 < len(existing_dumps) else None
                     break
         if not start_t and not end_t:
             raise Exception("Cannot find incremental dump with a specified ID."

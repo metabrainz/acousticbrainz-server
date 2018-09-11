@@ -108,7 +108,7 @@ def dump_db(location, threads=None, incremental=False, dump_id=None):
     time_now = datetime.today()
 
     if incremental:
-        dump_id, start_t, end_t = prepare_incremental_dump(dump_id)
+        dump_id, start_t, end_t = prepare_dump(dump_id)
         archive_name = "acousticbrainz-dump-incr-%s" % dump_id
     else:
         start_t, end_t = None, None  # full
@@ -349,7 +349,7 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
     utils.path.create_path(location)
 
     if incremental:
-        dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
+        dump_id, start_time, end_time = prepare_dump(dump_id)
         archive_name = "acousticbrainz-lowlevel-json-incr-%s" % dump_id
     else:
         start_time, end_time = None, None  # full
@@ -457,7 +457,7 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     utils.path.create_path(location)
 
     if incremental:
-        dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
+        dump_id, start_time, end_time = prepare_dump(dump_id)
         archive_name = "acousticbrainz-highlevel-json-incr-%s" % dump_id
     else:
         start_time, end_time = None, None  # full
@@ -540,12 +540,12 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     return archive_path
 
 
-def list_incremental_dumps():
-    """Get information about all created incremental dumps.
+def list_dumps():
+    """Get information about all created dumps.
 
     Returns:
         List of (id, created) pairs ordered by dump identifier, or None if
-        there are no incremental dumps yet.
+        there are no dumps yet.
     """
     with db.engine.connect() as connection:
         result = connection.execute("SELECT id, created, dump_type FROM data_dump ORDER BY id DESC")
@@ -567,9 +567,9 @@ def get_dump_info(dump_id):
             return None
 
 
-def prepare_incremental_dump(dump_id=None, full=False):
+def prepare_dump(dump_id=None, full=False):
     if dump_id:  # getting existing
-        existing_dumps = list_incremental_dumps()
+        existing_dumps = list_dumps()
         start_t, end_t = None, None
         if existing_dumps:
             for i, dump_info in enumerate(existing_dumps):
@@ -582,21 +582,21 @@ def prepare_incremental_dump(dump_id=None, full=False):
                         start_t = existing_dumps[i+1]["created"] if i+1 < len(existing_dumps) else None
                     break
         if not start_t and not end_t:
-            raise Exception("Cannot find incremental dump with a specified ID."
+            raise Exception("Cannot find dump with a specified ID."
                             " Please check if it exists or create a new one.")
 
     else:  # creating new
-        start_t = _get_incremental_dump_timestamp() if not full else None
+        start_t = _get_dump_timestamp() if not full else None
         if start_t and not _any_new_data(start_t):
-            raise NoNewData("No new data since the last incremental dump!")
-        dump_id, end_t = _create_new_inc_dump_record(full=full)
+            raise NoNewData("No new data since the last dump!")
+        dump_id, end_t = _create_new_dump_record(full=full)
 
     return dump_id, start_t, end_t
 
 
 def _any_new_data(from_time):
     """Checks if there's any new data since specified time in tables that
-    support incremental dumps.
+    support dumps.
 
     Returns:
         True if there is new data in one of tables that support incremental
@@ -610,8 +610,8 @@ def _any_new_data(from_time):
     return lowlevel_count > 0 or highlevel_count > 0
 
 
-def _create_new_inc_dump_record(full=False):
-    """Creates new record for incremental dump and returns its ID and creation time."""
+def _create_new_dump_record(full=False):
+    """Creates new record for dump and returns its ID and creation time."""
     with db.engine.connect() as connection:
         result = connection.execute(text("""
             INSERT INTO data_dump (created, dump_type)
@@ -625,7 +625,7 @@ def _create_new_inc_dump_record(full=False):
     return row
 
 
-def _get_incremental_dump_timestamp(dump_id=None):
+def _get_dump_timestamp(dump_id=None):
     with db.engine.connect() as connection:
         if dump_id:
             result = connection.execute("SELECT created FROM data_dump WHERE id = %s", (dump_id,))

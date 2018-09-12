@@ -106,9 +106,13 @@ def dump_db(location, threads=None, full=False, dump_id=None):
     """
     utils.path.create_path(location)
 
-    dump_id, start_t, end_t = prepare_dump(full)
+    if dump_id:
+        dump_id, start_time, end_time, full = prepare_dump(dump_id=dump_id)
+    else:
+        dump_id, start_time, end_time, full = prepare_dump(full=full)
+
     if full:
-        archive_name = "acousticbrainz-dump-full-%s-%s" % (dump_id, end_t.strftime("%Y%m%d-%H%M%S"))
+        archive_name = "acousticbrainz-dump-full-%s-%s" % (dump_id, end_time.strftime("%Y%m%d-%H%M%S"))
     else:
         full_dump_timestamp = _get_last_full_dump_timestamp(dump_id)
         archive_name = "acousticbrainz-dump-incr-%s-%s" % (dump_id, full_dump_timestamp.strftime("%Y%m%d-%H%M%S"))
@@ -134,7 +138,7 @@ def dump_db(location, threads=None, full=False, dump_id=None):
                     arcname=os.path.join(archive_name, "SCHEMA_SEQUENCE"))
             timestamp_path = os.path.join(temp_dir, "TIMESTAMP")
             with open(timestamp_path, "w") as f:
-                f.write(time_now.isoformat(" "))
+                f.write(end_time.isoformat(" "))
             tar.add(timestamp_path,
                     arcname=os.path.join(archive_name, "TIMESTAMP"))
             tar.add(DUMP_LICENSE_FILE_PATH,
@@ -142,7 +146,7 @@ def dump_db(location, threads=None, full=False, dump_id=None):
 
             archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
             utils.path.create_path(archive_tables_dir)
-            _copy_tables(archive_tables_dir, start_t, end_t)
+            _copy_tables(archive_tables_dir, start_time, end_time)
             tar.add(archive_tables_dir, arcname=os.path.join(archive_name, "abdump"))
 
             shutil.rmtree(temp_dir)  # Cleanup
@@ -349,9 +353,13 @@ def dump_lowlevel_json(location, full=False, dump_id=None):
     """
     utils.path.create_path(location)
 
-    dump_id, start_t, end_t = prepare_dump(full)
+    if dump_id:
+        dump_id, start_time, end_time, full = prepare_dump(dump_id=dump_id)
+    else:
+        dump_id, start_time, end_time, full = prepare_dump(full=full)
+
     if full:
-        archive_name = "acousticbrainz-lowlevel-json-full-%s-%s" % (dump_id, end_t.strftime("%Y%m%d-%H%M%S"))
+        archive_name = "acousticbrainz-lowlevel-json-full-%s-%s" % (dump_id, end_time.strftime("%Y%m%d-%H%M%S"))
     else:
         full_dump_timestamp = _get_last_full_dump_timestamp(dump_id)
         archive_name = "acousticbrainz-highlevel-json-incr-%s-%s" % (dump_id, full_dump_timestamp.strftime("%Y%m%d-%H%M%S"))
@@ -441,7 +449,7 @@ def dump_lowlevel_json(location, full=False, dump_id=None):
     return archive_path
 
 
-def dump_highlevel_json(location, incremental=False, dump_id=None):
+def dump_highlevel_json(location, full=False, dump_id=None):
     """Create JSON dump with high-level data.
 
     Args:
@@ -456,9 +464,13 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
     """
     utils.path.create_path(location)
 
-    dump_id, start_t, end_t = prepare_dump(full)
+    if dump_id:
+        dump_id, start_time, end_time, full = prepare_dump(dump_id=dump_id)
+    else:
+        dump_id, start_time, end_time, full = prepare_dump(full=full)
+
     if full:
-        archive_name = "acousticbrainz-highlevel-json-full-%s-%s" % (dump_id, end_t.strftime("%Y%m%d-%H%M%S"))
+        archive_name = "acousticbrainz-highlevel-json-full-%s-%s" % (dump_id, end_time.strftime("%Y%m%d-%H%M%S"))
     else:
         full_dump_timestamp = _get_last_full_dump_timestamp(dump_id)
         archive_name = "acousticbrainz-highlevel-json-incr-%s-%s" % (dump_id, full_dump_timestamp.strftime("%Y%m%d-%H%M%S"))
@@ -576,9 +588,11 @@ def prepare_dump(dump_id=None, full=False):
                     end_t = dump_info["created"]
                     if dump_info["dump_type"] == "full":
                         start_t = None
+                        full = True
                     else:
                         # Getting info about the dump before that specified
                         start_t = existing_dumps[i+1]["created"] if i+1 < len(existing_dumps) else None
+                        full = False
                     break
         if not start_t and not end_t:
             raise Exception("Cannot find dump with a specified ID."
@@ -590,7 +604,7 @@ def prepare_dump(dump_id=None, full=False):
             raise NoNewData("No new data since the last dump!")
         dump_id, end_t = _create_new_dump_record(full=full)
 
-    return dump_id, start_t, end_t
+    return dump_id, start_t, end_t, full
 
 
 def _any_new_data(from_time):

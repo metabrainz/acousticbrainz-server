@@ -25,17 +25,9 @@ def full(ctx, location, threads, rotate):
 
     Archive rotation is enabled by default for full dumps.
     """
-    try:
-        start_t = dump.prepare_incremental_dump()[1]
-        if start_t:  # not the first incremental dump
-            incremental(location, id=None, threads=None)
-        else:
-            print("Skipping incremental dump creation since it's the first one.\n")
-    except dump.NoNewData:
-        print("Skipping incremental dump creation. No new data.\n")
-
-    ctx.invoke(full_db, location=location, threads=threads, rotate=rotate)
-    ctx.invoke(json, location=location, rotate=rotate)
+    dump_id, _, _, _ = dump.prepare_dump(full=True)
+    ctx.invoke(full_db, location=location, threads=threads, rotate=rotate, dump_id=dump_id)
+    ctx.invoke(json, location=location, rotate=rotate, dump_id=dump_id)
 
 
 @cli.command()
@@ -43,14 +35,20 @@ def full(ctx, location, threads, rotate):
               help="Directory where dumps need to be created")
 @click.option("--threads", "-t", type=int)
 @click.option("--rotate", "-r", is_flag=True)
-def full_db(location, threads, rotate):
+@click.option("--dump-id", "-id", type=int)
+def full_db(location, threads, rotate, dump_id):
     print("Creating full database dump...")
-    path = dump.dump_db(location, threads)
+    if dump_id:
+        dump_info = dump.get_dump_info(dump_id)
+        if dump_info["dump_type"] != "full":
+            raise Exception("Dump ID: %d does not correspond to a full dump!" % dump_id)
+
+    path = dump.dump_db(location, threads, full=True, dump_id=dump_id)
     print("Done! Created:", path)
 
     if rotate:
         print("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-dump-[0-9]+-[0-9]+.tar.xz",
+        remove_old_archives(location, "acousticbrainz-dump-full-[0-9]+-[0-9]+.tar.xz",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
@@ -60,36 +58,39 @@ def full_db(location, threads, rotate):
 @click.option("--rotate", "-r", is_flag=True)
 @click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
-def json(location, rotate, no_lowlevel, no_highlevel):
+@click.option("--dump-id", "-id", type=int)
+def json(location, rotate, no_lowlevel, no_highlevel, dump_id):
     if no_lowlevel and no_highlevel:
         print("wut? check your options, mate!")
+        return
 
+    dump_id, _, _, _ = dump.prepare_dump(dump_id=int(dump_id) if dump_id else None, full=True)
     if not no_lowlevel:
-        _json_lowlevel(location, rotate)
+        _json_lowlevel(location, rotate, dump_id)
 
     if not no_highlevel:
-        _json_highlevel(location, rotate)
+        _json_highlevel(location, rotate, dump_id)
 
 
-def _json_lowlevel(location, rotate):
+def _json_lowlevel(location, rotate, dump_id):
     print("Creating low-level JSON data dump...")
-    path = dump.dump_lowlevel_json(location)
+    path = dump.dump_lowlevel_json(location, full=True, dump_id=dump_id)
     print("Done! Created: %s" % path)
 
     if rotate:
         print("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-lowlevel-json-full-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-def _json_highlevel(location, rotate):
+def _json_highlevel(location, rotate, dump_id):
     print("Creating high-level JSON data dump...")
-    path = dump.dump_highlevel_json(location)
+    path = dump.dump_highlevel_json(location, full=True, dump_id=dump_id)
     print("Done! Created: %s" % path)
 
     if rotate:
         print("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-highlevel-json-full-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
@@ -99,8 +100,8 @@ def _json_highlevel(location, rotate):
 @click.option("--id", type=int)
 @click.option("--threads", "-t", type=int)
 def incremental(location, id, threads):
-    dump_id, start_t, end_t = dump.prepare_incremental_dump(int(id) if id else None)
-    print("Creating incremental dumps with data between %s and %s:\n" % (start_t, end_t))
+    dump_id, start_t, end_t, _ = dump.prepare_dump(dump_id=int(id) if id else None)
+    print("Creating dumps with data between %s and %s:\n" % (start_t, end_t))
     _incremental_db(location, dump_id, threads)
     _incremental_json_lowlevel(location, dump_id)
     _incremental_json_highlevel(location, dump_id)
@@ -108,19 +109,19 @@ def incremental(location, id, threads):
 
 def _incremental_db(location, id, threads):
     print("Creating incremental database dump...")
-    path = dump.dump_db(location, threads, incremental=True, dump_id=id)
+    path = dump.dump_db(location, threads, full=False, dump_id=id)
     print("Done! Created: %s\n" % path)
 
 
 def _incremental_json_lowlevel(location, id):
     print("Creating incremental low-level JSON data dump...")
-    path = dump.dump_lowlevel_json(location, incremental=True, dump_id=id)
+    path = dump.dump_lowlevel_json(location, full=False, dump_id=id)
     print("Done! Created: %s\n" % path)
 
 
 def _incremental_json_highlevel(location, id):
     print("Creating incremental high-level JSON data dump...")
-    path = dump.dump_highlevel_json(location, incremental=True, dump_id=id)
+    path = dump.dump_highlevel_json(location, full=False, dump_id=id)
     print("Done! Created: %s\n" % path)
 
 

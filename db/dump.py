@@ -647,6 +647,7 @@ def _get_dump_timestamp(dump_id=None):
         row = result.fetchone()
     return row[0] if row else None
 
+
 def _get_last_full_dump_timestamp(dump_id):
     with db.engine.connect() as connection:
         result = connection.execute(text("""
@@ -659,8 +660,15 @@ def _get_last_full_dump_timestamp(dump_id):
         """), {
             "dump_id": dump_id,
         })
-        return result.fetchone()[0]
+        if result.rowcount > 0:
+            return result.fetchone()[0]
+        else:
+            raise NoPreviousFullDump
 
 
 class NoNewData(Exception):
+    pass
+
+
+class NoPreviousFullDump(Exception):
     pass

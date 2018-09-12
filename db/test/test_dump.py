@@ -17,12 +17,12 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         shutil.rmtree(self.temp_dir)
 
     def test_dump_db(self):
-        path = dump.dump_db(self.temp_dir)
+        path = dump.dump_db(self.temp_dir, full=True)
         self.assertTrue(os.path.isfile(path))
 
     def test_import_db_dump(self):
         id1 = dump._create_new_inc_dump_record()[0]
-        path = dump.dump_db(self.temp_dir)
+        path = dump.dump_db(self.temp_dir, full=True)
         self.reset_db()
         dump.import_db_dump(path)
         self.assertEqual(dump.list_incremental_dumps()[0][0], id1)
@@ -30,12 +30,12 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         self.assertGreater(id2, id1)
 
     def test_dump_lowlevel_json(self):
-        path = dump.dump_lowlevel_json(self.temp_dir)
+        path = dump.dump_lowlevel_json(self.temp_dir, full=True)
         self.assertTrue(os.path.isfile(path))
 
     @unittest.skip
     def test_dump_highlevel_json(self):
-        path = dump.dump_highlevel_json(self.temp_dir)
+        path = dump.dump_highlevel_json(self.temp_dir, full=True)
         self.assertTrue(os.path.isfile(path))
 
     def test_create_new_dump_record(self):
@@ -57,11 +57,12 @@ class DatabaseDumpTestCase(DatabaseTestCase):
     def test_prepare_dump(self):
         self.reset_db()
 
-        dump_id_first, start_t_first, end_t_first = dump.prepare_dump(full=True)
+        dump_id_first, start_t_first, end_t_first, full = dump.prepare_dump(full=True)
         self.assertIsNone(start_t_first)
         self.assertIsNotNone(end_t_first)
+        self.assertTrue(full)
 
-        dump_id_same, start_t_same, end_t_same = dump.prepare_dump(dump_id_first)
+        dump_id_same, start_t_same, end_t_same, full = dump.prepare_dump(dump_id_first)
         self.assertEqual(dump_id_same, dump_id_first)
         self.assertEqual(start_t_same, start_t_first)
         self.assertEqual(end_t_same, end_t_first)
@@ -71,14 +72,14 @@ class DatabaseDumpTestCase(DatabaseTestCase):
 
         self.load_low_level_data("0dad432b-16cc-4bf0-8961-fd31d124b01b")
 
-        dump_id_last, start_t_last, end_t_last = dump.prepare_dump()
+        dump_id_last, start_t_last, end_t_last, full = dump.prepare_dump()
         self.assertNotEqual(dump_id_last, dump_id_first)
         self.assertNotEqual(start_t_last, start_t_first)
         self.assertNotEqual(end_t_last, end_t_first)
 
         self.load_low_level_data("e8afe383-1478-497e-90b1-7885c7f37f6e")
 
-        dump_id_full, start_t_full, end_t_full = dump.prepare_dump(full=True)
+        dump_id_full, start_t_full, end_t_full, full = dump.prepare_dump(full=True)
         self.assertNotEqual(dump_id_full, dump_id_last)
         self.assertIsNone(start_t_full)
         self.assertNotEqual(end_t_full, end_t_first)

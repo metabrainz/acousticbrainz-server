@@ -152,6 +152,7 @@ def dump_db(location, threads=None, full=False, dump_id=None):
             shutil.rmtree(temp_dir)  # Cleanup
 
         pxz.stdin.close()
+        pxz.wait()
 
     return archive_path
 

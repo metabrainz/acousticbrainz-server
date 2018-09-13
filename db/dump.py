@@ -258,8 +258,6 @@ def update_sequences():
     """ Update all sequences to the maximum value of id in the table.
     """
     # lowlevel_id_seq
-    print(current_app.logger.getEffectiveLevel())
-    print(current_app.logger.isEnabledFor(logging.INFO))
     current_app.logger.info('Updating lowlevel_id_seq...')
     update_sequence('lowlevel_id_seq', 'lowlevel')
 

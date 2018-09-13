@@ -235,7 +235,7 @@ def _copy_tables(location, start_time=None, end_time=None):
             cursor.copy_to(f, "(SELECT %s FROM statistics %s)" %
                            (", ".join(_TABLES["statistics"]), generate_where("collected")))
 
-        # incremental_dumps
+        # data_dump
         with open(os.path.join(location, "data_dump"), "w") as f:
             logging.info(" - Copying table data_dump...")
             cursor.copy_to(f, "(SELECT %s FROM data_dump %s)" %
@@ -277,9 +277,9 @@ def update_sequences():
     current_app.logger.info('Updating model_id_seq...')
     update_sequence('model_id_seq', 'model')
 
-    # incremental_dumps_id_seq
-    current_app.logger.info('Updating incremental_dumps_id_seq...')
-    update_sequence('incremental_dumps_id_seq', 'incremental_dumps')
+    # data_dump_id_seq
+    current_app.logger.info('Updating data_dump_id_seq...')
+    update_sequence('data_dump_id_seq', 'data_dump')
 
     # user_id_seq
     current_app.logger.info('Updating user_id_seq...')

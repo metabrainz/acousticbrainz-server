@@ -21,12 +21,12 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         self.assertTrue(os.path.isfile(path))
 
     def test_import_db_dump(self):
-        id1 = dump._create_new_inc_dump_record()[0]
         path = dump.dump_db(self.temp_dir, full=True)
+        id1 = dump.list_dumps()[-1][0]
         self.reset_db()
         dump.import_db_dump(path)
-        self.assertEqual(dump.list_incremental_dumps()[0][0], id1)
-        id2 = dump._create_new_inc_dump_record()[0]
+        self.assertEqual(dump.list_dumps()[-1][0], id1)
+        id2 = dump._create_new_dump_record()[0]
         self.assertGreater(id2, id1)
 
     def test_dump_lowlevel_json(self):

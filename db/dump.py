@@ -10,6 +10,7 @@ include information from the previous dumps).
 from __future__ import print_function
 from collections import defaultdict
 from datetime import datetime
+from flask import current_app
 import utils.path
 import db
 import subprocess
@@ -19,6 +20,7 @@ import tarfile
 import shutil
 import os
 from sqlalchemy import text
+
 
 DUMP_CHUNK_SIZE = 1000
 DUMP_LICENSE_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -238,6 +240,58 @@ def _copy_tables(location, start_time=None, end_time=None):
         connection.close()
 
 
+def update_sequence(seq_name, table_name):
+    """ Update the specified sequence's value to the maximum value of ID in the table.
+
+    Args:
+        seq_name (str): the name of the sequence to be updated.
+        table_name (str): the name of the table from which the maximum value is to be retrieved
+    """
+    with db.engine.connect() as connection:
+        connection.execute(text("""
+            SELECT setval('{seq_name}', max(id))
+              FROM {table_name}
+        """.format(seq_name=seq_name, table_name=table_name)))
+
+
+def update_sequences():
+    """ Update all sequences to the maximum value of id in the table.
+    """
+    # lowlevel_id_seq
+    print(current_app.logger.getEffectiveLevel())
+    print(current_app.logger.isEnabledFor(logging.INFO))
+    current_app.logger.info('Updating lowlevel_id_seq...')
+    update_sequence('lowlevel_id_seq', 'lowlevel')
+
+    # highlevel_model_id_seq
+    current_app.logger.info('Updating highlevel_model_id_seq...')
+    update_sequence('highlevel_model_id_seq', 'highlevel')
+
+    # version_id_seq
+    current_app.logger.info('Updating version_id_seq...')
+    update_sequence('version_id_seq', 'version')
+
+    # model_id_seq
+    current_app.logger.info('Updating model_id_seq...')
+    update_sequence('model_id_seq', 'model')
+
+    # incremental_dumps_id_seq
+    current_app.logger.info('Updating incremental_dumps_id_seq...')
+    update_sequence('incremental_dumps_id_seq', 'incremental_dumps')
+
+    # user_id_seq
+    current_app.logger.info('Updating user_id_seq...')
+    update_sequence('user_id_seq', '"user"')
+
+    # dataset_class_id_seq
+    current_app.logger.info('Updating dataset_class_id_seq...')
+    update_sequence('dataset_class_id_seq', 'dataset_class')
+
+    # dataset_eval_sets_id_seq
+    current_app.logger.info('Updating dataset_eval_sets_id_seq...')
+    update_sequence('dataset_eval_sets_id_seq', 'dataset_eval_sets')
+
+
 def import_db_dump(archive_path):
     """Import data from .tar.xz archive into the database."""
     pxz_command = ["pxz", "--decompress", "--stdout", archive_path]
@@ -273,6 +327,11 @@ def import_db_dump(archive_path):
         connection.close()
 
     pxz.stdout.close()
+    pxz.wait()
+
+    logging.info('Updating sequences...')
+    update_sequences()
+    logging.info('Done!')
 
 
 def dump_lowlevel_json(location, incremental=False, dump_id=None):

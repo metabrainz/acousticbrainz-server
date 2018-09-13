@@ -18,7 +18,7 @@ CONSUL_CONFIG_FILE_RETRY_COUNT = 10
 
 def create_app_flaskgroup(script_info):
     """Factory function that accepts script_info and creates a Flask application"""
-    return create_app()
+    return create_app(debug=True)
 
 
 def load_config(app):

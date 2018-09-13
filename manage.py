@@ -148,6 +148,12 @@ def remove_admin(username):
         click.echo("Error: %s" % e, err=True)
         sys.exit(1)
 
+@cli.command()
+def update_sequences():
+    print('Updating database sequences...')
+    db.dump.update_sequences()
+    print('Done!')
+
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

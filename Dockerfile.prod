@@ -102,3 +102,4 @@ COPY ./docker/$deploy_env/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 RUN mkdir /cache_namespaces
 RUN chown -R www-data:www-data /cache_namespaces
 COPY . /code
+RUN /code/node_modules/.bin/gulp

@@ -101,5 +101,17 @@ COPY ./docker/$deploy_env/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 
 RUN mkdir /cache_namespaces
 RUN chown -R www-data:www-data /cache_namespaces
+
+# Create a user named acousticbrainz for cron jobs
+RUN useradd --create-home --shell /bin/bash acousticbrainz
+
+# Add cron jobs
+ADD docker/crontab /etc/cron.d/ab-crontab
+RUN chmod 0644 /etc/cron.d/ab-crontab && crontab -u acousticbrainz /etc/cron.d/ab-crontab
+
+# Make sure that the cron service doesn't start automagically
+# http://smarden.org/runit/runsv.8.html
+RUN touch /etc/service/cron/down
+
 COPY . /code
 RUN /code/node_modules/.bin/gulp

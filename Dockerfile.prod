@@ -108,6 +108,7 @@ RUN useradd --create-home --shell /bin/bash acousticbrainz
 # Add cron jobs
 ADD docker/crontab /etc/cron.d/ab-crontab
 RUN chmod 0644 /etc/cron.d/ab-crontab && crontab -u acousticbrainz /etc/cron.d/ab-crontab
+RUN touch /var/log/stats_calc.log /var/log/stats_cache.log && chown acousticbrainz:acousticbrainz /var/log/stats_calc.log /var/log/stats_cache.log
 
 # Make sure that the cron service doesn't start automagically
 # http://smarden.org/runit/runsv.8.html

@@ -360,21 +360,23 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
 
         connection = db.engine.raw_connection()
         try:
-            cursor = connection.cursor()
-
+            cursor = connection.cursor(name="server_side_cursor")
             mbid_occurences = defaultdict(int)
 
             # Need to count how many duplicate MBIDs are there before start_time
             if start_time:
                 cursor.execute("""
                     SELECT gid, count(id)
-                    FROM lowlevel
-                    WHERE submitted <= %s
-                    GROUP BY gid
+                      FROM lowlevel
+                     WHERE submitted <= %s
+                  GROUP BY gid
                     """, (start_time,))
                 counts = cursor.fetchall()
                 for mbid, count in counts:
                     mbid_occurences[mbid] = count
+
+            if not end_time:
+                end_time = datetime.now()
 
             if start_time or end_time:
                 start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
@@ -385,47 +387,34 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None):
                     where = "WHERE %s%s" % (start_cond, end_cond)
             else:
                 where = ""
-            cursor.execute("SELECT id FROM lowlevel ll %s ORDER BY gid" % where)
 
-            cursor_inner = connection.cursor()
+            cursor.execute("""
+                SELECT gid::text, llj.data::text
+                  FROM lowlevel ll
+                  JOIN lowlevel_json llj
+                    ON ll.id = llj.id
+                    %s
+              ORDER BY ll.gid
+            """ % where)
 
             temp_dir = tempfile.mkdtemp()
-
             dumped_count = 0
-
             while True:
-                id_list = cursor.fetchmany(size=DUMP_CHUNK_SIZE)
-                if not id_list:
+                row = cursor.fetchone()
+                if not row:
                     break
-                id_list = tuple([i[0] for i in id_list])
+                mbid, json_doc = row
 
-                query = text("""
-                   SELECT gid::text
-                        , llj.data::text
-                     FROM lowlevel ll
-                     JOIN lowlevel_json llj
-                       ON ll.id = llj.id
-                    WHERE ll.id IN :id_list
-                """)
+                json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
+                dump_tempfile = os.path.join(temp_dir, json_filename)
+                with open(dump_tempfile, "w") as f:
+                    f.write(json_doc.encode("utf-8"))
+                tar.add(dump_tempfile, arcname=os.path.join(
+                    archive_name, "lowlevel", mbid[0:2], mbid[2:4], json_filename))
+                os.unlink(dump_tempfile)
 
-                cursor_inner.execute(query, {"id_list": id_list})
-
-                while True:
-                    row = cursor_inner.fetchone()
-                    if not row:
-                        break
-                    mbid, json = row
-
-                    json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
-                    dump_tempfile = os.path.join(temp_dir, json_filename)
-                    with open(dump_tempfile, "w") as f:
-                        f.write(json)
-                    tar.add(dump_tempfile, arcname=os.path.join(
-                        archive_name, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
-                    os.unlink(dump_tempfile)
-
-                    mbid_occurences[mbid] += 1
-                    dumped_count += 1
+                mbid_occurences[mbid] += 1
+                dumped_count += 1
         finally:
             connection.close()
 

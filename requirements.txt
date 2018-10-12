@@ -12,7 +12,7 @@ Jinja2 == 2.10
 mock == 2.0.0
 musicbrainzngs == 0.6
 ndg-httpsclient==0.4.4
-psycopg2 == 2.7.4
+psycopg2 == 2.7.5
 pytz==2018.3
 pytest==3.4.2
 pytest-cov==2.5.1
@@ -21,6 +21,6 @@ rauth == 0.7.3
 raven[flask] == 6.6.0
 setproctitle == 1.1.10
 six == 1.11.0
-SQLAlchemy == 1.2.5
+SQLAlchemy == 1.2.11
 Werkzeug == 0.14.1
 -r docs/requirements.txt

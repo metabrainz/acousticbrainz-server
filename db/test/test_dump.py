@@ -2,6 +2,7 @@ from db.testing import DatabaseTestCase
 from db import dump
 from db.dump import _TABLES
 
+import os
 import os.path
 import tempfile
 import shutil
@@ -33,7 +34,8 @@ class DatabaseDumpTestCase(DatabaseTestCase):
 
     def test_dump_lowlevel_json(self):
         path = dump.dump_lowlevel_json(self.temp_dir)
-        self.assertTrue(os.path.isfile(path))
+        for f in os.listdir(path):
+            self.assertTrue(os.path.isfile(os.path.join(path, f)))
 
     @unittest.skip
     def test_dump_highlevel_json(self):

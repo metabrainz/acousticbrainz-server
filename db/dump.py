@@ -9,8 +9,6 @@ include information from the previous dumps).
 """
 from __future__ import print_function
 
-from collections import defaultdict
-from datetime import datetime
 from flask import current_app
 
 import utils.path
@@ -485,101 +483,125 @@ def import_db_dump(archive_path, tables):
     logging.info('Done!')
 
 
-def dump_lowlevel_json(location, incremental=False, dump_id=None):
+def dump_lowlevel_json(location, incremental=False, dump_id=None, num_files_per_archive=float("inf")):
     """Create JSON dump with low level data.
 
     Args:
         location: Directory where archive will be created.
-        incremental: False if resulting JSON dump should be complete, False if
+        incremental: False if resulting JSON dump should be complete, True if
             it needs to be incremental.
         dump_id: If you need to reproduce previously created incremental dump,
             its identifier (integer) can be specified there.
+        num_files_per_archive: The maximum number of recordings to dump in one file.
+                   Infinite if not specified.
 
     Returns:
         Path to created low level JSON dump.
     """
-    utils.path.create_path(location)
 
     if incremental:
         dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
-        archive_name = "acousticbrainz-lowlevel-json-incr-%s" % dump_id
+        archive_dirname = "acousticbrainz-lowlevel-json-incr-%s" % dump_id
+        filename_pattern = archive_dirname + "-%d"
     else:
         start_time, end_time = None, None  # full
-        archive_name = "acousticbrainz-lowlevel-json-%s" % \
+        archive_dirname = "acousticbrainz-lowlevel-json-%s" % \
                        datetime.today().strftime("%Y%m%d")
+        filename_pattern = archive_dirname + "-%d"
 
-    archive_path = os.path.join(location, archive_name + ".tar.bz2")
-    with tarfile.open(archive_path, "w:bz2") as tar:
+    dump_path = os.path.join(location, archive_dirname)
+    utils.path.create_path(dump_path)
 
-        connection = db.engine.raw_connection()
-        try:
-            cursor = connection.cursor(name="server_side_cursor")
-            mbid_occurences = defaultdict(int)
+    file_num = 0
+    connection = db.engine.raw_connection()
+    try:
 
-            # Need to count how many duplicate MBIDs are there before start_time
-            if start_time:
-                cursor.execute("""
-                    SELECT gid, count(id)
-                      FROM lowlevel
-                     WHERE submitted <= %s
-                  GROUP BY gid
-                    """, (start_time,))
-                counts = cursor.fetchall()
-                for mbid, count in counts:
-                    mbid_occurences[mbid] = count
+        cursor = connection.cursor(name="server_side_cursor")
+        mbid_occurences = defaultdict(int)
 
-            if not end_time:
-                end_time = datetime.now()
+        # Need to count how many duplicate MBIDs are there before start_time
+        if start_time:
+            results = connection.execute(sqlalchemy.text("""
+                SELECT gid, COUNT(id)
+                  FROM lowlevel
+                 WHERE submitted <= :start_time
+              GROUP BY gid
+                """), {
+                "start_time": start_time,
+            })
+            for mbid, count in results.fetchall():
+                mbid_occurences[mbid] = count
 
-            if start_time or end_time:
-                start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
-                end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
-                if start_time and end_time:
-                    where = "WHERE %s AND %s" % (start_cond, end_cond)
-                else:
-                    where = "WHERE %s%s" % (start_cond, end_cond)
+        if not end_time:
+            end_time = datetime.now()
+
+        if start_time or end_time:
+            start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
+            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
+            if start_time and end_time:
+                where = "WHERE %s AND %s" % (start_cond, end_cond)
             else:
-                where = ""
+                where = "WHERE %s%s" % (start_cond, end_cond)
+        else:
+            where = ""
 
-            cursor.execute("""
-                SELECT gid::text, llj.data::text
-                  FROM lowlevel ll
-                  JOIN lowlevel_json llj
-                    ON ll.id = llj.id
-                    %s
-              ORDER BY ll.gid
-            """ % where)
+        data = None
+        total_dumped = 0  # total number of recordings dumped
+        dump_done = False  # flag to check if all recordings have been dumped
 
-            temp_dir = tempfile.mkdtemp()
-            dumped_count = 0
-            while True:
-                row = cursor.fetchone()
-                if not row:
-                    break
-                mbid, json_doc = row
+        temp_dir = tempfile.mkdtemp()
 
-                json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
-                dump_tempfile = os.path.join(temp_dir, json_filename)
-                with open(dump_tempfile, "w") as f:
-                    f.write(json_doc.encode("utf-8"))
-                tar.add(dump_tempfile, arcname=os.path.join(
-                    archive_name, "lowlevel", mbid[0:2], mbid[2:4], json_filename))
-                os.unlink(dump_tempfile)
+        cursor.execute("""
+            SELECT gid::text, llj.data::text
+              FROM lowlevel ll
+              JOIN lowlevel_json llj
+                ON ll.id = llj.id
+                %s
+          ORDER BY ll.gid
+        """ % where)
 
-                mbid_occurences[mbid] += 1
-                dumped_count += 1
-        finally:
-            connection.close()
+        while not dump_done:
 
-        # Copying legal text
-        tar.add(DUMP_LICENSE_FILE_PATH,
-                arcname=os.path.join(archive_name, "COPYING"))
+            # create a new file and dump recordings there
+            filename = filename_pattern % file_num
+            file_path = os.path.join(dump_path, "%s.tar.bz2" % filename)
+            with tarfile.open(file_path, "w:bz2") as tar:
+
+                dumped_count = 0
+
+                while dumped_count < num_files_per_archive:
+                    row = cursor.fetchone()
+                    if not row:
+                        dump_done = True
+                        break
+                    mbid, json_data = row
+
+                    json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
+                    dump_tempfile = os.path.join(temp_dir, json_filename)
+                    with open(dump_tempfile, "w") as f:
+                        f.write(json.dumps(json_data))
+                    tar.add(dump_tempfile, arcname=os.path.join(
+                        filename, "lowlevel", mbid[0:2], mbid[2:4], json_filename))
+                    os.unlink(dump_tempfile)
+
+                    mbid_occurences[mbid] += 1
+                    dumped_count += 1
+
+                # Copying legal text
+                tar.add(DUMP_LICENSE_FILE_PATH,
+                        arcname=os.path.join(filename, "COPYING"))
+
+                logging.info("Dumped %s recordings in file number %d." % (dumped_count, file_num))
+                file_num += 1
+                total_dumped += dumped_count
 
         shutil.rmtree(temp_dir)  # Cleanup
 
-        logging.info("Dumped %s recordings." % dumped_count)
+    finally:
+        connection.close()
 
-    return archive_path
+    logging.info("Dumped a total of %d recordings in %d files." % (total_dumped, file_num))
+    return dump_path
 
 
 def dump_highlevel_json(location, incremental=False, dump_id=None):

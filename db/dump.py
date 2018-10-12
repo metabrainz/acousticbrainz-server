@@ -8,17 +8,24 @@ or raw information from all tables in TSV format).
 include information from the previous dumps).
 """
 from __future__ import print_function
+
 from collections import defaultdict
 from datetime import datetime
 from flask import current_app
+
 import utils.path
 import db
-import subprocess
-import tempfile
 import logging
-import tarfile
-import shutil
 import os
+import shutil
+import sqlalchemy
+import subprocess
+import tarfile
+import tempfile
+import json
+
+from collections import defaultdict
+from datetime import datetime
 from sqlalchemy import text
 
 
@@ -460,12 +467,14 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
 
             # Need to count how many duplicate MBIDs are there before start_time
             if start_time:
-                result = connection.execute("""
+                result = connection.execute(sqlalchemy.text("""
                     SELECT mbid, count(id)
-                    FROM highlevel
-                    WHERE submitted <= %s
-                    GROUP BY mbid
-                    """, (start_time,))
+                      FROM highlevel
+                     WHERE submitted <= :start_time
+                  GROUP BY mbid
+                    """), {
+                        'start_time': start_time,
+                    })
                 counts = result.fetchall()
                 for mbid, count in counts:
                     mbid_occurences[mbid] = count
@@ -474,15 +483,22 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                 start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ""
                 end_cond = "hl.submitted <= '%s'" % str(end_time) if end_time else ""
                 if start_time and end_time:
-                    where = "AND %s AND %s" % (start_cond, end_cond)
+                    where = "WHERE %s AND %s" % (start_cond, end_cond)
                 else:
-                    where = "AND %s%s" % (start_cond, end_cond)
+                    where = "WHERE %s%s" % (start_cond, end_cond)
             else:
                 where = ""
-            result = connection.execute("""SELECT hl.id
-                              FROM highlevel hl, highlevel_json hlj
-                              WHERE hl.data = hlj.id %s
-                              ORDER BY mbid""" % where)
+
+            result = connection.execute(sqlalchemy.text("""
+                    SELECT hl.id AS id
+                         , hl.mbid AS mbid
+                         , hlm.data AS metadata
+                      FROM highlevel hl
+                 LEFT JOIN highlevel_meta hlm
+                        ON hl.id = hlm.id
+                        {where_clause}
+                  ORDER BY hl.mbid
+                """.format(where_clause=where)))
 
             with db.engine.connect() as connection_inner:
                 temp_dir = tempfile.mkdtemp()
@@ -490,26 +506,49 @@ def dump_highlevel_json(location, incremental=False, dump_id=None):
                 dumped_count = 0
 
                 while True:
-                    id_list = result.fetchmany(size=DUMP_CHUNK_SIZE)
-                    if not id_list:
+                    data_list = result.fetchmany(size=DUMP_CHUNK_SIZE)
+                    if not data_list:
                         break
-                    id_list = tuple([i[0] for i in id_list])
 
-                    q = text("""SELECT mbid::text, hlj.data::text
-                           FROM highlevel hl, highlevel_json hlj
-                           WHERE hl.data = hlj.id AND hl.id IN :ids
-                           ORDER BY mbid""")
-                    result_inner = connection_inner.execute(q, {"ids": id_list})
-                    while True:
-                        row = result_inner.fetchone()
-                        if not row:
-                            break
-                        mbid, json = row
+                    # get data for the all the hlids in the current chunk
+                    result_inner = connection_inner.execute(sqlalchemy.text("""
+                            SELECT m.model AS model
+                                 , hlmo.data AS model_data
+                                 , version.data AS version
+                                 , hlmo.highlevel AS id
+                              FROM highlevel_model hlmo
+                              JOIN model m
+                                ON m.id = hlmo.model
+                              JOIN version
+                                ON version.id = hlmo.version
+                             WHERE hlmo.highlevel IN :ids
+                               AND m.status = 'show'
+                        """), {
+                            'ids': tuple(i['id'] for i in data_list)
+                        })
 
-                        json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
+
+                    # consolidate the different models for each hlid into dicts
+                    highlevel_models = defaultdict(dict)
+                    for row in result_inner.fetchall():
+                        model, model_data, version, hlid = row['model'], row['model_data'], row['version'], row['id']
+                        model_data['version'] = version
+                        highlevel_models[hlid][model] = model_data
+
+
+                    # create final json for each hlid and dump it
+                    for row in data_list:
+                        mbid = str(row['mbid'])
+                        hlid = row['id']
+                        hl_data = {
+                            'metadata': row['metadata'],
+                            'highlevel': highlevel_models[hlid],
+                        }
+
+                        json_filename = '{mbid}-{no}.json'.format(mbid=mbid, no=mbid_occurences[mbid])
                         dump_tempfile = os.path.join(temp_dir, json_filename)
                         with open(dump_tempfile, "w") as f:
-                            f.write(json)
+                            f.write(json.dumps(hl_data, sort_keys=True))
                         tar.add(dump_tempfile, arcname=os.path.join(
                             archive_name, "highlevel", mbid[0:1], mbid[0:2], json_filename))
                         os.unlink(dump_tempfile)

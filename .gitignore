@@ -24,9 +24,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Configuration
-custom_config.py
-ve
-*.swp
 hl_extractor/streaming_extractor_music_svm
 hl_extractor/svm_models
 hl_extractor/profile.conf

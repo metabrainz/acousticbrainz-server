@@ -1,6 +1,7 @@
 from db.testing import DatabaseTestCase
 from db import dump
-import db
+from db.dump import _TABLES
+
 import os.path
 import tempfile
 import shutil
@@ -25,7 +26,7 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         id1 = dump._create_new_inc_dump_record()[0]
         path = dump.dump_db(self.temp_dir)
         self.reset_db()
-        dump.import_db_dump(path)
+        dump.import_db_dump(path, _TABLES)
         self.assertEqual(dump.list_incremental_dumps()[0][0], id1)
         id2 = dump._create_new_inc_dump_record()[0]
         self.assertGreater(id2, id1)

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import logging
 import os
 import sys
 
@@ -23,6 +24,7 @@ ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 cli.add_command(shell_command)
 
+logging.basicConfig(level=logging.INFO)
 
 @cli.command()
 @click.option("--host", "-h", default="0.0.0.0", show_default=True)
@@ -79,7 +81,7 @@ def init_db(archive, force, skip_create_db=False):
 
     if archive:
         print('Importing data...')
-        db.dump.import_db_dump(archive)
+        db.dump.import_dump(archive)
     else:
         print('Skipping data importing.')
         print('Loading fixtures...')
@@ -108,6 +110,17 @@ def import_data(archive, drop_constraints=False):
 
     print('Importing data...')
     db.dump.import_db_dump(archive)
+    print('Done!')
+
+
+@cli.command()
+@click.argument("archive", type=click.Path(exists=True))
+def import_dataset_data(archive):
+    """Imports dataset dump into the database."""
+
+    print('Importing dataset data...')
+    db.dump.import_datasets_dump(archive)
+    print('Done!')
 
     if drop_constraints:
         print('Creating primary key and foreign key constraints...')

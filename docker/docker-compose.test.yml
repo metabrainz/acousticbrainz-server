@@ -1,11 +1,15 @@
 # Docker Compose file for test
 version: "2"
+
+volumes:
+  postgres:
+
 services:
 
   db:
-    image: postgres:9.5.4
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
+    image: postgres:10.5
+    volumes:
+      - postgres:/var/lib/postgresql/data
     ports:
       - "15431:5432"
     command: postgres -F

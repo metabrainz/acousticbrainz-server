@@ -26,17 +26,3 @@ services:
 
   redis:
     image: redis:4.0-alpine
-
-  hl_extractor:
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile.dev
-    depends_on:
-      - db
-
-  dataset_evaluator:
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile.dev
-    depends_on:
-      - db

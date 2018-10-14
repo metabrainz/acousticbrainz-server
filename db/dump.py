@@ -294,15 +294,15 @@ def _copy_dataset_tables(location, tar, archive_name, start_time=None, end_time=
                     (", ".join(_DATASET_TABLES["dataset_snapshot"])))
         _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_snapshot")
 
-        # dataset_eval_jobs
-        _copy_table(cursor, location, "dataset_eval_jobs", "SELECT %s FROM dataset_eval_jobs" %
-                    (", ".join(_DATASET_TABLES["dataset_eval_jobs"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_eval_jobs")
-
         # dataset_eval_sets
         _copy_table(cursor, location, "dataset_eval_sets", "SELECT %s FROM dataset_eval_sets" %
                     (", ".join(_DATASET_TABLES["dataset_eval_sets"])))
         _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_eval_sets")
+
+        # dataset_eval_jobs
+        _copy_table(cursor, location, "dataset_eval_jobs", "SELECT %s FROM dataset_eval_jobs" %
+                    (", ".join(_DATASET_TABLES["dataset_eval_jobs"])))
+        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_eval_jobs")
 
         # challenge
         _copy_table(cursor, location, "challenge", "SELECT %s FROM challenge" %

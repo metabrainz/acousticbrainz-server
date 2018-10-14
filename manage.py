@@ -112,11 +112,22 @@ def import_data(archive, drop_constraints=False):
     db.dump.import_db_dump(archive)
     print('Done!')
 
+    if drop_constraints:
+        print('Creating primary key and foreign key constraints...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
+
 
 @cli.command()
+@click.option("--drop-constraints", "-d", is_flag=True, help="Drop primary and foreign keys before importing.")
 @click.argument("archive", type=click.Path(exists=True))
-def import_dataset_data(archive):
+def import_dataset_data(archive, drop_constraints=False):
     """Imports dataset dump into the database."""
+
+    if drop_constraints:
+        print('Dropping primary key and foreign key constraints...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_foreign_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_primary_keys.sql'))
 
     print('Importing dataset data...')
     db.dump.import_datasets_dump(archive)

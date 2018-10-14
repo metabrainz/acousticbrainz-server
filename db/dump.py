@@ -377,7 +377,7 @@ def _copy_tables(location, tar, archive_name, start_time=None, end_time=None):
         _add_file_to_tar_and_delete(location, archive_name, tar, "highlevel_meta")
 
         # highlevel_model
-        query = "SELECT %s FROM highlevel_model WHERE id IN (SELECT id FROM highlevel %s) ORDER BY id LIMIT {limit} OFFSET {offset}" \
+        query = "SELECT %s FROM highlevel_model WHERE highlevel IN (SELECT id FROM highlevel %s) ORDER BY id LIMIT {limit} OFFSET {offset}" \
                 % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
         _copy_table_into_multiple_files(cursor, "highlevel_model", query, tar, archive_name)
 

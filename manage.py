@@ -109,7 +109,7 @@ def import_data(archive, drop_constraints=False):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_primary_keys.sql'))
 
     print('Importing data...')
-    db.dump.import_db_dump(archive)
+    db.dump.import_dump(archive)
     print('Done!')
 
     if drop_constraints:

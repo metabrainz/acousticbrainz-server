@@ -77,7 +77,7 @@ def create_app(debug=None):
             namespace=app.config['REDIS_NAMESPACE'],
             ns_versions_loc=app.config['REDIS_NS_VERSIONS_LOCATION'])
     else:
-        raise Exception('One or more redis cache configuration options are missing from custom_config.py')
+        raise Exception('One or more redis cache configuration options are missing from config.py')
 
     # Extensions
     from flask_uuid import FlaskUUID

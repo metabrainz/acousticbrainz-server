@@ -38,10 +38,6 @@ In order to load a psql session, use the following command:
 
     ./develop.sh run --rm db psql -U acousticbrainz -h db
 
-### Manually
-
-Full installation instructions are available in [INSTALL.md](https://github.com/metabrainz/acousticbrainz-server/blob/master/INSTALL.md) file. After installing, continue the following steps.
-
 ## Configuration and development
 
 ### Building static files

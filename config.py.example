@@ -53,6 +53,8 @@ LOG_EMAIL = {
     "level": "ERROR",  
 }
 
+LOG_SENTRY_ENABLED = False
+
 LOG_SENTRY = {
     "dsn": "YOUR_SENTRY_DSN",
     "level": "WARNING",

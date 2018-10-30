@@ -55,8 +55,10 @@ def create_app(debug=None):
         app.init_debug_toolbar()
 
     # Logging
-    from webserver.loggers import init_loggers
-    init_loggers(app) # TODO: use CustomFlask.init_loggers here instead
+    app.init_loggers(file_config=app.config.get('LOG_FILE'),
+        email_config=app.config.get('LOG_EMAIL'),
+        sentry_config=app.config.get('LOG_SENTRY')
+    ) 
 
     # Database connection
     from db import init_db_engine

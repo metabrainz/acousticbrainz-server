@@ -55,10 +55,10 @@ LOG_EMAIL = {
 
 LOG_SENTRY_ENABLED = False
 
-LOG_SENTRY = {
-    "dsn": "YOUR_SENTRY_DSN",
-    "level": "WARNING",
-}
+#LOG_SENTRY = {
+#    "dsn": "YOUR_SENTRY_DSN",
+#    "level": "WARNING",
+#}
 
 # MISCELLANEOUS
 

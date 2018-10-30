@@ -36,16 +36,27 @@ REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__fil
 
 # LOGGING
 
-LOG_FILE_ENABLED = False
-LOG_FILE = "./acousticbrainz.log"
+LOG_FILE = {
+    "filename": "./acousticbrainz.log",
+    "max_bytes": 512 * 1024,  
+    "backup_count": 100,      
+}
 
-LOG_EMAIL_ENABLED = False
-LOG_EMAIL_TOPIC = "AcousticBrainz Webserver Failure"
-LOG_EMAIL_RECIPIENTS = []  # List of email addresses (strings)
+LOG_EMAIL = {
+    "mail_server": "localhost",
+    "mail_port": 25,
+    "mail_from_host": "acousticbrainz.org",
+    "log_email_recipients": [
+        "user1@example.org"
+    ],
+    "log_email_topic": "AcousticBrainz Failure",
+    "level": "ERROR",  
+}
 
-LOG_SENTRY_ENABLED = False
-SENTRY_DSN = ""
-
+LOG_SENTRY = {
+    "dsn": "YOUR_SENTRY_DSN",
+    "level": "WARNING",
+}
 
 # MISCELLANEOUS
 

@@ -120,13 +120,16 @@ def compute_stats():
     """Compute outstanding hourly statistics."""
     import datetime
     import pytz
+    print("Computing outstanding stats...")
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
-
+    print("Done!")
 
 @cli.command()
 def cache_stats():
     """Compute recent stats and add to cache."""
+    print("Computing recent stats...")
     db.stats.add_stats_to_cache()
+    print("Done!")
 
 
 @cli.command()

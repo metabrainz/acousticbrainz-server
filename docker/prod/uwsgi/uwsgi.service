@@ -2,6 +2,9 @@
 
 if [ "${CONTAINER_NAME}" = "acousticbrainz-web-prod" ]
 then
+    rm -f /etc/service/cron/down
+    sv restart cron
+
     exec uwsgi /etc/uwsgi/uwsgi.ini
 fi
 

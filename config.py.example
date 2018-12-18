@@ -35,38 +35,33 @@ REDIS_NAMESPACE = "AB"
 REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache_namespaces')
 
 # LOGGING
+# Uncomment any of the following logging stubs if you want to enable logging
+# during development. In general you shouldn't need to do this.
 
-LOG_FILE = {
-    "filename": "./acousticbrainz.log",
-    "max_bytes": 512 * 1024,  
-    "backup_count": 100,      
-}
+# LOG_FILE = {
+#    'filename': './acousticbrainz.log',
+#    'max_bytes': 512 * 1024, # optional
+#    'backup_count': 10, # optional
+# }
 
-LOG_EMAIL = {
-    "mail_server": "localhost",
-    "mail_port": 25,
-    "mail_from_host": "acousticbrainz.org",
-    "log_email_recipients": [
-        "user1@example.org"
-    ],
-    "log_email_topic": "AcousticBrainz Failure",
-    "level": "ERROR",  
-}
+# LOG_EMAIL = {
+#    'mail_server': 'localhost',
+#    'mail_port': 25,
+#    'mail_from_host': 'acousticbrainz.org',
+#    'log_email_recipients': [
+#        '',
+#    ],
+#    'log_email_topic': 'AcousticBrainz Error',
+#    'level': 'ERROR',
+# }
 
-LOG_SENTRY_ENABLED = False
-
-#LOG_SENTRY = {
-#    "dsn": "YOUR_SENTRY_DSN",
-#    "level": "WARNING",
-#}
+# LOG_SENTRY = {
+#    'dsn':'',
+#    'environment': 'development',
+#    'level': 'ERROR',
+# }
 
 # MISCELLANEOUS
-
-# Mail server
-# These variables need to be defined if you enabled log emails.
-SMTP_SERVER = "localhost"
-SMTP_PORT = 25
-MAIL_FROM_DOMAIN = "acousticbrainz.org"
 
 DATASET_DIR = "/data/datasets"
 FILE_STORAGE_DIR = "/data/files"

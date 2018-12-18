@@ -56,9 +56,9 @@ def create_app(debug=None):
 
     # Logging
     app.init_loggers(file_config=app.config.get('LOG_FILE'),
-        email_config=app.config.get('LOG_EMAIL'),
-        sentry_config=app.config.get('LOG_SENTRY')
-    ) 
+                     email_config=app.config.get('LOG_EMAIL'),
+                     sentry_config=app.config.get('LOG_SENTRY')
+                     )
 
     # Database connection
     from db import init_db_engine

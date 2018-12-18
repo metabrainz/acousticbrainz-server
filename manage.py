@@ -7,6 +7,7 @@ import sys
 import click
 from brainzutils import cache
 from flask import current_app
+from werkzeug.serving import run_simple
 from flask.cli import FlaskGroup, shell_command
 from shutil import copyfile
 
@@ -32,8 +33,12 @@ logging.basicConfig(level=logging.INFO)
 def runserver(host, port):
     """Run a development server."""
     reload_on_files = current_app.config['RELOAD_ON_FILES']
-    current_app.run(host=host, port=port,
-                    extra_files=reload_on_files)
+    run_simple(
+        hostname=host,
+        port=port,
+        application=current_app,
+        extra_files=reload_on_files
+    )
 
 
 @cli.command()

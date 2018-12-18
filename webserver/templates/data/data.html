@@ -4,17 +4,24 @@
   <h2 class="page-title">AcousticBrainz data</h2>
   <p><ul>
       <li><a href="#api-reference">API Reference</a>
+    <li><a href="#highlevel-data">Highlevel data and datasets</a>
       <li><a href="#sample-data">Sample data</a>
   </ul></p>
-  <p>
-    Before diving into the API details, please have a look at the
-    <a href="#sample-data">sample data</a> below.
-  </p>
 
   <a name="api-reference"></a>
   <h3>API Reference</h3>
-  <p>
+  <p>Data in AcousticBrainz can be read using our API. 
     <a href="https://acousticbrainz.readthedocs.io">The API reference can be found here.</a>
+  </p>
+
+  <a name="highlevel-data"></a>
+  <h3>High-level models and dataset</h3>
+  <p>
+  AcousticBrainz includes models to compute semantically meaningful music features. You can read more about
+  the <a href="{{ url_for('datasets.accuracy') }}">Accuracies and confusion matrices for default models</a>
+  </p>
+  <p>Additionally, we provide the functionality to design your own datasets and use them to build new models
+  that can be integrated into the data that AcousticBrainz computes.
   </p>
 
   <h3 id="sample-data">Sample data</h3>

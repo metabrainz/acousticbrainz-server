@@ -59,7 +59,7 @@ RUN git clone https://github.com/MTG/essentia /tmp/essentia \
     && ./waf \
     && ./waf install \
     && ldconfig \
-    && cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm /code/hl_extractor/streaming_extractor_music_svm \
+    && cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm /usr/local/bin \
     && cd / && rm -r /tmp/essentia
 
 # SVM models

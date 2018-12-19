@@ -23,7 +23,8 @@ DEFAULT_NUM_THREADS = 1
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 BASE_DIR = os.path.dirname(__file__)
-HIGH_LEVEL_EXTRACTOR_BINARY = os.path.join(BASE_DIR, "streaming_extractor_music_svm")
+BIN_PATH = "/usr/local/bin"
+HIGH_LEVEL_EXTRACTOR_BINARY = os.path.join(BIN_PATH, "essentia_streaming_extractor_music_svm")
 
 PROFILE_CONF_TEMPLATE = os.path.join(BASE_DIR, "profile.conf.in")
 PROFILE_CONF = os.path.join(BASE_DIR, "profile.conf")
@@ -60,7 +61,7 @@ class HighLevel(Thread):
 
         fnull = open(os.devnull, 'w')
         try:
-            subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY),
+            subprocess.check_call([HIGH_LEVEL_EXTRACTOR_BINARY,
                                    name, out_file, PROFILE_CONF],
                                   stdout=fnull, stderr=fnull)
         except subprocess.CalledProcessError:

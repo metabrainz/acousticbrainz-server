@@ -100,7 +100,8 @@ def compute_stats(to_date):
 
         while next_date < to_date:
             stats = _count_submissions_to_date(connection, next_date)
-            _write_stats(connection, next_date, stats)
+            with connection.begin() as transaction:
+                _write_stats(connection, next_date, stats)
             next_date = _get_next_hour(next_date)
 
 

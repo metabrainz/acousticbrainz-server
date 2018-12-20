@@ -20,7 +20,7 @@ fi
 if [ "${CONTAINER_NAME}" = "acousticbrainz-cron-prod" ]
 then
     rm -f /etc/service/cron/down
-    sv restart cron
+    exec sv restart cron
 fi
 
 echo "init script has no clue which service to start. Set env var CONTAINER_NAME"

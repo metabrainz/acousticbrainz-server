@@ -39,11 +39,11 @@ MUSICBRAINZ_CLIENT_SECRET = '''{{template "KEY" "musicbrainz/client_secret"}}'''
 # Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
 COMPILE_LESS = False
 
-LOG_FILE_ENABLED = False
-LOG_FILE = "./acousticbrainz.log"
-
-LOG_SENTRY_ENABLED = True
-SENTRY_DSN = '''{{template "KEY" "sentry_dsn"}}'''
+LOG_SENTRY = {
+   'dsn':'''{{template "KEY" "sentry_dsn"}}''',
+   'environment': 'production',
+   'level': 'WARN',
+}
 
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
 FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''

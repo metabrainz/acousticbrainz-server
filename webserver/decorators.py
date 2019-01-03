@@ -15,6 +15,14 @@ def auth_required(f):
             raise Unauthorized
     return decorated
 
+def api_login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if current_user.is_authenticated:
+            return f(*args, **kwargs):
+        else: 
+            return jsonify(message = "Request is not authenticated") , 401
+    return decorated
 
 def crossdomain(origin='*', methods=None, headers=None,
                 max_age=21600, attach_to_all=True,

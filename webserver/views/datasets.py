@@ -5,6 +5,7 @@ from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
 from webserver.external import musicbrainz
 from webserver import flash, forms
+from webserver.decorators import api_login_required
 from utils import dataset_validator
 from collections import defaultdict
 import db.exceptions
@@ -202,7 +203,7 @@ def view_json(id):
 
 
 @datasets_bp.route("/create", methods=("GET", "POST"))
-@login_required
+@api_login_required
 def create():
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -230,7 +231,7 @@ def create():
 
 
 @datasets_bp.route("/import", methods=("GET", "POST"))
-@login_required
+@api_login_required
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
@@ -267,7 +268,7 @@ def _parse_dataset_csv(file):
 
 
 @datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", "POST"))
-@login_required
+@api_login_required
 def edit(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
@@ -304,7 +305,7 @@ def edit(dataset_id):
 
 
 @datasets_bp.route("/<uuid:dataset_id>/delete", methods=("GET", "POST"))
-@login_required
+@api_login_required
 def delete(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:

@@ -3,6 +3,10 @@ version: "2"
 
 volumes:
   postgres:
+  # root home dir in the postgres container to hold psql history
+  postgreshome:
+  # root home dir in the webserver container to hold ipython history
+  webhome:
 
 services:
 
@@ -10,6 +14,7 @@ services:
     image: postgres:10.5
     volumes:
       - postgres:/var/lib/postgresql/data
+      - postgreshome:/root
     ports:
       - "15432:5432"
 
@@ -21,6 +26,7 @@ services:
     volumes:
       - ../:/code
       - ../data/app:/data
+      - webhome:/root
     ports:
       - "8080:8080"
     depends_on:

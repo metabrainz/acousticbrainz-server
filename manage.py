@@ -7,6 +7,7 @@ import sys
 import click
 from brainzutils import cache
 import flask.cli
+from flask import current_app
 from flask.cli import FlaskGroup
 from shutil import copyfile
 

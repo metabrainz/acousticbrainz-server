@@ -10,10 +10,13 @@ Please report issues here: http://tickets.musicbrainz.org/browse/AB
 
 ### Docker
 
-You can use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server. Make sure docker and docker-compose are installed.
-Then copy two config files:
+We use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server. Ensure that you have these tools installed.
 
-1. `config.py.example` to `config.py`, you'll need to add your custom configs to this file.
+### Configuration
+
+Copy the following two configuration files:
+
+1. `config.py.example` to `config.py`
 2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
   In `profile.conf.in` you need to set the `models_essentia_git_sha` value.
   Unless you know what you are doing, this value should be **v2.1_beta1**
@@ -24,27 +27,37 @@ For convenience, we provide a script `develop.sh` which does the same as running
 
     docker-compose -f docker/docker-compose.yml -p acousticbrainz-server <args>
 
-Then, in order to download all the software and build and start the containers needed to run AcousticBrainz, use the following command:
+### Build and initial configuration
 
-#### Build
+Build the docker containers needed for AcousticBrainz by running the following:
 
-    ./develop.sh up --build
+    ./develop.sh build
 
-The first time you install acousticbrainz, you will need to initialize the AcousticBrainz database:
+The first time you install AcousticBrainz, you will need to initialize the AcousticBrainz database:
 
     ./develop.sh run --rm  webserver python2 manage.py init_db
+
+### Running 
+
+Start the webserver and other required services with:
+
+    ./develop.sh up 
+    
+You will be able to view your local AcousticBrainz server at http://localhost:8080
+
+## Development notes
+
+### Database
 
 In order to load a psql session, use the following command:
 
     ./develop.sh run --rm db psql -U acousticbrainz -h db
 
-## Configuration and development
-
 ### Building static files
 
 We use Gulp as our JavaScript/CSS build system.
 
-#### First-time installation
+#### First-time gulp setup
 For development, the first time that you install acousticbrainz you must install
 node packages in your local directory.
 

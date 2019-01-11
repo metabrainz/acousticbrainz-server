@@ -96,14 +96,14 @@ class DatasetsViewsTestCase(ServerTestCase):
 
     def test_create(self):
         resp = self.client.get(url_for("datasets.create"))
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
 
         resp = self.client.post(
             url_for("datasets.create"),
             headers={"Content-Type": "application/json"},
             data=json.dumps(self.test_data),
         )
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
 
         # With logged in user
         self.temporary_login(self.test_user_id)
@@ -123,19 +123,19 @@ class DatasetsViewsTestCase(ServerTestCase):
         # Should redirect to login page even if trying to edit dataset that
         # doesn't exist.
         resp = self.client.get(url_for("datasets.edit", dataset_id=self.test_uuid))
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
 
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         # Trying to edit without login
         resp = self.client.get(url_for("datasets.edit", dataset_id=dataset_id))
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
         resp = self.client.post(
             url_for("datasets.edit", dataset_id=dataset_id),
             headers={"Content-Type": "application/json"},
             data=json.dumps(self.test_data),
         )
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
 
         # Editing using another user
         another_user_id = user.create("another_tester")
@@ -165,15 +165,15 @@ class DatasetsViewsTestCase(ServerTestCase):
         # Should redirect to login page even if trying to delete dataset that
         # doesn't exist.
         resp = self.client.get(url_for("datasets.delete", dataset_id=self.test_uuid))
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
 
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         # Trying to delete without login
         resp = self.client.get(url_for("datasets.delete", dataset_id=dataset_id))
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
         resp = self.client.post(url_for("datasets.delete", dataset_id=dataset_id))
-        self.assertStatus(resp, 302)
+        self.assertStatus(resp, 401)
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 1)
 
         # Deleting using another user

@@ -19,7 +19,7 @@ def api_login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if current_user.is_authenticated:
-            return f(*args, **kwargs):
+            return f(*args, **kwargs)
         else: 
             return jsonify(message = "Request is not authenticated") , 401
     return decorated

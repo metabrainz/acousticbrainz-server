@@ -53,6 +53,9 @@ function run_tests {
 
     # run tests
     echo "running tests"
+    # NOTE: we specify container name here so that we have a consistent name, allowing
+    # us to copy over the test results later in the script. The container name contains
+    # a reference to the jenkins tag, so it won't conflict with other test runs.
     docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME run  --name $TEST_CONTAINER_REF $TEST_CONTAINER_NAME \
                 dockerize \
                 -wait tcp://db:5432 -timeout 60s \

@@ -22,6 +22,8 @@ services:
     build:
       context: ..
       dockerfile: ./docker/Dockerfile.dev
+    environment:
+      FLASK_ENV: development
     command: python manage.py runserver
     volumes:
       - ../:/code

@@ -6,9 +6,9 @@ import sys
 
 import click
 from brainzutils import cache
+import flask.cli
 from flask import current_app
-from werkzeug.serving import run_simple
-from flask.cli import FlaskGroup, shell_command
+from flask.cli import FlaskGroup
 from shutil import copyfile
 
 import db
@@ -18,27 +18,49 @@ import db.exceptions
 import db.stats
 import db.user
 import webserver
-from db.testing import DatabaseTestCase
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
-cli.add_command(shell_command)
 
 logging.basicConfig(level=logging.INFO)
 
+
 @cli.command()
-@click.option("--host", "-h", default="0.0.0.0", show_default=True)
-@click.option("--port", "-p", default=8080, show_default=True)
-def runserver(host, port):
-    """Run a development server."""
-    reload_on_files = current_app.config['RELOAD_ON_FILES']
-    run_simple(
-        hostname=host,
-        port=port,
-        application=current_app,
-        extra_files=reload_on_files
-    )
+@click.option('--host', '-h', default='0.0.0.0',
+              help='The interface to bind to.')
+@click.option('--port', '-p', default=8080,
+              help='The port to bind to.')
+@click.option('--debugger/--no-debugger', default=None,
+              help='Enable or disable the debugger. By default the debugger '
+              'is active if debug is enabled.')
+@flask.cli.pass_script_info
+def runserver(info, host, port, debugger):
+    """Run a local development server.
+    This server is for development purposes only. It does not provide
+    the stability, security, or performance of production WSGI servers.
+    The reloader and debugger are enabled by default if
+    FLASK_ENV=development or FLASK_DEBUG=1.
+
+    This is a copy of flask.cli.run_command, which passes the additional
+    argument `extra_files` to `run_simple`. Some defaults are set that are
+    available as options in the original method."""
+
+    debug = flask.helpers.get_debug_flag()
+    reload = debug
+
+    if debugger is None:
+        debugger = debug
+
+    eager_loading = not reload
+
+    flask.cli.show_server_banner(flask.helpers.get_env(), debug, info.app_import_path, eager_loading)
+    app = flask.cli.DispatchingApp(info.load_app, use_eager_loading=eager_loading)
+    reload_on_files = info.load_app().config['RELOAD_ON_FILES']
+
+    from werkzeug.serving import run_simple
+    run_simple(host, port, app, use_reloader=reload, use_debugger=debugger,
+               extra_files=reload_on_files)
 
 
 @cli.command()

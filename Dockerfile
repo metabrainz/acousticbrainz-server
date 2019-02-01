@@ -1,9 +1,9 @@
-FROM metabrainz/python:2.7
+FROM metabrainz/python:2.7 AS acousticbrainz-base
 
 ARG deploy_env
 
 # Dockerize
-ENV DOCKERIZE_VERSION v0.2.0
+ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
@@ -61,28 +61,18 @@ RUN git clone https://github.com/MTG/essentia /tmp/essentia \
     && ./waf \
     && ./waf install \
     && ldconfig \
-    && cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm /code/hl_extractor/streaming_extractor_music_svm \
+    && cp /tmp/essentia/build/src/examples/essentia_streaming_extractor_music_svm /usr/local/bin \
     && cd / && rm -r /tmp/essentia
 
 # SVM models
 RUN mkdir /tmp/models \
     && cd /tmp/models \
-    && curl --silent -o models.tar.gz http://essentia.upf.edu/documentation/svm_models/essentia-extractor-svm_models-v2.1_beta1.tar.gz \
+    && curl -L --silent -o models.tar.gz https://essentia.upf.edu/documentation/svm_models/essentia-extractor-svm_models-v2.1_beta1.tar.gz \
     && tar -xvzf models.tar.gz \
     && mv /tmp/models/v2.1_beta1/svm_models /data/ \
     && cd / && rm -r /tmp/models
 
-
-# PostgreSQL client
-ENV PG_MAJOR 10
-RUN add-apt-repository 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main'
-RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends postgresql-client-$PG_MAJOR \
-    && rm -rf /var/lib/apt/lists/*
-
 # Python dependencies
-RUN pip install uWSGI==2.0.17.1
 RUN mkdir /code/docs/
 COPY docs/requirements.txt /code/docs/requirements.txt
 COPY requirements.txt /code/requirements.txt
@@ -90,6 +80,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY package.json /code
 RUN npm install
+
+
+FROM acousticbrainz-base AS acousticbrainz-dev
+
+COPY . /code
+
+
+FROM acousticbrainz-base AS acousticbrainz-prod
+
+RUN pip install uWSGI==2.0.17.1
 
 # Consul template service is already set up, just need to copy the configuration
 COPY ./docker/consul-template.conf /etc/consul-template.conf

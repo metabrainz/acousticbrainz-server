@@ -4,7 +4,6 @@ Flask-Admin == 1.5.3
 Flask-Login == 0.4.1
 Flask-SQLAlchemy == 2.3.2
 Flask-Testing == 0.7.1
-Flask-UUID == 0.2
 Flask-WTF == 0.14.2
 Jinja2 == 2.10
 mock == 2.0.0
@@ -16,8 +15,6 @@ pytest==4.1.1
 pytest-cov==2.6.1
 pyyaml == 3.13
 rauth == 0.7.3
-raven[flask] == 6.10.0
 setproctitle == 1.1.10
 six == 1.11.0
-SQLAlchemy == 1.2.17
 -r docs/requirements.txt

@@ -26,7 +26,7 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 logging.basicConfig(level=logging.INFO)
 
 
-@cli.command()
+@cli.command(name='runserver')
 @click.option('--host', '-h', default='0.0.0.0',
               help='The interface to bind to.')
 @click.option('--port', '-p', default=8080,
@@ -63,7 +63,7 @@ def runserver(info, host, port, debugger):
                extra_files=reload_on_files)
 
 
-@cli.command()
+@cli.command(name='init_db')
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
 @click.argument("archive", type=click.Path(exists=True), required=False)
 @click.option("--skip-create-db", "-s", is_flag=True, help="Skip database creation step.")
@@ -125,7 +125,7 @@ def init_db(archive, force, skip_create_db=False):
     print("Done!")
 
 
-@cli.command()
+@cli.command(name='import_data')
 @click.option("--drop-constraints", "-d", is_flag=True, help="Drop primary and foreign keys before importing.")
 @click.argument("archive", type=click.Path(exists=True))
 def import_data(archive, drop_constraints=False):
@@ -145,7 +145,7 @@ def import_data(archive, drop_constraints=False):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
 
 
-@cli.command()
+@cli.command(name='import_dataset_data')
 @click.option("--drop-constraints", "-d", is_flag=True, help="Drop primary and foreign keys before importing.")
 @click.argument("archive", type=click.Path(exists=True))
 def import_dataset_data(archive, drop_constraints=False):
@@ -166,7 +166,7 @@ def import_dataset_data(archive, drop_constraints=False):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
 
 
-@cli.command()
+@cli.command(name='compute_stats')
 def compute_stats():
     """Compute outstanding hourly statistics."""
     import datetime
@@ -174,19 +174,19 @@ def compute_stats():
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
 
 
-@cli.command()
+@cli.command(name='cache_stats')
 def cache_stats():
     """Compute recent stats and add to cache."""
     db.stats.add_stats_to_cache()
 
 
-@cli.command()
+@cli.command(name='clear_cache')
 def clear_cache():
     """Clear the cache."""
     cache.flush_all()
 
 
-@cli.command()
+@cli.command(name='add_admin')
 @click.argument("username")
 @click.option("--force", "-f", is_flag=True, help="Create user if doesn't exist.")
 def add_admin(username, force=False):
@@ -199,7 +199,7 @@ def add_admin(username, force=False):
         sys.exit(1)
 
 
-@cli.command()
+@cli.command(name='remove_admin')
 @click.argument("username")
 def remove_admin(username):
     """Remove admin privileges from a user."""
@@ -210,14 +210,15 @@ def remove_admin(username):
         click.echo("Error: %s" % e, err=True)
         sys.exit(1)
 
-@cli.command()
+
+@cli.command(name='update_sequences')
 def update_sequences():
     print('Updating database sequences...')
     db.dump.update_sequences()
     print('Done!')
 
 
-@cli.command()
+@cli.command(name='toggle_site_status')
 def toggle_site_status():
     """ Bring the site down if it is up, bring it up if down.
 

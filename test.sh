@@ -33,7 +33,7 @@ function build {
 }
 
 function bring_up_db {
-    docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME up -d db redis hl_extractor dataset_evaluator
+    docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME up -d db redis
 }
 
 function setup {

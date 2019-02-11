@@ -1,26 +1,20 @@
 git+https://github.com/metabrainz/brainzutils-python.git@v1.7.0
-click == 6.7
-coverage == 4.5.1
-Fabric == 1.14.0
-Flask-Admin == 1.5.1
+coverage == 4.5.2
+Flask-Admin == 1.5.3
 Flask-Login == 0.4.1
 Flask-SQLAlchemy == 2.3.2
 Flask-Testing == 0.7.1
-Flask-UUID == 0.2
 Flask-WTF == 0.14.2
 Jinja2 == 2.10
 mock == 2.0.0
 musicbrainzngs == 0.6
-ndg-httpsclient==0.4.4
-psycopg2 == 2.7.5
-pytz==2018.3
-pytest==3.4.2
-pytest-cov==2.5.1
-pyyaml == 3.11
+ndg-httpsclient==0.5.1
+psycopg2 == 2.7.7
+pytz==2018.9
+pytest==4.1.1
+pytest-cov==2.6.1
+pyyaml == 3.13
 rauth == 0.7.3
-raven[flask] == 6.6.0
 setproctitle == 1.1.10
 six == 1.11.0
-SQLAlchemy == 1.2.11
-Werkzeug == 0.14.1
 -r docs/requirements.txt

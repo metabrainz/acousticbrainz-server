@@ -11,7 +11,7 @@ import webserver
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 
 
-@cli.command()
+@cli.command(name='full')
 @click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
               help="Directory where dumps need to be created")
 @click.option("--threads", "-t", type=int)
@@ -38,7 +38,7 @@ def full(ctx, location, threads, rotate):
     ctx.invoke(json, location=location, rotate=rotate)
 
 
-@cli.command()
+@cli.command(name='full_db')
 @click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
               help="Directory where dumps need to be created")
 @click.option("--threads", "-t", type=int)
@@ -54,7 +54,7 @@ def full_db(location, threads, rotate):
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-@cli.command()
+@cli.command(name='json')
 @click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
               help="Directory where dumps need to be created")
 @click.option("--rotate", "-r", is_flag=True)
@@ -93,7 +93,7 @@ def _json_highlevel(location, rotate):
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-@cli.command()
+@cli.command(name='incremental')
 @click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
               help="Directory where dumps need to be created")
 @click.option("--id", type=int)
@@ -124,7 +124,7 @@ def _incremental_json_highlevel(location, id):
     print("Done! Created: %s\n" % path)
 
 
-@cli.command()
+@cli.command(name='incremental_info')
 @click.option("--all", "-a", is_flag=True, help="Print info about all incremental dumps.")
 def incremental_info(all=False):
     """Prints information about incremental dumps: id, timestamp.
@@ -177,7 +177,7 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
             os.remove(entry)
 
 
-@cli.command()
+@cli.command(name='full_dataset_dump')
 @click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
               help="Directory where dumps need to be created")
 @click.option("--threads", "-t", type=int)

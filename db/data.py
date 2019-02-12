@@ -61,6 +61,55 @@ def _has_key(dictionary, key):
         dictionary = dictionary[part]
     return True
 
+def show_failed_rows():
+    """
+        checks for rows in highlevel table which havent been processed.
+        Returns:
+        (id, mbid, offset) of unprocessed rows sorted by submission date
+        where
+        1. Id : id of the failed row in highlevel table, 
+        2. Mbid : Musicbrainz Identifier, 
+        3. Offset : It is the position of the failed row in a set of rows
+                    having same mbids  
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+                        SELECT id,mbid,
+                    ROW_NUMBER ()
+                          OVER (PARTITION BY mbid) RowNum
+                          FROM highlevel
+                     LEFT JOIN highlevel_meta
+                         USING (id)
+                         WHERE highlevel_meta.id is null
+                      ORDER BY submitted
+                    """)
+        result = connection.execute(query).fetchall()
+
+        result = [{row[0]: (row[1], int(row[2]))} for row in result]
+        
+    return result
+
+
+def remove_failed_rows():
+    """
+        Function for for removing rows in highlevel table which havent
+        been processed.
+    """
+
+    with db.engine.connect() as connection:
+        with connection.begin() as transaction:
+            query = text("""
+                        DELETE
+                          FROM highlevel
+                         WHERE highlevel.id
+                            IN (SELECT highlevel.id
+                                  FROM highlevel
+                                  LEFT JOIN highlevel_meta
+                                 USING (id)
+                                 WHERE highlevel_meta.id is null
+                               )
+                        """)
+            connection.execute(query)
 
 def sanity_check_data(data):
     """Checks if data about the recording contains all required keys.

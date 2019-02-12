@@ -14,6 +14,7 @@ from shutil import copyfile
 import db
 import db.dump
 import db.dump_manage
+import db.manage_highlevel
 import db.exceptions
 import db.stats
 import db.user
@@ -241,6 +242,7 @@ def toggle_site_status():
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
+cli.add_command(db.manage_highlevel.cli, name="highlevel")
 
 if __name__ == '__main__':
     cli()

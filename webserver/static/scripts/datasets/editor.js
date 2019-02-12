@@ -67,7 +67,7 @@ var Dataset = React.createClass({
                 "in data-edit-id property.");
                 return;
             }
-            $.get("/datasets/" + container.dataset.editId + "/json", function(result) {
+            $.get("/datasets/service/" + container.dataset.editId + "/json", function(result) {
                 if (this.isMounted()) { this.setState({data: result}); }
             }.bind(this));
         } else {
@@ -232,9 +232,9 @@ var DatasetControlButtons = React.createClass({
         });
         var submitEndpoint = null;
         if (this.props.mode == MODE_CREATE) {
-            submitEndpoint = "/datasets/create";
+            submitEndpoint = "/datasets/service/create";
         } else { // MODE_EDIT
-            submitEndpoint = "/datasets/" + container.dataset.editId + "/edit";
+            submitEndpoint = "/datasets/service/" + container.dataset.editId + "/edit";
         }
         var so = this;
         $.ajax({

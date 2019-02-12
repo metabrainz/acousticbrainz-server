@@ -74,36 +74,30 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.temporary_login(self.test_user_id)
 
     def test_eval_job_delete(self):
-        resp = self.client.delete("/datasets/%s/%s" % (self.test_uuid, self.test_uuid))
+        resp = self.client.delete(url_for("datasets.eval_job", dataset_id=self.test_uuid, job_id=self.test_uuid))
         self.assert404(resp)
 
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
-        resp = self.client.delete("/datasets/%s/%s" % (dataset_id, self.test_uuid))
+        resp = self.client.delete(url_for("datasets.eval_job", dataset_id=dataset_id, job_id=self.test_uuid))
         self.assert404(resp)
 
         job_id = dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL)
 
-        resp = self.client.delete("/datasets/%s/%s" % (dataset_id, job_id))
+        resp = self.client.delete(url_for("datasets.eval_job", dataset_id=dataset_id, job_id=job_id))
         self.assert401(resp)
+        self.assertEqual(resp.json, {'success': False, 'error': 'You are not allowed to delete this evaluation job.'})
 
         # As an author
         self.temporary_login(self.test_user_id)
-        resp = self.client.delete("/datasets/%s/%s" % (dataset_id, job_id))
+        resp = self.client.delete(url_for("datasets.eval_job", dataset_id=dataset_id, job_id=job_id))
         self.assert200(resp)
 
         self.assertIsNone(dataset_eval.get_job(job_id))
 
     def test_create(self):
         resp = self.client.get(url_for("datasets.create"))
-        self.assertStatus(resp, 401)
-
-        resp = self.client.post(
-            url_for("datasets.create"),
-            headers={"Content-Type": "application/json"},
-            data=json.dumps(self.test_data),
-        )
-        self.assertStatus(resp, 401)
+        self.assertStatus(resp, 302)
 
         # With logged in user
         self.temporary_login(self.test_user_id)
@@ -111,8 +105,21 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.create"))
         self.assert200(resp)
 
+    def test_create_service(self):
+
         resp = self.client.post(
-            url_for("datasets.create"),
+            url_for("datasets.create_service"),
+            headers={"Content-Type": "application/json"},
+            data=json.dumps(self.test_data),
+        )
+        self.assert401(resp)
+        self.assertTrue(resp.json["message"].startswith("The server could not verify that you are authorized"))
+
+        # With logged in user
+        self.temporary_login(self.test_user_id)
+
+        resp = self.client.post(
+            url_for("datasets.create_service"),
             headers={"Content-Type": "application/json"},
             data=json.dumps(self.test_data),
         )
@@ -123,19 +130,13 @@ class DatasetsViewsTestCase(ServerTestCase):
         # Should redirect to login page even if trying to edit dataset that
         # doesn't exist.
         resp = self.client.get(url_for("datasets.edit", dataset_id=self.test_uuid))
-        self.assertStatus(resp, 401)
+        self.assertStatus(resp, 302)
 
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         # Trying to edit without login
         resp = self.client.get(url_for("datasets.edit", dataset_id=dataset_id))
-        self.assertStatus(resp, 401)
-        resp = self.client.post(
-            url_for("datasets.edit", dataset_id=dataset_id),
-            headers={"Content-Type": "application/json"},
-            data=json.dumps(self.test_data),
-        )
-        self.assertStatus(resp, 401)
+        self.assertStatus(resp, 302)
 
         # Editing using another user
         another_user_id = user.create("another_tester")
@@ -143,8 +144,31 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.temporary_login(another_user_id)
         resp = self.client.get(url_for("datasets.edit", dataset_id=dataset_id))
         self.assert401(resp)
+
+        # Editing properly
+        self.temporary_login(self.test_user_id)
+        resp = self.client.get(url_for("datasets.edit", dataset_id=dataset_id))
+        self.assert200(resp)
+
+    def test_edit_service(self):
+
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+
+        # Trying to edit without login
         resp = self.client.post(
-            url_for("datasets.edit", dataset_id=dataset_id),
+            url_for("datasets.edit_service", dataset_id=dataset_id),
+            headers={"Content-Type": "application/json"},
+            data=json.dumps(self.test_data),
+        )
+        self.assert401(resp)
+        self.assertTrue(resp.json["message"].startswith("The server could not verify that you are authorized"))
+
+        # Editing using another user
+        another_user_id = user.create("another_tester")
+        user.agree_to_gdpr("another_tester")
+        self.temporary_login(another_user_id)
+        resp = self.client.post(
+            url_for("datasets.edit_service", dataset_id=dataset_id),
             headers={"Content-Type": "application/json"},
             data=json.dumps(self.test_data),
         )
@@ -152,10 +176,8 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         # Editing properly
         self.temporary_login(self.test_user_id)
-        resp = self.client.get(url_for("datasets.edit", dataset_id=dataset_id))
-        self.assert200(resp)
         resp = self.client.post(
-            url_for("datasets.edit", dataset_id=dataset_id),
+            url_for("datasets.edit_service", dataset_id=dataset_id),
             headers={"Content-Type": "application/json"},
             data=json.dumps(self.test_data),
         )
@@ -165,15 +187,15 @@ class DatasetsViewsTestCase(ServerTestCase):
         # Should redirect to login page even if trying to delete dataset that
         # doesn't exist.
         resp = self.client.get(url_for("datasets.delete", dataset_id=self.test_uuid))
-        self.assertStatus(resp, 401)
+        self.assertStatus(resp, 302)
 
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         # Trying to delete without login
         resp = self.client.get(url_for("datasets.delete", dataset_id=dataset_id))
-        self.assertStatus(resp, 401)
+        self.assertStatus(resp, 302)
         resp = self.client.post(url_for("datasets.delete", dataset_id=dataset_id))
-        self.assertStatus(resp, 401)
+        self.assertStatus(resp, 302)
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 1)
 
         # Deleting using another user
@@ -181,9 +203,9 @@ class DatasetsViewsTestCase(ServerTestCase):
         user.agree_to_gdpr("another_tester")
         self.temporary_login(another_user_id)
         resp = self.client.get(url_for("datasets.delete", dataset_id=dataset_id))
-        self.assert401(resp)
+        self.assert403(resp)
         resp = self.client.post(url_for("datasets.delete", dataset_id=dataset_id))
-        self.assert401(resp)
+        self.assert403(resp)
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 1)
 
         # Editing properly

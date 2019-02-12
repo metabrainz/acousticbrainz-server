@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
+from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
 from webserver.external import musicbrainz
 from webserver import flash, forms
-from webserver.decorators import api_login_required
+from webserver.decorators import auth_required
 from utils import dataset_validator
 from collections import defaultdict
 import db.exceptions
@@ -15,6 +15,8 @@ import db.user
 import csv
 import math
 import six
+
+from webserver.views.api.exceptions import APIUnauthorized
 
 datasets_bp = Blueprint("datasets", __name__)
 
@@ -105,7 +107,7 @@ def eval_info(dataset_id):
     )
 
 
-@datasets_bp.route("/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
+@datasets_bp.route("/service/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
 def eval_job(dataset_id, job_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
@@ -132,7 +134,7 @@ def eval_job(dataset_id, job_id):
         return jsonify({"success": True})
 
 
-@datasets_bp.route("/<uuid:dataset_id>/evaluation/json")
+@datasets_bp.route("/service/<uuid:dataset_id>/evaluation/json")
 def eval_jobs(dataset_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
@@ -184,7 +186,7 @@ def evaluate(dataset_id):
     return render_template("datasets/evaluate.html", dataset=ds, form=form)
 
 
-@datasets_bp.route("/<uuid:id>/json")
+@datasets_bp.route("/service/<uuid:id>/json")
 def view_json(id):
     dataset = get_dataset(id)
     dataset_clean = {
@@ -202,9 +204,15 @@ def view_json(id):
     return jsonify(dataset_clean)
 
 
-@datasets_bp.route("/create", methods=("GET", "POST"))
-@api_login_required
+@datasets_bp.route("/create", methods=("GET", ))
+@login_required
 def create():
+    return render_template("datasets/edit.html", mode="create")
+
+
+@datasets_bp.route("/service/create", methods=("POST", ))
+@auth_required
+def create_service():
     if request.method == "POST":
         dataset_dict = request.get_json()
         if not dataset_dict:
@@ -226,12 +234,9 @@ def create():
             dataset_id=dataset_id,
         )
 
-    else:  # GET
-        return render_template("datasets/edit.html", mode="create")
-
 
 @datasets_bp.route("/import", methods=("GET", "POST"))
-@api_login_required
+@login_required
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
@@ -268,11 +273,26 @@ def _parse_dataset_csv(file):
 
 
 @datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", "POST"))
-@api_login_required
+@login_required
 def edit(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
+
+    return render_template(
+        "datasets/edit.html",
+        mode="edit",
+        dataset_id=str(dataset_id),
+        dataset_name=ds["name"],
+    )
+
+
+@datasets_bp.route("/service/<uuid:dataset_id>/edit", methods=("POST", ))
+@auth_required
+def edit_service(dataset_id):
+    ds = get_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise APIUnauthorized("You can't edit this dataset.")
 
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -295,24 +315,13 @@ def edit(dataset_id):
             dataset_id=dataset_id,
         )
 
-    else:  # GET
-        return render_template(
-            "datasets/edit.html",
-            mode="edit",
-            dataset_id=str(dataset_id),
-            dataset_name=ds["name"],
-        )
-
 
 @datasets_bp.route("/<uuid:dataset_id>/delete", methods=("GET", "POST"))
-@api_login_required
+@login_required
 def delete(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
-        return jsonify(
-            error=True,
-            description="You can't delete this dataset.",
-        ), 401  # Unauthorized
+        raise Forbidden("You can't delete this dataset.")
 
     if request.method == "POST":
         db.dataset.delete(ds["id"])

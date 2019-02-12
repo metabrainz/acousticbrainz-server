@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template, jsonify
-from flask_login import current_user, login_required
+from flask_login import current_user
 from werkzeug.exceptions import NotFound
-from webserver.decorators import api_login_required
+from webserver.decorators import auth_required
 import db.user
 import db.dataset
 import db.api_key
@@ -36,7 +36,7 @@ def profile(musicbrainz_id):
 
 
 @user_bp.route("/user/generate-api-key", methods=['POST'])
-@api_login_required
+@auth_required
 def generate_api_key():
     """This endpoint revokes all keys owned by current user and generates a new one."""
     db.api_key.revoke_all(current_user.id)

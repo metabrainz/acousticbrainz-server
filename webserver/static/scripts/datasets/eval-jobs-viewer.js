@@ -43,7 +43,7 @@ var EvaluationJobsViewer = React.createClass({
                 "in data-dataset-id property.");
             return;
         }
-        $.get("/datasets/" + container.dataset.datasetId + "/evaluation/json", function(data) {
+        $.get("/datasets/service/" + container.dataset.datasetId + "/evaluation/json", function(data) {
             if (this.isMounted()) {
                 let isAuthorViewing = false;
                 if (user !== null) {
@@ -109,7 +109,7 @@ var EvaluationJobsViewer = React.createClass({
     handleJobDelete: function (jobID, index) {
         $.ajax({
             type: "DELETE",
-            url: "/datasets/" + container.dataset.datasetId + "/" + jobID,
+            url: "/datasets/service/" + container.dataset.datasetId + "/" + jobID,
             success: function (data, textStatus, jqXHR) {
                 console.log("Evaluation job " + jobID + " has been removed from the queue.")
             },

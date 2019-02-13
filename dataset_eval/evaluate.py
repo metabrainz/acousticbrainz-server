@@ -1,48 +1,45 @@
 from __future__ import print_function
 
-import sys
+import json
+import logging
 import os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-import config
+import shutil
+import tempfile
+import time
 
-from dataset_eval import gaia_wrapper
-from dataset_eval import artistfilter
 import gaia2.fastyaml as yaml
+from flask import current_app
+
 import db
 import db.data
 import db.dataset
 import db.dataset_eval
 import db.exceptions
 import utils.path
-import utils.models
-import tempfile
-import logging
-import shutil
-import time
-import json
-import os
+from dataset_eval import artistfilter
+from dataset_eval import gaia_wrapper
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
-HISTORY_STORAGE_DIR = os.path.join(config.FILE_STORAGE_DIR, "history")
 
 
 def main():
     logging.info("Starting dataset evaluator...")
+    dataset_dir = current_app.config["DATASET_DIR"]
+    storage_dir = os.path.join(current_app.config["FILE_STORAGE_DIR"], "history")
     while True:
-        db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
         pending_job = db.dataset_eval.get_next_pending_job()
         if pending_job:
             logging.info("Processing job %s..." % pending_job["id"])
-            evaluate_dataset(pending_job)
+            evaluate_dataset(pending_job, dataset_dir, storage_dir)
         else:
             logging.info("No pending datasets. Sleeping %s seconds." % SLEEP_DURATION)
             time.sleep(SLEEP_DURATION)
 
 
-def evaluate_dataset(eval_job):
+def evaluate_dataset(eval_job, dataset_dir, storage_dir):
     db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_RUNNING)
 
-    eval_location = os.path.join(os.path.abspath(config.DATASET_DIR), eval_job["id"])
+    eval_location = os.path.join(os.path.abspath(dataset_dir), eval_job["id"])
     utils.path.create_path(eval_location)
     temp_dir = tempfile.mkdtemp()
 
@@ -70,7 +67,7 @@ def evaluate_dataset(eval_job):
             filelist_file=filelist_path,
         )
         logging.info("Saving results...")
-        save_history_file(results["history_path"], eval_job["id"])
+        save_history_file(storage_dir, results["history_path"], eval_job["id"])
         db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
             "project_path": eval_location,
             "parameters": results["parameters"],
@@ -170,11 +167,9 @@ def extract_recordings(dataset):
     return recordings
 
 
-def save_history_file(history_file_path, job_id):
-    destination = utils.models.get_model_file_path(job_id, create_dir=True)
+def save_history_file(storage_dir, history_file_path, job_id):
+    directory = os.path.join(storage_dir, job_id[0:1], job_id[0:2])
+    utils.path.create_path(directory)
+    destination = os.path.join(directory, "%s.history" % job_id)
     shutil.copyfile(history_file_path, destination)
     return destination
-
-
-if __name__ == "__main__":
-    main()

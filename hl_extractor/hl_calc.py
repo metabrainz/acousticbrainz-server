@@ -1,33 +1,27 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from hashlib import sha256, sha1
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
 from threading import Thread
 from time import sleep
-import subprocess
-import tempfile
-import argparse
-import json
-import yaml
-import os
-from setproctitle import setproctitle
 
-# Configuration
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-
-
-import utils.hl_calc
-import db.data
 import db
-import config
+import db.data
+import utils.hl_calc
 
 DEFAULT_NUM_THREADS = 1
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
-HIGH_LEVEL_EXTRACTOR_BINARY = "streaming_extractor_music_svm"
+BASE_DIR = os.path.dirname(__file__)
+BIN_PATH = "/usr/local/bin"
+HIGH_LEVEL_EXTRACTOR_BINARY = os.path.join(BIN_PATH, "essentia_streaming_extractor_music_svm")
 
-PROFILE_CONF_TEMPLATE = "profile.conf.in"
-PROFILE_CONF = "profile.conf"
+PROFILE_CONF_TEMPLATE = os.path.join(BASE_DIR, "profile.conf.in")
+PROFILE_CONF = os.path.join(BASE_DIR, "profile.conf")
 
 
 class HighLevel(Thread):
@@ -63,9 +57,9 @@ class HighLevel(Thread):
 
         fnull = open(os.devnull, 'w')
         try:
-            subprocess.check_call([os.path.join(".", HIGH_LEVEL_EXTRACTOR_BINARY),
+            subprocess.check_call([HIGH_LEVEL_EXTRACTOR_BINARY,
                                    name, out_file, PROFILE_CONF],
-                                  #stdout=fnull, stderr=fnull
+                                  stdout=fnull, stderr=fnull
                                   )
         except (subprocess.CalledProcessError, OSError):
             print("Cannot call high-level extractor")
@@ -106,7 +100,6 @@ def main(num_threads):
     sys.stdout.flush()
     build_sha1 = utils.hl_calc.get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     utils.hl_calc.create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
 
     num_processed = 0
 
@@ -174,10 +167,3 @@ def main(num_threads):
                 sleep(.1)
             else:
                 break
-
-if __name__ == "__main__":
-    setproctitle("hl_calc")
-    parser = argparse.ArgumentParser(description='Extract high-level data from low-level data')
-    parser.add_argument("-t", "--threads", help="Number of threads to start", default=DEFAULT_NUM_THREADS, type=int)
-    args = parser.parse_args()
-    main(args.threads)

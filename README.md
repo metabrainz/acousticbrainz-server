@@ -1,62 +1,77 @@
 acousticbrainz-server
 =====================
 
-The server components for the new AcousticBrainz project.
+The server components for the AcousticBrainz project.
 
 Please report issues here: http://tickets.musicbrainz.org/browse/AB
 
 
-## Installation
+## Installation and Running
 
-### Vagrant VM
+### Docker
 
-The easiest way to start is to setup ready-to-use [Vagrant](https://www.vagrantup.com/)
-VM. To do that [download](https://www.vagrantup.com/downloads.html) and install
-Vagrant for your OS. Then copy two config files:
+We use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server. Ensure that you have these tools installed.
 
-1. `config.py.sample` to `config.py` *(you don't need to modify this file)*
+### Configuration
+
+Copy the following two configuration files:
+
+1. `config.py.example` to `config.py`
 2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
-*(in this file you need to set `models_essentia_git_sha` value)*
+  In `profile.conf.in` you need to set the `models_essentia_git_sha` value.
+  Unless you know what you are doing, this value should be **v2.1_beta1**
 
-After that you can spin up the VM and start working with it:
+#### Running `docker-compose` commands
 
-    $ vagrant up
-    $ vagrant ssh
+For convenience, we provide a script `develop.sh` which does the same as running:
 
-There are some environment variables that you can set to affect the
-provisioning of the virtual machine.
+    docker-compose -f docker/docker-compose.yml -p acousticbrainz-server <args>
 
- * `AB_NCPUS`: Number of CPUs to put in the VM (default 1, 2 makes
-               compilation faster)
- * `AB_MEM`:   Amount of memory (default 1024mb)
- * `AB_MIRROR`: ubuntu mirror (default archive.ubuntu.com)
- * `AB_NOHL`: If set, don't compile the highlevel calculation tools
-              (not needed for regular server development)
+### Build and initial configuration
 
+Build the docker containers needed for AcousticBrainz by running the following:
 
-There are some shortcuts defined using fabric to perform commonly used
-commands:
+    ./develop.sh build
 
- * `fab vpsql`: Load a psql session. Requires a local psql client
- * `fab vssh`: Connect to the VM more efficiently, saving the settings
-               so that you don't need to run vagrant each time you ssh.
+The first time you install AcousticBrainz, you will need to initialize the AcousticBrainz database:
 
-### Manually
+    ./develop.sh run --rm  webserver python2 manage.py init_db
 
-Full installation instructions are available in [INSTALL.md](https://github.com/metabrainz/acousticbrainz-server/blob/master/INSTALL.md) file. After installing, continue the following steps.
+### Running 
 
-## Configuration and development
+Start the webserver and other required services with:
+
+    ./develop.sh up 
+    
+You will be able to view your local AcousticBrainz server at http://localhost:8080
+
+## Development notes
+
+### Database
+
+In order to load a psql session, use the following command:
+
+    ./develop.sh run --rm db psql -U acousticbrainz -h db
 
 ### Building static files
 
 We use Gulp as our JavaScript/CSS build system.
-node.js dependencies. Calling `gulp` on its own will build everything necessary
-to access the server in a web browser:
 
-    ./node_modules/.bin/gulp
+#### First-time gulp setup
+For development, the first time that you install acousticbrainz you must install
+node packages in your local directory.
 
-*Keep in mind that you'll need to rebuild static files after you modify
-JavaScript or CSS.*
+    ./develop.sh run --rm --user `id -u`:`id -g` -e HOME=/tmp webserver npm install
+
+This has the effect of creating a `node_modules` directory in your local code checkout.
+The `--user` and `-e` flags are needed on a Linux host to make this directory owned
+by your local user.
+
+To build stylesheets and javascript bundles, run gulp:
+
+    ./develop.sh run --rm webserver ./node_modules/.bin/gulp
+
+*You will need to rebuild static files after you modify JavaScript or CSS.*
 
 ### Login
 
@@ -77,56 +92,36 @@ to log in.
 
 Once you have logged in, you can make your user an admin, by running
 
-    python manage.py add_admin <your user>
+    ./develop.sh run --rm webserver python2 manage.py add_admin <your user>
 
 You should now be able to access the admin section at http://localhost:8080/admin
-
-
-## Running
-
-Before starting the server you will need to build static files:
-
-    $ cd acousticbrainz-server
-    $ fab build_static
-
-*Keep in mind that you'll need to rebuild static files after you modify
-JavaScript or CSS.*
-
-You can start the web server (will be available at http://localhost:8080/):
-
-    $ cd acousticbrainz-server
-    $ python manage.py runserver
-
-the high-level data extractor:
-
-    $ cd acousticbrainz-server/hl_extractor
-    $ python hl_calc.py
-
-the dataset evaluator:
-
-    $ cd acousticbrainz-server/dataset_eval
-    $ python evaluate.py
 
 
 ## Working with data
 
 ### Importing
 
+> Before you import or export data, make sure you understand how
+[docker bind mounts](https://docs.docker.com/engine/admin/volumes/bind-mounts/) work.
+The following commands will work if you specify paths in the current directory, but
+if you want to specify paths somewhere else (e.g. a Downloads or tmp directory) you
+must specify an additional `--mount` flag.
+
 AcousticBrainz provides data dumps that you can import into your own server.
 Latest database dump is available at http://acousticbrainz.org/download. You
 need to download full database dump from this page and use it during database
 initialization:
 
-    $ python manage.py init_db path_to_the_archive
+    ./develop.sh run --rm webserver python2 manage.py init_db path_to_the_archive
 
 you can also easily remove existing database before initialization using
 `--force` option:
 
-    $ python manage.py init_db --force path_to_the_archive
+    ./develop.sh run --rm webserver python2 manage.py init_db --force path_to_the_archive
 
 or import archive after database is created:
 
-    $ python manage.py import_data path_to_the_archive
+    ./develop.sh run --rm webserver python2 manage.py import_data path_to_the_archive
 
 *You can also import dumps that you created yourself. This process is described
 below (see `dump full_db` command).*
@@ -141,23 +136,62 @@ format. Both ways support incremental dumping.
 
 **Full database dump:**
 
-    $ python manage.py dump full_db
+    ./develop.sh run --rm webserver python2 manage.py dump full_db
 
 **JSON dump:**
 
-    $ python manage.py dump json
+    ./develop.sh run --rm webserver python2 manage.py dump json
 
 *Creates two separate full JSON dumps with low-level and high-level data.*
 
 **Incremental dumps:**
 
-    $ python manage.py dump incremental
+    ./develop.sh run --rm webserver python2 manage.py dump incremental
 
 *Creates new incremental dump in three different formats: usual database dump,
 low-level and high-level JSON.*
 
 **Previous incremental dumps:**
 
-    $ python manage.py dump incremental --id 42
+    ./develop.sh run --rm webserver python2 manage.py dump incremental --id 42
 
 *Same as another one, but recreates previously created incremental dump.*
+
+## Test your changes with unit tests
+
+Unit tests are an important part of AcousticBrainz. It helps make it easier for
+developers to test changes and help prevent easily avoidable mistakes later on.
+Before commiting new code or making a pull request, run the unit tests on your code.
+
+    ./test.sh
+
+This will start a set of docker containers separate to your development environment,
+run the tests, and then stop and remove the containers. To run tests more rapidly
+without having to bring up and take down containers all the time, you can run
+each step individually. To bring up containers in the background:
+
+    ./test.sh -u
+
+Then run your tests when you need with:
+
+    ./test.sh [optional arguments to pass to py.test]
+
+Stop the test containers with:
+
+    ./test.sh -s
+
+This will stop but not delete the containers. You can delete the containers with:
+
+    ./test.sh -d
+
+We use the `-p` flag to `docker-compose` to start the test containers as a new
+project, `acousticbrainztest` so that containers don't conflict with
+already running development containers. You can access containers directly
+while they are running (e.g. with `docker exec`) with this name (e.g. `acousticbrainztest_db_1`)
+
+The database has no separate volume for data, this means that any data
+in the test database will disappear when the containers are
+deleted (at the end of standalone `./test.sh`, or after `./test.sh -d`)
+
+We forward the port from postgres to `localhost:15431`, so you can connect to it
+with `psql` on your host if you want to inspect the contents of the database.

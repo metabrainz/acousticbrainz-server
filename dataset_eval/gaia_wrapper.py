@@ -92,19 +92,20 @@ def select_best_model(project_dir):
 
 def train_svm_history(project, params, output_file_path):
     params_model = params["model"]
-    if params_model.pop("classifier") != "svm":
+    if params_model.get("classifier") != "svm":
         raise GaiaWrapperException("Can only use this script on SVM config parameters.")
 
     ds = DataSet()
     ds.load(os.path.join(
         project["datasetsDirectory"],
-        "%s-%s.db" % (project["className"], params_model.pop("preprocessing"))
+        "%s-%s.db" % (project["className"], params_model["preprocessing"])
     ))
 
     gt = GroundTruth.fromFile(project["groundtruth"])
     gt.className = "highlevel." + project["className"]
 
-    history = train_svm(ds, gt, **params_model)  # doing the whole training
+    history = train_svm(ds, gt, type=params_model["type"], kernel=params_model["kernel"],
+                        C=params_model["C"], gamma=params_model["gamma"])  # doing the whole training
     if isinstance(output_file_path, unicode):
         output_file_path = output_file_path.encode("utf-8")
     history.save(output_file_path)

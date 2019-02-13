@@ -1,32 +1,85 @@
-from flask import Flask
-import sys
+from __future__ import print_function
+
+from brainzutils.flask import CustomFlask
+from flask import request, url_for, redirect
+from flask_login import current_user
+from pprint import pprint
+
 import os
+import time
+
+API_PREFIX = '/api/'
 
 
-def create_app():
-    app = Flask(__name__)
+# Check to see if we're running under a docker deployment. If so, don't second guess
+# the config file setup and just wait for the correct configuration to be generated.
+deploy_env = os.environ.get('DEPLOY_ENV', '')
+CONSUL_CONFIG_FILE_RETRY_COUNT = 10
+
+def create_app_flaskgroup(script_info):
+    """Factory function that accepts script_info and creates a Flask application"""
+    return create_app(debug=True)
+
+
+def load_config(app):
+    """Load configuration file for specified Flask app"""
+    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
+    if deploy_env:
+        for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
+            if not os.path.exists(config_file):
+                time.sleep(1)
+
+        if not os.path.exists(config_file):
+            print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
+
+    app.config.from_pyfile(config_file)
+
+    if deploy_env:
+        print('Config file loaded!')
+        pprint(dict(app.config))
+
+
+def create_app(debug=None):
+    app = CustomFlask(
+        import_name=__name__,
+        use_flask_uuid=True,
+    )
 
     # Configuration
-    sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-    import default_config
-    app.config.from_object(default_config)
-    import config
-    app.config.from_object(config)
+    load_config(app)
+
+    if debug is not None:
+        app.debug = debug
+
+    if app.debug and app.config['SECRET_KEY']:
+        app.init_debug_toolbar()
 
     # Logging
-    from webserver.loggers import init_loggers
-    init_loggers(app)
+    app.init_loggers(file_config=app.config.get('LOG_FILE'),
+                     email_config=app.config.get('LOG_EMAIL'),
+                     sentry_config=app.config.get('LOG_SENTRY')
+                     )
 
     # Database connection
     from db import init_db_engine
     init_db_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
-    # Memcached
-    if 'MEMCACHED_SERVERS' in app.config:
-        from db import cache
-        cache.init(app.config['MEMCACHED_SERVERS'],
-                   app.config['MEMCACHED_NAMESPACE'],
-                   debug=1 if app.debug else 0)
+    # Cache
+    if 'REDIS_HOST' in app.config and\
+       'REDIS_PORT' in app.config and\
+       'REDIS_NAMESPACE' in app.config and\
+       'REDIS_NS_VERSIONS_LOCATION' in app.config:
+        if not os.path.exists(app.config['REDIS_NS_VERSIONS_LOCATION']):
+            os.makedirs(app.config['REDIS_NS_VERSIONS_LOCATION'])
+
+        from brainzutils import cache
+        cache.init(
+            host=app.config['REDIS_HOST'],
+            port=app.config['REDIS_PORT'],
+            namespace=app.config['REDIS_NAMESPACE'],
+            ns_versions_loc=app.config['REDIS_NS_VERSIONS_LOCATION'])
+    else:
+        raise Exception('One or more redis cache configuration options are missing from config.py')
 
     # Extensions
     from flask_uuid import FlaskUUID
@@ -69,6 +122,20 @@ def create_app():
     admin.add_view(admins.AdminsView(name='Admins'))
     admin.add_view(challenges.ChallengesView(name='Challenges'))
 
+    @ app.before_request
+    def before_request_gdpr_check():
+        # skip certain pages, static content and the API
+        if request.path == url_for('index.gdpr_notice') \
+          or request.path == url_for('login.logout') \
+          or request.path.startswith('/_debug') \
+          or request.path.startswith('/static') \
+          or request.path.startswith(API_PREFIX):
+            return
+        # otherwise if user is logged in and hasn't agreed to gdpr,
+        # redirect them to agree to terms page.
+        elif current_user.is_authenticated and current_user.gdpr_agreed is None:
+            return redirect(url_for('index.gdpr_notice', next=request.full_path))
+
     return app
 
 
@@ -79,7 +146,7 @@ def create_app_sphinx():
     that we use, so we have to ignore these initialization steps. Only
     blueprints/views are needed to build documentation.
     """
-    app = Flask(__name__)
+    app = CustomFlask(import_name=__name__)
     _register_blueprints(app)
     return app
 
@@ -104,7 +171,7 @@ def _register_blueprints(app):
         app.register_blueprint(challenges_bp, url_prefix='/challenges')
 
     def register_api(app):
-        v1_prefix = '/api/v1'
+        v1_prefix = os.path.join(API_PREFIX, 'v1')
         from webserver.views.api.v1.core import bp_core
         from webserver.views.api.v1.datasets import bp_datasets
         from webserver.views.api.v1.dataset_eval import bp_dataset_eval

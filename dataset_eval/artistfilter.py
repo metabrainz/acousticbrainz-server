@@ -1,23 +1,22 @@
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-
-from sqlalchemy import text
-import logging
-fmt = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.INFO, format=fmt)
-import random
 import collections
 import json
+import logging
+import os
+import random
+
+from sqlalchemy import text
 
 import db
 import db.dataset
-import db.cache
-import config
 
-#db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+fmt = '%(asctime)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.INFO, format=fmt)
 
-rtoajson = json.load(open("recordingtoartistmap.json"))
+fname = "recordingtoartistmap.json"
+if os.path.isfile(fname):
+    rtoajson = json.load(open(fname))
+else:
+    rtoajson = {}
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -144,7 +143,7 @@ def recordings_to_artists_sub(mbids):
             notincache.append(m)
 
     q = text(
-       """SELECT mbid::text, data->'metadata'->'tags'->'musicbrainz_artistid'->>0
+       """SELECT gid::text, data->'metadata'->'tags'->'musicbrainz_artistid'->>0
             FROM lowlevel ll
             JOIN lowlevel_json llj
               ON ll.id = llj.id

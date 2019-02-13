@@ -1,23 +1,26 @@
 import db
 import db.data
-import unittest
 import json
 import os
+import random
 from db import gid_types
 
+from webserver import create_app
 
-# Configuration
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
-import config
+from flask_testing import TestCase
+
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'admin', 'sql')
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test_data')
 
-class DatabaseTestCase(unittest.TestCase):
+
+class DatabaseTestCase(TestCase):
+
+    @staticmethod
+    def create_app():
+        return create_app()
 
     def setUp(self):
-        db.init_db_engine(config.SQLALCHEMY_TEST_URI)
         self.reset_db()
 
     def tearDown(self):
@@ -77,3 +80,25 @@ class DatabaseTestCase(unittest.TestCase):
         """
         with open(self.data_filename(mbid)) as json_file:
             db.data.submit_low_level_data(mbid, json.loads(json_file.read()), gid_types.GID_TYPE_MBID)
+
+    def submit_fake_low_level_data(self, mbid):
+        """Generate a minimal dataset to be submitted in tests for a given
+        MBID. Several calls to this function generate distinct entries by using
+        a random value for the 'average_loudness' field"""
+        db.data.submit_low_level_data(
+            mbid,
+            {"lowlevel": {"average_loudness": random.random()},
+             "metadata": {"audio_properties": {"length": None,
+                                               "bit_rate": None,
+                                               "codec": None,
+                                               "lossless": True},
+                          "tags": {"file_name": "fake",
+                                   "musicbrainz_recordingid": [mbid]},
+                          "version": {"essentia": None,
+                                      "essentia_build_sha": "",
+                                      "essentia_git_sha": None,
+                                      "extractor": None}},
+             "rhythm": {},
+             "tonal": {}
+            },
+            gid_types.GID_TYPE_MBID)

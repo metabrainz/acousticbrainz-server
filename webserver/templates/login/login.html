@@ -5,6 +5,7 @@
 {% block content %}
   <h2 class="page-title">Sign in</h2>
   <p>To sign in, use your MusicBrainz account, and authorize AcousticBrainz to access your profile data.</p>
+    <p>By signing in to AcousticBrainz you agree to let us process any data that you create. For further details please see our <a href="https://metabrainz.org/gdpr">GDPR compliance statement.</a></p>
   <hr />
   <div class="well" style="max-width: 600px; margin: 0 auto;">
     <a href="{{ url_for('login.musicbrainz', next=request.args.get('next')) }}"

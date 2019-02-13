@@ -25,13 +25,14 @@ class StatsTestCase(unittest.TestCase):
         expected = datetime.datetime(2016, 01, 07, 14, 0, 0, tzinfo=pytz.utc)
         self.assertEqual(next_hour, expected)
 
-    @mock.patch("db.cache.get")
-    def test_get_last_submitted_recordings(self, dbget):
+    @mock.patch("brainzutils.cache.get")
+    @mock.patch("brainzutils.cache.set")
+    def test_get_last_submitted_recordings(self, dbset, dbget):
         dbget.return_value = None
         mbids = []
         for i in range(20):
             rand_mbid = uuid.uuid4()
-            mbids.append(rand_mbid)
+            mbids.append(str(rand_mbid))
             data = {
                 "metadata": {
                     "tags": {
@@ -85,7 +86,7 @@ class StatsTestCase(unittest.TestCase):
         self.assertEquals("cachedate", last_collected)
         self.assertEquals("cachestats", stats)
 
-    @mock.patch("db.cache.get")
+    @mock.patch("brainzutils.cache.get")
     def test_get_stats_from_cache(self, cacheget):
 
         db.stats._get_stats_from_cache()
@@ -95,7 +96,7 @@ class StatsTestCase(unittest.TestCase):
     @mock.patch("db.engine.connect")
     @mock.patch("db.stats._count_submissions_to_date")
     @mock.patch("db.stats.datetime")
-    @mock.patch("db.cache.set")
+    @mock.patch("brainzutils.cache.set")
     def test_add_stats_to_cache(self, cacheset, dt, count, connect):
         datetimenow = datetime.datetime(2015, 12, 22, 14, 00, 00, tzinfo=pytz.utc)
         dt.datetime.now.return_value = datetimenow

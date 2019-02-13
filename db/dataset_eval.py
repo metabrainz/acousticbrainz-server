@@ -404,11 +404,14 @@ def _filter_recordings(recordings, dataset):
 class IncompleteDatasetException(db.exceptions.DatabaseException):
     pass
 
+
 class IncorrectJobStatusException(db.exceptions.DatabaseException):
     pass
 
+
 class JobNotFoundException(db.exceptions.DatabaseException):
     pass
+
 
 class JobExistsException(db.exceptions.DatabaseException):
     """Should be raised when trying to add a job for dataset that already has one."""

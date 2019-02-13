@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ "${CONTAINER_NAME}" = "acousticbrainz-web-prod" ]
+then
+    exec uwsgi /etc/uwsgi/uwsgi.ini
+fi
+
+if [ "${CONTAINER_NAME}" = "acousticbrainz-hl-extractor-prod" ]
+then
+    cd /code
+    exec python worker_manage.py hl_extractor
+fi
+
+if [ "${CONTAINER_NAME}" = "acousticbrainz-dataset-evaluator-prod" ]
+then
+    cd /code
+    exec python worker_manage.py dataset_evaluator
+fi
+
+echo "init script has no clue which service to start. Set env var CONTAINER_NAME"

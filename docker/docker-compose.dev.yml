@@ -1,0 +1,61 @@
+# Docker Compose file for development
+version: "2"
+
+volumes:
+  postgres:
+  # root home dir in the postgres container to hold psql history
+  postgreshome:
+  # root home dir in the webserver container to hold ipython history
+  webhome:
+
+services:
+
+  db:
+    image: postgres:10.5
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - postgreshome:/root
+    ports:
+      - "15432:5432"
+
+  webserver:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.dev
+    environment:
+      FLASK_ENV: development
+    command: python manage.py runserver
+    volumes:
+      - ../:/code
+      - ../data/app:/data
+      - webhome:/root
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - redis
+
+  redis:
+    image: redis:4.0-alpine
+
+  hl_extractor:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.dev
+    command: python2 worker_manage.py hl_extractor
+    volumes:
+      - ../:/code
+    depends_on:
+      - db
+
+  dataset_evaluator:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.dev
+    command: python2 worker_manage.py dataset_evaluator
+    volumes:
+      - ../:/code
+      - ../data/datasets:/data/datasets
+      - ../data/files:/data/files
+    depends_on:
+      - db

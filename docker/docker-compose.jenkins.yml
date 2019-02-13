@@ -1,0 +1,36 @@
+# Docker Compose file for test
+version: "2"
+services:
+
+  db:
+    image: postgres:10.5
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "15431:5432"
+    command: postgres -F
+
+  acousticbrainz:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.dev
+    depends_on:
+      - db
+      - redis
+
+  redis:
+    image: redis:4.0-alpine
+
+  hl_extractor:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.dev
+    depends_on:
+      - db
+
+  dataset_evaluator:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.dev
+    depends_on:
+      - db

@@ -70,7 +70,8 @@ CREATE TABLE "user" (
   id             SERIAL,
   created        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   musicbrainz_id VARCHAR,
-  admin          BOOLEAN NOT NULL         DEFAULT FALSE
+  admin          BOOLEAN NOT NULL         DEFAULT FALSE,
+  gdpr_agreed    TIMESTAMP WITH TIME ZONE
 );
 ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id);
 

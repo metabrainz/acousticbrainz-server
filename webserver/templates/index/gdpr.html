@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Agree to GDPR - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <h2 class="page-title">Agree to General Data Protection Regulations</h2>
+
+  <div class="well bg-danger" style="max-width: 600px; margin: 0 auto;">
+    <p class="text-danger">Important!</p>
+    <p>By continuing to use AcousticBrainz, you grant the MetaBrainz Foundation permission to process
+        any data that you submit to the website using our data creation tools.</p>
+    <p>We use this data to build new machine learning models to improve the information that we make
+        available on AcousticBrainz.</p>
+    <p>If you do not want to give the MetaBrainz Foundation permission to process your the data that you
+        create, send an email to support@metabrainz.org listing your username and requesting that we delete your account.
+    </p>
+    <p>For further details please see our <a href="https://metabrainz.org/gdpr">GDPR compliance statement.</a></p>
+    <form method="POST">
+        <input type="radio" id="gdpr-agree" name="gdpr-options" value="agree" required> <label for="gdpr-agree">OK, I agree</label><br/>
+        <input type="radio" id="gdpr-disagree" name="gdpr-options" value="disagree" required> <label for="gdpr-disagree">No, I don't want to use AcousticBrainz</label><br/>
+      {% if request.args.get('next') %}
+        <input type="hidden" name="next" value="{{ request.args.get('next') }}"/>
+      {% endif %}
+
+    <br/>
+    <div class="well" style="max-width: 600px; margin: 0 auto;">
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Submit choice!</button>
+    </div>
+  </form>
+  </div>
+{% endblock %}

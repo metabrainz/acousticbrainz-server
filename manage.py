@@ -1,38 +1,74 @@
 from __future__ import print_function
+
+import logging
+import os
+import sys
+
+import click
+from brainzutils import cache
+import flask.cli
+from flask import current_app
+from flask.cli import FlaskGroup
+from shutil import copyfile
+
 import db
-import db.cache
 import db.dump
-import db.user
-import db.stats
 import db.dump_manage
 import db.exceptions
-from webserver import create_app
-import subprocess
-import os
-import click
-import config
+import db.stats
+import db.user
+import webserver
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
-cli = click.Group()
+cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
+
+logging.basicConfig(level=logging.INFO)
 
 
-@cli.command()
-@click.option("--host", "-h", default="0.0.0.0", show_default=True)
-@click.option("--port", "-p", default=8080, show_default=True)
-@click.option("--debug", "-d", type=bool,
-              help="Turns debugging mode on or off. If specified, overrides "
-                   "'DEBUG' value in the config file.")
-def runserver(host, port, debug):
-    create_app().run(host=host, port=port, debug=debug,
-                     extra_files=config.RELOAD_ON_FILES)
+@cli.command(name='runserver')
+@click.option('--host', '-h', default='0.0.0.0',
+              help='The interface to bind to.')
+@click.option('--port', '-p', default=8080,
+              help='The port to bind to.')
+@click.option('--debugger/--no-debugger', default=None,
+              help='Enable or disable the debugger. By default the debugger '
+              'is active if debug is enabled.')
+@flask.cli.pass_script_info
+def runserver(info, host, port, debugger):
+    """Run a local development server.
+    This server is for development purposes only. It does not provide
+    the stability, security, or performance of production WSGI servers.
+    The reloader and debugger are enabled by default if
+    FLASK_ENV=development or FLASK_DEBUG=1.
+
+    This is a copy of flask.cli.run_command, which passes the additional
+    argument `extra_files` to `run_simple`. Some defaults are set that are
+    available as options in the original method."""
+
+    debug = flask.helpers.get_debug_flag()
+    reload = debug
+
+    if debugger is None:
+        debugger = debug
+
+    eager_loading = not reload
+
+    flask.cli.show_server_banner(flask.helpers.get_env(), debug, info.app_import_path, eager_loading)
+    app = flask.cli.DispatchingApp(info.load_app, use_eager_loading=eager_loading)
+    reload_on_files = info.load_app().config['RELOAD_ON_FILES']
+
+    from werkzeug.serving import run_simple
+    run_simple(host, port, app, use_reloader=reload, use_debugger=debugger,
+               extra_files=reload_on_files)
 
 
-@cli.command()
+@cli.command(name='init_db')
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
 @click.argument("archive", type=click.Path(exists=True), required=False)
-def init_db(archive, force):
-    """Initializes database and imports data if needed.
+@click.option("--skip-create-db", "-s", is_flag=True, help="Skip database creation step.")
+def init_db(archive, force, skip_create_db=False):
+    """Initialize database and import data.
 
     This process involves several steps:
     1. Table structure is created.
@@ -45,22 +81,24 @@ def init_db(archive, force):
     More information about populating a PostgreSQL database efficiently can be
     found at http://www.postgresql.org/docs/current/static/populate.html.
     """
-    if force:
-        exit_code = _run_psql('drop_db.sql')
-        if exit_code != 0:
-            raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
 
-    print('Creating user and a database...')
-    exit_code = _run_psql('create_db.sql')
-    if exit_code != 0:
-        raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
+    db.init_db_engine(current_app.config['POSTGRES_ADMIN_URI'])
+    if force:
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_db.sql'))
+        if not res:
+            raise Exception('Failed to drop existing database and user! Exit code: %i' % res)
+
+    if not skip_create_db:
+        print('Creating user and a database...')
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_db.sql'))
+        if not res:
+            raise Exception('Failed to create new database and user! Exit code: %i' % res)
 
     print('Creating database extensions...')
-    exit_code = _run_psql('create_extensions.sql', 'acousticbrainz')
-    if exit_code != 0:
-        raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
+    db.init_db_engine(current_app.config['POSTGRES_ADMIN_AB_URI'])
+    res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'))
 
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    db.init_db_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
 
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
@@ -70,9 +108,12 @@ def init_db(archive, force):
 
     if archive:
         print('Importing data...')
-        db.dump.import_db_dump(archive)
+        db.dump.import_dump(archive)
     else:
         print('Skipping data importing.')
+        print('Loading fixtures...')
+        print('Models...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_models.sql'))
 
     print('Creating primary and foreign keys...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
@@ -84,98 +125,115 @@ def init_db(archive, force):
     print("Done!")
 
 
-@cli.command()
-@click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
-def init_test_db(force=False):
-    """Same as `init_db` command, but creates a database that will be used to
-    run tests and doesn't import data (no need to do that).
-
-    `SQLALCHEMY_TEST_URI` must be defined in the config file.
-    """
-    if force:
-        exit_code = _run_psql('drop_test_db.sql')
-        if exit_code != 0:
-            raise Exception('Failed to drop existing database and user! Exit code: %i' % exit_code)
-
-    print('Creating database and user for testing...')
-    exit_code = _run_psql('create_test_db.sql')
-    if exit_code != 0:
-        raise Exception('Failed to create new database and user! Exit code: %i' % exit_code)
-
-    exit_code = _run_psql('create_extensions.sql', 'ab_test')
-    if exit_code != 0:
-        raise Exception('Failed to create database extensions! Exit code: %i' % exit_code)
-
-    db.init_db_engine(config.SQLALCHEMY_TEST_URI)
-
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
-
-    print("Done!")
-
-
-@cli.command()
+@cli.command(name='import_data')
+@click.option("--drop-constraints", "-d", is_flag=True, help="Drop primary and foreign keys before importing.")
 @click.argument("archive", type=click.Path(exists=True))
-def import_data(archive):
+def import_data(archive, drop_constraints=False):
     """Imports data dump into the database."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    if drop_constraints:
+        print('Dropping primary key and foreign key constraints...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_foreign_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_primary_keys.sql'))
+
     print('Importing data...')
-    db.dump.import_db_dump(archive)
+    db.dump.import_dump(archive)
+    print('Done!')
+
+    if drop_constraints:
+        print('Creating primary key and foreign key constraints...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
 
 
-@cli.command()
+@cli.command(name='import_dataset_data')
+@click.option("--drop-constraints", "-d", is_flag=True, help="Drop primary and foreign keys before importing.")
+@click.argument("archive", type=click.Path(exists=True))
+def import_dataset_data(archive, drop_constraints=False):
+    """Imports dataset dump into the database."""
+
+    if drop_constraints:
+        print('Dropping primary key and foreign key constraints...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_foreign_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_primary_keys.sql'))
+
+    print('Importing dataset data...')
+    db.dump.import_datasets_dump(archive)
+    print('Done!')
+
+    if drop_constraints:
+        print('Creating primary key and foreign key constraints...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
+
+
+@cli.command(name='compute_stats')
 def compute_stats():
-    """Compute any outstanding hourly stats and add to the database."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
+    """Compute outstanding hourly statistics."""
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
 
 
-@cli.command()
+@cli.command(name='cache_stats')
 def cache_stats():
-    """Compute recent stats and add to memcache."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
-    db.cache.init(config.MEMCACHED_SERVERS)
+    """Compute recent stats and add to cache."""
     db.stats.add_stats_to_cache()
 
 
-@cli.command()
+@cli.command(name='clear_cache')
+def clear_cache():
+    """Clear the cache."""
+    cache.flush_all()
+
+
+@cli.command(name='add_admin')
 @click.argument("username")
 @click.option("--force", "-f", is_flag=True, help="Create user if doesn't exist.")
 def add_admin(username, force=False):
     """Make user an admin."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
     try:
         db.user.set_admin(username, admin=True, force=force)
+        click.echo("Made %s an admin." % username)
     except db.exceptions.DatabaseException as e:
         click.echo("Error: %s" % e, err=True)
-    click.echo("Made %s an admin." % username)
+        sys.exit(1)
 
 
-@cli.command()
+@cli.command(name='remove_admin')
 @click.argument("username")
 def remove_admin(username):
     """Remove admin privileges from a user."""
-    db.init_db_engine(config.SQLALCHEMY_DATABASE_URI)
     try:
         db.user.set_admin(username, admin=False)
+        click.echo("Removed admin privileges from %s." % username)
     except db.exceptions.DatabaseException as e:
         click.echo("Error: %s" % e, err=True)
-    click.echo("Removed admin privileges from %s." % username)
+        sys.exit(1)
 
 
-def _run_psql(script, database=None):
-    script = os.path.join(ADMIN_SQL_DIR, script)
-    command = ['psql', '-p', config.PG_PORT, '-U', config.PG_SUPER_USER, '-f', script]
-    if database:
-        command.extend(['-d', database])
-    exit_code = subprocess.call(command)
+@cli.command(name='update_sequences')
+def update_sequences():
+    print('Updating database sequences...')
+    db.dump.update_sequences()
+    print('Done!')
 
-    return exit_code
+
+@cli.command(name='toggle_site_status')
+def toggle_site_status():
+    """ Bring the site down if it is up, bring it up if down.
+
+    Note: We use nginx configs to set AB up/down status. If the file `is_down.html`
+    exists, then it is rendered by default for all pages. Create the file to bring AB down,
+    remove it to bring it up.
+    """
+    if os.path.exists('is_down.html'):
+        print('Removing is_down.html...')
+        os.remove('is_down.html')
+        print('Done!')
+    else:
+        print('Creating is_down.html from is_down.html.sample')
+        copyfile('is_down.html.sample', 'is_down.html')
+        print('Done!')
 
 
 # Please keep additional sets of commands down there

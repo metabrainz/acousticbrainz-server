@@ -1,0 +1,51 @@
+{{- define "KEY" -}}
+    {{ key (printf "docker-server-configs/AB/config.%s.json/%s" (env "DEPLOY_ENV") .) }}
+{{- end -}}
+
+{{- define "KEY_ARRAY" -}}
+    {{- range $index, $element := (key (printf "docker-server-configs/AB/config.%s.json/%s" (env "DEPLOY_ENV") .) | parseJSON) -}}
+        "{{.}}",
+    {{- end -}}
+{{- end -}}
+
+import os
+
+DEBUG = False
+SECRET_KEY = '''{{template "KEY" "secret_key"}}'''
+
+{{if service "pgbouncer-acousticbrainz"}}
+{{with index (service "pgbouncer-acousticbrainz") 0}}
+SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz:acousticbrainz@{{.Address}}:{{.Port}}/acousticbrainz"
+POSTGRES_ADMIN_URI="postgresql://postgres@{{.Address}}:{{.Port}}/template1"
+POSTGRES_ADMIN_AB_URI="postgresql://postgres@{{.Address}}:{{.Port}}/acousticbrainz"
+{{end}}
+{{end}}
+
+{{if service "acousticbrainz-redis"}}
+{{with index (service "acousticbrainz-redis") 0}}
+REDIS_HOST = "{{.Address}}"
+REDIS_PORT = {{.Port}}
+REDIS_NAMESPACE = "acousticbrainz"
+REDIS_NS_VERSIONS_LOCATION = '/cache_namespaces'
+{{end}}
+{{end}}
+
+MUSICBRAINZ_USERAGENT = '''{{template "KEY" "musicbrainz_useragent"}}'''
+MUSICBRAINZ_HOSTNAME = '''{{template "KEY" "musicbrainz_hostname"}}'''
+
+MUSICBRAINZ_CLIENT_ID = '''{{template "KEY" "musicbrainz/client_id"}}'''
+MUSICBRAINZ_CLIENT_SECRET = '''{{template "KEY" "musicbrainz/client_secret"}}'''
+
+# Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
+COMPILE_LESS = False
+
+LOG_SENTRY = {
+   'dsn':'''{{template "KEY" "sentry_dsn"}}''',
+   'environment': 'production',
+   'level': 'WARN',
+}
+
+DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
+FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
+
+FEATURE_EVAL_LOCATION = False

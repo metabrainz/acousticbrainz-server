@@ -1,11 +1,11 @@
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField
 from wtforms.fields.html5 import DateField
 from wtforms.validators import DataRequired, UUID
 from webserver.forms import DynamicSelectField
 
 
-class AddAdminForm(Form):
+class AddAdminForm(FlaskForm):
     musicbrainz_id = StringField(
         "MusicBrainz username",
         validators=[DataRequired("MusicBrainz username is required!")],

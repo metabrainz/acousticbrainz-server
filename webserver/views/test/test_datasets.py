@@ -1,13 +1,15 @@
 from __future__ import absolute_import
-from webserver.testing import ServerTestCase
-from db import dataset, dataset_eval, user
-from db.testing import TEST_DATA_PATH
-import webserver.forms as forms
-from flask import url_for
-import os.path
-import json
-import mock
+
 import datetime
+import json
+
+import mock
+from flask import url_for
+
+import webserver.forms as forms
+from db import dataset, dataset_eval, user
+from webserver.testing import ServerTestCase
+from webserver.views.test.test_data import FakeMusicBrainz
 
 
 class DatasetsViewsTestCase(ServerTestCase):
@@ -17,6 +19,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         self.test_user_mb_name = "tester"
         self.test_user_id = user.create(self.test_user_mb_name)
+        user.agree_to_gdpr(self.test_user_mb_name)
 
         self.test_uuid = "123e4567-e89b-12d3-a456-426655440000"
         self.test_mbid_1 = "e8afe383-1478-497e-90b1-7885c7f37f6e"
@@ -136,6 +139,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         # Editing using another user
         another_user_id = user.create("another_tester")
+        user.agree_to_gdpr("another_tester")
         self.temporary_login(another_user_id)
         resp = self.client.get(url_for("datasets.edit", dataset_id=dataset_id))
         self.assert401(resp)
@@ -174,6 +178,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         # Deleting using another user
         another_user_id = user.create("another_tester")
+        user.agree_to_gdpr("another_tester")
         self.temporary_login(another_user_id)
         resp = self.client.get(url_for("datasets.delete", dataset_id=dataset_id))
         self.assert401(resp)
@@ -189,9 +194,13 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertRedirects(resp, url_for("user.profile", musicbrainz_id=self.test_user_mb_name))
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 0)
 
-    def test_recording_info(self):
+    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    def test_recording_info(self, get_recording_by_id):
+        get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
+
         recording_mbid = "770cc467-8dde-4d22-bc4c-a42f91e7515e"
 
+        # If you're not logged in, you get redirected to the login page
         resp = self.client.get(url_for("datasets.recording_info", mbid=recording_mbid))
         self.assertStatus(resp, 302)
         resp = self.client.get(url_for("datasets.recording_info", mbid=self.test_uuid))
@@ -203,6 +212,30 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for("datasets.recording_info", mbid=recording_mbid))
         self.assert200(resp)
         resp = self.client.get(url_for("datasets.recording_info", mbid=self.test_uuid))
+        self.assert404(resp)
+
+    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    def test_recording_info_in_dataset(self, get_recording_by_id):
+        """ Tests views.datasets.recording_info_in_dataset.
+
+        If the Recording MBID is present in the dataset, the view should return information about the
+        MBID. Otherwise, it should return a 404 response
+        """
+
+        # Note: self.test_mbid_1 is in the dataset
+
+        get_recording_by_id.return_value = {'title': 'recording_title',
+                                            'artist-credit-phrase': 'artist_credit'}
+
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+
+        resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=self.test_mbid_1))
+        self.assert200(resp)
+        expected = {'recording': {'title': 'recording_title', 'artist': 'artist_credit'}}
+        self.assertEqual(expected, json.loads(resp.data))
+
+        # self.test_uuid is not in the dataset
+        resp = self.client.get(url_for("datasets.recording_info_in_dataset", dataset_id=dataset_id, mbid=self.test_uuid))
         self.assert404(resp)
 
     def test_evaluate_location_options(self):

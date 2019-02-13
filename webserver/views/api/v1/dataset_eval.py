@@ -4,6 +4,8 @@ from flask_login import current_user
 from webserver.decorators import auth_required
 from webserver.views.api import exceptions
 import db.dataset_eval
+import db.dataset
+from webserver.views.api.v1 import datasets
 
 bp_dataset_eval = Blueprint('api_v1_dataset_eval', __name__)
 
@@ -48,4 +50,68 @@ def get_jobs():
         username=current_user.musicbrainz_id,
         jobs=jobs
     )
+
+@bp_dataset_eval.route("/jobs/<uuid:job_id>", methods=["GET"])
+@auth_required
+def job_details(job_id):
+    """Returns the details of a particular job.
+       API key argument is required.
+
+       **Example Response**:
+
+       .. sourcecode:: json
+
+       {
+           "created": "Tue, 07 Jun 2016 22:12:32 GMT",
+           "dataset": {
+               "author": 1,
+               "classes": [
+                   {
+                       "description": null,
+                       "id": "141",
+                       "name": "Class2",
+                       "recordings": [
+                           "d08ab44b-94c8-482b-a67f-a683a30fbe5a",
+                           "2618cb1d-8699-49df-93f7-a8afea6c914f"
+                       ]
+                   },
+                   {
+                       "description": null,
+                       "id": "142",
+                       "name": "Class1",
+                       "recordings": [
+                           "5251c17c-c161-4e73-8b1c-4231e8e39095",
+                           "c0dccd50-f9dc-476c-b1f1-84f00adeab51"
+                       ]
+                   }
+               ],
+               "created": "Mon, 02 May 2016 16:41:08 GMT",
+               "description": "",
+               "id": "5375e0ff-a6d0-44a3-bee1-05d46fbe6bd5",
+               "last_edited": "Mon, 02 May 2016 16:41:08 GMT",
+               "name": "test4",
+               "public": true
+           },
+           "dataset_id": "5375e0ff-a6d0-44a3-bee1-05d46fbe6bd5",
+           "eval_location": "local",
+           "id": "7804abe5-58be-4c9c-a787-22b91d031489",
+           "options": {
+               "filter_type": null,
+               "normalize": false
+           },
+           "result": null,
+           "snapshot_id": "2d51df50-6b71-410e-bf9a-7e877fc9c6c0",
+           "status": "pending",
+           "status_msg": null,
+           "testing_snapshot": null,
+           "training_snapshot": null,
+           "updated": "Tue, 07 Jun 2016 22:12:32 GMT"
+    }
+    """
+    job = db.dataset_eval.get_job(job_id)
+    if not job:
+        raise exceptions.APINotFound('No such job')
+
+    job['dataset'] = datasets.get_check_dataset(job['dataset_id'])
+    return jsonify(job)
 

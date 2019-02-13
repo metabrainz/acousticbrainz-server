@@ -1,24 +1,20 @@
-click == 6.6
-coverage == 3.7.1
-Fabric == 1.10.2
-Flask == 0.10.1
-Flask-Admin == 1.4.0
-Flask-Login == 0.3.2
-Flask-SQLAlchemy == 2.0
-Flask-Testing == 0.4.2
-Flask-UUID == 0.2
-Flask-WTF == 0.12
-Jinja2 == 2.8
-mock == 1.3.0
-musicbrainzngs == 0.5
-psycopg2 == 2.6.1
-python-memcached == 1.57
-pytz==2015.7
-pyyaml == 3.11
-rauth == 0.7.1
-raven[flask] == 5.21.0
-setproctitle == 1.1.9
-six == 1.9.0
-SQLAlchemy == 1.0.9
-Werkzeug == 0.10.4
+git+https://github.com/metabrainz/brainzutils-python.git@v1.7.0
+coverage == 4.5.2
+Flask-Admin == 1.5.3
+Flask-Login == 0.4.1
+Flask-SQLAlchemy == 2.3.2
+Flask-Testing == 0.7.1
+Flask-WTF == 0.14.2
+Jinja2 == 2.10
+mock == 2.0.0
+musicbrainzngs == 0.6
+ndg-httpsclient==0.5.1
+psycopg2 == 2.7.7
+pytz==2018.9
+pytest==4.1.1
+pytest-cov==2.6.1
+pyyaml == 3.13
+rauth == 0.7.3
+setproctitle == 1.1.10
+six == 1.11.0
 -r docs/requirements.txt

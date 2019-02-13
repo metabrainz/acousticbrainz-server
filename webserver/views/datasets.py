@@ -193,7 +193,7 @@ def evaluate(dataset_id):
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException as e:
-            flash.error("Cannot add this dataset because of a validation error: %s" % e.message)
+            flash.error("Cannot add this dataset because of a validation error: %s" % e)
         except db.dataset_eval.JobExistsException:
             flash.warn("An evaluation job for this dataset has been already created.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
@@ -339,10 +339,7 @@ def delete(dataset_id):
         return render_template("datasets/delete.html", dataset=ds)
 
 
-@datasets_bp.route("/recording/<uuid:mbid>")
-@login_required
-def recording_info(mbid):
-    """Endpoint for getting information about recordings (title and artist)."""
+def _get_recording_info_for_mbid(mbid):
     try:
         recording = musicbrainz.get_recording_by_id(mbid)
         return jsonify(recording={
@@ -351,6 +348,31 @@ def recording_info(mbid):
         })
     except musicbrainz.DataUnavailable as e:
         return jsonify(error=str(e)), 404
+
+
+@datasets_bp.route("/metadata/recording/<uuid:mbid>")
+@login_required
+def recording_info(mbid):
+    """Endpoint for getting information about recordings (title and artist)."""
+    return _get_recording_info_for_mbid(mbid)
+
+
+@datasets_bp.route("/metadata/dataset/<uuid:dataset_id>/<uuid:mbid>")
+def recording_info_in_dataset(dataset_id, mbid):
+    """Endpoint for getting information about recordings (title and artist), for the
+    case when user is not logged in.
+
+    Args:
+        mbid (uuid): the recording mbid for which info is to be returned
+        dataset_id (uuid): the dataset id to which the passed recording mbid belongs
+
+    Returns:
+        json: If the mbid is present in the dataset, info about the recording
+              404 otherwise
+     """
+    if not db.dataset.check_recording_in_dataset(dataset_id, mbid):
+        return jsonify(error="Recording not found in the dataset"), 404
+    return _get_recording_info_for_mbid(mbid)
 
 
 def get_dataset(dataset_id):

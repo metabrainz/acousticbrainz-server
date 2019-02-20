@@ -76,10 +76,10 @@ def _job_exists(connection, dataset_id):
         SELECT count(*)
           FROM dataset_eval_jobs
           JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-         WHERE dataset_snapshot.dataset_id = :dataset_id AND dataset_eval_jobs.status IN :statses
+         WHERE dataset_snapshot.dataset_id = :dataset_id AND dataset_eval_jobs.status IN :statuses
     """), {
         "dataset_id": dataset_id,
-        "statses": (STATUS_PENDING, STATUS_RUNNING),
+        "statuses": (STATUS_PENDING, STATUS_RUNNING),
     })
     return result.fetchone()[0] > 0
 

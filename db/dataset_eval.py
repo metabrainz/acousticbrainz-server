@@ -41,13 +41,18 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
             See FILTER_* variables in this module for a list of existing
             filters.
 
+    Raises:
+        JobExistsException if the dataset has already been submitted for evaluation
+        IncompleteDatasetException if the dataset is incomplete (it has recordings that aren't in AB)
+
     Returns:
         ID of the newly created evaluation job.
     """
     with db.engine.begin() as connection:
         if _job_exists(connection, dataset_id):
             raise JobExistsException
-        # Validating dataset contents after submitting it
+
+        # Validate dataset contents
         validate_dataset_contents(db.dataset.get(dataset_id))
         return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
 
@@ -80,7 +85,8 @@ def _job_exists(connection, dataset_id):
 
 
 def validate_dataset_structure(dataset):
-    """Validate dataset structure by making sure that it's complete.
+    """Validate dataset structure by making sure that it has at
+    least two classes and two recordings in each class.
 
     Raises IncompleteDatasetException if dataset doesn't satisfy the
     structure needs for evaluation.
@@ -94,7 +100,6 @@ def validate_dataset_structure(dataset):
         )
     for cls in dataset["classes"]:
         if len(cls["recordings"]) < MIN_RECORDINGS_IN_CLASS:
-            # TODO: Would be nice to mention class name in an error message.
             raise IncompleteDatasetException(
                 "There are not enough recordings in a class `%s` (%s). "
                 "At least %s are required in each class." %

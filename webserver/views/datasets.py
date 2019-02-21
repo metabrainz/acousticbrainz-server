@@ -272,7 +272,7 @@ def _parse_dataset_csv(file):
     return classes
 
 
-@datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", "POST"))
+@datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", ))
 @login_required
 def edit(dataset_id):
     ds = get_dataset(dataset_id)

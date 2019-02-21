@@ -50,7 +50,7 @@ var Dataset = React.createClass({
             "in data-dataset-id property.");
             return;
         }
-        $.get("/datasets/" + container.dataset.datasetId + "/json", function(result) {
+        $.get("/datasets/service/" + container.dataset.datasetId + "/json", function(result) {
             if (this.isMounted()) { this.setState({data: result}); }
         }.bind(this));
     },

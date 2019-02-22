@@ -276,13 +276,9 @@ var DatasetControlButtons = React.createClass({
             buttonText = "Update";
         }
         if (this.state.errorMsg) {
-            var errorMessage = "Unknown error";
-            if (typeof this.state.errorMsg.error !== 'undefined') {
-                errorMessage = this.state.errorMsg.error;
-            }
             var error = <p className='text-danger'>
                     <strong>An error occurred while submitting this dataset:</strong>
-                    &nbsp;{ errorMessage }
+                    &nbsp;{ this.state.errorMsg.error ||  "Unknown error" }
                 </p>
         } else {
             var error = ''

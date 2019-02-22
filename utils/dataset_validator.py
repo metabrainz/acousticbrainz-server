@@ -66,7 +66,7 @@ def _validate_dataset_name(name):
     if not isinstance(name, string_types):
         raise ValidationException("Field `name` must be a string.")
     if not (DATASET_NAME_LEN_MIN <= len(name) <= DATASET_NAME_LEN_MAX):
-        raise ValidationException("Class name must be between %s and %s characters" %
+        raise ValidationException("Dataset name must be between %s and %s characters" %
                                   (DATASET_NAME_LEN_MIN, DATASET_NAME_LEN_MAX))
 
 

@@ -275,12 +275,17 @@ var DatasetControlButtons = React.createClass({
         if (this.props.mode == MODE_EDIT) {
             buttonText = "Update";
         }
+        if (this.state.errorMsg) {
+            var error = <p className='text-danger'>
+                    <strong>An error occurred while submitting this dataset:</strong>
+                    &nbsp;{ this.state.errorMsg.error ||  "Unknown error" }
+                </p>
+        } else {
+            var error = ''
+        }
         return (
             <div className="form-group">
-                <p className={this.state.errorMsg ? 'text-danger' : 'hidden'}>
-                    <strong>Error occured while submitting this dataset:</strong>
-                    <br />{ this.state.errorMsg }
-                </p>
+                { error }
                 <button onClick={this.handleSubmit} type="button"
                         disabled={this.state.enabled ? '' : 'disabled'}
                         className="btn btn-default btn-primary">{buttonText}</button>

@@ -289,20 +289,24 @@ class DatasetValidatorTestCase(unittest.TestCase):
 
     def test_dataset_item_lengths(self):
         # Incorrect lengths
-        with self.assertRaises(dataset_validator.ValidationException):
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "",  # Smaller than Min Len
                 "classes": [],
                 "public": False,
             })
-        with self.assertRaises(dataset_validator.ValidationException):
+        self.assertEqual(str(ar.exception), "Dataset name must be between 1 and 100 characters")
+
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv \
                 wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghj",  # Greater than Max Len
                 "classes": [],
                 "public": False,
             })
-        with self.assertRaises(dataset_validator.ValidationException):
+        self.assertEqual(str(ar.exception), "Dataset name must be between 1 and 100 characters")
+
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "this dataset",
                 "classes": [
@@ -313,7 +317,9 @@ class DatasetValidatorTestCase(unittest.TestCase):
                 ],
                 "public": False,
             })
-        with self.assertRaises(dataset_validator.ValidationException):
+        self.assertEqual(str(ar.exception), "Length of the `name` field in class number 0 doesn't fit the limits. Class name must be between 1 and 100 characters")
+
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "this dataset",
                 "classes": [
@@ -325,6 +331,8 @@ class DatasetValidatorTestCase(unittest.TestCase):
                 ],
                 "public": False,
             })
+        self.assertEqual(str(ar.exception), "Length of the `name` field in class number 0 doesn't fit the limits. Class name must be between 1 and 100 characters")
+
         with self.assertRaises(dataset_validator.ValidationException):
             dataset_validator.validate({
                 "name": "test",

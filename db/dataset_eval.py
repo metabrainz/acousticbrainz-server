@@ -134,15 +134,32 @@ def get_next_pending_job():
     #       to do it in 1 query
     with db.engine.connect() as connection:
         query = text(
-            """SELECT id::text
+            """SELECT dataset_eval_jobs.id::text
+                    , dataset_snapshot.dataset_id::text
+                    , dataset_eval_jobs.snapshot_id::text
+                    , dataset_eval_jobs.status
+                    , dataset_eval_jobs.status_msg
+                    , dataset_eval_jobs.result
+                    , dataset_eval_jobs.options
+                    , dataset_eval_jobs.training_snapshot
+                    , dataset_eval_jobs.testing_snapshot
+                    , dataset_eval_jobs.created
+                    , dataset_eval_jobs.updated
+                    , dataset_eval_jobs.eval_location
                  FROM dataset_eval_jobs
-                WHERE status = :status
-                  AND eval_location = 'local'
-             ORDER BY created ASC
-                LIMIT 1""")
+                 JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+                 WHERE dataset_eval_jobs.id in (
+                      SELECT id
+                      FROM dataset_eval_jobs
+                      WHERE status = :status
+                      AND eval_location = 'local'
+                      ORDER BY created ASC
+                      LIMIT 1
+                )
+            """)
         result = connection.execute(query, {"status": STATUS_PENDING})
         row = result.fetchone()
-        return get_job(row[0]) if row else None
+        return dict(row) if row else None
 
 
 def get_job(job_id):

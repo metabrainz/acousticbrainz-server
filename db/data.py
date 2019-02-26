@@ -6,6 +6,7 @@ import json
 import os
 import db
 import db.exceptions
+import detect_outliers
 
 from sqlalchemy import text
 import sqlalchemy.exc
@@ -425,6 +426,94 @@ def count_lowlevel(mbid):
         )
         return result.fetchone()[0]
 
+
+def get_correct_lowlevel(mbid):
+    """Returns lowlevel data of the correct offset for a given mbid"""
+    with db.engine.connect() as connection:
+        result = connection.execute(
+            """SELECT lowlevel_json.data
+                 FROM lowlevel, lowlevel_json
+                WHERE lowlevel.gid = %s
+                  AND lowlevel_json.label = 'best'
+            """, (str(mbid),)
+        )
+        result = result.fetchone()
+        if result is None:
+            eval_mbid_labels(mbid)
+            result = connection.execute(
+                """SELECT lowlevel_json.data
+                     FROM lowlevel, lowlevel_json
+                    WHERE lowlevel.gid = %s
+                      AND lowlevel_json.label = 'best'
+                """, (str(mbid),)
+                )
+            result = result.fetchone()
+            lowlevel_data = result[0]
+            return lowlevel_data
+        else:
+            lowlevel_data = result[0]
+            return lowlevel_data
+      
+    
+def get_lowlevel_data(mbid):
+    """ For an mbid with multiple submissions, this method returns a list of 
+    lowlevel data for each submission"""
+    with db.engine.connect() as connection:
+        result = connection.execute(
+            """SELECT llj.data
+                 FROM lowlevel ll
+                 JOIN lowlevel_json llj
+                   ON ll.id = llj.id
+                WHERE ll.gid = %s
+             ORDER BY ll.submitted
+            """, (mbid,)
+        )
+        row = result.fetchall()
+        return row
+
+
+def eval_mbid_labels(mbid):
+    """Fetches all rows containing lowlevel data for a given mbid,
+    evaluates incorrect_offsets, correct_offsets, and best_offset for the fetched rows
+    and sets respective label against each row
+    """
+    ids = []
+    features = []
+    data = get_lowlevel_data(mbid)
+    for row in data:
+        features.append(detect_outliers.extract_features(row[0]))
+    incorrect_offsets, correct_offsets, best_offset = detect_outliers.identify_anomalies(features)
+    set_mbid_labels(mbid, incorrect_offsets, correct_offsets, best_offset)
+
+
+def set_mbid_labels(mbid, incorrect_offsets, correct_offsets, best_offset):
+    """ sets labels as incorrect, correct, or best against each row for a given mbid """
+    
+    query_set_labels = text("""UPDATE lowlevel_json
+                                    SET label = :label
+                                   FROM (SELECT row_number() over (partition by gid) AS rn, id, gid
+                                         FROM lowlevel
+                                        ) AS rows                                  
+                                  WHERE rows.gid = :mbid
+                                    AND rows.id = lowlevel_json.id
+                                    AND rows.rn
+                                     IN :offsets
+                              """)
+    
+    with db.engine.connect() as connection:
+        with connection.begin() as transaction:
+            if incorrect_offsets:
+                connection.execute(query_set_labels,{"label": 'incorrect',
+                                                   "offsets": tuple(incorrect_offsets),
+                                                      "mbid": mbid})
+            if correct_offsets:
+                connection.execute(query_set_labels,{"label": 'correct',
+                                                   "offsets": tuple(correct_offsets),
+                                                      "mbid": mbid})
+                connection.execute(query_set_labels,{"label": 'best',
+                                                   "offsets": (best_offset,),
+                                                      "mbid": mbid})
+      
 
 def count_many_lowlevel(mbids):
     """Count number of stored low-level submissions for a specified set

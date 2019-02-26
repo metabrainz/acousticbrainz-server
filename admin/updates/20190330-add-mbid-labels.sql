@@ -1,0 +1,6 @@
+
+BEGIN;
+
+ALTER TABLE lowlevel_json ADD COLUMN label TEXT;
+
+COMMIT;

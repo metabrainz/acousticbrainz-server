@@ -72,6 +72,12 @@ class DataDBTestCase(DatabaseTestCase):
             db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
 
 
+    def test_get_correct_lowlevel(self):
+        """ Calculating correct offset in a set of same mbids """
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        self.assertEqual(self.test_lowlevel_data, db.data.get_correct_lowlevel(self.test_mbid))
+
+
     def test_write_load_low_level(self):
         """Writing and loading a dict returns the same data"""
         one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}

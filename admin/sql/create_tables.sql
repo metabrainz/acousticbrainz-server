@@ -13,6 +13,7 @@ CREATE TABLE lowlevel_json (
   id          INTEGER, -- FK to lowlevel.id
   data        JSONB    NOT NULL,
   data_sha256 CHAR(64) NOT NULL,
+  label       TEXT, 
   version     INTEGER  NOT NULL-- FK to version.id
 );
 

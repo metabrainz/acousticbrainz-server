@@ -41,12 +41,29 @@ def get_low_level(mbid):
     endpoint.
 
     :query n: *Optional.* Integer specifying an offset for a document.
+    :query correct: *Optional.* To get the data which is found to be most correct for an mbid.
 
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
+    correct = request.args.get("correct")
     try:
+        if correct:
+            return jsonify(db.data.get_correct_lowlevel(str(mbid)))
         return jsonify(db.data.load_low_level(str(mbid), offset))
+    except NoDataFoundException:
+        raise webserver.views.api.exceptions.APINotFound("Not found")
+
+
+@bp_core.route("/<uuid:mbid>/info", methods=["GET"])
+@crossdomain()
+def get_correct_mbid(mbid):
+    """Get correct low-level data for the given mbid
+
+    :resheader Content-Type: *application/json*
+    """
+    try:
+        return jsonify(db.data.get_correct_mbid(str(mbid)))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -93,6 +110,7 @@ def submit_low_level(mbid):
         submit_low_level_data(str(mbid), data, 'mbid')
     except BadDataException as e:
         raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
+    db.data.eval_mbid_labels(str(mbid))
     return jsonify({"message": "ok"})
 
 

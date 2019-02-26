@@ -14,4 +14,6 @@ pyyaml == 3.13
 rauth == 0.7.3
 setproctitle == 1.1.10
 six == 1.11.0
+numpy == 1.16.1
+scipy == 1.2.1
 -r docs/requirements.txt

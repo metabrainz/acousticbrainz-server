@@ -49,7 +49,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
         ]}
         with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:
             dataset_eval.validate_dataset_structure(test_dataset)
-            self.assertEqual(str(e), "Dataset needs to have at least 2 classes.")
+        self.assertEqual(str(e), "Dataset needs to have at least 2 classes.")
 
         test_dataset["classes"].append(
             {"name": "class2",
@@ -58,7 +58,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
 
         with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:
             dataset_eval.validate_dataset_structure(test_dataset)
-            self.assertEqual(str(e), "There are not enough recordings in a class `class2` (1). At least 2 are required in each class.")
+        self.assertEqual(str(e), "There are not enough recordings in a class `class2` (1). At least 2 are required in each class.")
 
         test_dataset["classes"][1]["recordings"].append("rec2")
 
@@ -81,7 +81,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
         count_lowlevel.return_value = 0
         with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:
             dataset_eval.validate_dataset_contents(self.test_data)
-            self.assertEqual(str(e), "Can't find low-level data for recording: 0dad432b-16cc-4bf0-8961-fd31d124b01b")
+        self.assertEqual(str(e), "Can't find low-level data for recording: 0dad432b-16cc-4bf0-8961-fd31d124b01b")
 
     def test_create_job_nonormalize(self):
         # No dataset normalization

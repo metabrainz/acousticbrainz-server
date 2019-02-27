@@ -13,6 +13,20 @@ STATUS_RUNNING = "running"
 STATUS_DONE = "done"
 STATUS_FAILED = "failed"
 
+EVAL_COLUMNS = ["dataset_eval_jobs.id::text",
+                "dataset_snapshot.dataset_id::text",
+                "dataset_eval_jobs.snapshot_id::text",
+                "dataset_eval_jobs.status",
+                "dataset_eval_jobs.status_msg", 
+                "dataset_eval_jobs.result", 
+                "dataset_eval_jobs.options", 
+                "dataset_eval_jobs.training_snapshot", 
+                "dataset_eval_jobs.testing_snapshot", 
+                "dataset_eval_jobs.created", 
+                "dataset_eval_jobs.updated", 
+                "dataset_eval_jobs.eval_location"]
+ALL_EVAL_COLUMNS = ", ".join([c for c in EVAL_COLUMNS])
+
 VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
 
 # Location to run an evaluation (on the AB server of the user's local server),
@@ -129,34 +143,17 @@ def validate_dataset_contents(dataset):
 
 
 def get_next_pending_job():
-    # TODO: This should return the same data as `get_job`, so
-    #       we run 2 queries, however it would be more efficient
-    #       to do it in 1 query
+
     with db.engine.connect() as connection:
         query = text(
-            """SELECT dataset_eval_jobs.id::text
-                    , dataset_snapshot.dataset_id::text
-                    , dataset_eval_jobs.snapshot_id::text
-                    , dataset_eval_jobs.status
-                    , dataset_eval_jobs.status_msg
-                    , dataset_eval_jobs.result
-                    , dataset_eval_jobs.options
-                    , dataset_eval_jobs.training_snapshot
-                    , dataset_eval_jobs.testing_snapshot
-                    , dataset_eval_jobs.created
-                    , dataset_eval_jobs.updated
-                    , dataset_eval_jobs.eval_location
+            """SELECT %s
                  FROM dataset_eval_jobs
                  JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-                 WHERE dataset_eval_jobs.id in (
-                      SELECT id
-                      FROM dataset_eval_jobs
-                      WHERE status = :status
-                      AND eval_location = 'local'
-                      ORDER BY created ASC
-                      LIMIT 1
-                )
-            """)
+                 WHERE status = :status
+                 AND eval_location = 'local'
+                 ORDER BY created ASC
+                 LIMIT 1
+            """ % ALL_EVAL_COLUMNS)
         result = connection.execute(query, {"status": STATUS_PENDING})
         row = result.fetchone()
         return dict(row) if row else None
@@ -165,21 +162,10 @@ def get_next_pending_job():
 def get_job(job_id):
     with db.engine.connect() as connection:
         query = text(
-            """SELECT dataset_eval_jobs.id::text
-                    , dataset_snapshot.dataset_id::text
-                    , dataset_eval_jobs.snapshot_id::text
-                    , dataset_eval_jobs.status
-                    , dataset_eval_jobs.status_msg
-                    , dataset_eval_jobs.result
-                    , dataset_eval_jobs.options
-                    , dataset_eval_jobs.training_snapshot
-                    , dataset_eval_jobs.testing_snapshot
-                    , dataset_eval_jobs.created
-                    , dataset_eval_jobs.updated
-                    , dataset_eval_jobs.eval_location
+            """SELECT %s
                  FROM dataset_eval_jobs
                  JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-                WHERE dataset_eval_jobs.id = :id""")
+                WHERE dataset_eval_jobs.id = :id""" % ALL_EVAL_COLUMNS)
         result = connection.execute(query, {"id": job_id})
 
         row = result.fetchone()

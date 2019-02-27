@@ -120,9 +120,24 @@ def add_stats_to_cache():
     with db.engine.connect() as connection:
         stats = _count_submissions_to_date(connection, now)
         cache.set(STATS_CACHE_KEY, stats,
-                     time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+                  time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
         cache.set(STATS_CACHE_LAST_UPDATE_KEY, now,
-                     time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+                  time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+
+
+def has_incomplete_stats_rows():
+    """Check if there are any statistics rows that are missing a key.
+    Returns: True if any stats hour has less than 6 stats keys, otherwise False"""
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT collected
+                 , count(name)
+              FROM statistics
+          GROUP BY collected
+            HAVING count(name) < :numitems""")
+        result = connection.execute(query, {"numitems": len(stats_key_map)})
+        return result.rowcount > 0
 
 
 def get_stats_summary():

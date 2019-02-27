@@ -18,7 +18,6 @@ import db.exceptions
 import db.stats
 import db.user
 import webserver
-from db.testing import DatabaseTestCase
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -150,6 +149,9 @@ def compute_stats():
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
+    incomplete = db.stats.has_incomplete_stats_rows()
+    if incomplete:
+        click.echo("Incomplete stats row detected", err=True)
 
 
 @cli.command()

@@ -100,18 +100,18 @@ def compute_stats(to_date):
 
         while next_date < to_date:
             stats = _count_submissions_to_date(connection, next_date)
-            with connection.begin() as transaction:
-                _write_stats(connection, next_date, stats)
+            _write_stats(connection, next_date, stats)
             next_date = _get_next_hour(next_date)
 
 
 def _write_stats(connection, date, stats):
     """Records a value with a given name and current timestamp."""
-    for name, value in six.iteritems(stats):
-        q = text("""
-            INSERT INTO statistics (collected, name, value)
-                 VALUES (:collected, :name, :value)""")
-        connection.execute(q, {"collected": date, "name": name, "value": value})
+    with connection.begin():
+        for name, value in six.iteritems(stats):
+            q = text("""
+                INSERT INTO statistics (collected, name, value)
+                     VALUES (:collected, :name, :value)""")
+            connection.execute(q, {"collected": date, "name": name, "value": value})
 
 
 def add_stats_to_cache():

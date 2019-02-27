@@ -1,3 +1,5 @@
+import sqlalchemy
+
 from db.testing import DatabaseTestCase
 import unittest
 import db
@@ -203,6 +205,23 @@ class StatsDatabaseTestCase(DatabaseTestCase):
             {"collected": date2, "stats": stats2}
         ]
         self.assertEqual(list(expected_data), list(data))
+
+    def test_write_stats_error(self):
+        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                  "lowlevel-lossless": 15,
+                  "lowlevel-lossless-unique": 10,
+                  "lowlevel-total": 25, "lowlevel-total-unique": "not-a-number"}
+        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+
+        try:
+            with db.engine.connect() as connection:
+                db.stats._write_stats(connection, date1, stats1)
+        except sqlalchemy.exc.DataError:
+            # We expect this to error-out
+            pass
+
+        data = db.stats.load_statistics_data()
+        self.assertEqual(0, len(data))
 
     def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""

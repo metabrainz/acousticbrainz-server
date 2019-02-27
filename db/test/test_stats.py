@@ -314,3 +314,34 @@ def add_empty_lowlevel(mbid, lossless, date):
         connection.execute(query,
                 {"id": id, "data": data_json,
                  "data_sha256": data_sha256, "version": version_id})
+
+
+class StatsHighchartsTestCase(DatabaseTestCase):
+    """Statistics methods which test the graphs on the website"""
+
+    def setUp(self):
+        super(StatsHighchartsTestCase, self).setUp()
+
+    def test_get_statistics_history(self):
+        """Test that we can generate highcharts format, even if some
+           data is missing for a date."""
+        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                  "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
+                  "lowlevel-total": 25, "lowlevel-total-unique": 16}
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
+                  "lowlevel-lossless": 20,  # missing lowlevel-lossless-unique
+                  "lowlevel-total": 35, "lowlevel-total-unique": 20}
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
+        with db.engine.connect() as connection:
+            db.stats._write_stats(connection, date1, stats1)
+            db.stats._write_stats(connection, date2, stats2)
+
+        history = db.stats.get_statistics_history()
+        # 6 data types
+        self.assertEqual(len(history), 6)
+        # each item has 2 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 2)
+        # Example of date conversion
+        self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})

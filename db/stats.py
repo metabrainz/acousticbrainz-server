@@ -183,7 +183,7 @@ def format_statistics_for_highcharts(data):
 
         ts = _make_timestamp(collected)
         for k, v in counts.items():
-            counts[k].append([ts, stats[k]])
+            counts[k].append([ts, stats.get(k, 0)])
 
     stats = [{"name": stats_key_map.get(key, key), "data": data} for key, data in counts.items()]
 

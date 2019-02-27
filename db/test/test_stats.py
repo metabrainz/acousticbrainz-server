@@ -345,3 +345,25 @@ class StatsHighchartsTestCase(DatabaseTestCase):
             self.assertEqual(len(h["data"]), 2)
         # Example of date conversion
         self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
+
+    def test_stats_daily(self):
+        """Only show stats computed for the beginning of each day, and
+        the last stats value"""
+        stats = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                 "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
+                 "lowlevel-total": 25, "lowlevel-total-unique": 16}
+        date = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        delta = datetime.timedelta(hours=1)
+        with db.engine.connect() as connection:
+            # 60 hours = 2 and a bit days, so we should retrieve 3 values
+            # for the beginning of each day, and 1 more last value
+            for i in range(60):
+                db.stats._write_stats(connection, date, stats)
+                date += delta
+
+        history = db.stats.get_statistics_history()
+        # 6 data types
+        self.assertEqual(len(history), 6)
+        # each item has 4 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 4)

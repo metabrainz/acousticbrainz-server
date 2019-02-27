@@ -196,12 +196,16 @@ def load_statistics_data(limit=None):
     # create an array of {"name": name, "value": value} objects and change
     # it in python
     args = {}
-    # TODO: use sqlalchemy select().limit()?
     qtext = """
             SELECT collected
                  , json_agg(row_to_json(
                     (SELECT r FROM (SELECT name, value) r) )) AS stats
               FROM statistics
+             WHERE date_part('hour', timezone('UTC'::text, collected)) = 0 
+                OR collected = (SELECT collected
+                                  FROM statistics
+                              ORDER BY collected DESC
+                                 LIMIT 1)
           GROUP BY collected
           ORDER BY collected DESC
           """

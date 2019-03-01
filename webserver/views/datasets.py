@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, Response
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
 from webserver.external import musicbrainz
@@ -12,6 +12,7 @@ import db.exceptions
 import db.dataset
 import db.dataset_eval
 import db.user
+import json
 import csv
 import math
 import six
@@ -91,6 +92,32 @@ def view(id):
         author=db.user.get(ds["author"]),
     )
 
+
+def get_json(id):
+    dataset = get_dataset(id)
+    dataset_clean = {
+        "name": dataset["name"],
+        "description": dataset["description"],
+        "classes": [],
+        "public": dataset["public"],
+    }
+    for cls in dataset["classes"]:
+        dataset_clean["classes"].append({
+            "name": cls["name"],
+            "description": cls["description"],
+            "recordings": cls["recordings"],
+        })
+
+    return dataset_clean
+
+
+@datasets_bp.route("/<uuid:dataset_id>/download")
+def download_json(dataset_id):
+    # return render_template("datasets/accuracy.html")
+    ds = get_json(dataset_id)
+    return Response(json.dumps(ds),
+                    mimetype='application/json',
+                    headers={'Content-Disposition': 'attachment;filename=dataset.json'})
 
 @datasets_bp.route("/accuracy")
 def accuracy():
@@ -195,19 +222,7 @@ def evaluate(dataset_id):
 
 @datasets_bp.route("/service/<uuid:id>/json")
 def view_json(id):
-    dataset = get_dataset(id)
-    dataset_clean = {
-        "name": dataset["name"],
-        "description": dataset["description"],
-        "classes": [],
-        "public": dataset["public"],
-    }
-    for cls in dataset["classes"]:
-        dataset_clean["classes"].append({
-            "name": cls["name"],
-            "description": cls["description"],
-            "recordings": cls["recordings"],
-        })
+    dataset_clean = get_json(id)
     return jsonify(dataset_clean)
 
 

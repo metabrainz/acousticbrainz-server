@@ -25,7 +25,7 @@ EVAL_COLUMNS = ["dataset_eval_jobs.id::text",
                 "dataset_eval_jobs.created", 
                 "dataset_eval_jobs.updated", 
                 "dataset_eval_jobs.eval_location"]
-ALL_EVAL_COLUMNS = ", ".join([c for c in EVAL_COLUMNS])
+
 
 VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
 
@@ -144,28 +144,32 @@ def validate_dataset_contents(dataset):
 
 def get_next_pending_job():
 
+    EVAL_COLUMNS_COMMA_SEPERATED = ", ".join([c for c in EVAL_COLUMNS])
     with db.engine.connect() as connection:
         query = text(
             """SELECT %s
                  FROM dataset_eval_jobs
-                 JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-                 WHERE status = :status
-                 AND eval_location = 'local'
-                 ORDER BY created ASC
-                 LIMIT 1
-            """ % ALL_EVAL_COLUMNS)
+                 JOIN dataset_snapshot 
+                   ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
+                WHERE status = :status
+                  AND eval_location = 'local'
+             ORDER BY created ASC
+                LIMIT 1
+            """ % EVAL_COLUMNS_COMMA_SEPERATED)
         result = connection.execute(query, {"status": STATUS_PENDING})
         row = result.fetchone()
         return dict(row) if row else None
 
 
 def get_job(job_id):
+
+    EVAL_COLUMNS_COMMA_SEPERATED = ", ".join([c for c in EVAL_COLUMNS])
     with db.engine.connect() as connection:
         query = text(
             """SELECT %s
                  FROM dataset_eval_jobs
                  JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-                WHERE dataset_eval_jobs.id = :id""" % ALL_EVAL_COLUMNS)
+                WHERE dataset_eval_jobs.id = :id""" % EVAL_COLUMNS_COMMA_SEPERATED)
         result = connection.execute(query, {"id": job_id})
 
         row = result.fetchone()

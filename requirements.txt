@@ -1,5 +1,4 @@
 git+https://github.com/metabrainz/brainzutils-python.git@v1.7.0
-coverage == 4.5.2
 Flask-Admin == 1.5.3
 Flask-Login == 0.4.1
 Flask-SQLAlchemy == 2.3.2
@@ -11,8 +10,6 @@ musicbrainzngs == 0.6
 ndg-httpsclient==0.5.1
 psycopg2 == 2.7.7
 pytz==2018.9
-pytest==4.1.1
-pytest-cov==2.6.1
 pyyaml == 3.13
 rauth == 0.7.3
 setproctitle == 1.1.10

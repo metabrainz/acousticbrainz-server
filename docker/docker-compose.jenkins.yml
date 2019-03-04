@@ -1,5 +1,5 @@
 # Docker Compose file for test
-version: "2"
+version: "3.4"
 services:
 
   db:
@@ -13,24 +13,11 @@ services:
   acousticbrainz:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
     depends_on:
       - db
       - redis
 
   redis:
     image: redis:4.0-alpine
-
-  hl_extractor:
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile.dev
-    depends_on:
-      - db
-
-  dataset_evaluator:
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile.dev
-    depends_on:
-      - db

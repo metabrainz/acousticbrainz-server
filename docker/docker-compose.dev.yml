@@ -1,5 +1,5 @@
 # Docker Compose file for development
-version: "2"
+version: "3.4"
 
 volumes:
   postgres:
@@ -21,13 +21,13 @@ services:
   webserver:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
     environment:
       FLASK_ENV: development
     command: python manage.py runserver
     volumes:
       - ../:/code
-      - ../data/app:/data
       - webhome:/root
     ports:
       - "8080:8080"
@@ -41,7 +41,8 @@ services:
   hl_extractor:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
     command: python2 worker_manage.py hl_extractor
     volumes:
       - ../:/code
@@ -51,7 +52,8 @@ services:
   dataset_evaluator:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
     command: python2 worker_manage.py dataset_evaluator
     volumes:
       - ../:/code

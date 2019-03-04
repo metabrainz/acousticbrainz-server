@@ -1,5 +1,5 @@
 # Docker Compose file for test
-version: "2"
+version: "3.4"
 
 volumes:
   postgres:
@@ -17,7 +17,8 @@ services:
   acousticbrainz:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
     volumes:
       - ..:/code:z
     depends_on:

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 # Modify these two as needed:
 COMPOSE_FILE_LOC="docker/docker-compose.jenkins.yml"
 TEST_SERVICE_NAME="acousticbrainz"
@@ -13,14 +15,14 @@ TEST_CONTAINER_REF="${COMPOSE_PROJECT_NAME}_${TEST_SERVICE_NAME}_run_1"
 
 # Record installed version of Docker and Compose with each build
 echo "Docker environment:"
-docker --version
+docker version
 docker-compose --version
 
 function cleanup {
     # Shutting down all containers associated with this project
     docker-compose -f $COMPOSE_FILE_LOC \
                    -p $COMPOSE_PROJECT_NAME \
-                   down --remove-
+                   down --remove-orphans
     docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
         | awk '{print $1}' | xargs --no-run-if-empty docker stop
     docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
@@ -28,8 +30,6 @@ function cleanup {
 }
 
 function run_tests {
-
-    ls -lR
 
     # Create containers
     docker-compose -f $COMPOSE_FILE_LOC \

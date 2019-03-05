@@ -93,8 +93,10 @@ def view(id):
     )
 
 
-def get_json(id):
-    dataset = get_dataset(id)
+def dataset_to_public_json(dataset):
+    """Constructs a dict containing name, description, classes and public flag
+       of a dataset to be returned as json"""
+
     dataset_clean = {
         "name": dataset["name"],
         "description": dataset["description"],
@@ -110,12 +112,11 @@ def get_json(id):
 
     return dataset_clean
 
-CSV_DIR = "./code/data/files/csv_files"
 
-@datasets_bp.route("/<uuid:dataset_id>/download")
+@datasets_bp.route("/<uuid:dataset_id>/download_schema")
 def download_csv(dataset_id):
-    # return render_template("datasets/accuracy.html")
-    ds = get_json(dataset_id)
+
+    ds = db.dataset.get(dataset_id)
     ds_csv = ""
     for ds_class in ds["classes"]:
         class_name = ds_class["name"]
@@ -231,7 +232,8 @@ def evaluate(dataset_id):
 
 @datasets_bp.route("/service/<uuid:id>/json")
 def view_json(id):
-    dataset_clean = get_json(id)
+    dataset = get_dataset(id)
+    dataset_clean = dataset_to_public_json(dataset)
     return jsonify(dataset_clean)
 
 

@@ -110,14 +110,24 @@ def get_json(id):
 
     return dataset_clean
 
+CSV_DIR = "./code/data/files/csv_files"
 
 @datasets_bp.route("/<uuid:dataset_id>/download")
-def download_json(dataset_id):
+def download_csv(dataset_id):
     # return render_template("datasets/accuracy.html")
     ds = get_json(dataset_id)
-    return Response(json.dumps(ds),
-                    mimetype='application/json',
-                    headers={'Content-Disposition': 'attachment;filename=dataset.json'})
+    ds_csv = ""
+    for ds_class in ds["classes"]:
+        class_name = ds_class["name"]
+        for rec in ds_class["recordings"]:
+            strList = [str(rec), str(class_name)]
+            ds_csv = ds_csv + ",".join(strList) + "\n"
+ 
+    return Response(ds_csv,
+        mimetype="text/csv",
+        headers={"Content-disposition":
+                 "attachment; filename=dataset.csv"})
+
 
 @datasets_bp.route("/accuracy")
 def accuracy():

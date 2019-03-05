@@ -25,7 +25,7 @@
             {% endif %}
 
         <a class="btn btn-info pull-right" title="Download this dataset" 
-          href="{{ url_for('datasets.download_json', dataset_id=dataset['id']) }}">
+          href="{{ url_for('datasets.download_csv', dataset_id=dataset['id']) }}">
           <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
           Download
         </a>

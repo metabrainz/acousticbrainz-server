@@ -124,9 +124,8 @@ def download_csv(dataset_id):
             ds_csv = ds_csv + ",".join(strList) + "\n"
  
     return Response(ds_csv,
-        mimetype="text/csv",
-        headers={"Content-disposition":
-                 "attachment; filename=dataset.csv"})
+                    mimetype="text/csv",
+                    headers={"Content-disposition":"attachment; filename=dataset.csv"})
 
 
 @datasets_bp.route("/accuracy")

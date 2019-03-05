@@ -84,6 +84,8 @@ RUN npm install
 
 FROM acousticbrainz-base AS acousticbrainz-dev
 
+ARG deploy_env
+
 COPY requirements_development.txt /code/requirements_development.txt
 RUN pip install --no-cache-dir -r requirements_development.txt
 
@@ -91,6 +93,8 @@ COPY . /code
 
 
 FROM acousticbrainz-base AS acousticbrainz-prod
+
+ARG deploy_env
 
 RUN pip install uWSGI==2.0.17.1
 

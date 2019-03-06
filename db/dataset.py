@@ -12,6 +12,37 @@ import db.dataset_eval
 from db import exceptions
 from utils import dataset_validator
 
+model_json_mappings = {
+    "genre_dortmund": {
+        "alternative": "Alternative",
+        "blues": "Blues",
+        "electronic": "Electronic",
+        "folkcountry": "Folk/Country",
+        "funksoulrnb": "Funk/Soul/RnB",
+        "jazz": "Jazz",
+        "pop": "Pop",
+        "raphiphop": "Rap/Hip Hop",
+        "rock": "Rock"
+    },
+    "genre_electronic": {
+        "ambient": "Ambient",
+        "dnb": "Drum and Bass",
+        "house": "House",
+        "techno": "Techno",
+        "trance": "Trance"
+    },
+    "genre_rosamerica": {
+        "cla": "Classical",
+        "dan": "Dance",
+        "hip": "Hip Hop",
+        "jaz": "Jazz",
+        "pop": "Pop",
+        "rhy": "Rhythm",
+        "roc": "Rock",
+        "spe": "Speech"
+    },
+}
+
 
 def _slugify(string):
     """Converts unicode string to lowercase, removes alphanumerics and

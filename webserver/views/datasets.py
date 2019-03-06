@@ -12,7 +12,6 @@ import db.exceptions
 import db.dataset
 import db.dataset_eval
 import db.user
-import json
 import csv
 import math
 import six

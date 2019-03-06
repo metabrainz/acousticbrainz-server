@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, Response
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
 from webserver.external import musicbrainz
@@ -16,6 +16,7 @@ import json
 import csv
 import math
 import six
+import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
 
@@ -114,19 +115,25 @@ def dataset_to_public_json(dataset):
 
 
 @datasets_bp.route("/<uuid:dataset_id>/download_schema")
-def download_csv(dataset_id):
-
+def download_schema_csv(dataset_id):
+    """ Converts dataset dict to csv for user to download
+    """
     ds = db.dataset.get(dataset_id)
-    ds_csv = ""
+    f = StringIO.StringIO()
+    writer = csv.writer(f)
+
     for ds_class in ds["classes"]:
         class_name = ds_class["name"]
         for rec in ds_class["recordings"]:
-            strList = [str(rec), str(class_name)]
-            ds_csv = ds_csv + ",".join(strList) + "\n"
- 
-    return Response(ds_csv,
-                    mimetype="text/csv",
-                    headers={"Content-disposition":"attachment; filename=dataset.csv"})
+            writer.writerow([rec, class_name])
+
+    f.seek(0)
+    file_name = "dataset_schema_" + ds["name"] + ".csv" 
+    
+    return send_file(f,
+                     mimetype='text/csv',
+                     attachment_filename=file_name,
+                     as_attachment=True)
 
 
 @datasets_bp.route("/accuracy")

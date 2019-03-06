@@ -76,7 +76,7 @@ class DatasetEvalTestCase(DatabaseTestCase):
                  mock.call("fd528ddb-411c-47bc-a383-1f8a222ed213"),
                  mock.call("96888f9e-c268-4db2-bc13-e29f8b317c20"),
                  mock.call("ed94c67d-bea8-4741-a3a6-593f20a22eb6")]
-        count_lowlevel.assert_has_calls(calls, any_order=True)
+        count_lowlevel.assert_has_calls(calls)
 
         count_lowlevel.return_value = 0
         with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:

@@ -409,9 +409,36 @@ def load_high_level(mbid, offset=0):
             data = row[1]
             version = row[2]
             data["version"] = version
+            data = map_model_classes(model,data)
             highlevel[model] = data
 
         return {"metadata": metadata, "highlevel": highlevel}
+
+
+def map_model_classes(model, data):
+    """
+    Helper function to map key names of model data to from shortened 
+    keywords to meaningful labels
+
+       Args:
+       -model name
+       -data corresponding to the model
+
+       Returns:
+       -data dict containing mapped keys
+    """
+
+    with open('db/model_class_mappings.json') as f:
+        map = json.load(f)
+
+        for name, value in map.iteritems():
+            if model == name:
+                for key, val in value.iteritems():
+                    data["all"][val] = data["all"].pop(key)
+                    if key == data["value"]:
+                        data["value"] = val
+
+    return data
 
 
 def count_lowlevel(mbid):

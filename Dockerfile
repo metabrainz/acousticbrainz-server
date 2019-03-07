@@ -96,15 +96,7 @@ FROM acousticbrainz-base AS acousticbrainz-prod
 
 ARG deploy_env
 
-RUN pip install uWSGI==2.0.17.1
-
-# Consul template service is already set up, just need to copy the configuration
-COPY ./docker/consul-template.conf /etc/consul-template.conf
-
-# uwsgi service files
-COPY ./docker/$deploy_env/uwsgi/uwsgi.service /etc/service/uwsgi/run
-RUN chmod 755 /etc/service/uwsgi/run
-COPY ./docker/$deploy_env/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
+RUN pip install --no-cache-dir uWSGI==2.0.17.1
 
 RUN mkdir /cache_namespaces
 RUN chown -R www-data:www-data /cache_namespaces
@@ -112,14 +104,34 @@ RUN chown -R www-data:www-data /cache_namespaces
 # Create a user named acousticbrainz for cron jobs
 RUN useradd --create-home --shell /bin/bash acousticbrainz
 
+# Consul template service is already set up, just need to copy the configuration
+COPY ./docker/consul-template.conf /etc/consul-template.conf
+
+# runit service files
+# All services are created with a `down` file, preventing them from starting
+# rc.local removes the down file for the specific service we want to run in a container
+# http://smarden.org/runit/runsv.8.html
+
+# uwsgi service files
+COPY ./docker/uwsgi/uwsgi.service /etc/service/uwsgi/run
+COPY ./docker/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
+RUN touch /etc/service/uwsgi/down
+
+# hl_extractor service files
+COPY ./docker/hl_extractor/hl_extractor.service /etc/service/hl_extractor/run
+RUN touch /etc/service/hl_extractor/down
+
+# dataset evaluator service files
+COPY ./docker/dataset_eval/dataset_eval.service /etc/service/dataset_eval/run
+RUN touch /etc/service/dataset_eval/down
+
 # Add cron jobs
 ADD docker/crontab /etc/cron.d/ab-crontab
 RUN chmod 0644 /etc/cron.d/ab-crontab && crontab -u acousticbrainz /etc/cron.d/ab-crontab
 RUN touch /var/log/stats_calc.log /var/log/stats_cache.log && chown acousticbrainz:acousticbrainz /var/log/stats_calc.log /var/log/stats_cache.log
-
-# Make sure that the cron service doesn't start automagically
-# http://smarden.org/runit/runsv.8.html
 RUN touch /etc/service/cron/down
+
+COPY ./docker/$deploy_env/rc.local /etc/rc.local
 
 COPY . /code
 RUN /code/node_modules/.bin/gulp

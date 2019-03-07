@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# AcousticBrainz rc.local
+# Enables a specific runit service depending on what the
+# CONTAINER_NAME variable is set to
+
+
+if [ "${CONTAINER_NAME}" = "acousticbrainz-web-beta" ]
+then
+    rm -f /etc/service/uwsgi/down
+    exit 0
+fi
+
+if [ "${CONTAINER_NAME}" = "acousticbrainz-hl-extractor-beta" ]
+then
+    rm -f /etc/service/hl_extractor/down
+    exit 0
+fi
+
+if [ "${CONTAINER_NAME}" = "acousticbrainz-dataset-evaluator-beta" ]
+then
+    rm -f /etc/service/dataset_eval/down
+    exit 0
+fi
+
+if [ "${CONTAINER_NAME}" = "acousticbrainz-cron-beta" ]
+then
+    rm -f /etc/service/cron/down
+    exit 0
+fi
+
+echo "init script has no clue which service to start. Set env var CONTAINER_NAME"
+exit 1

@@ -13,7 +13,6 @@ RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
     && apt-get install -y --no-install-recommends \
                        build-essential \
                        ca-certificates \
-                       cron \
                        git \
                        ipython \
                        libavcodec-dev \
@@ -101,9 +100,6 @@ RUN pip install --no-cache-dir uWSGI==2.0.17.1
 RUN mkdir /cache_namespaces
 RUN chown -R www-data:www-data /cache_namespaces
 
-# Create a user named acousticbrainz for cron jobs
-RUN useradd --create-home --shell /bin/bash acousticbrainz
-
 # Consul template service is already set up, just need to copy the configuration
 COPY ./docker/consul-template.conf /etc/consul-template.conf
 
@@ -126,9 +122,8 @@ COPY ./docker/dataset_eval/dataset_eval.service /etc/service/dataset_eval/run
 RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs
-ADD docker/crontab /etc/cron.d/ab-crontab
-RUN chmod 0644 /etc/cron.d/ab-crontab && crontab -u acousticbrainz /etc/cron.d/ab-crontab
-RUN touch /var/log/stats_calc.log /var/log/stats_cache.log && chown acousticbrainz:acousticbrainz /var/log/stats_calc.log /var/log/stats_cache.log
+ADD docker/crontab /etc/cron.d/acousticbrainz
+RUN chmod 0644 /etc/cron.d/acousticbrainz
 RUN touch /etc/service/cron/down
 
 COPY ./docker/$deploy_env/rc.local /etc/rc.local

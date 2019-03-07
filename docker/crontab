@@ -1,8 +1,5 @@
-PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
-PYTHONPATH=/usr/local/lib/python27.zip:/usr/local/lib/python2.7:/usr/local/lib/python2.7/lib-dynload:/usr/local/lib/python2.7/site-packages
-
 # Compute stats
-5 * * * * /usr/local/bin/python /code/manage.py compute_stats >> /var/log/stats_calc.log 2>&1
+5 * * * * root /usr/local/bin/python /code/manage.py compute_stats >> /var/log/stats_calc.log 2>&1
 
 # Cache stats
-*/10 * * * * /usr/local/bin/python /code/manage.py cache_stats >> /var/log/stats_cache.log 2>&1
+*/10 * * * * root /usr/local/bin/python /code/manage.py cache_stats >> /var/log/stats_cache.log 2>&1

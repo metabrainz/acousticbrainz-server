@@ -106,11 +106,12 @@ def compute_stats(to_date):
 
 def _write_stats(connection, date, stats):
     """Records a value with a given name and current timestamp."""
-    for name, value in six.iteritems(stats):
-        q = text("""
-            INSERT INTO statistics (collected, name, value)
-                 VALUES (:collected, :name, :value)""")
-        connection.execute(q, {"collected": date, "name": name, "value": value})
+    with connection.begin():
+        for name, value in six.iteritems(stats):
+            q = text("""
+                INSERT INTO statistics (collected, name, value)
+                     VALUES (:collected, :name, :value)""")
+            connection.execute(q, {"collected": date, "name": name, "value": value})
 
 
 def add_stats_to_cache():
@@ -119,9 +120,24 @@ def add_stats_to_cache():
     with db.engine.connect() as connection:
         stats = _count_submissions_to_date(connection, now)
         cache.set(STATS_CACHE_KEY, stats,
-                     time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+                  time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
         cache.set(STATS_CACHE_LAST_UPDATE_KEY, now,
-                     time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+                  time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+
+
+def has_incomplete_stats_rows():
+    """Check if there are any statistics rows that are missing a key.
+    Returns: True if any stats hour has less than 6 stats keys, otherwise False"""
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT collected
+                 , count(name)
+              FROM statistics
+          GROUP BY collected
+            HAVING count(name) < :numitems""")
+        result = connection.execute(query, {"numitems": len(stats_key_map)})
+        return result.rowcount > 0
 
 
 def get_stats_summary():
@@ -167,7 +183,7 @@ def format_statistics_for_highcharts(data):
 
         ts = _make_timestamp(collected)
         for k, v in counts.items():
-            counts[k].append([ts, stats[k]])
+            counts[k].append([ts, stats.get(k, 0)])
 
     stats = [{"name": stats_key_map.get(key, key), "data": data} for key, data in counts.items()]
 
@@ -180,12 +196,16 @@ def load_statistics_data(limit=None):
     # create an array of {"name": name, "value": value} objects and change
     # it in python
     args = {}
-    # TODO: use sqlalchemy select().limit()?
     qtext = """
             SELECT collected
                  , json_agg(row_to_json(
                     (SELECT r FROM (SELECT name, value) r) )) AS stats
               FROM statistics
+             WHERE date_part('hour', timezone('UTC'::text, collected)) = 0 
+                OR collected = (SELECT collected
+                                  FROM statistics
+                              ORDER BY collected DESC
+                                 LIMIT 1)
           GROUP BY collected
           ORDER BY collected DESC
           """

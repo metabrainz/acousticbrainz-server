@@ -1,3 +1,5 @@
+import sqlalchemy
+
 from db.testing import DatabaseTestCase
 import unittest
 import db
@@ -204,6 +206,23 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
+    def test_write_stats_error(self):
+        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                  "lowlevel-lossless": 15,
+                  "lowlevel-lossless-unique": 10,
+                  "lowlevel-total": 25, "lowlevel-total-unique": "not-a-number"}
+        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+
+        try:
+            with db.engine.connect() as connection:
+                db.stats._write_stats(connection, date1, stats1)
+        except sqlalchemy.exc.DataError:
+            # We expect this to error-out
+            pass
+
+        data = db.stats.load_statistics_data()
+        self.assertEqual(0, len(data))
+
     def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""
 
@@ -295,3 +314,56 @@ def add_empty_lowlevel(mbid, lossless, date):
         connection.execute(query,
                 {"id": id, "data": data_json,
                  "data_sha256": data_sha256, "version": version_id})
+
+
+class StatsHighchartsTestCase(DatabaseTestCase):
+    """Statistics methods which test the graphs on the website"""
+
+    def setUp(self):
+        super(StatsHighchartsTestCase, self).setUp()
+
+    def test_get_statistics_history(self):
+        """Test that we can generate highcharts format, even if some
+           data is missing for a date."""
+        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                  "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
+                  "lowlevel-total": 25, "lowlevel-total-unique": 16}
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
+                  "lowlevel-lossless": 20,  # missing lowlevel-lossless-unique
+                  "lowlevel-total": 35, "lowlevel-total-unique": 20}
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
+        with db.engine.connect() as connection:
+            db.stats._write_stats(connection, date1, stats1)
+            db.stats._write_stats(connection, date2, stats2)
+
+        history = db.stats.get_statistics_history()
+        # 6 data types
+        self.assertEqual(len(history), 6)
+        # each item has 2 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 2)
+        # Example of date conversion
+        self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
+
+    def test_stats_daily(self):
+        """Only show stats computed for the beginning of each day, and
+        the last stats value"""
+        stats = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                 "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
+                 "lowlevel-total": 25, "lowlevel-total-unique": 16}
+        date = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        delta = datetime.timedelta(hours=1)
+        with db.engine.connect() as connection:
+            # 60 hours = 2 and a bit days, so we should retrieve 3 values
+            # for the beginning of each day, and 1 more last value
+            for i in range(60):
+                db.stats._write_stats(connection, date, stats)
+                date += delta
+
+        history = db.stats.get_statistics_history()
+        # 6 data types
+        self.assertEqual(len(history), 6)
+        # each item has 4 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 4)

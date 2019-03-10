@@ -359,7 +359,7 @@ def load_low_level(mbid, offset=0):
         return row[0]
 
 
-def load_high_level(mbid, offset=0):
+def load_high_level(mbid, offset=0, map_classes = False):
     """Load high-level data for a given MBID."""
     with db.engine.connect() as connection:
         # Metadata
@@ -400,7 +400,7 @@ def load_high_level(mbid, offset=0):
                  JOIN version
                    ON version.id = hlmo.version
                 WHERE hlmo.highlevel = :hlid
-                  AND m.status = 'show'
+                  AND m.status = 'hidden'
             """)
         result = connection.execute(query, {"hlid": hlid})
         highlevel = {}
@@ -409,7 +409,8 @@ def load_high_level(mbid, offset=0):
             data = row[1]
             version = row[2]
             data["version"] = version
-            data = map_model_classes(model,data)
+            if map_classes:
+                data = map_model_classes(model,data)
             highlevel[model] = data
 
         return {"metadata": metadata, "highlevel": highlevel}
@@ -428,15 +429,22 @@ def map_model_classes(model, data):
        -data dict containing mapped keys
     """
 
-    with open('db/model_class_mappings.json') as f:
-        map = json.load(f)
+    with db.engine.connect() as connection:
+        query = text("""SELECT model.model, mappings
+                          FROM model
+                          WHERE mappings is not null
+        """)
+        result = connection.execute(query)
+        key_map_list = result.fetchall()
 
-        for name, value in map.iteritems():
-            if model == name:
-                for key, val in value.iteritems():
-                    data["all"][val] = data["all"].pop(key)
-                    if key == data["value"]:
-                        data["value"] = val
+    for i in range(0, len(key_map_list[:])):
+        name = key_map_list[i][0]
+        if name == model:
+            mapping = key_map_list[i][1]
+            for key, val in mapping.iteritems():
+                data["all"][val] = data["all"].pop(key)
+                if key == data["value"]:
+                    data["value"] = val
 
     return data
 

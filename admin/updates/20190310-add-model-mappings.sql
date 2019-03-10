@@ -24,7 +24,7 @@ UPDATE model SET mappings = '{
 UPDATE model SET mappings = '{
         "cla": "classical",
         "dan": "dance",
-        "hip": "hip_hop",
+        "hip": "hiphop",
         "jaz": "jazz",
         "pop": "pop",
         "rhy": "rhythm",

@@ -42,10 +42,13 @@ def get_high_level(mbid):
     If there is more than one document with the same mbid, you can specify
     an offset as a query parameter in the form of ?n=x, where x is an integer
     starting from 0
+    If you need the full key values instead of the shortened keys, you can specify
+    a parameter 'map=True' where map is a boolean value
     """
     mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
+    map_classes = request.args.get("map")
     try:
-        return jsonify(db.data.load_high_level(mbid, offset))
+        return jsonify(db.data.load_high_level(mbid, offset, map_classes))
     except NoDataFoundException:
         raise exceptions.APINotFound("Not found")
 

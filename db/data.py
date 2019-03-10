@@ -359,7 +359,7 @@ def load_low_level(mbid, offset=0):
         return row[0]
 
 
-def load_high_level(mbid, offset=0, map_classes = False):
+def load_high_level(mbid, offset=0, map_classes=False):
     """Load high-level data for a given MBID."""
     with db.engine.connect() as connection:
         # Metadata

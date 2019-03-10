@@ -60,17 +60,21 @@ def get_high_level(mbid):
     for an MBID, you can browse through them by specifying an offset parameter
     ``n``. Documents are sorted by the submission time of their associated
     low-level documents.
+    You can get the full key values for model classes by specifying a
+    parameter ``map=True``
 
     You can get the total number of low-level submissions using ``/<mbid>/count``
     endpoint.
 
     :query n: *Optional.* Integer specifying an offset for a document.
+         map: *Optional.* Boolean flag to get mapped key
 
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
+    map_classes = request.args.get("map")
     try:
-        return jsonify(db.data.load_high_level(str(mbid), offset))
+        return jsonify(db.data.load_high_level(str(mbid), offset, map_classes))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -176,7 +180,7 @@ def check_bad_request_for_multiple_recordings():
     return recordings
 
 
-def get_data_for_multiple_recordings(collect_data):
+def get_data_for_multiple_recordings(collect_data, map_classes=False):
     """Gets low-level and high-level data using the function collect_data
     """
     recordings = check_bad_request_for_multiple_recordings()
@@ -185,7 +189,10 @@ def get_data_for_multiple_recordings(collect_data):
 
     for recording_id, offset in recordings:
         try:
-            recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
+            if collect_data == db.data.load_high_level:
+                recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset, map_classes)
+            else:
+                recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
         except NoDataFoundException:
             pass
 
@@ -248,13 +255,16 @@ def get_many_highlevel():
     in the returned data.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
+                     map: *Optional.* Boolean flag to get mapped key values.
 
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
 
     :resheader Content-Type: *application/json*
     """
-    recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
+    map_classes = request.args.get("map")
+
+    recording_details = get_data_for_multiple_recordings(db.data.load_high_level, map_classes)
     return recording_details
 
 

@@ -359,7 +359,7 @@ def load_low_level(mbid, offset=0):
         return row[0]
 
 
-def load_high_level(mbid, offset=0, map_classes=False):
+def load_high_level(mbid, offset=0, map_keys=False):
     """Load high-level data for a given MBID."""
     with db.engine.connect() as connection:
         # Metadata
@@ -400,7 +400,7 @@ def load_high_level(mbid, offset=0, map_classes=False):
                  JOIN version
                    ON version.id = hlmo.version
                 WHERE hlmo.highlevel = :hlid
-                  AND m.status = 'hidden'
+                  AND m.status = 'show'
             """)
         result = connection.execute(query, {"hlid": hlid})
         highlevel = {}
@@ -409,7 +409,7 @@ def load_high_level(mbid, offset=0, map_classes=False):
             data = row[1]
             version = row[2]
             data["version"] = version
-            if map_classes:
+            if map_keys:
                 data = map_model_classes(model,data)
             highlevel[model] = data
 

@@ -67,14 +67,14 @@ def get_high_level(mbid):
     endpoint.
 
     :query n: *Optional.* Integer specifying an offset for a document.
-         map: *Optional.* Boolean flag to get mapped key
+         map: *Optional.* Boolean flag to get mapped keys
 
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
-    map_classes = request.args.get("map")
+    map_keys = request.args.get("map")
     try:
-        return jsonify(db.data.load_high_level(str(mbid), offset, map_classes))
+        return jsonify(db.data.load_high_level(str(mbid), offset, map_keys))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -180,19 +180,21 @@ def check_bad_request_for_multiple_recordings():
     return recordings
 
 
-def get_data_for_multiple_recordings(collect_data, map_classes=False):
+def get_data_for_multiple_recordings(collect_data):
     """Gets low-level and high-level data using the function collect_data
     """
     recordings = check_bad_request_for_multiple_recordings()
 
     recording_details = {}
-
+    map_keys = request.args.get("map")
     for recording_id, offset in recordings:
         try:
-            if collect_data == db.data.load_high_level:
-                recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset, map_classes)
+            if map_keys:
+                recording_details.setdefault(recording_id, {})[offset] = collect_data(
+                    recording_id, offset, map_keys)
             else:
-                recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
+                recording_details.setdefault(recording_id, {})[offset] = collect_data(
+                    recording_id, offset)
         except NoDataFoundException:
             pass
 
@@ -262,9 +264,8 @@ def get_many_highlevel():
 
     :resheader Content-Type: *application/json*
     """
-    map_classes = request.args.get("map")
 
-    recording_details = get_data_for_multiple_recordings(db.data.load_high_level, map_classes)
+    recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
     return recording_details
 
 

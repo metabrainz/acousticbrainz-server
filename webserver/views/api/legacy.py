@@ -46,9 +46,9 @@ def get_high_level(mbid):
     a parameter 'map=True' where map is a boolean value
     """
     mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
-    map_classes = request.args.get("map")
+    map_keys = request.args.get("map")
     try:
-        return jsonify(db.data.load_high_level(mbid, offset, map_classes))
+        return jsonify(db.data.load_high_level(mbid, offset, map_keys))
     except NoDataFoundException:
         raise exceptions.APINotFound("Not found")
 

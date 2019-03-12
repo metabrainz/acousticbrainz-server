@@ -121,7 +121,11 @@ def summary(mbid):
         return render_template("data/summary-missing.html", metadata=recording_info,
                                youtube_query=_get_youtube_query(recording_info)), 404
     else:  # Recording doesn't exist in MusicBrainz
-        raise NotFound("MusicBrainz does not have data for this track.")
+        raise NotFound(
+            """MusicBrainz does not have data for this track. 
+                If the recording has been recently added to MusicBrainz, 
+                we might not have heard of it yet.""")
+
 
 def _get_youtube_query(metadata):
     """Generates a query string to search youtube for this song

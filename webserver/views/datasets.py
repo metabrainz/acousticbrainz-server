@@ -93,46 +93,42 @@ def view(dataset_id):
     )
 
 
-def dataset_to_public_json(dataset):
-    """Constructs a dict containing name, description, classes and public flag
-       of a dataset to be returned as json"""
-
-    dataset_clean = {
-        "name": dataset["name"],
-        "description": dataset["description"],
-        "classes": [],
-        "public": dataset["public"],
-    }
-    for cls in dataset["classes"]:
-        dataset_clean["classes"].append({
-            "name": cls["name"],
-            "description": cls["description"],
-            "recordings": cls["recordings"],
-        })
-
-    return dataset_clean
-
-
 @datasets_bp.route("/<uuid:dataset_id>/download_schema")
 def download_schema_csv(dataset_id):
     """ Converts dataset dict to csv for user to download
     """
-    ds = db.dataset.get(dataset_id)
-    f = StringIO.StringIO()
-    writer = csv.writer(f)
+    ds = get_dataset(dataset_id)
+    fp = _convert_dataset_to_csv_stringio(ds)
 
-    for ds_class in ds["classes"]:
+    file_name = "dataset_schema_%s.csv" % db.dataset._slugify(ds["name"])
+
+    return send_file(fp,
+                     mimetype='text/csv',
+                     as_attachment=True,
+                     attachment_filename=file_name)
+
+
+def _convert_dataset_to_csv_stringio(dataset):
+    """Convert a dataset to a CSV representation that can be imported
+    by the dataset importer.
+    A dataset file contains a line for each item in the format
+        classname,mbid
+
+    Arguments:
+        dataset: a dataset loaded with get_dataset
+
+    Returns:
+        A rewound StringIO containing a CSV representation of the dataset"""
+    fp = StringIO.StringIO()
+    writer = csv.writer(fp)
+
+    for ds_class in dataset["classes"]:
         class_name = ds_class["name"]
         for rec in ds_class["recordings"]:
             writer.writerow([rec, class_name])
 
-    f.seek(0)
-    file_name = "dataset_schema_" + ds["name"] + ".csv" 
-    
-    return send_file(f,
-                     mimetype='text/csv',
-                     attachment_filename=file_name,
-                     as_attachment=True)
+    fp.seek(0)
+    return fp
 
 
 @datasets_bp.route("/accuracy")
@@ -236,10 +232,21 @@ def evaluate(dataset_id):
     return render_template("datasets/evaluate.html", dataset=ds, form=form)
 
 
-@datasets_bp.route("/service/<uuid:id>/json")
-def view_json(id):
-    dataset = get_dataset(id)
-    dataset_clean = dataset_to_public_json(dataset)
+@datasets_bp.route("/service/<uuid:dataset_id>/json")
+def view_json(dataset_id):
+    dataset = get_dataset(dataset_id)
+    dataset_clean = {
+        "name": dataset["name"],
+        "description": dataset["description"],
+        "classes": [],
+        "public": dataset["public"],
+    }
+    for cls in dataset["classes"]:
+        dataset_clean["classes"].append({
+            "name": cls["name"],
+            "description": cls["description"],
+            "recordings": cls["recordings"],
+        })
     return jsonify(dataset_clean)
 
 

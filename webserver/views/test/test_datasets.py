@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import csv
 import datetime
 import json
 
@@ -8,6 +9,7 @@ from flask import url_for
 
 import webserver.forms as forms
 from db import dataset, dataset_eval, user
+from webserver.views import datasets as ws_datasets
 from webserver.testing import ServerTestCase
 from webserver.views.test.test_data import FakeMusicBrainz
 
@@ -201,6 +203,9 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertRedirects(resp, url_for("user.profile", musicbrainz_id=self.test_user_mb_name))
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 0)
 
+    def test_download_schema_csv(self):
+        self._test_view_with_get_dataset("datasets.download_schema_csv")
+
     def _test_view_with_get_dataset(self, view_name):
         """Check that a view that uses datasets.get_dataset to retrieve a dataset"""
         # no such dataset, 404
@@ -288,11 +293,25 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.post(url_for("datasets.evaluate", dataset_id=dataset_id, form=evaluate_form))
         self.assertStatus(resp, 200)
 
+    def test_dataset_to_csv(self):
+        fp = ws_datasets._convert_dataset_to_csv_stringio(self.test_data)
+        dataset_csv = fp.getvalue()
+        expected_list = ["e8afe383-1478-497e-90b1-7885c7f37f6e,Class #1",
+                         "0dad432b-16cc-4bf0-8961-fd31d124b01b,Class #1",
+                         "e8afe383-1478-497e-90b1-7885c7f37f6e,Class #2",
+                         "0dad432b-16cc-4bf0-8961-fd31d124b01b,Class #2"]
+        # the csv module by default uses \r\n as a terminator, and puts one at the end to
+        terminator = csv.excel.lineterminator
+        expected = terminator.join(expected_list) + terminator
+
+        self.assertEqual(dataset_csv, expected)
+
+
 class DatasetsListTestCase(ServerTestCase):
 
     def setUp(self):
         self.ds = {"id": "id", "author_name": "author", "name": "name",
-                "created": datetime.datetime.now(), "status": "done"}
+                   "created": datetime.datetime.now(), "status": "done"}
 
     @mock.patch("db.dataset.get_public_datasets")
     def test_page(self, get_public_datasets):

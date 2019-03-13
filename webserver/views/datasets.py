@@ -93,14 +93,14 @@ def view(dataset_id):
     )
 
 
-@datasets_bp.route("/<uuid:dataset_id>/download_schema")
-def download_schema_csv(dataset_id):
+@datasets_bp.route("/<uuid:dataset_id>/download_annotation")
+def download_annotation_csv(dataset_id):
     """ Converts dataset dict to csv for user to download
     """
     ds = get_dataset(dataset_id)
     fp = _convert_dataset_to_csv_stringio(ds)
 
-    file_name = "dataset_schema_%s.csv" % db.dataset._slugify(ds["name"])
+    file_name = "dataset_annotations_%s.csv" % db.dataset._slugify(ds["name"])
 
     return send_file(fp,
                      mimetype='text/csv',

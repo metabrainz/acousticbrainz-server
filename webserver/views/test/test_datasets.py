@@ -203,8 +203,8 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertRedirects(resp, url_for("user.profile", musicbrainz_id=self.test_user_mb_name))
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 0)
 
-    def test_download_schema_csv(self):
-        self._test_view_with_get_dataset("datasets.download_schema_csv")
+    def test_download_annotation_csv(self):
+        self._test_view_with_get_dataset("datasets.download_annotation_csv")
 
     def _test_view_with_get_dataset(self, view_name):
         """Check that a view that uses datasets.get_dataset to retrieve a dataset"""

@@ -40,7 +40,7 @@
           </a>
         </td>
         <td>
-          <a href="{{ url_for('datasets.view', id=ds['id']) }}">{{ ds['name'] }}</a>
+          <a href="{{ url_for('datasets.view', dataset_id=ds['id']) }}">{{ ds['name'] }}</a>
         </td>
         <td>{{ ds['created']|datetime }}</td>
         <td>{{ render_job_status(ds['status']) }}</td>

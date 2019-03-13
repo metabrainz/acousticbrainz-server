@@ -83,9 +83,9 @@ def list_datasets(status):
             nextpage=nextpage)
 
 
-@datasets_bp.route("/<uuid:id>")
-def view(id):
-    ds = get_dataset(id)
+@datasets_bp.route("/<uuid:dataset_id>")
+def view(dataset_id):
+    ds = get_dataset(dataset_id)
     return render_template(
         "datasets/view.html",
         dataset=ds,
@@ -212,7 +212,7 @@ def evaluate(dataset_id):
         db.dataset_eval.validate_dataset_structure(ds)
     except db.dataset_eval.IncompleteDatasetException as e:
         flash.error("Cannot add this dataset because of a validation error: %s" % e)
-        return redirect(url_for("datasets.view", id=dataset_id))
+        return redirect(url_for("datasets.view", dataset_id=dataset_id))
 
     form = forms.DatasetEvaluationForm()
 

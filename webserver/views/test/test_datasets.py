@@ -54,24 +54,10 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.load_low_level_data(self.test_mbid_2)
 
     def test_view(self):
-        resp = self.client.get(url_for("datasets.view", id=self.test_uuid))
-        self.assert404(resp)
-
-        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        resp = self.client.get(url_for("datasets.view", id=dataset_id))
-        self.assert200(resp)
+        self._test_view_with_get_dataset("datasets.view")
 
     def test_view_json(self):
-        resp = self.client.get(url_for("datasets.view_json", id=self.test_uuid))
-        self.assert404(resp)
-
-        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        resp = self.client.get(url_for("datasets.view_json", id=dataset_id))
-        self.assert200(resp)
-
-        dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL)
-
-        self.temporary_login(self.test_user_id)
+        self._test_view_with_get_dataset("datasets.view_json")
 
     def test_eval_job_delete(self):
         resp = self.client.delete(url_for("datasets.eval_job", dataset_id=self.test_uuid, job_id=self.test_uuid))
@@ -151,7 +137,6 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assert200(resp)
 
     def test_edit_service(self):
-
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         # Trying to edit without login
@@ -215,6 +200,36 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.post(url_for("datasets.delete", dataset_id=dataset_id))
         self.assertRedirects(resp, url_for("user.profile", musicbrainz_id=self.test_user_mb_name))
         self.assertTrue(len(dataset.get_by_user_id(self.test_user_id)) == 0)
+
+    def _test_view_with_get_dataset(self, view_name):
+        """Check that a view that uses datasets.get_dataset to retrieve a dataset"""
+        # no such dataset, 404
+        resp = self.client.get(url_for(view_name, dataset_id=self.test_uuid))
+        self.assert404(resp)
+
+        # public dataset + not logged in, OK
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        resp = self.client.get(url_for(view_name, dataset_id=dataset_id))
+        self.assert200(resp)
+
+        self.temporary_login(self.test_user_id)
+
+        # private dataset + logged in, ok
+        resp = self.client.get(url_for(view_name, dataset_id=dataset_id))
+        self.assert200(resp)
+
+        # private dataset + author, ok
+        self.test_data["public"] = False
+        private_dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        resp = self.client.get(url_for(view_name, dataset_id=private_dataset_id))
+        self.assert200(resp)
+
+        # private dataset, not author, 404
+        another_user_id = user.create("another_tester")
+        user.agree_to_gdpr("another_tester")
+        self.temporary_login(another_user_id)
+        resp = self.client.get(url_for(view_name, dataset_id=private_dataset_id))
+        self.assert404(resp)
 
     @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
     def test_recording_info(self, get_recording_by_id):

@@ -49,7 +49,7 @@
 
     <ul class="nav nav-tabs">
       <li {{ 'class=active' if active_tab=='view' }}>
-        <a href="{{ url_for('datasets.view', id=dataset['id']) }}">View</a>
+        <a href="{{ url_for('datasets.view', dataset_id=dataset['id']) }}">View</a>
       </li>
       <li {{ 'class=active' if active_tab=='evaluation' }}>
         <a href="{{ url_for('datasets.eval_info', dataset_id=dataset['id']) }}">Evaluation</a>

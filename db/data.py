@@ -359,7 +359,7 @@ def load_low_level(mbid, offset=0):
         return row[0]
 
 
-def load_high_level(mbid, offset=0, map_keys=False):
+def load_high_level(mbid, offset=0):
     """Load high-level data for a given MBID."""
     with db.engine.connect() as connection:
         # Metadata
@@ -409,42 +409,42 @@ def load_high_level(mbid, offset=0, map_keys=False):
             data = row[1]
             version = row[2]
             data["version"] = version
-            if map_keys:
-                data = map_model_classes(model,data)
             highlevel[model] = data
 
         return {"metadata": metadata, "highlevel": highlevel}
 
 
-def map_model_classes(model, data):
-    """
-    Helper function to map key names of model data to from shortened 
-    keywords to meaningful labels
+def model_class_mappings():
+    """Maps key names of model data to from shortened keywords to meaningful 
+    labels
 
        Args:
-       -model name
-       -data corresponding to the model
+           model: The model class whose keys are to be replaced with descriptive 
+                  names
+           data: dict containing model data 
 
        Returns:
-       -data dict containing mapped keys
+           data: dict containing descriptive keys
     """
+    mappings = {}
 
     with db.engine.connect() as connection:
         query = text("""SELECT model.model, mappings
                           FROM model
-                          WHERE mappings is not null
+                         WHERE mappings is not null
         """)
         result = connection.execute(query)
         key_map_list = result.fetchall()
 
-    for i in range(0, len(key_map_list[:])):
-        name = key_map_list[i][0]
-        if name == model:
-            mapping = key_map_list[i][1]
-            for key, val in mapping.iteritems():
-                data["all"][val] = data["all"].pop(key)
-                if key == data["value"]:
-                    data["value"] = val
+    for row in key_map_list:
+        if key_map_list is None:
+            continue
+
+        mappings[row["model"]] = row["mappings"]
+        # for key, val in mapping.iteritems():
+        #     data["all"][val] = data["all"].pop(key)
+        #     if key == data["value"]:
+        #         data["value"] = val
 
     return data
 

@@ -239,6 +239,18 @@ def set_model_status(model_name, model_version, model_status):
              "model_version": model_version,
              "model_status": model_status})
 
+
+def set_model_mappings(model_name, model_version, mappings):
+    with db.engine.begin() as connection:
+        query = text(
+            """UPDATE model
+                  SET mappings = :mappings
+                WHERE model.model = :model_name
+            """
+        )
+        connection.execute(query, {"mappings": mappings,
+                                   "model_name": model_name})
+
 def get_model(model_name, model_version):
     with db.engine.begin() as connection:
         query = text(
@@ -415,16 +427,10 @@ def load_high_level(mbid, offset=0):
 
 
 def model_class_mappings():
-    """Maps key names of model data to from shortened keywords to meaningful 
-    labels
-
-       Args:
-           model: The model class whose keys are to be replaced with descriptive 
-                  names
-           data: dict containing model data 
+    """Fetches key mappings of model classes from database
 
        Returns:
-           data: dict containing descriptive keys
+           data: dict containing descriptive keys for model classes
     """
     mappings = {}
 
@@ -444,20 +450,29 @@ def model_class_mappings():
     return mappings
 
 
-def map_class_labels(high_level_json):
-    mappings = db.data.model_class_mappings()
+def map_class_labels(high_level_dict):
+    """Maps shortend key names in high-level dict to meaningful labels using
+    mappings returned by `model_class_mappings` 
 
-    high_level = high_level_json["highlevel"]
+    Args:
+        high_level_data: high-level data dict containing shortend keys
+    
+    Returns:
+        dict with mapped model class keys
+
+    """
+    mappings = db.data.model_class_mappings()
+    high_level = high_level_dict["highlevel"]
 
     for model, map in mappings.iteritems():
         for key, val in map.iteritems():
             high_level[model]["all"][val] = high_level[model]["all"].pop(key)
             if key == high_level[model]["value"]:
-                    high_level[model]["value"] = val
+                high_level[model]["value"] = val
 
-    high_level_json["highlevel"] = high_level
-
-    return high_level_json
+    high_level_dict["highlevel"] = high_level
+    
+    return high_level_dict
 
 
 def count_lowlevel(mbid):

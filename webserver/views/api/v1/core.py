@@ -10,7 +10,6 @@ import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
-
 bp_core = Blueprint('api_v1_core', __name__)
 
 
@@ -67,14 +66,17 @@ def get_high_level(mbid):
     endpoint.
 
     :query n: *Optional.* Integer specifying an offset for a document.
-         map: *Optional.* Boolean flag to get mapped keys
+    :query map: *Optional.* Boolean flag to get mapped keys.
 
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
-    map_keys = request.args.get("map")
+    map_keys = True if request.args.get("map") == 'True' else False
     try:
-        return jsonify(db.data.load_high_level(str(mbid), offset, map_keys))
+        high_level = db.data.load_high_level(str(mbid), offset)
+        if map_keys:
+            high_level = db.data.map_class_labels(high_level)
+        return jsonify(high_level)
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -186,19 +188,15 @@ def get_data_for_multiple_recordings(collect_data):
     recordings = check_bad_request_for_multiple_recordings()
 
     recording_details = {}
-    map_keys = request.args.get("map")
+
     for recording_id, offset in recordings:
         try:
-            if map_keys:
-                recording_details.setdefault(recording_id, {})[offset] = collect_data(
-                    recording_id, offset, map_keys)
-            else:
                 recording_details.setdefault(recording_id, {})[offset] = collect_data(
                     recording_id, offset)
         except NoDataFoundException:
             pass
 
-    return jsonify(recording_details)
+    return recording_details
 
 
 @bp_core.route("/low-level", methods=["GET"])
@@ -231,7 +229,7 @@ def get_many_lowlevel():
     :resheader Content-Type: *application/json*
     """
     recording_details = get_data_for_multiple_recordings(db.data.load_low_level)
-    return recording_details
+    return jsonify(recording_details)
 
 
 @bp_core.route("/high-level", methods=["GET"])
@@ -257,7 +255,7 @@ def get_many_highlevel():
     in the returned data.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
-                     map: *Optional.* Boolean flag to get mapped key values.
+              :query map: *Optional.* Boolean flag to get descriptive keys
 
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
@@ -266,7 +264,15 @@ def get_many_highlevel():
     """
 
     recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
-    return recording_details
+    map_keys = True if request.args.get("map") == 'True' else False
+    if map_keys:
+        for recording_id, offset in recording_details.iteritems():
+            for key, data in offset.iteritems():
+                recording_details.setdefault(recording_id, {})[key] = db.data.map_class_labels(
+                    recording_details[recording_id][key])
+    
+    return jsonify(recording_details)
+
 
 
 @bp_core.route("/count", methods=["GET"])

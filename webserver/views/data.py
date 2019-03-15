@@ -66,26 +66,16 @@ def view_high_level(mbid):
         offset = 0
 
     try:
-        high_level_dump = db.data.load_high_level(mbid, offset)
-        high_level_dump = map_class_labels(high_level_dump)
-        return render_template(db.data.load_high_level(mbid, offset)
-            "data/json-display.html",
+        high_level_json = db.data.load_high_level(mbid, offset)
+        high_level_json = db.data.map_class_labels(high_level_json)
+        return render_template("data/json-display.html",
             mbid=mbid,
-            data=json.dumps(high_level_dump,
+            data=json.dumps(high_level_json,
                             indent=4, sort_keys=True),
             title="High-level JSON for %s" % mbid,
         )
     except db.exceptions.NoDataFoundException:
         raise NotFound
-
-
-def map_class_labels(high_level):
-    mappings = db.data.model_class_mappings()
-    
-    for name, map in mappings.iteritems():
-        data["all"][val] = data["all"].pop(key)
-            if key == data["value"]:
-                data["value"] = val
 
 
 @data_bp.route("/<uuid:mbid>")

@@ -46,9 +46,12 @@ def get_high_level(mbid):
     a parameter 'map=True' where map is a boolean value
     """
     mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
-    map_keys = request.args.get("map")
+    map_keys = True if request.args.get("map") == 'True' else False
     try:
-        return jsonify(db.data.load_high_level(mbid, offset, map_keys))
+        highlevel = db.data.load_high_level(mbid, offset)
+        if map_keys:
+            highlevel = db.data.map_class_labels(highlevel)
+        return jsonify(highlevel)
     except NoDataFoundException:
         raise exceptions.APINotFound("Not found")
 
@@ -67,6 +70,22 @@ def submit_low_level(mbid):
     except BadDataException as e:
         raise exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
+
+
+def map_class_labels(high_level_json):
+    mappings = db.data.model_class_mappings()
+
+    high_level = high_level_json["highlevel"]
+
+    for model, map in mappings.iteritems():
+        for key, val in map.iteritems():
+            high_level[model]["all"][val] = high_level[model]["all"].pop(key)
+            if key == high_level[model]["value"]:
+                    high_level[model]["value"] = map
+
+    high_level_json["highlevel"] = high_level
+
+    return high_level_json
 
 
 def _validate_data_arguments(mbid, offset):

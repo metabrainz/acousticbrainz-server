@@ -120,7 +120,7 @@ class CoreViewsTestCase(ServerTestCase):
         hl.return_value = {}
         resp = self.client.get("/api/v1/%s/high-level?n=3&map=False" % self.uuid)
         self.assertEqual(200, resp.status_code)
-        hl.assert_called_with(self.uuid, 3, "False")
+        hl.assert_called_with(self.uuid, 3)
 
     @mock.patch('db.data.load_low_level')
     def test_get_bulk_ll_no_param(self, load_low_level):
@@ -228,10 +228,10 @@ class CoreViewsTestCase(ServerTestCase):
         }
         self.assertDictEqual(resp.json, expected_result)
 
-        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0, "False"),
-                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3, "False"),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2, "False"),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3, "False")]
+        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
+                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
         load_high_level.assert_has_calls(calls)
 
     @mock.patch('db.data.load_high_level')
@@ -255,9 +255,9 @@ class CoreViewsTestCase(ServerTestCase):
         }
         self.assertDictEqual(resp.json, expected_result)
 
-        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0, "False"),
-                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3, "False"),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2, "False")]
+        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
         load_high_level.assert_has_calls(calls)
 
     def test_get_bulk_hl_more_than_200(self):

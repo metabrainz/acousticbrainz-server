@@ -400,7 +400,7 @@ def load_high_level(mbid, offset=0):
                  JOIN version
                    ON version.id = hlmo.version
                 WHERE hlmo.highlevel = :hlid
-                  AND m.status = 'hidden'
+                  AND m.status = 'show'
             """)
         result = connection.execute(query, {"hlid": hlid})
         highlevel = {}
@@ -453,12 +453,12 @@ def map_class_labels(high_level_json):
         for key, val in map.iteritems():
             high_level[model]["all"][val] = high_level[model]["all"].pop(key)
             if key == high_level[model]["value"]:
-                    high_level[model]["value"] = map
+                    high_level[model]["value"] = val
 
     high_level_json["highlevel"] = high_level
 
     return high_level_json
-    
+
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""

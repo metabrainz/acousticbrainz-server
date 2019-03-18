@@ -42,11 +42,11 @@ def get_high_level(mbid):
     If there is more than one document with the same mbid, you can specify
     an offset as a query parameter in the form of ?n=x, where x is an integer
     starting from 0
-    If you need the full key values instead of the shortened keys, you can specify
-    a parameter 'map=True' where map is a boolean value
+    Some models use short codes as class names. To get more descriptive class 
+    names for these models, set a query parameter map_model_class_names=True
     """
     mbid, offset = _validate_data_arguments(mbid, request.args.get("n"))
-    map_keys = True if request.args.get("map") == 'True' else False
+    map_keys = True if request.args.get("map_model_class_names") == 'True' else False
     try:
         highlevel = db.data.load_high_level(mbid, offset)
         if map_keys:

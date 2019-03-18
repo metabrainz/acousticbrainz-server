@@ -59,8 +59,8 @@ def get_high_level(mbid):
     for an MBID, you can browse through them by specifying an offset parameter
     ``n``. Documents are sorted by the submission time of their associated
     low-level documents.
-    You can get the full key values for model classes by specifying a
-    parameter ``map=True``
+    Some models use short codes as class names. To get more descriptive class 
+    names for these models, set a query parameter `map_model_class_names=True`
 
     You can get the total number of low-level submissions using ``/<mbid>/count``
     endpoint.
@@ -71,7 +71,8 @@ def get_high_level(mbid):
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
-    map_keys = True if request.args.get("map") == 'True' else False
+    map_keys = True if request.args.get(
+        "map_model_class_names") == 'True' else False
     try:
         high_level = db.data.load_high_level(str(mbid), offset)
         if map_keys:
@@ -255,7 +256,7 @@ def get_many_highlevel():
     in the returned data.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
-              :query map: *Optional.* Boolean flag to get descriptive keys
+    :query map_model_class_names: *Optional.* Boolean flag to get descriptive keys
 
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
@@ -264,7 +265,8 @@ def get_many_highlevel():
     """
 
     recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
-    map_keys = True if request.args.get("map") == 'True' else False
+    map_keys = True if request.args.get(
+        "map_model_class_names") == 'True' else False
     if map_keys:
         for recording_id, offset in recording_details.iteritems():
             for key, data in offset.iteritems():

@@ -118,7 +118,7 @@ class CoreViewsTestCase(ServerTestCase):
     @mock.patch("db.data.load_high_level")
     def test_hl_numerical_offset(self, hl):
         hl.return_value = {}
-        resp = self.client.get("/api/v1/%s/high-level?n=3&map=False" % self.uuid)
+        resp = self.client.get("/api/v1/%s/high-level?n=3&map_model_class_names=False" % self.uuid)
         self.assertEqual(200, resp.status_code)
         hl.assert_called_with(self.uuid, 3)
 
@@ -218,7 +218,8 @@ class CoreViewsTestCase(ServerTestCase):
 
         load_high_level.side_effect = [rec_c5, rec_7f, rec_40_2, rec_40_3]
 
-        resp = self.client.get('api/v1/high-level?recording_ids=' + params+'&map=False')
+        resp = self.client.get(
+            'api/v1/high-level?recording_ids=' + params+'&map_model_class_names=False')
         self.assert200(resp)
 
         expected_result = {
@@ -246,7 +247,8 @@ class CoreViewsTestCase(ServerTestCase):
 
         load_high_level.side_effect = [rec_c5, db.exceptions.NoDataFoundException, rec_40_2]
 
-        resp = self.client.get('api/v1/high-level?recording_ids=' + params + '&map=False')
+        resp = self.client.get(
+            'api/v1/high-level?recording_ids=' + params + '&map_model_class_names=False')
         self.assert200(resp)
 
         expected_result = {
@@ -265,7 +267,7 @@ class CoreViewsTestCase(ServerTestCase):
         manyids = [str(uuid.uuid4()) for i in range(205)]
         limit_exceed_url = ";".join(manyids)
         resp = self.client.get(
-            'api/v1/high-level?recording_ids=' + limit_exceed_url + '&map=False')
+            'api/v1/high-level?recording_ids=' + limit_exceed_url + '&map_model_class_names=False')
         self.assert400(resp)
         self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
 

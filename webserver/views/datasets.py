@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
 from webserver.external import musicbrainz
@@ -15,6 +15,7 @@ import db.user
 import csv
 import math
 import six
+import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
 
@@ -82,14 +83,52 @@ def list_datasets(status):
             nextpage=nextpage)
 
 
-@datasets_bp.route("/<uuid:id>")
-def view(id):
-    ds = get_dataset(id)
+@datasets_bp.route("/<uuid:dataset_id>")
+def view(dataset_id):
+    ds = get_dataset(dataset_id)
     return render_template(
         "datasets/view.html",
         dataset=ds,
         author=db.user.get(ds["author"]),
     )
+
+
+@datasets_bp.route("/<uuid:dataset_id>/download_annotation")
+def download_annotation_csv(dataset_id):
+    """ Converts dataset dict to csv for user to download
+    """
+    ds = get_dataset(dataset_id)
+    fp = _convert_dataset_to_csv_stringio(ds)
+
+    file_name = "dataset_annotations_%s.csv" % db.dataset._slugify(ds["name"])
+
+    return send_file(fp,
+                     mimetype='text/csv',
+                     as_attachment=True,
+                     attachment_filename=file_name)
+
+
+def _convert_dataset_to_csv_stringio(dataset):
+    """Convert a dataset to a CSV representation that can be imported
+    by the dataset importer.
+    A dataset file contains a line for each item in the format
+        classname,mbid
+
+    Arguments:
+        dataset: a dataset loaded with get_dataset
+
+    Returns:
+        A rewound StringIO containing a CSV representation of the dataset"""
+    fp = StringIO.StringIO()
+    writer = csv.writer(fp)
+
+    for ds_class in dataset["classes"]:
+        class_name = ds_class["name"]
+        for rec in ds_class["recordings"]:
+            writer.writerow([rec, class_name])
+
+    fp.seek(0)
+    return fp
 
 
 @datasets_bp.route("/accuracy")
@@ -169,7 +208,7 @@ def evaluate(dataset_id):
         db.dataset_eval.validate_dataset_structure(ds)
     except db.dataset_eval.IncompleteDatasetException as e:
         flash.error("Cannot add this dataset because of a validation error: %s" % e)
-        return redirect(url_for("datasets.view", id=dataset_id))
+        return redirect(url_for("datasets.view", dataset_id=dataset_id))
 
     form = forms.DatasetEvaluationForm()
 
@@ -193,9 +232,9 @@ def evaluate(dataset_id):
     return render_template("datasets/evaluate.html", dataset=ds, form=form)
 
 
-@datasets_bp.route("/service/<uuid:id>/json")
-def view_json(id):
-    dataset = get_dataset(id)
+@datasets_bp.route("/service/<uuid:dataset_id>/json")
+def view_json(dataset_id):
+    dataset = get_dataset(dataset_id)
     dataset_clean = {
         "name": dataset["name"],
         "description": dataset["description"],

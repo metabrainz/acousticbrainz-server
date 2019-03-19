@@ -13,6 +13,21 @@ STATUS_RUNNING = "running"
 STATUS_DONE = "done"
 STATUS_FAILED = "failed"
 
+# Columns to select when getting a job
+EVAL_COLUMNS = ["dataset_eval_jobs.id::text",
+                "dataset_snapshot.dataset_id::text",
+                "dataset_eval_jobs.snapshot_id::text",
+                "dataset_eval_jobs.status",
+                "dataset_eval_jobs.status_msg", 
+                "dataset_eval_jobs.result", 
+                "dataset_eval_jobs.options", 
+                "dataset_eval_jobs.training_snapshot", 
+                "dataset_eval_jobs.testing_snapshot", 
+                "dataset_eval_jobs.created", 
+                "dataset_eval_jobs.updated", 
+                "dataset_eval_jobs.eval_location"]
+EVAL_COLUMNS_COMMA_SEPARATED = ", ".join(EVAL_COLUMNS)
+
 VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
 
 # Location to run an evaluation (on the AB server of the user's local server),
@@ -129,40 +144,44 @@ def validate_dataset_contents(dataset):
 
 
 def get_next_pending_job():
-    # TODO: This should return the same data as `get_job`, so
-    #       we run 2 queries, however it would be more efficient
-    #       to do it in 1 query
+    """
+    Get the earliest submitted job which is still in the pending state.
+
+    Returns:
+         The next job to process
+    """
     with db.engine.connect() as connection:
         query = text(
-            """SELECT id::text
+            """SELECT %s
                  FROM dataset_eval_jobs
+                 JOIN dataset_snapshot 
+                   ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE status = :status
                   AND eval_location = 'local'
              ORDER BY created ASC
-                LIMIT 1""")
+                LIMIT 1
+            """ % EVAL_COLUMNS_COMMA_SEPARATED)
         result = connection.execute(query, {"status": STATUS_PENDING})
         row = result.fetchone()
-        return get_job(row[0]) if row else None
+        return dict(row) if row else None
 
 
 def get_job(job_id):
+    """
+    Get an evaluation job.
+
+    Arguments:
+        job_id: the id to the job to retrieve
+
+    Returns:
+        The evaluation job with the specified id
+    """
     with db.engine.connect() as connection:
         query = text(
-            """SELECT dataset_eval_jobs.id::text
-                    , dataset_snapshot.dataset_id::text
-                    , dataset_eval_jobs.snapshot_id::text
-                    , dataset_eval_jobs.status
-                    , dataset_eval_jobs.status_msg
-                    , dataset_eval_jobs.result
-                    , dataset_eval_jobs.options
-                    , dataset_eval_jobs.training_snapshot
-                    , dataset_eval_jobs.testing_snapshot
-                    , dataset_eval_jobs.created
-                    , dataset_eval_jobs.updated
-                    , dataset_eval_jobs.eval_location
+            """SELECT %s
                  FROM dataset_eval_jobs
                  JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-                WHERE dataset_eval_jobs.id = :id""")
+                WHERE dataset_eval_jobs.id = :id""" % EVAL_COLUMNS_COMMA_SEPARATED)
         result = connection.execute(query, {"id": job_id})
 
         row = result.fetchone()

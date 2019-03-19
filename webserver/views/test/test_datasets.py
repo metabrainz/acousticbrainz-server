@@ -219,7 +219,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         self.temporary_login(self.test_user_id)
 
-        # private dataset + logged in, ok
+        # public dataset + logged in, ok
         resp = self.client.get(url_for(view_name, dataset_id=dataset_id))
         self.assert200(resp)
 

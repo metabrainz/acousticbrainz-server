@@ -240,17 +240,6 @@ def set_model_status(model_name, model_version, model_status):
              "model_status": model_status})
 
 
-def set_model_mappings(model_name, model_version, mappings):
-    with db.engine.begin() as connection:
-        query = text(
-            """UPDATE model
-                  SET mappings = :mappings
-                WHERE model.model = :model_name
-            """
-        )
-        connection.execute(query, {"mappings": mappings,
-                                   "model_name": model_name})
-
 def get_model(model_name, model_version):
     with db.engine.begin() as connection:
         query = text(
@@ -443,37 +432,52 @@ def model_class_mappings():
         key_map_list = result.fetchall()
 
     for row in key_map_list:
-        if key_map_list is None:
-            continue
         mappings[row["model"]] = row["mappings"]
 
     return mappings
 
 
-def map_class_labels(high_level_dict):
+def map_highlevel_class_labels(highlevel_dict, mappings):
     """Maps shortend key names in high-level dict to meaningful labels using
-    mappings returned by `model_class_mappings` 
+    mappings dict
 
     Args:
         high_level_data: high-level data dict containing shortend keys
+        mappings: dict containing mappings for shortened keys
     
     Returns:
         dict with mapped model class keys
 
     """
-    mappings = db.data.model_class_mappings()
-    high_level = high_level_dict["highlevel"]
-
-    for model, map in mappings.iteritems():
-        for key, val in map.iteritems():
-            high_level[model]["all"][val] = high_level[model]["all"].pop(key)
-            if key == high_level[model]["value"]:
-                high_level[model]["value"] = val
-
-    high_level_dict["highlevel"] = high_level
+    highlevel = highlevel_dict["highlevel"]
+    for model, data in highlevel.iteritems():
+        if model in mappings:
+            data = map_single_highlevel_class_labels(data, mappings[model])
+            highlevel[model] = data
     
-    return high_level_dict
+    highlevel_dict["highlevel"] = highlevel
+    return highlevel_dict
 
+
+def map_single_highlevel_class_labels(data, mapping):
+    """Takes a single highlevel class dict and replaces the shortened keys with
+    the mapped keys 
+
+    Args:
+        data: single high-level class data dict containing shortend keys
+        mappings: dict containing mappings of shortened keys of a single high-level class
+    
+    Returns:
+        dict with mapped model class keys
+
+    """
+    value = data["value"]
+    data["value"] = mapping.get(value, value)
+    all = {}
+    for k, v in data["all"].iteritems():
+        all[mapping.get(k, k)] = v
+    data["all"] = all
+    return data
 
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
@@ -580,6 +584,8 @@ def get_summary_data(mbid, offset=0):
 
     try:
         highlevel = load_high_level(mbid, offset)
+        mappings = db.data.model_class_mappings()
+        highlevel = db.data.map_highlevel_class_labels(highlevel, mappings)
         summary['highlevel'] = highlevel
     except db.exceptions.NoDataFoundException:
         pass

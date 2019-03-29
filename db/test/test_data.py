@@ -320,51 +320,34 @@ class DataDBTestCase(DatabaseTestCase):
 
         self.assertDictEqual(hl3_expected, db.data.load_high_level(self.test_mbid, offset=2))
 
-    
-    def test_map_class_labels(self):
-        """Mapping of shortened keys in model classes of high-level data"""
 
-        hl = {"highlevel": {"genre_tzanetakis": {"all": {
-            "blu":0,
-            "cla":0,
-            "cou":0,
-            "dis":0,
-            "hip":0,
-            "jaz":0,
-            "met":0,
-            "pop":0,
-            "reg":0,
-            "roc":0 },
-            "value": " "}}}
+    def test_map_highlevel_class_labels(self):
+        """Mapping of shortened keys in all model classes of high-level data"""
 
-        hl_expected = {"highlevel": {"genre_tzanetakis": {"all": {
-            "blues":0,
-            "classical":0,
-            "country":0,
-            "disco":0,
-            "hiphop":0,
-            "jazz":0,
-            "metal":0,
-            "pop":0,
-            "reggae":0,
-            "rock":0 },
-            "value":" "}}}
+        hl = {"highlevel": {"model": {"all": {"blu":0, "cla":0, "cou":0},
+              "value": "blu"}}}
 
-        db.data.add_model('genre_tzanetakis', 'v1', 'show')
-        db.data.set_model_mappings('genre_tzanetakis', 'v1', """{
-            "blu": "blues",
-            "cla": "classical",
-            "cou": "country",
-            "dis": "disco",
-            "hip": "hiphop",
-            "jaz": "jazz",
-            "met": "metal",
-            "pop": "pop",
-            "reg": "reggae",
-            "roc": "rock"
-        }""")
+        hl_expected = {"highlevel": {"model": {"all": {"blues":0, "classical":0, "country":0},
+                       "value":"blues"}}}
 
-        self.assertEqual(hl_expected, db.data.map_class_labels(hl))
+        mappings = {"model": {"blu": "blues", "cla": "classical", "cou": "country"}}
+
+        self.assertEqual(hl_expected, db.data.map_highlevel_class_labels(hl, mappings))
+
+
+    def test_map_single_highlevel_class_labels(self):
+        """Mapping of shortened keys in a single model class of high-level data"""
+        
+        data = {"all": {"blu":0, "cla":0, "cou":0},
+              "value": " "}
+
+        data_expected = {"all": {"blues":0, "classical":0, "country":0},
+                       "value":" "}
+        
+        mapping = {"blu": "blues", "cla": "classical", "cou": "country"}
+
+        self.assertEqual(data_expected, db.data.map_single_highlevel_class_labels(data, mapping))
+        
 
     def test_count_lowlevel(self):
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)

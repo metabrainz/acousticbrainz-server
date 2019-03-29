@@ -67,7 +67,8 @@ def view_high_level(mbid):
 
     try:
         high_level_json = db.data.load_high_level(mbid, offset)
-        high_level_json = db.data.map_class_labels(high_level_json)
+        mappings = db.data.model_class_mappings()
+        high_level_json = db.data.map_highlevel_class_labels(high_level_json, mappings)
         return render_template("data/json-display.html",
             mbid=mbid,
             data=json.dumps(high_level_json,

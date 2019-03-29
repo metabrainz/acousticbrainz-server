@@ -76,7 +76,8 @@ def get_high_level(mbid):
     try:
         high_level = db.data.load_high_level(str(mbid), offset)
         if map_keys:
-            high_level = db.data.map_class_labels(high_level)
+            mappings = db.data.model_class_mappings()
+            high_level = db.data.map_highlevel_class_labels(high_level, mappings)
         return jsonify(high_level)
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
@@ -268,10 +269,11 @@ def get_many_highlevel():
     map_keys = True if request.args.get(
         "map_model_class_names") == 'True' else False
     if map_keys:
+        mappings = db.data.model_class_mappings()
         for recording_id, offset in recording_details.iteritems():
             for key, data in offset.iteritems():
-                recording_details.setdefault(recording_id, {})[key] = db.data.map_class_labels(
-                    recording_details[recording_id][key])
+                recording_details[recording_id][key] = db.data.map_highlevel_class_labels(
+                    recording_details[recording_id][key], mappings)
     
     return jsonify(recording_details)
 

@@ -122,18 +122,17 @@ def _convert_dataset_to_csv_stringio(dataset):
     fp = StringIO.StringIO()
     writer = csv.writer(fp)
 
-    if dataset["description"] is not None:
-        #check if description is empty string
-        if dataset["description"] != "":
-            description = dataset["description"]
-            writer.writerow(["description", description])
+    #check if description is empty string or None
+    if dataset["description"]:
+        description = dataset["description"]
+        writer.writerow(["description", description])
 
     for ds_class in dataset["classes"]:
-        if ds_class["description"] is not None:
-            if ds_class["description"] != "":
-                ds_class_description = ds_class["description"]
-                ds_class_desc_head = "description:" + ds_class["name"]
-                writer.writerow([ds_class_desc_head, ds_class_description])
+        #check if description is empty string or None
+        if ds_class["description"]:
+            ds_class_description = ds_class["description"]
+            ds_class_desc_head = "description:" + ds_class["name"]
+            writer.writerow([ds_class_desc_head, ds_class_description])
 
     for ds_class in dataset["classes"]:
         class_name = ds_class["name"]
@@ -302,7 +301,7 @@ def import_csv():
         [description, classes] = _parse_dataset_csv(request.files[form.file.name])
         dataset_dict = {
             "name": form.name.data,
-            "description": description if not None else form.description.data,
+            "description": description if description else form.description.data,
             "classes": classes,
             "public": True,
         }

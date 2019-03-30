@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import csv
 import datetime
+import os
 import json
 
 import mock
@@ -10,7 +11,7 @@ from flask import url_for
 import webserver.forms as forms
 from db import dataset, dataset_eval, user
 from webserver.views import datasets as ws_datasets
-from webserver.testing import ServerTestCase
+from webserver.testing import ServerTestCase, TEST_DATA_PATH
 from webserver.views.test.test_data import FakeMusicBrainz
 
 
@@ -293,10 +294,30 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.post(url_for("datasets.evaluate", dataset_id=dataset_id, form=evaluate_form))
         self.assertStatus(resp, 200)
 
+    def test_parse_dataset_csv(self):
+        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_db.csv')
+        with open(test_csv_file) as csv_data:
+            [test_dataset_description, test_classes] = ws_datasets._parse_dataset_csv(csv_data)
+        expected_dataset_description = "This is a test dataset."
+        expected_classes = [{"name": "Class #1",
+                             "description": "This is a description for Class #1",
+                             "recordings": ["00f08e7e-7c7f-4f9f-b8f2-5986ba53476d",
+                                            "c5e1c8bc-64c9-4690-a9e0-6c025721ff86",
+                                            "55339a88-f02b-4c03-9f94-f5ef3b29e1ab"]},
+
+                            {"name": "Class #2",
+                             "description": None,
+                             "recordings": ["6fff3ebf-4c7f-4aed-b807-112fa4994cca",
+                                            "2af64e20-38f9-4dc9-8db6-9d6026257dc2"]}
+                            ]
+        self.assertEqual(test_dataset_description, expected_dataset_description)
+        self.assertEqual(test_classes, expected_classes)
+
     def test_dataset_to_csv(self):
         fp = ws_datasets._convert_dataset_to_csv_stringio(self.test_data)
         dataset_csv = fp.getvalue()
-        expected_list = ["e8afe383-1478-497e-90b1-7885c7f37f6e,Class #1",
+        expected_list = ["description:Class #1,This is a description of class #1!",
+                         "e8afe383-1478-497e-90b1-7885c7f37f6e,Class #1",
                          "0dad432b-16cc-4bf0-8961-fd31d124b01b,Class #1",
                          "e8afe383-1478-497e-90b1-7885c7f37f6e,Class #2",
                          "0dad432b-16cc-4bf0-8961-fd31d124b01b,Class #2"]

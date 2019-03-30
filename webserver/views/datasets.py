@@ -122,6 +122,19 @@ def _convert_dataset_to_csv_stringio(dataset):
     fp = StringIO.StringIO()
     writer = csv.writer(fp)
 
+    if dataset["description"] is not None:
+        #check if description is empty string
+        if dataset["description"] != "":
+            description = dataset["description"]
+            writer.writerow(["description", description])
+
+    for ds_class in dataset["classes"]:
+        if ds_class["description"] is not None:
+            if ds_class["description"] != "":
+                ds_class_description = ds_class["description"]
+                ds_class_desc_head = "description:" + ds_class["name"]
+                writer.writerow([ds_class_desc_head, ds_class_description])
+
     for ds_class in dataset["classes"]:
         class_name = ds_class["name"]
         for rec in ds_class["recordings"]:
@@ -286,10 +299,11 @@ def create_service():
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
+        [description, classes] = _parse_dataset_csv(request.files[form.file.name])
         dataset_dict = {
             "name": form.name.data,
-            "description": form.description.data,
-            "classes": _parse_dataset_csv(request.files[form.file.name]),
+            "description": description if not None else form.description.data,
+            "classes": classes,
             "public": True,
         }
         try:
@@ -305,17 +319,35 @@ def import_csv():
 
 def _parse_dataset_csv(file):
     classes_dict = defaultdict(list)
+    dataset_description = None
     for class_row in csv.reader(file):
         if len(class_row) != 2:
-            raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
-        classes_dict[class_row[1]].append(class_row[0])
+            raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")        
+        if class_row[0] == "description":
+            #row is the dataset description
+            dataset_description = class_row[1]
+        elif (class_row[0])[:12] == "description:":
+            #row is a class description
+            description = class_row[1]
+            class_name = class_row[0][12:]
+            classes_dict.setdefault(class_name,{})
+            classes_dict[class_name]["description"] = description
+        else:
+            #row is a recording
+            classes_dict.setdefault(class_row[1],{})
+            classes_dict[class_row[1]].setdefault("recordings",[])
+            classes_dict[class_row[1]]["recordings"].append(class_row[0])
+    
     classes = []
-    for name, recordings in six.iteritems(classes_dict):
+    
+    for name, class_data in six.iteritems(classes_dict):
         classes.append({
+            "recordings": class_data["recordings"] if "recordings" in class_data else [],
             "name": name,
-            "recordings": recordings,
+            "description": class_data["description"] if "description" in class_data else None,
         })
-    return classes
+    
+    return [dataset_description, classes]
 
 
 @datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", ))

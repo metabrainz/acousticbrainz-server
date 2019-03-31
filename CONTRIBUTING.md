@@ -13,9 +13,6 @@ IRC channel on irc.freenode.net. More info is available at https://wiki.musicbra
 Alternatively, you can post something in the [AcousticBrainz category](https://community.metabrainz.org/c/acousticbrainz)
 of the MetaBrainz forums.
 
-Create tickets in [the bug tracker](http://tickets.musicbrainz.org/browse/AB).
-
-
 ## Development workflow
 
 Keep these points in mind when making changes to the AcousticBrainz codebase. If anything is unclear or
@@ -51,11 +48,27 @@ on the MetaBrainz site for information about
  * Documentation
  * Tests
 
+## Bug tracking and issues
+
+Tickets can be created or resolved via [the bug tracker](https://tickets.metabrainz.org/projects/AB/issues/).
+
+### Ticketing basics
+
+ * You can assign yourself to a ticket if you wish to start working on it. 
+ * Set the ticket status to "in progress" when you begin.
+ * Follow our [git workflow](#git-workflow) to begin making changes and create a pull request.
+ * The project maintainer will change a ticket status to "resolved" when the related pull request is merged.
+
 ## Git workflow
 
 We use a git workflow similar to that proposed by github: https://guides.github.com/activities/forking/
 
-Ensure that you [write good commit messages](http://robots.thoughtbot.com/5-useful-tips-for-a-better-commit-message).
+Some key steps to follow:
 
-Once you have made your changes, create [a new pull request](https://github.com/metabrainz/acousticbrainz-server/compare).
+1. Create a new branch in your fork and _give it a meaningful name_.
+    * For example, if you are fixing the issue AB-101, the branch could be named ab-101.
+2. Write [good commit messages](http://robots.thoughtbot.com/5-useful-tips-for-a-better-commit-message) when you commit your changes.
+3. Once you have made your changes, create [a new pull request](https://github.com/metabrainz/acousticbrainz-server/compare).
+    * When solving more than one issue, split them into multiple pull requests. This makes it easier to review and merge patches.
+4. If you get feedback and need to make changes to a pull request, [use git rebase](https://help.github.com/en/articles/using-git-rebase-on-the-command-line) instead of adding more commits.
 

@@ -620,4 +620,3 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 400)
         expected = {"message": "No such class exists."}
         self.assertEqual(resp.json, expected)
-

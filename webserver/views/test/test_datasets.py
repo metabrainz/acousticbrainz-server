@@ -72,7 +72,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         resp = self.client.delete(url_for("datasets.eval_job", dataset_id=dataset_id, job_id=self.test_uuid))
         self.assert404(resp)
 
-        job_id = dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL)
+        job_id, _ = dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL)
 
         resp = self.client.delete(url_for("datasets.eval_job", dataset_id=dataset_id, job_id=job_id))
         self.assert401(resp)

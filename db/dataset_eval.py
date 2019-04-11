@@ -18,13 +18,13 @@ EVAL_COLUMNS = ["dataset_eval_jobs.id::text",
                 "dataset_snapshot.dataset_id::text",
                 "dataset_eval_jobs.snapshot_id::text",
                 "dataset_eval_jobs.status",
-                "dataset_eval_jobs.status_msg", 
-                "dataset_eval_jobs.result", 
-                "dataset_eval_jobs.options", 
-                "dataset_eval_jobs.training_snapshot", 
-                "dataset_eval_jobs.testing_snapshot", 
-                "dataset_eval_jobs.created", 
-                "dataset_eval_jobs.updated", 
+                "dataset_eval_jobs.status_msg",
+                "dataset_eval_jobs.result",
+                "dataset_eval_jobs.options",
+                "dataset_eval_jobs.training_snapshot",
+                "dataset_eval_jobs.testing_snapshot",
+                "dataset_eval_jobs.created",
+                "dataset_eval_jobs.updated",
                 "dataset_eval_jobs.eval_location"]
 EVAL_COLUMNS_COMMA_SEPARATED = ", ".join(EVAL_COLUMNS)
 
@@ -62,14 +62,17 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
 
     Returns:
         ID of the newly created evaluation job.
+        Dataset
     """
     with db.engine.begin() as connection:
         if _job_exists(connection, dataset_id):
             raise JobExistsException
 
+        dataset = db.dataset.get(dataset_id)
         # Validate dataset contents
-        validate_dataset_contents(db.dataset.get(dataset_id))
-        return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
+        validate_dataset_structure(dataset)
+        job_id = _create_job(connection, dataset_id, normalize, eval_location, filter_type)
+        return job_id, dataset
 
 
 def job_exists(dataset_id):
@@ -116,21 +119,23 @@ def validate_dataset_structure(dataset):
     for cls in dataset["classes"]:
         if len(cls["recordings"]) < MIN_RECORDINGS_IN_CLASS:
             raise IncompleteDatasetException(
-                "There are not enough recordings in a class `%s` (%s). "
+                "There are not enough recordings in a class `%s`. "
+                "The %s of %s recordings not present in AB (ignored). "
                 "At least %s are required in each class." %
-                (cls["name"], len(cls["recordings"]), MIN_RECORDINGS_IN_CLASS)
+                (cls["name"],
+                 len(cls["skipped_recordings"]),
+                 len(cls["recordings"]) + len(cls["skipped_recordings"]),
+                 MIN_RECORDINGS_IN_CLASS)
             )
 
 
 def validate_dataset_contents(dataset):
     """Validate dataset contents by checking if all recordings referenced
     in classes have low-level information in the database.
-
     Raises IncompleteDatasetException if contents of the dataset are not
     found.
     """
     rec_memo = {}
-
     for cls in dataset["classes"]:
         for recording_mbid in cls["recordings"]:
             if recording_mbid in rec_memo and rec_memo[recording_mbid]:
@@ -154,7 +159,7 @@ def get_next_pending_job():
         query = text(
             """SELECT %s
                  FROM dataset_eval_jobs
-                 JOIN dataset_snapshot 
+                 JOIN dataset_snapshot
                    ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE status = :status
                   AND eval_location = 'local'

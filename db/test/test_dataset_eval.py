@@ -24,7 +24,8 @@ class DatasetEvalTestCase(DatabaseTestCase):
                     "recordings": [
                         "0dad432b-16cc-4bf0-8961-fd31d124b01b",
                         "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
+                    ],
+                    "skipped_recordings": ["19e698e7-71df-48a9-930e-d4b1a2026c82"]
                 },
                 {
                     "name": "Class #2",
@@ -33,7 +34,8 @@ class DatasetEvalTestCase(DatabaseTestCase):
                         "fd528ddb-411c-47bc-a383-1f8a222ed213",
                         "96888f9e-c268-4db2-bc13-e29f8b317c20",
                         "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
+                    ],
+                    "skipped_recordings": ["ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
                 },
             ],
             "public": True,
@@ -45,7 +47,8 @@ class DatasetEvalTestCase(DatabaseTestCase):
         test_dataset = {"classes": [
             {"name": "class1",
              # structure of recordings isn't important, only size
-             "recordings": ["rec1", "rec2"]}
+             "recordings": ["rec1", "rec2"],
+             "skipped_recordings": []}
         ]}
         with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:
             dataset_eval.validate_dataset_structure(test_dataset)
@@ -53,12 +56,16 @@ class DatasetEvalTestCase(DatabaseTestCase):
 
         test_dataset["classes"].append(
             {"name": "class2",
-             "recordings": ["rec1"]}
+             "recordings": ["rec1"],
+             "skipped_recordings": []}
         )
 
         with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:
             dataset_eval.validate_dataset_structure(test_dataset)
-        self.assertEqual(str(e.exception), "There are not enough recordings in a class `class2` (1). At least 2 are required in each class.")
+        self.assertEqual(
+            str(e.exception),
+            "There are not enough recordings in a class `class2`. The 0 of 1 recordings not present in AB (ignored). "
+            "At least 2 are required in each class.")
 
         test_dataset["classes"][1]["recordings"].append("rec2")
 
@@ -81,7 +88,9 @@ class DatasetEvalTestCase(DatabaseTestCase):
         count_lowlevel.return_value = 0
         with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:
             dataset_eval.validate_dataset_contents(self.test_data)
-        self.assertEqual(str(e.exception), "Can't find low-level data for recording: 0dad432b-16cc-4bf0-8961-fd31d124b01b")
+        self.assertEqual(
+            str(e.exception),
+            "Can't find low-level data for recording: 0dad432b-16cc-4bf0-8961-fd31d124b01b")
 
     def test_create_job_nonormalize(self):
         # No dataset normalization
@@ -221,9 +230,9 @@ class DatasetEvalTestCase(DatabaseTestCase):
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
         expected_response = [{
-                'job_id' : str(job_id),
-                'dataset_name' : self.test_data['name'],
-                'created' : job_details['created']
+                'job_id': str(job_id),
+                'dataset_name': self.test_data['name'],
+                'created': job_details['created']
                 }]
         self.assertEqual(response, expected_response)
 
@@ -253,9 +262,10 @@ class DatasetEvalTestCase(DatabaseTestCase):
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
         self.assertEqual(response, [])
 
-    @mock.patch('db.dataset_eval.validate_dataset_contents')
-    def test_evaluate_dataset(self, validate_dataset_contents):
+    @mock.patch("db.dataset_eval.validate_dataset_structure")
+    def test_evaluate_dataset(self, validate_dataset_structure):
         """Test that a dataset can be submitted for evaluation if it is complete"""
+        validate_dataset_structure.return_value = self.test_data
 
         dataset_eval.evaluate_dataset(self.test_dataset_id, False, 'local')
         self.assertTrue(dataset_eval.job_exists(self.test_dataset_id))
@@ -264,9 +274,17 @@ class DatasetEvalTestCase(DatabaseTestCase):
         with self.assertRaises(dataset_eval.JobExistsException):
             dataset_eval.evaluate_dataset(self.test_dataset_id, False, 'local')
 
-        # We validate after checking if the dataset exists, so this will only
-        # be called once
-        validate_dataset_contents.assert_called_once()
+    @mock.patch("db.data.count_lowlevel")
+    def test_evaluate_dataset_structure_incomplete(self, count_lowlevel):
+        """Test that a dataset can be submitted for evaluation if it is complete"""
+        count_lowlevel.return_value = 0
+        with self.assertRaises(dataset_eval.IncompleteDatasetException) as e:
+            dataset_eval.evaluate_dataset(self.test_dataset_id, False, 'local')
+        self.assertEqual(
+            str(e.exception),
+            "There are not enough recordings in a class `Class #1`. The 2 of 2 recordings not present in AB (ignored). "
+            "At least 2 are required in each class.")
+        # "There are not enough recordings in a class `Class #1` (1). At least 2 are required in each class.")
 
     @mock.patch('db.dataset_eval._create_job')
     def test_evaluate_dataset_incomplete(self, create_job):

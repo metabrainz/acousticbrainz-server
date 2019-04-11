@@ -205,8 +205,12 @@ def _get_classes(dataset_id):
         classes = []
         for row in rows:
             row = dict(row)
-            row["recordings"] = _get_recordings_in_class(row["id"])
+            recs = _get_recordings_in_class(row["id"])
+            skipped_recs = _get_skipped_recordings_in_class(row["id"])
+            row["skipped_recordings"] = list(skipped_recs)
+            row["recordings"] = list(recs - skipped_recs)
             classes.append(row)
+
         return classes
 
 
@@ -214,9 +218,23 @@ def _get_recordings_in_class(class_id):
     with db.engine.connect() as connection:
         result = connection.execute("SELECT mbid::text FROM dataset_class_member WHERE class = %s",
                                     (class_id,))
-        recordings = []
+        recordings = set()
         for row in result:
-            recordings.append(row["mbid"])
+            recordings.add(row["mbid"])
+        return recordings
+
+
+def _get_skipped_recordings_in_class(class_id):
+    with db.engine.connect() as connection:
+        result = connection.execute("""SELECT dataset_class_member.mbid::text
+                                         FROM dataset_class_member
+                                    LEFT JOIN lowlevel
+                                           ON dataset_class_member.mbid = lowlevel.gid
+                                        WHERE lowlevel.gid is null AND dataset_class_member.class = %s;
+                                    """, (class_id,))
+        recordings = set()
+        for row in result:
+            recordings.add(row["mbid"])
         return recordings
 
 
@@ -271,6 +289,7 @@ def create_snapshot(dataset_id):
     dataset = get(dataset_id)
     if not dataset:
         raise exceptions.NoDataFoundException("Can't find dataset with a specified ID.")
+
     snapshot = {
         "name": dataset["name"],
         "description": dataset["description"],
@@ -278,6 +297,7 @@ def create_snapshot(dataset_id):
                         "name": c["name"],
                         "description": c["description"],
                         "recordings": c["recordings"],
+                        "skipped_recordings": c["skipped_recordings"],
                     } for c in dataset["classes"]],
     }
     with db.engine.connect() as connection:
@@ -525,7 +545,7 @@ def check_recording_in_dataset(dataset_id, mbid):
             SELECT dataset_class.id
               FROM dataset_class
               JOIN dataset_class_member
-                ON dataset_class_member.class = dataset_class.id 
+                ON dataset_class_member.class = dataset_class.id
              WHERE dataset_class.dataset = :dataset_id
                AND dataset_class_member.mbid = :mbid
         """), {"dataset_id": dataset_id, "mbid": mbid})

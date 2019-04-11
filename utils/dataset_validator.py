@@ -132,6 +132,7 @@ def validate_class(cls, idx=None, recordings_required=True):
             ("name", True),
             ("description", False),
             ("recordings", recordings_required),
+            ("skipped_recordings", False),
         ],
         "class%s" % class_number_text,
     )

@@ -27,7 +27,8 @@ class DatasetTestCase(DatabaseTestCase):
                     "recordings": [
                         "0dad432b-16cc-4bf0-8961-fd31d124b01b",
                         "19e698e7-71df-48a9-930e-d4b1a2026c82",
-                    ]
+                    ],
+                    "skipped_recordings": [],
                 },
                 {
                     "name": "Class #2",
@@ -36,13 +37,17 @@ class DatasetTestCase(DatabaseTestCase):
                         "fd528ddb-411c-47bc-a383-1f8a222ed213",
                         "96888f9e-c268-4db2-bc13-e29f8b317c20",
                         "ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                    ]
+                    ],
+                    "skipped_recordings": [],
                 },
             ],
             "public": True,
         }
 
-    def test_create_from_dict(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_create_from_dict(self, _get_skipped_recordings_in_class):
+        _get_skipped_recordings_in_class.return_value = set()
+
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         ds = dataset.get(id)
@@ -50,7 +55,9 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(len(ds["classes"][0]["recordings"]), 2)
         self.assertEqual(len(ds["classes"][1]["recordings"]), 3)
 
-    def test_create_from_dict_duplicates(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_create_from_dict_duplicates(self, _get_skipped_recordings_in_class):
+        _get_skipped_recordings_in_class.return_value = set()
         bad_dict = copy.deepcopy(self.test_data)
         bad_dict["classes"][0]["recordings"] = [
             "0dad432b-16cc-4bf0-8961-fd31d124b01b",
@@ -74,7 +81,9 @@ class DatasetTestCase(DatabaseTestCase):
         with self.assertRaises(dataset_validator.ValidationException):
             dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
 
-    def test_update(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_update(self, _get_skipped_recordings_in_class):
+        _get_skipped_recordings_in_class.return_value = set()
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         updated_dict = copy.deepcopy(self.test_data)
         updated_dict["classes"][0]["recordings"] = []  # Removing recordings from first class
@@ -163,7 +172,9 @@ class DatasetTestCase(DatabaseTestCase):
         ds_updated = dataset.get(id)
         self.assertTrue(ds_updated['last_edited'] > ds['last_edited'])
 
-    def test_create_snapshot(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_create_snapshot(self, _get_skipped_recordings_in_class):
+        _get_skipped_recordings_in_class.return_value = set()
         id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         snapshots = dataset.get_snapshots_for_dataset(id)
         self.assertEqual(len(snapshots), 0)
@@ -192,8 +203,11 @@ class DatasetTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             dataset.get_snapshot(snap_id)
 
-    def test_add_recordings(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_add_recordings(self, _get_skipped_recordings_in_class):
         """ Add recordings to an existing class """
+        _get_skipped_recordings_in_class.return_value = set()
+
         dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         originaldataset = dataset.get(dsid)
 
@@ -216,8 +230,10 @@ class DatasetTestCase(DatabaseTestCase):
                                "ed94c67d-bea8-4741-a3a6-593f20a22eb6"]
         self.assertEqual(set(expected_recordings), set(updateddataset["classes"][1]["recordings"]))
 
-    def test_add_recordings_duplicate(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_add_recordings_duplicate(self, _get_skipped_recordings_in_class):
         """ A recording id which already exists is skipped """
+        _get_skipped_recordings_in_class.return_value = set()
         dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
         class_name = "Class #1",
@@ -230,8 +246,11 @@ class DatasetTestCase(DatabaseTestCase):
                                "1c085555-3805-428a-982f-e14e0a2b18e6"]
         self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
 
-    def test_delete_recordings(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_delete_recordings(self, _get_skipped_recordings_in_class):
         """ Delete recordings from a class """
+        _get_skipped_recordings_in_class.return_value = set()
+
         dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         originaldataset = dataset.get(dsid)
 
@@ -246,8 +265,11 @@ class DatasetTestCase(DatabaseTestCase):
         expected_recordings = ["0dad432b-16cc-4bf0-8961-fd31d124b01b"]
         self.assertEqual(set(expected_recordings), set(updateddataset["classes"][0]["recordings"]))
 
-    def test_delete_recordings_other_class(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_delete_recordings_other_class(self, _get_skipped_recordings_in_class):
         """ If there are two datasets with the same class names, the correct one is deleted. """
+        _get_skipped_recordings_in_class.return_value = set()
+
         ds1id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         ds2id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
 
@@ -278,17 +300,21 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertEqual(3, len(updateddataset["classes"]))
         expected = copy.deepcopy(test_data)
         expected["recordings"] = []
+        expected["skipped_recordings"] = []
         expected["id"] = mock.ANY
         self.assertDictEqual(expected, updateddataset["classes"][2])
 
-    def test_add_class_with_recordings(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_add_class_with_recordings(self, _get_skipped_recordings_in_class):
         """ Add a class to a dataset and also add some recordings to it """
+        _get_skipped_recordings_in_class.return_value = set()
 
         dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         test_data = {
             "name": "Class #3",
             "description": "This is description of class 3",
-            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"]
+            "recordings": ["1c085555-3805-428a-982f-e14e0a2b18e6"],
+            "skipped_recordings": []
         }
         dataset.add_class(dsid, test_data)
         updateddataset = dataset.get(dsid)
@@ -298,8 +324,11 @@ class DatasetTestCase(DatabaseTestCase):
         expected["id"] = mock.ANY
         self.assertDictEqual(expected, updateddataset["classes"][2])
 
-    def test_add_class_twice(self):
+    @mock.patch("db.dataset._get_skipped_recordings_in_class")
+    def test_add_class_twice(self, _get_skipped_recordings_in_class):
         """ A class name which already exists is skipped. """
+        _get_skipped_recordings_in_class.return_value = set()
+
         dsid = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
         test_data = {
             "name": "Class #1",

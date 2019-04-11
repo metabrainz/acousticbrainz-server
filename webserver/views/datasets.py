@@ -228,13 +228,18 @@ def evaluate(dataset_id):
         try:
             if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
                 form.filter_type.data = None
-            db.dataset_eval.evaluate_dataset(
+            job_id, dataset = db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
                 filter_type=form.filter_type.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
+            for cls in dataset["classes"]:
+                flash_message = ''
+                if len(cls["skipped_recordings"]) > 0:
+                    flash_message += '\n' + cls["name"] + ': ' + len(cls["skipped_recordings"])
+                flash.warn("The number of recording ignored per class: %s" % flash_message)
         except db.dataset_eval.IncompleteDatasetException as e:
             flash.error("Cannot add this dataset because of a validation error: %s" % e)
         except db.dataset_eval.JobExistsException:

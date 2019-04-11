@@ -490,9 +490,9 @@ def import_db_dump(archive_path, tables):
                                          columns=_TABLES[table_name])
 
                     elif file_name in table_names:
-                        logging.info(" - Importing data into %s table..." % file_name)
-                        cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
-                                         columns=tables[file_name])
+                            logging.info(" - Importing data into %s table..." % file_name)
+                            cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
+                                            columns=tables[file_name])
         connection.commit()
     finally:
         connection.close()

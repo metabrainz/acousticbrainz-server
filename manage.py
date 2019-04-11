@@ -177,6 +177,19 @@ def compute_stats():
         click.echo("Incomplete stats row detected", err=True)
 
 
+@cli.command(name='cleanup_stats')
+def cleanup_stats():
+    """Store daily data instead of hourly data"""
+    db.stats.count_rows()
+    db.stats.cleanup_stats()
+    db.stats.count_rows()
+
+
+@cli.command(name='stats_to_json')
+def stats_to_json():
+    """Store daily data in json"""
+    db.stats.move_stats_rows_to_json()
+
 @cli.command(name='cache_stats')
 def cache_stats():
     """Compute recent stats and add to cache."""

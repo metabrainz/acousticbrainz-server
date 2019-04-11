@@ -62,6 +62,11 @@ CREATE TABLE statistics (
   value     INTEGER                  NOT NULL
 );
 
+CREATE TABLE submission_stats (
+  collected TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  stats     JSONB NOT NULL
+);
+
 CREATE TABLE incremental_dumps (
   id      SERIAL,
   created TIMESTAMP WITH TIME ZONE DEFAULT NOW()

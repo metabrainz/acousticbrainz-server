@@ -10,6 +10,7 @@ import datetime
 import pytz
 import calendar
 import six
+import json
 
 from sqlalchemy import text
 
@@ -112,6 +113,55 @@ def _write_stats(connection, date, stats):
                 INSERT INTO statistics (collected, name, value)
                      VALUES (:collected, :name, :value)""")
             connection.execute(q, {"collected": date, "name": name, "value": value})
+
+
+def count_rows():
+    """Used for debugging for now"""
+    with db.engine.connect() as connection:
+        query = text("""SELECT COUNT(*) 
+                          FROM submission_stats
+                    """)
+        result = connection.execute(query)
+        print("No of rows in table submission_stats :", result.fetchone())
+
+def cleanup_stats():
+    """Keeps only one statistics row for each day in the table 
+    submission_stats"""
+
+    with db.engine.connect() as connection:
+        with connection.begin() as transaction:
+            query = text("""DELETE 
+                              FROM submission_stats
+                             WHERE collected
+                               NOT IN( SELECT max(collected) 
+                                        FROM submission_stats 
+                                        GROUP BY date(collected)
+                                    )  
+                        """)
+            connection.execute(query)
+            
+def move_stats_rows_to_json():
+    """Combines key-value pairs from the statistics table and stores them 
+    in the table submission_stats"""
+
+    with db.engine.connect() as connection:
+        with connection.begin() as transaction:
+            query_select = text("""SELECT collected, jsonb_object_agg(name,value) 
+                                     FROM statistics
+                                    GROUP BY collected
+                                    ORDER BY collected DESC
+                                    
+                                """)
+            stats_rows = connection.execute(query_select).fetchall()
+            query_insert = text("""INSERT INTO submission_stats
+                                   VALUES (:collected, :stats)                        
+                                """)
+            for row in stats_rows:
+                #check for incomplete rows
+                if len(stats_key_map) == len(row[1]):
+                    print("    1234     ")
+                    connection.execute(query_insert, {"collected": row[0], 
+                                                        "stats": json.dumps(row[1])})
 
 
 def add_stats_to_cache():

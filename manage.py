@@ -179,15 +179,14 @@ def compute_stats():
 
 @cli.command(name='cleanup_stats')
 def cleanup_stats():
-    """Store daily data instead of hourly data"""
-    db.stats.count_rows()
+    """Clean up submission_stats table to store daily data instead of hourly data"""
     db.stats.cleanup_stats()
-    db.stats.count_rows()
 
 
 @cli.command(name='stats_to_json')
 def stats_to_json():
-    """Store daily data in json"""
+    """Move stats rows from the statistics table to submission_stats
+    and store name-value pairs as json grouped by collected time"""
     db.stats.move_stats_rows_to_json()
 
 @cli.command(name='cache_stats')

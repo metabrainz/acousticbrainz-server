@@ -16,16 +16,16 @@ from db import gid_types
 class StatsTestCase(unittest.TestCase):
     """Statistics methods which use mocked database methods for testing"""
 
-    def test_get_next_hour(self):
+    def test_get_next_day(self):
         date1 = datetime.datetime(2016, 01, 07, 10, 20, 39, tzinfo=pytz.utc)
-        next_hour = db.stats._get_next_hour(date1)
-        expected = datetime.datetime(2016, 01, 07, 11, 0, 0, tzinfo=pytz.utc)
-        self.assertEqual(next_hour, expected)
+        next_day = db.stats._get_next_day(date1)
+        expected = datetime.datetime(2016, 01, 8, 0, 0, 0, tzinfo=pytz.utc)
+        self.assertEqual(next_day, expected)
 
         date2 = datetime.datetime(2016, 01, 07, 13, 0, 0, tzinfo=pytz.utc)
-        next_hour = db.stats._get_next_hour(date2)
-        expected = datetime.datetime(2016, 01, 07, 14, 0, 0, tzinfo=pytz.utc)
-        self.assertEqual(next_hour, expected)
+        next_day = db.stats._get_next_day(date2)
+        expected = datetime.datetime(2016, 01, 8, 0, 0, 0, tzinfo=pytz.utc)
+        self.assertEqual(next_day, expected)
 
     @mock.patch("brainzutils.cache.get")
     @mock.patch("brainzutils.cache.set")
@@ -113,7 +113,7 @@ class StatsTestCase(unittest.TestCase):
         count.assert_called_once_with(connection, datetimenow)
         connect.assert_called_once_with()
         dt.datetime.now.assert_called_once_with(pytz.utc)
-        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=600, namespace="statistics"), mock.call("recent-stats-last-updated", datetimenow, time=600, namespace="statistics")]
+        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=3600, namespace="statistics"), mock.call("recent-stats-last-updated", datetimenow, time=3600, namespace="statistics")]
         cacheset.assert_has_calls(setcalls)
 
     def test_compute_stats(self):
@@ -206,22 +206,6 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
-    def test_write_stats_error(self):
-        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
-                  "lowlevel-lossless": 15,
-                  "lowlevel-lossless-unique": 10,
-                  "lowlevel-total": 25, "lowlevel-total-unique": "not-a-number"}
-        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
-
-        try:
-            with db.engine.connect() as connection:
-                db.stats._write_stats(connection, date1, stats1)
-        except sqlalchemy.exc.DataError:
-            # We expect this to error-out
-            pass
-
-        data = db.stats.load_statistics_data()
-        self.assertEqual(0, len(data))
 
     def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""
@@ -360,23 +344,22 @@ class StatsHighchartsTestCase(DatabaseTestCase):
         self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
 
     def test_stats_daily(self):
-        """Only show stats computed for the beginning of each day, and
-        the last stats value"""
+        """Show stats computed for each day"""
+
         stats = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                  "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                  "lowlevel-total": 25, "lowlevel-total-unique": 16}
         date = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
-        delta = datetime.timedelta(hours=1)
+        delta = datetime.timedelta(days=1)
         with db.engine.connect() as connection:
-            # 60 hours = 2 and a bit days, so we should retrieve 3 values
-            # for the beginning of each day, and 1 more last value
-            for i in range(60):
+            # writing values for 5 consecutive days
+            for i in range(5):
                 db.stats._write_stats(connection, date, stats)
                 date += delta
 
         history = db.stats.get_statistics_history()
         # 6 data types
         self.assertEqual(len(history), 6)
-        # each item has 4 dates
+        # each item has 5 dates
         for h in history:
-            self.assertEqual(len(h["data"]), 4)
+            self.assertEqual(len(h["data"]), 5)

@@ -3,6 +3,7 @@ import os
 
 TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'views', 'test_data')
 
+
 class ServerTestCase(DatabaseTestCase):
 
     def temporary_login(self, user_id):

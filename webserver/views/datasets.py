@@ -122,13 +122,13 @@ def _convert_dataset_to_csv_stringio(dataset):
     fp = StringIO.StringIO()
     writer = csv.writer(fp)
 
-    #check if description is empty string or None
+    # write dataset description only if it is set
     if dataset["description"]:
         description = dataset["description"]
         writer.writerow(["description", description])
 
     for ds_class in dataset["classes"]:
-        #check if description is empty string or None
+        # write class description only if it is set
         if ds_class["description"]:
             ds_class_description = ds_class["description"]
             ds_class_desc_head = "description:" + ds_class["name"]
@@ -298,7 +298,7 @@ def create_service():
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
-        [description, classes] = _parse_dataset_csv(request.files[form.file.name])
+        description, classes = _parse_dataset_csv(request.files[form.file.name])
         dataset_dict = {
             "name": form.name.data,
             "description": description if description else form.description.data,
@@ -317,36 +317,46 @@ def import_csv():
 
 
 def _parse_dataset_csv(file):
-    classes_dict = defaultdict(list)
+    """Parse a csv file containing a representation of a dataset.
+    The csv file should have rows with 2 columns in one of the following forms:
+      <recording_id>,<classname>
+      description,<dataset_description>
+      description:<classname>,<class_description>
+
+    Arguments:
+        file: path to the csv file containing the dataset
+    Returns: a tuple of (dataset description, [classes]), where classes is a list of dictionaries
+             {"name": class name, "description": class description, "recordings": []}
+             a class is only returned if there are recordings for it. A class
+        """
+    classes_dict = defaultdict(lambda: {"description": None, "recordings": []})
     dataset_description = None
     for class_row in csv.reader(file):
         if len(class_row) != 2:
-            raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")        
+            raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
+
         if class_row[0] == "description":
-            #row is the dataset description
+            # row is the dataset description
             dataset_description = class_row[1]
         elif (class_row[0])[:12] == "description:":
-            #row is a class description
-            description = class_row[1]
+            # row is a class description
             class_name = class_row[0][12:]
-            classes_dict.setdefault(class_name,{})
-            classes_dict[class_name]["description"] = description
+            classes_dict[class_name]["description"] = class_row[1]
         else:
-            #row is a recording
-            classes_dict.setdefault(class_row[1],{})
-            classes_dict[class_row[1]].setdefault("recordings",[])
+            # row is a recording
             classes_dict[class_row[1]]["recordings"].append(class_row[0])
     
     classes = []
     
     for name, class_data in six.iteritems(classes_dict):
-        classes.append({
-            "recordings": class_data["recordings"] if "recordings" in class_data else [],
-            "name": name,
-            "description": class_data["description"] if "description" in class_data else None,
-        })
+        if class_data["recordings"]:
+            classes.append({
+                "recordings": class_data["recordings"] if "recordings" in class_data else [],
+                "name": name,
+                "description": class_data["description"] if "description" in class_data else None,
+            })
     
-    return [dataset_description, classes]
+    return dataset_description, classes
 
 
 @datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", ))

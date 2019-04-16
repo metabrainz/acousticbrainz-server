@@ -18,7 +18,9 @@ class DatabaseTestCase(TestCase):
 
     @staticmethod
     def create_app():
-        return create_app()
+        app = create_app()
+        app.config['WTF_CSRF_ENABLED'] = False
+        return app
 
     def setUp(self):
         self.reset_db()

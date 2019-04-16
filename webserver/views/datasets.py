@@ -310,7 +310,7 @@ def import_csv():
         except dataset_validator.ValidationException as e:
             raise BadRequest(str(e))
         flash.info("Dataset has been imported successfully.")
-        return redirect(url_for(".view", id=dataset_id))
+        return redirect(url_for(".view", dataset_id=dataset_id))
 
     else:
         return render_template("datasets/import.html", form=form)

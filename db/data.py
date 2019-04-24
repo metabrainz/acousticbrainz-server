@@ -334,6 +334,7 @@ def write_high_level(mbid, ll_id, data, build_sha1):
             for model_name, data in json_high.items():
                 write_high_level_item(connection, model_name, model_version, ll_id, version_id, data)
 
+
 def load_low_level(mbid, offset=0):
     """Load lowlevel data with the given mbid as a dictionary.
     If no offset is given, return the first. If an offset is
@@ -357,6 +358,58 @@ def load_low_level(mbid, offset=0):
 
         row = result.fetchone()
         return row[0]
+
+
+def load_many_low_level(recordings):
+    """Recordings is a list of tuples (mbid, offset).
+       Uses a single query method to collect low level data for multiple recordings.
+       
+       Steps:
+        - Creates dict structure as sampled below
+        - Subquery uses `row_number` with `partition by` attach offsets to recordings
+        - Outer query left joins lowlevel_json to select data
+        - recordings_info is used as a parameter to select recordings/offsets 
+        - recordings_info formatted as jsonb
+
+       Sample query response returned to api/v1/core.py get_data_for_multiple_recordings():
+
+       {"mbid1": {"offset1": {lowlevel_data},
+                  "offsetn": {lowlevel_data}}
+         ...
+         ...
+
+        "mbidn": {"offset1": {lowlevel_data}}
+       }
+    
+    """
+    recordings_info = {}
+    for mbid, offset in recordings:
+        recordings_info.setdefault(mbid, {})[offset] = {}
+
+    recordings_info_json = json.dumps(recordings_info, separators=(',', ':'))
+    
+    with db.engine.connect() as connection:
+        query = text(
+            """ SELECT gid, RowNum, data
+                FROM
+                (
+                SELECT id, gid,
+                ROW_NUMBER () 
+                OVER (PARTITION BY gid) RowNum
+                FROM lowlevel
+                ) AS partitions
+                LEFT JOIN lowlevel_json USING (id)
+                WHERE (:recordings_info)::jsonb ? gid::text 
+                AND (:recordings_info)::jsonb->gid::text ? (RowNum-1)::text
+            """)
+        
+        result = connection.execute(query, { 'recordings_info': recordings_info_json })
+
+        # RowNum starts at 1 so it must be decremented to match offset
+        for row in result.fetchall():
+            recordings_info[str(row[0])][str(row[1]-1)] = row[2]
+
+        return recordings_info
 
 
 def load_high_level(mbid, offset=0):

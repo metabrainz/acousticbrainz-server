@@ -183,11 +183,17 @@ def get_data_for_multiple_recordings(collect_data):
 
     recording_details = {}
 
-    for recording_id, offset in recordings:
-        try:
-            recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
-        except NoDataFoundException:
-            pass
+    # Loading low level data with single query method
+    if collect_data == db.data.load_many_low_level:
+        recording_details = collect_data(recordings)
+
+    # Loading low level data with multiple query method
+    else:
+        for recording_id, offset in recordings:
+            try:
+                recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
+            except NoDataFoundException:
+                pass
 
     return jsonify(recording_details)
 
@@ -219,9 +225,21 @@ def get_many_lowlevel():
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
 
+    :query query_method: *Optional.* Determines which query method should be used
+
+      `single` will use the single-query method. No parameter or other value will revert
+      to the multiple-query method
+
     :resheader Content-Type: *application/json*
     """
-    recording_details = get_data_for_multiple_recordings(db.data.load_low_level)
+    # Query option allowed for testing purposes:
+    if request.args.get("query_method") == "single":
+        # Use single-query method
+        recording_details = get_data_for_multiple_recordings(db.data.load_many_low_level)
+    else:
+        # Use multiple-query method
+        recording_details = get_data_for_multiple_recordings(db.data.load_low_level)
+    
     return recording_details
 
 

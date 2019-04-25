@@ -361,53 +361,43 @@ def load_low_level(mbid, offset=0):
 
 
 def load_many_low_level(recordings):
-    """Recordings is a list of tuples (mbid, offset).
-       Uses a single query method to collect low level data for multiple recordings.
-       
-       Steps:
-        - Creates dict structure as sampled below
-        - Subquery uses `row_number` with `partition by` attach offsets to recordings
-        - Outer query left joins lowlevel_json to select data
-        - recordings_info is used as a parameter to select recordings/offsets 
-        - recordings_info formatted as jsonb
+    """Uses a single query method to collect low-level JSON data for multiple recordings.
 
-       Sample query response returned to api/v1/core.py get_data_for_multiple_recordings():
+    Args:
+        recordings: A list of tuples (mbid, offset).
 
-       {"mbid1": {"offset1": {lowlevel_data},
+    Returns:
+
+        {"mbid1": {"offset1": {lowlevel_data},
                   "offsetn": {lowlevel_data}}
          ...
          ...
 
         "mbidn": {"offset1": {lowlevel_data}}
-       }
+        }
     
     """
-    recordings_info = {}
-    for mbid, offset in recordings:
-        recordings_info.setdefault(mbid, {})[offset] = {}
-
-    recordings_info_json = json.dumps(recordings_info, separators=(',', ':'))
     
     with db.engine.connect() as connection:
-        query = text(
-            """ SELECT gid, RowNum, data
-                FROM
-                (
-                SELECT id, gid,
-                ROW_NUMBER () 
-                OVER (PARTITION BY gid) RowNum
-                FROM lowlevel
-                ) AS partitions
-                LEFT JOIN lowlevel_json USING (id)
-                WHERE (:recordings_info)::jsonb ? gid::text 
-                AND (:recordings_info)::jsonb->gid::text ? (RowNum-1)::text
-            """)
+        query = text("""
+            SELECT gid, submission_offset, data
+              FROM (
+            SELECT id, gid,
+        ROW_NUMBER () 
+              OVER (PARTITION BY gid 
+          ORDER BY submitted DESC) - 1 submission_offset
+              FROM lowlevel
+            )   AS partitions
+         LEFT JOIN lowlevel_json 
+             USING (id)
+             WHERE (gid, submission_offset) IN :recordings
+        """)
         
-        result = connection.execute(query, { 'recordings_info': recordings_info_json })
+        result = connection.execute(query, { 'recordings': tuple(recordings) })
 
-        # RowNum starts at 1 so it must be decremented to match offset
+        recordings_info = {}
         for row in result.fetchall():
-            recordings_info[str(row[0])][str(row[1]-1)] = row[2]
+            recordings_info.setdefault(str(row['gid']), {})[str(row['submission_offset'])] = row['data']
 
         return recordings_info
 

@@ -6,6 +6,7 @@ import json
 import os
 import db
 import db.exceptions
+from collections import defaultdict
 
 from sqlalchemy import text
 import sqlalchemy.exc
@@ -385,7 +386,7 @@ def load_many_low_level(recordings):
             SELECT id, gid,
         ROW_NUMBER () 
               OVER (PARTITION BY gid 
-          ORDER BY submitted DESC) - 1 submission_offset
+          ORDER BY submitted) - 1 submission_offset
               FROM lowlevel
             )   AS partitions
          LEFT JOIN lowlevel_json 
@@ -395,9 +396,9 @@ def load_many_low_level(recordings):
         
         result = connection.execute(query, { 'recordings': tuple(recordings) })
 
-        recordings_info = {}
+        recordings_info = defaultdict(dict)
         for row in result.fetchall():
-            recordings_info.setdefault(str(row['gid']), {})[str(row['submission_offset'])] = row['data']
+            recordings_info[str(row['gid'])][str(row['submission_offset'])] = row['data']
 
         return recordings_info
 

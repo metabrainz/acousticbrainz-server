@@ -194,12 +194,13 @@ def write_low_level(mbid, data, is_mbid):
         query = text("""
             SELECT MAX(submission_offset)
               FROM lowlevel
-             WHERE gid = :mbid
+             WHERE gid::text = :mbid
         """)
         result = connection.execute(query, {"mbid": mbid})
 
-        if result.fetchone()[0]:
-            return result.fetchone()[0] + 1
+        row = result.fetchone()
+        if row[0] is not None:
+            return row[0] + 1
         else:
             # No previous submission
             return 0

@@ -11,4 +11,4 @@ SELECT id, ROW_NUMBER ()
  WHERE lowlevel.id = offset_table.id 
    AND lowlevel.submission_offset IS NULL;
 
-END;
+COMMIT;

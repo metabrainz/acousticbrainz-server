@@ -370,8 +370,7 @@ def load_low_level(mbid, offset=0):
                  JOIN lowlevel_json llj
                    ON ll.id = llj.id
                 WHERE ll.gid = %s
-             ORDER BY ll.submitted
-               OFFSET %s""",
+                  AND ll.submission_offset = %s""",
             (str(mbid), offset)
         )
         if not result.rowcount:
@@ -379,6 +378,45 @@ def load_low_level(mbid, offset=0):
 
         row = result.fetchone()
         return row[0]
+
+
+def load_many_low_level(recordings):
+    """Collect low-level JSON data for multiple recordings.
+    
+    Args:
+        recordings: A list of tuples (mbid, offset).
+    
+    Returns:
+        {"mbid-1": {"offset-1": lowlevel_data,
+                    ...
+                    ...
+                  "offset-n": lowlevel_data},
+         ...
+         ...
+
+        "mbid-n": {"offset-1": lowlevel_data}
+        }
+
+    """
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT ll.gid, 
+                   ll.submission_offset, 
+                   llj.data
+              FROM lowlevel ll
+         LEFT JOIN lowlevel_json llj
+                ON ll.id = llj.id
+             WHERE (gid, submission_offset) 
+                IN :recordings
+        """)
+
+    result = connection.execute(query, { 'recordings': tuple(recordings) })
+
+    recordings_info = defaultdict(dict)
+    for row in result.fetchall():
+        recordings_info[str(row['gid'])][str(row['submission_offset'])] = row['data']
+
+    return recordings_info
 
 
 def load_high_level(mbid, offset=0):
@@ -394,8 +432,7 @@ def load_high_level(mbid, offset=0):
                  JOIN lowlevel ll
                    ON ll.id = hl.id
                 WHERE ll.gid = %s
-             ORDER BY ll.submitted
-               OFFSET %s""",
+                  AND ll.submission_offset = %s""",
             (str(mbid), offset)
         )
         metarow = result.fetchone()
@@ -434,6 +471,82 @@ def load_high_level(mbid, offset=0):
             highlevel[model] = data
 
         return {"metadata": metadata, "highlevel": highlevel}
+
+
+def load_many_high_level(recordings):
+    """Collect high-level data for multiple recordings.
+
+    Args:
+        recordings: A list of tuples (mbid, offset).
+
+    Returns:
+        {"mbid-1": {"offset-1": {"metadata-1": metadata, "highlevel-1": highlevel},
+                    ...
+                    ...
+                   "offset-n": {"metadata-n": metadata, "highlevel-n": highlevel}},
+
+        ...
+        ...
+
+        "mbid-n": {"offset-1": {"metadata-1": metadata, "highlevel-1": highlevel}}
+        }
+
+    """
+    with db.engine.connect() as connection:
+        # Metadata
+        meta_query = text("""
+            SELECT hl.id
+                 , hlm.data
+                 , ll.gid
+                 , ll.submission_offset
+              FROM highlevel hl
+         LEFT JOIN highlevel_meta hlm
+                ON hl.id = hlm.id
+              JOIN lowlevel ll
+                ON ll.id = hl.id
+             WHERE (ll.gid, ll.submission_offset)
+                IN :recordings
+        """)
+
+        meta_result = connection.execute(meta_query, { 'recordings': tuple(recordings) })
+
+        hlids = []
+        recordings_info = defaultdict(dict)
+        for row in meta_result.fetchall():
+            hlids.append(row['hl.id'])
+
+            if row['hlm.data'] is None:
+                raise db.exceptions.NoDataFoundException
+            recordings_info[str(row['ll.gid'])][str(row['ll.submission_offset'])]['metadata'] = row['hlm.data']
+
+        # Model data
+        model_query = text("""
+            SELECT m.model
+                 , hlmo.data
+                 , version.data as version
+                 , ll.gid
+                 , ll.submission_offset
+              FROM highlevel_model hlmo
+              JOIN model m
+                ON m.id = hlmo.model
+              JOIN version
+                ON version.id = hlmo.version
+              JOIN lowlevel ll
+                ON ll.id = hlmo.highlevel
+             WHERE hlmo.highlevel IN :hlids
+               AND m.status = 'show'
+        """)
+
+        model_result = connection.execute(model_query, { 'hlids': hlids })
+        for row in model_result.fetchall():
+
+            model = row['m.model']
+            data = row['hlmo.data']
+            data['version'] = row['version']
+
+            recordings_info[str(row['ll.gid'])][str(row['ll.submission_offset'])]['highlevel'][model] = data
+
+        return recordings_info
 
 
 def count_lowlevel(mbid):

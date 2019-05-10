@@ -175,21 +175,21 @@ def check_bad_request_for_multiple_recordings():
 
     return recordings
 
+# DELETE THIS
+# def get_data_for_multiple_recordings(collect_data):
+#     """Gets low-level and high-level data using the function collect_data
+#     """
+#     recordings = check_bad_request_for_multiple_recordings()
 
-def get_data_for_multiple_recordings(collect_data):
-    """Gets low-level and high-level data using the function collect_data
-    """
-    recordings = check_bad_request_for_multiple_recordings()
+#     recording_details = {}
 
-    recording_details = {}
+#     for recording_id, offset in recordings:
+#         try:
+#             recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
+#         except NoDataFoundException:
+#             pass
 
-    for recording_id, offset in recordings:
-        try:
-            recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
-        except NoDataFoundException:
-            pass
-
-    return jsonify(recording_details)
+#     return jsonify(recording_details)
 
 
 @bp_core.route("/low-level", methods=["GET"])
@@ -221,8 +221,10 @@ def get_many_lowlevel():
 
     :resheader Content-Type: *application/json*
     """
-    recording_details = get_data_for_multiple_recordings(db.data.load_low_level)
-    return recording_details
+    recordings = check_bad_request_for_multiple_recordings()
+    recording_details = db.data.load_many_low_level(recordings)
+
+    return jsonify(recording_details)
 
 
 @bp_core.route("/high-level", methods=["GET"])
@@ -254,8 +256,10 @@ def get_many_highlevel():
 
     :resheader Content-Type: *application/json*
     """
-    recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
-    return recording_details
+    recordings = check_bad_request_for_multiple_recordings()
+    recording_details = db.data.load_many_high_level(recordings)
+    
+    return jsonify(recording_details)
 
 
 @bp_core.route("/count", methods=["GET"])

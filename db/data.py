@@ -151,6 +151,7 @@ def insert_version(connection, data, version_type):
     row = result.fetchone()
     return row[0]
 
+
 def write_low_level(mbid, data, is_mbid):
 
     def _get_by_data_sha256(connection, data_sha256):
@@ -162,17 +163,18 @@ def write_low_level(mbid, data, is_mbid):
         result = connection.execute(query, {"data_sha256": data_sha256})
         return result.fetchone()
 
-    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, gid_type):
+    def _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, gid_type, submission_offset):
         """ Insert metadata into the lowlevel table and return its id """
         query = text("""
-            INSERT INTO lowlevel (gid, build_sha1, lossless, gid_type)
-                 VALUES (:mbid, :build_sha1, :lossless, :gid_type)
+            INSERT INTO lowlevel (gid, build_sha1, lossless, gid_type, submission_offset)
+                 VALUES (:mbid, :build_sha1, :lossless, :gid_type, :submission_offset)
               RETURNING id
         """)
         result = connection.execute(query, {"mbid": mbid,
                                             "build_sha1": build_sha1,
                                             "lossless": is_lossless_submit,
-                                            "gid_type": gid_type})
+                                            "gid_type": gid_type,
+                                            "submission_offset": submission_offset})
         return result.fetchone()[0]
 
     def _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id):
@@ -187,6 +189,21 @@ def write_low_level(mbid, data, is_mbid):
                                    "data_sha256": data_sha256,
                                    "version": version_id})
 
+    def _get_submission_offset(connection, mbid):
+        """ Get highest existing submission offset for mbid, then increment """
+        query = text("""
+            SELECT MAX(submission_offset)
+              FROM lowlevel
+             WHERE gid = :mbid
+        """)
+        result = connection.execute(query, {"mbid": mbid})
+
+        if result.fetchone()[0]:
+            return result.fetchone()[0] + 1
+        else:
+            # No previous submission
+            return 0
+
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     version = data['metadata']['version']
     build_sha1 = version['essentia_build_sha']
@@ -200,7 +217,8 @@ def write_low_level(mbid, data, is_mbid):
             return
 
         try:
-            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid)
+            submission_offset = _get_submission_offset(connection, mbid)
+            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid, submission_offset)
             version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
             _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id)
             logging.info("Saved %s" % mbid)

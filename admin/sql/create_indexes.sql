@@ -26,4 +26,6 @@ CREATE UNIQUE INDEX lower_musicbrainz_id_ndx_user ON "user" (lower(musicbrainz_i
 CREATE INDEX collected_ndx_statistics ON statistics (collected);
 CREATE INDEX collected_hour_ndx_statistics ON statistics (date_part('hour'::text, timezone('UTC'::text, collected)));
 
+CREATE INDEX submission_offset_ndx_lowlevel ON lowlevel (submission_offset);
+
 COMMIT;

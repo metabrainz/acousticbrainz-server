@@ -55,7 +55,7 @@ def get_jobs():
 
 @bp_dataset_eval.route("/jobs/<uuid:job_id>", methods=["GET"])
 @auth_required
-@ratelimit
+@ratelimit()
 def job_details(job_id):
     """Returns the details of a particular job.
        API key argument is required.

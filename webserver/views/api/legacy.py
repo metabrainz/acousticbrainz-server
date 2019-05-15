@@ -14,7 +14,7 @@ api_legacy_bp = Blueprint('api', __name__)
 
 @api_legacy_bp.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
-@ratelimit
+@ratelimit()
 def count(mbid):
     return jsonify({
         'mbid': mbid,
@@ -24,7 +24,7 @@ def count(mbid):
 
 @api_legacy_bp.route("/<string:mbid>/low-level", methods=["GET"])
 @crossdomain()
-@ratelimit
+@ratelimit()
 def get_low_level(mbid):
     """Endpoint for fetching low-level data.
     If there is more than one document with the same mbid, you can specify
@@ -40,7 +40,7 @@ def get_low_level(mbid):
 
 @api_legacy_bp.route("/<string:mbid>/high-level", methods=["GET"])
 @crossdomain()
-@ratelimit
+@ratelimit()
 def get_high_level(mbid):
     """Endpoint for fetching high-level data.
     If there is more than one document with the same mbid, you can specify
@@ -55,7 +55,7 @@ def get_high_level(mbid):
 
 
 @api_legacy_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
-@ratelimit
+@ratelimit()
 def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz."""
     raw_data = request.get_data()

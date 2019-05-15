@@ -67,8 +67,8 @@ class CoreViewsTestCase(ServerTestCase):
         resp = self.client.get("/api/v1/nothing/low-level")
         self.assertEqual(404, resp.status_code)
         load_low_level.assert_not_called()
-        
-        expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
+
+        expected_result = {"message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."}
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.data.load_low_level")

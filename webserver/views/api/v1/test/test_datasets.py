@@ -239,7 +239,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         self.assertEqual(resp.status_code, 404)
-        expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
+        expected_result = {"message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."}
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.dataset.get")

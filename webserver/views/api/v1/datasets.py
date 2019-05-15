@@ -20,9 +20,9 @@ def get_dataset(dataset_id):
     return jsonify(get_check_dataset(dataset_id))
 
 
+# don't ratelimit this function, since it is called from our JS
 @bp_datasets.route("/", methods=["POST"])
 @auth_required
-@ratelimit()
 def create_dataset():
     """Create a new dataset.
 

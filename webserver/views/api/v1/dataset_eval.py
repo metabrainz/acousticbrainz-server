@@ -10,9 +10,9 @@ from webserver.views.api.v1 import datasets
 
 bp_dataset_eval = Blueprint('api_v1_dataset_eval', __name__)
 
+# Don't ratelimit this view since it is being used by JS
 @bp_dataset_eval.route("/jobs", methods=["GET"])
 @auth_required
-@ratelimit()
 def get_jobs():
     """Return a list of jobs related to the current user.
        Identify the current user by being logged in or by passing a Token for authentication.

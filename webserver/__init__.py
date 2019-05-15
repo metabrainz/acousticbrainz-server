@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from brainzutils.flask import CustomFlask
+from brainzutils.ratelimit import inject_x_rate_headers
 from flask import request, url_for, redirect
 from flask_login import current_user
 from pprint import pprint
@@ -59,6 +60,12 @@ def create_app(debug=None):
                      email_config=app.config.get('LOG_EMAIL'),
                      sentry_config=app.config.get('LOG_SENTRY')
                      )
+
+
+    # Add rate limiting support
+    @app.after_request
+    def after_request_callbacks(response):
+        return inject_x_rate_headers(response)
 
     # Database connection
     from db import init_db_engine

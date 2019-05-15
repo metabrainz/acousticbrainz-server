@@ -175,22 +175,6 @@ def check_bad_request_for_multiple_recordings():
 
     return recordings
 
-# DELETE THIS
-# def get_data_for_multiple_recordings(collect_data):
-#     """Gets low-level and high-level data using the function collect_data
-#     """
-#     recordings = check_bad_request_for_multiple_recordings()
-
-#     recording_details = {}
-
-#     for recording_id, offset in recordings:
-#         try:
-#             recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
-#         except NoDataFoundException:
-#             pass
-
-#     return jsonify(recording_details)
-
 
 @bp_core.route("/low-level", methods=["GET"])
 @crossdomain()

@@ -6,6 +6,7 @@ import json
 import os
 import db
 import db.exceptions
+from collections import defaultdict
 
 from sqlalchemy import text
 import sqlalchemy.exc
@@ -406,17 +407,19 @@ def load_many_low_level(recordings):
               FROM lowlevel ll
          LEFT JOIN lowlevel_json llj
                 ON ll.id = llj.id
-             WHERE (gid, submission_offset) 
+             WHERE (ll.gid, ll.submission_offset) 
                 IN :recordings
         """)
 
-    result = connection.execute(query, { 'recordings': tuple(recordings) })
+        result = connection.execute(query, { 'recordings': tuple(recordings) })
+        if not result.rowcount:
+            raise db.exceptions.NoDataFoundException
 
-    recordings_info = defaultdict(dict)
-    for row in result.fetchall():
-        recordings_info[str(row['gid'])][str(row['submission_offset'])] = row['data']
+        recordings_info = defaultdict(dict)
+        for row in result.fetchall():
+            recordings_info[str(row['gid'])][str(row['submission_offset'])] = row['data']
 
-    return recordings_info
+        return recordings_info
 
 
 def load_high_level(mbid, offset=0):
@@ -509,15 +512,16 @@ def load_many_high_level(recordings):
         """)
 
         meta_result = connection.execute(meta_query, { 'recordings': tuple(recordings) })
+        if not meta_result.rowcount:
+            raise db.exceptions.NoDataFoundException
 
         hlids = []
-        recordings_info = defaultdict(dict)
+        recordings_info = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
         for row in meta_result.fetchall():
-            hlids.append(row['hl.id'])
-
-            if row['hlm.data'] is None:
-                raise db.exceptions.NoDataFoundException
-            recordings_info[str(row['ll.gid'])][str(row['ll.submission_offset'])]['metadata'] = row['hlm.data']
+            # Check that the hl calculation didn't fail (not just a placeholder row)
+            if row['data']:
+                hlids.append(row['id'])
+                recordings_info[str(row['gid'])][str(row['submission_offset'])]['metadata'] = row['data']
 
         # Model data
         model_query = text("""
@@ -537,14 +541,14 @@ def load_many_high_level(recordings):
                AND m.status = 'show'
         """)
 
-        model_result = connection.execute(model_query, { 'hlids': hlids })
+        model_result = connection.execute(model_query, { 'hlids': tuple(hlids) })
         for row in model_result.fetchall():
 
-            model = row['m.model']
-            data = row['hlmo.data']
+            model = row['model']
+            data = row['data']
             data['version'] = row['version']
 
-            recordings_info[str(row['ll.gid'])][str(row['ll.submission_offset'])]['highlevel'][model] = data
+            recordings_info[str(row['gid'])][str(row['submission_offset'])]['highlevel'][model] = data
 
         return recordings_info
 

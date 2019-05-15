@@ -148,6 +148,7 @@ def main(num_threads):
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
 
     num_processed = 0
+    done_row_id = 0
 
     pool = {}
     docs = []
@@ -155,7 +156,7 @@ def main(num_threads):
         # Check to see if we need more database rows
         if len(docs) == 0:
             # Fetch more rows from the DB
-            docs = db.data.get_unprocessed_highlevel_documents()
+            docs = db.data.get_unprocessed_highlevel_documents(min_row_id=done_row_id)
 
             # We will fetch some rows that are already in progress. Remove those.
             in_progress = pool.keys()
@@ -207,6 +208,7 @@ def main(num_threads):
                     print("done  %s" % mbid)
                     sys.stdout.flush()
                     num_processed += 1
+                    done_row_id = max(done_row_id, ll_id)
 
             if len(pool) == num_threads:
                 # tranquilo!

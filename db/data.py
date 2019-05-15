@@ -470,8 +470,14 @@ def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
         docs = result.fetchall()
         return docs
 
-def get_unprocessed_highlevel_documents():
-    """Fetch up to 100 low-level documents which have no associated high level data."""
+def get_unprocessed_highlevel_documents(min_row_id=0):
+    """Fetch up to 100 low-level documents which have no associated high level data.
+
+    Args:
+        min_row_id (int): the minimum lowlevel row ID the function should return. This
+                        is used to restrict the query to only get docs submitted
+                        after a particular time.
+    """
     with db.engine.connect() as connection:
         query = text(
                 """SELECT ll.gid::text
@@ -483,8 +489,10 @@ def get_unprocessed_highlevel_documents():
             LEFT JOIN highlevel AS hl
                    ON ll.id = hl.id
                 WHERE hl.mbid IS NULL
+                  AND ll.id >= :min_row_id
+             ORDER BY ll.id
                 LIMIT 100""")
-        result = connection.execute(query)
+        result = connection.execute(query, {"min_row_id": min_row_id})
         docs = result.fetchall()
         return docs
 

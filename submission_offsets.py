@@ -50,25 +50,18 @@ def incremental_add_offset(limit):
 			if gid in max_offsets:
 				# Current offset exists
 				max_offsets[gid] += 1
-				offset = max_offsets[gid]
-
-				query = text("""
-					UPDATE lowlevel
-					   SET submission_offset = :offset
-					 WHERE id = :id
-				""")
-				connection.execute(query, { "id": id, "offset": offset })
 			else:
 				# No existing offset
 				max_offsets[gid] = 0
+			offset = max_offsets[gid]
 
-				query = text("""
-					UPDATE lowlevel
-					   SET submission_offset = 0
-					 WHERE id = :id
-				""")
-				connection.execute(query, { "id": id })
-
+			query = text("""
+				UPDATE lowlevel
+				   SET submission_offset = :offset
+				 WHERE id = :id
+			""")
+			connection.execute(query, { "id": id, "offset": offset })
+			
 			count += 1
 
 		print("============================")

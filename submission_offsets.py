@@ -31,7 +31,7 @@ def incremental_add_offset(limit):
 			SELECT gid, MAX(submission_offset)
 			  FROM lowlevel
 			 WHERE submission_offset IS NOT NULL
-		  GROUP BY gid
+		      GROUP BY gid
 		""")
 		offset_result = connection.execute(offset_query)
 

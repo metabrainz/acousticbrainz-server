@@ -31,7 +31,7 @@ def incremental_add_offset(limit):
 			SELECT gid, MAX(submission_offset)
 			  FROM lowlevel
 			 WHERE submission_offset IS NOT NULL
-	      GROUP BY gid
+		  GROUP BY gid
 		""")
 		offset_result = connection.execute(offset_query)
 
@@ -46,7 +46,6 @@ def incremental_add_offset(limit):
 			print("Finished {}/{} items".format(count, limit))
 			print("Current lowlevel.id: {}".format(id)) 
 			print("Inserting...")
-
 			if gid in max_offsets:
 				# Current offset exists
 				max_offsets[gid] += 1
@@ -61,7 +60,6 @@ def incremental_add_offset(limit):
 				 WHERE id = :id
 			""")
 			connection.execute(query, { "id": id, "offset": offset })
-			
 			count += 1
 
 		print("============================")

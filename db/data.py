@@ -190,6 +190,22 @@ def write_low_level(mbid, data, is_mbid):
                                    "data_sha256": data_sha256,
                                    "version": version_id})
 
+    def _get_submission_offset(connection, mbid):
+        """ Get highest existing submission offset for mbid, then increment """
+        query = text("""
+            SELECT MAX(submission_offset) as max_offset
+              FROM lowlevel
+             WHERE gid = :mbid
+        """)
+        result = connection.execute(query, {"mbid": mbid})
+
+        row = result.fetchone()
+        if row["max_offset"] is not None:
+            return row["max_offset"] + 1
+        else:
+            # No previous submission
+            return 0
+
     is_lossless_submit = data['metadata']['audio_properties']['lossless']
     version = data['metadata']['version']
     build_sha1 = version['essentia_build_sha']

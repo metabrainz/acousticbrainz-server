@@ -8,6 +8,8 @@ import db.data
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
 
+from sqlalchemy import text
+
 
 class DataDBTestCase(DatabaseTestCase):
 
@@ -98,6 +100,34 @@ class DataDBTestCase(DatabaseTestCase):
 
             db.data.write_low_level(self.test_mbid_two, three, gid_types.GID_TYPE_MBID)
             self.assertEqual(1, db.data.get_next_submission_offset(connection, self.test_mbid_two))
+
+    def test_write_low_level_submission_offset(self):
+
+        def _get_submission_offset(connection, mbid):
+            query = text("""
+                SELECT MAX(submission_offset) as max_offset
+                  FROM lowlevel
+                 WHERE gid = :mbid
+            """)
+            result = connection.execute(query, {"mbid": mbid})
+            row = result.fetchone()
+            return row["max_offset"]
+
+        with db.engine.connect() as connection:
+            one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+            two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+            three = {"data": "three", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+            
+            db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
+            self.assertEqual(0, _get_submission_offset(connection, self.test_mbid))
+
+            # Adding second submission, max offset is incremented
+            db.data.write_low_level(self.test_mbid, two, gid_types.GID_TYPE_MBID)
+            self.assertEqual(1, _get_submission_offset(connection, self.test_mbid))
+
+            db.data.write_low_level(self.test_mbid_two, three, gid_types.GID_TYPE_MBID)
+            self.assertEqual(0, _get_submission_offset(connection, self.test_mbid_two))
+
 
     def test_write_load_low_level(self):
         """Writing and loading a dict returns the same data"""

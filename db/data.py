@@ -412,8 +412,6 @@ def load_many_low_level(recordings):
         """)
 
         result = connection.execute(query, { 'recordings': tuple(recordings) })
-        if not result.rowcount:
-            raise db.exceptions.NoDataFoundException
 
         recordings_info = defaultdict(dict)
         for row in result.fetchall():
@@ -512,8 +510,9 @@ def load_many_high_level(recordings):
         """)
 
         meta_result = connection.execute(meta_query, { 'recordings': tuple(recordings) })
+        # Return empty dictionary if no metadata is found
         if not meta_result.rowcount:
-            raise db.exceptions.NoDataFoundException
+            return {}
 
         hlids = []
         recordings_info = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))

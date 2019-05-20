@@ -77,32 +77,25 @@ class DataDBTestCase(DatabaseTestCase):
             db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
 
 
-    def test_write_low_level_submission_offset(self):
-
-        def _get_submission_offset(connection, mbid):
-            query = text("""
-                SELECT MAX(submission_offset) as max_offset
-                  FROM lowlevel
-                 WHERE gid = :mbid
-            """)
-            result = connection.execute(query, {"mbid": mbid})
-            row = result.fetchone()
-            return row["max_offset"]
-
+    def test_get_next_submission_offset(self):
+        # Check that next max offset is returned
         with db.engine.connect() as connection:
             one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
             two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
             three = {"data": "three", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
             
             db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
-            self.assertEqual(0, _get_submission_offset(connection, self.test_mbid))
+            self.assertEqual(1, db.data.get_next_submission_offset(connection, self.test_mbid))
 
             # Adding second submission, max offset is incremented
             db.data.write_low_level(self.test_mbid, two, gid_types.GID_TYPE_MBID)
-            self.assertEqual(1, _get_submission_offset(connection, self.test_mbid))
+            self.assertEqual(2, db.data.get_next_submission_offset(connection, self.test_mbid))
+
+            # Before any submissions exist, returns 0
+            self.assertEqual(0, db.data.get_next_submission_offset(connection, self.test_mbid_two))
 
             db.data.write_low_level(self.test_mbid_two, three, gid_types.GID_TYPE_MBID)
-            self.assertEqual(0, _get_submission_offset(connection, self.test_mbid_two))
+            self.assertEqual(1, db.data.get_next_submission_offset(connection, self.test_mbid_two))
 
 
     def test_write_load_low_level(self):

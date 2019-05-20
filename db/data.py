@@ -189,7 +189,30 @@ def write_low_level(mbid, data, is_mbid):
                                    "data_sha256": data_sha256,
                                    "version": version_id})
 
-    def _get_submission_offset(connection, mbid):
+    is_lossless_submit = data['metadata']['audio_properties']['lossless']
+    version = data['metadata']['version']
+    build_sha1 = version['essentia_build_sha']
+    data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
+    with db.engine.begin() as connection:
+        # See if we already have this data
+        existing = _get_by_data_sha256(connection, data_sha256)
+        if existing:
+            logging.info("Already have %s" % data_sha256)
+            return
+
+        try:
+            submission_offset = get_next_submission_offset(connection, mbid)
+            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid, submission_offset)
+            version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
+            _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id)
+            logging.info("Saved %s" % mbid)
+        except sqlalchemy.exc.DataError as e:
+            raise db.exceptions.BadDataException(
+                    "data is badly formed")
+
+
+def get_next_submission_offset(connection, mbid):
         """ Get highest existing submission offset for mbid, then increment """
         query = text("""
             SELECT MAX(submission_offset) as max_offset
@@ -205,27 +228,6 @@ def write_low_level(mbid, data, is_mbid):
             # No previous submission
             return 0
 
-    is_lossless_submit = data['metadata']['audio_properties']['lossless']
-    version = data['metadata']['version']
-    build_sha1 = version['essentia_build_sha']
-    data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
-    with db.engine.begin() as connection:
-        # See if we already have this data
-        existing = _get_by_data_sha256(connection, data_sha256)
-        if existing:
-            logging.info("Already have %s" % data_sha256)
-            return
-
-        try:
-            submission_offset = _get_submission_offset(connection, mbid)
-            ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid, submission_offset)
-            version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
-            _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id)
-            logging.info("Saved %s" % mbid)
-        except sqlalchemy.exc.DataError as e:
-            raise db.exceptions.BadDataException(
-                    "data is badly formed")
 
 def add_model(model_name, model_version, model_status=STATUS_HIDDEN):
     if model_status not in MODEL_STATUSES:

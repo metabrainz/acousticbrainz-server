@@ -6,7 +6,8 @@ CREATE TABLE lowlevel (
   build_sha1 TEXT      NOT NULL,
   lossless   BOOLEAN                  DEFAULT 'n',
   submitted  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  gid_type   gid_type  NOT NULL
+  gid_type   gid_type  NOT NULL,
+  submission_offset     INTEGER
 );
 
 CREATE TABLE lowlevel_json (

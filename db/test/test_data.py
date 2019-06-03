@@ -18,6 +18,8 @@ class DataDBTestCase(DatabaseTestCase):
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
 
         self.test_mbid_two = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
+        self.test_lowlevel_data_json_two = open(os.path.join(TEST_DATA_PATH, self.test_mbid_two + '.json')).read()
+        self.test_lowlevel_data_two = json.loads(self.test_lowlevel_data_json_two)
 
     @mock.patch("db.data.sanity_check_data")
     @mock.patch("db.data.write_low_level")

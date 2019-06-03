@@ -5,7 +5,7 @@ import os
 import sys
 
 import click
-from brainzutils import cache
+from brainzutils import cache, ratelimit
 import flask.cli
 from flask import current_app
 from flask.cli import FlaskGroup
@@ -237,6 +237,7 @@ def toggle_site_status():
         print('Done!')
 
 
+<<<<<<< HEAD
 @cli.group()
 @click.pass_context
 def highlevel(ctx):
@@ -278,7 +279,15 @@ def remove_failed_rows():
         sys.exit(1)
 
 
-# Keep additional sets of commands down here
+@cli.command(name='set_rate_limits')
+@click.argument('per_ip')
+@click.argument('per_token')
+@click.argument('window_size')
+def set_rate_limits(per_ip, per_token, window_size):
+    ratelimit.set_rate_limits(per_token, per_ip, window_size)
+    print("new ratelimit parameters set!")
+
+# Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
 
 if __name__ == '__main__':

@@ -8,8 +8,6 @@ import db.data
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
 
-from sqlalchemy import text
-
 
 class DataDBTestCase(DatabaseTestCase):
 
@@ -20,8 +18,6 @@ class DataDBTestCase(DatabaseTestCase):
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
 
         self.test_mbid_two = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
-        self.test_lowlevel_data_two_json = open(os.path.join(TEST_DATA_PATH, self.test_mbid_two + '.json')).read()
-        self.test_lowlevel_data_two = json.loads(self.test_lowlevel_data_two_json)
 
     @mock.patch("db.data.sanity_check_data")
     @mock.patch("db.data.write_low_level")
@@ -101,34 +97,6 @@ class DataDBTestCase(DatabaseTestCase):
             db.data.write_low_level(self.test_mbid_two, three, gid_types.GID_TYPE_MBID)
             self.assertEqual(1, db.data.get_next_submission_offset(connection, self.test_mbid_two))
 
-    def test_write_low_level_submission_offset(self):
-
-        def _get_submission_offset(connection, mbid):
-            query = text("""
-                SELECT MAX(submission_offset) as max_offset
-                  FROM lowlevel
-                 WHERE gid = :mbid
-            """)
-            result = connection.execute(query, {"mbid": mbid})
-            row = result.fetchone()
-            return row["max_offset"]
-
-        with db.engine.connect() as connection:
-            one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-            two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-            three = {"data": "three", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-            
-            db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
-            self.assertEqual(0, _get_submission_offset(connection, self.test_mbid))
-
-            # Adding second submission, max offset is incremented
-            db.data.write_low_level(self.test_mbid, two, gid_types.GID_TYPE_MBID)
-            self.assertEqual(1, _get_submission_offset(connection, self.test_mbid))
-
-            db.data.write_low_level(self.test_mbid_two, three, gid_types.GID_TYPE_MBID)
-            self.assertEqual(0, _get_submission_offset(connection, self.test_mbid_two))
-
-
     def test_write_load_low_level(self):
         """Writing and loading a dict returns the same data"""
         one = {"data": "one",
@@ -175,6 +143,7 @@ class DataDBTestCase(DatabaseTestCase):
             for row in result:
                 ret.append(row[0])
             return ret
+
 
     def test_load_many_low_level(self):
         """Lowlevel data corresponds to the specified offsets, returns first submission without offset"""
@@ -420,7 +389,6 @@ class DataDBTestCase(DatabaseTestCase):
             db.data.load_high_level(self.test_mbid, offset=1)
 
         self.assertDictEqual(hl3_expected, db.data.load_high_level(self.test_mbid, offset=2))
-    
 
     def test_load_many_high_level_skip(self):
         """If two ll items exist but hl fails for second, the second is skipped.
@@ -485,7 +453,6 @@ class DataDBTestCase(DatabaseTestCase):
         
         self.assertDictEqual(expected, db.data.load_many_high_level(list(recordings)))
 
-
     def test_load_many_high_level_offset(self):
         # If no hl data is found, empty dictionary is returned
         recordings = [(self.test_mbid, 0),
@@ -548,7 +515,6 @@ class DataDBTestCase(DatabaseTestCase):
         second_data["metadata"]["tags"]["album"] = ["Another album"]
         db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(2, db.data.count_lowlevel(self.test_mbid))
-
 
     def test_add_get_model(self):
         self.assertIsNone(db.data._get_model_id("modelname", "v1"))

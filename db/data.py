@@ -213,20 +213,21 @@ def write_low_level(mbid, data, is_mbid):
 
 
 def get_next_submission_offset(connection, mbid):
-        """ Get highest existing submission offset for mbid, then increment """
-        query = text("""
-            SELECT MAX(submission_offset) as max_offset
-              FROM lowlevel
-             WHERE gid = :mbid
-        """)
-        result = connection.execute(query, {"mbid": mbid})
+    """Get highest existing submission offset for mbid, then increment.
+    If the mbid doesn't exist in the database, return an offset of 0"""
+    query = text("""
+        SELECT MAX(submission_offset) as max_offset
+          FROM lowlevel
+         WHERE gid = :mbid
+    """)
+    result = connection.execute(query, {"mbid": mbid})
 
-        row = result.fetchone()
-        if row["max_offset"] is not None:
-            return row["max_offset"] + 1
-        else:
-            # No previous submission
-            return 0
+    row = result.fetchone()
+    if row["max_offset"] is not None:
+        return row["max_offset"] + 1
+    else:
+        # No previous submission
+        return 0
 
 
 def add_model(model_name, model_version, model_status=STATUS_HIDDEN):

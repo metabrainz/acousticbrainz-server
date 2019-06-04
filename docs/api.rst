@@ -43,6 +43,10 @@ following headers:
 - **X-RateLimit-Reset**: UNIX epoch number of seconds (without timezone) when
   current time window expires [#]_
 
+We typically set the limit to 10 queries every 10 seconds per IP address,
+but these values may change. Make sure you check the response headers
+if you want to know the specific values.
+
 Rate limiting is automatic and the client must use these headers to determine
 the rate to make API calls. If the client exceeds the number of requests
 allowed, the server will respond with error code ``429: Too Many Requests``.

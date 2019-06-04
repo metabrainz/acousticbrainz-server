@@ -296,14 +296,27 @@ def add_empty_lowlevel(mbid, lossless, date):
     gid_type = gid_types.GID_TYPE_MSID
     with db.engine.connect() as connection:
         query = text("""
-            INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, gid_type)
-                 VALUES (:mbid, :build_sha1, :lossless, :submitted, :gid_type)
+            SELECT MAX(submission_offset)
+              FROM lowlevel
+             WHERE gid::text = :mbid
+        """)
+        result = connection.execute(query, {"mbid": str(mbid)})
+        row = result.fetchone()
+        if row[0] is not None:
+            submission_offset = row[0] + 1
+        else:
+            submission_offset = 0
+
+        query = text("""
+            INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, gid_type, submission_offset)
+                 VALUES (:mbid, :build_sha1, :lossless, :submitted, :gid_type, :submission_offset)
               RETURNING id
         """)
         result = connection.execute(query,
                 {"mbid": mbid, "build_sha1": build_sha1,
                  "lossless": lossless, "submitted": date,
-                 "gid_type": gid_types.GID_TYPE_MSID})
+                 "gid_type": gid_types.GID_TYPE_MSID,
+                 "submission_offset": submission_offset})
         id = result.fetchone()[0]
 
         version_id = db.data.insert_version(connection, {}, db.data.VERSION_TYPE_LOWLEVEL)

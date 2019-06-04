@@ -19,8 +19,6 @@ import db.stats
 import db.user
 import webserver
 
-import add_submission_offsets
-
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
@@ -243,7 +241,6 @@ def toggle_site_status():
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
-cli.add_command(add_submission_offsets.cli, name="update-offsets")
 
 if __name__ == '__main__':
     cli()

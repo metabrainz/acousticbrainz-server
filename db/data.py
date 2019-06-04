@@ -1,14 +1,16 @@
-from hashlib import sha256
-import logging
 import copy
-import time
 import json
+import logging
 import os
+import time
+from collections import defaultdict
+from hashlib import sha256
+
+import sqlalchemy.exc
+from sqlalchemy import text
+
 import db
 import db.exceptions
-
-from sqlalchemy import text
-import sqlalchemy.exc
 
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
@@ -37,6 +39,7 @@ VERSION_TYPE_LOWLEVEL = 'lowlevel'
 VERSION_TYPE_HIGHLEVEL = 'highlevel'
 
 MODEL_STATUSES = [STATUS_HIDDEN, STATUS_EVALUATION, STATUS_SHOW]
+
 
 # TODO: Util methods should not be in the database package
 
@@ -128,6 +131,7 @@ def submit_low_level_data(mbid, data, gid_type):
     # The data looks good, lets see about saving it
     write_low_level(mbid, data, gid_type)
 
+
 def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id
     norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
@@ -153,7 +157,6 @@ def insert_version(connection, data, version_type):
 
 
 def write_low_level(mbid, data, is_mbid):
-
     def _get_by_data_sha256(connection, data_sha256):
         query = text("""
             SELECT id
@@ -209,7 +212,7 @@ def write_low_level(mbid, data, is_mbid):
             logging.info("Saved %s" % mbid)
         except sqlalchemy.exc.DataError as e:
             raise db.exceptions.BadDataException(
-                    "data is badly formed")
+                "data is badly formed")
 
 
 def get_next_submission_offset(connection, mbid):
@@ -240,9 +243,9 @@ def add_model(model_name, model_version, model_status=STATUS_HIDDEN):
                  RETURNING id"""
         )
         result = connection.execute(query,
-            {"model_name": model_name,
-             "model_version": model_version,
-             "model_status": model_status})
+                                    {"model_name": model_name,
+                                     "model_version": model_version,
+                                     "model_status": model_status})
         return result.fetchone()[0]
 
 
@@ -257,9 +260,10 @@ def set_model_status(model_name, model_version, model_status):
                   AND model_version = :model_version"""
         )
         connection.execute(query,
-            {"model_name": model_name,
-             "model_version": model_version,
-             "model_status": model_status})
+                           {"model_name": model_name,
+                            "model_version": model_version,
+                            "model_status": model_status})
+
 
 def get_model(model_name, model_version):
     with db.engine.begin() as connection:
@@ -269,9 +273,10 @@ def get_model(model_name, model_version):
                 WHERE model = :model_name
                   AND model_version = :model_version""")
         result = connection.execute(query,
-                    {"model_name": model_name,
-                     "model_version": model_version})
+                                    {"model_name": model_name,
+                                     "model_version": model_version})
         return result.fetchone()
+
 
 def _get_model_id(model_name, version):
     with db.engine.begin() as connection:
@@ -281,13 +286,14 @@ def _get_model_id(model_name, version):
                 WHERE model = :model_name
                   AND model_version = :model_version""")
         result = connection.execute(query,
-                    {"model_name": model_name,
-                     "model_version": version})
+                                    {"model_name": model_name,
+                                     "model_version": version})
         row = result.fetchone()
         if row:
             return row[0]
         else:
             return None
+
 
 def write_high_level_item(connection, model_name, model_version, ll_id, version_id, data):
     item_norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
@@ -302,9 +308,10 @@ def write_high_level_item(connection, model_name, model_version, ll_id, version_
                 VALUES (:highlevel, :data, :data_sha256, :model, :version)""")
 
     connection.execute(item_q,
-        {"highlevel": ll_id, "data": item_norm_data,
-            "data_sha256": item_sha, "model": model_id,
-            "version": version_id})
+                       {"highlevel": ll_id, "data": item_norm_data,
+                        "data_sha256": item_sha, "model": model_id,
+                        "version": version_id})
+
 
 def write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta):
     check_query = text(
@@ -356,84 +363,161 @@ def write_high_level(mbid, ll_id, data, build_sha1):
             for model_name, data in json_high.items():
                 write_high_level_item(connection, model_name, model_version, ll_id, version_id, data)
 
+
 def load_low_level(mbid, offset=0):
     """Load lowlevel data with the given mbid as a dictionary.
     If no offset is given, return the first. If an offset is
     given (from 0), return the relevent item.
 
-    Raises db.exceptions.NoDataFoundException if the mbid doesn't
-    exist or if the offset is too high."""
-    with db.engine.connect() as connection:
-        result = connection.execute(
-            """SELECT llj.data
-                 FROM lowlevel ll
-                 JOIN lowlevel_json llj
-                   ON ll.id = llj.id
-                WHERE ll.gid = %s
-             ORDER BY ll.submitted
-               OFFSET %s""",
-            (str(mbid), offset)
-        )
-        if not result.rowcount:
-            raise db.exceptions.NoDataFoundException
+    Arguments:
+        mbid (str): MBID to load
+        offset (int): submission offset for this MBID, starting from 0
 
-        row = result.fetchone()
-        return row[0]
+    Raises:
+        NoDataFoundException: if this mbid doesn't exist or the offset is too high"""
+
+    # in case it's a uuid
+    mbid = str(mbid)
+    result = load_many_low_level([(mbid, offset)])
+    if not result:
+        raise db.exceptions.NoDataFoundException
+
+    return result[mbid][str(offset)]
+
+
+def load_many_low_level(recordings):
+    """Collect low-level JSON data for multiple recordings.
+    
+    Args:
+        recordings: A list of tuples (mbid, offset).
+    
+    Returns:
+        A dictionary of mbids containing a dictionary of offsets. If an (mbid, offset) doesn't exist
+        in the database, it is ommitted from the returned data.
+
+        {"mbid-1": {"offset-1": lowlevel_data,
+                    ...
+                    "offset-n": lowlevel_data},
+         ...
+         "mbid-n": {"offset-1": lowlevel_data}
+        }
+
+    """
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT ll.gid::text,
+                   ll.submission_offset::text,
+                   llj.data
+              FROM lowlevel ll
+              JOIN lowlevel_json llj
+                ON ll.id = llj.id
+             WHERE (ll.gid, ll.submission_offset) 
+                IN :recordings
+        """)
+
+        result = connection.execute(query, {'recordings': tuple(recordings)})
+
+        recordings_info = defaultdict(dict)
+        for row in result.fetchall():
+            recordings_info[row['gid']][row['submission_offset']] = row['data']
+
+        return dict(recordings_info)
 
 
 def load_high_level(mbid, offset=0):
-    """Load high-level data for a given MBID."""
+    """Load high-level data for a given MBID.
+
+    Arguments:
+        mbid (str): MBID to load
+        offset (int): submission offset for this MBID, starting from 0
+
+    Raises:
+        NoDataFoundException: if this mbid doesn't exist or the offset is too high
+    """
+
+    # in case it's a uuid
+    mbid = str(mbid)
+    result = load_many_high_level([(mbid, offset)])
+    if not result:
+        raise db.exceptions.NoDataFoundException
+
+    return result[mbid][str(offset)]
+
+
+def load_many_high_level(recordings):
+    """Collect high-level data for multiple recordings.
+
+    Args:
+        recordings: A list of tuples (mbid, offset).
+
+    Returns:
+        {"mbid-1": {"offset-1": {"metadata-1": metadata, "highlevel-1": highlevel},
+                    ...
+                    "offset-n": {"metadata-n": metadata, "highlevel-n": highlevel}},
+         ...
+         "mbid-n": {"offset-1": {"metadata-1": metadata, "highlevel-1": highlevel}}
+        }
+
+    """
     with db.engine.connect() as connection:
         # Metadata
-        result = connection.execute(
-            """SELECT hl.id
-                    , hlm.data
-                 FROM highlevel hl
-            LEFT JOIN highlevel_meta hlm
-                   ON hl.id = hlm.id
-                 JOIN lowlevel ll
-                   ON ll.id = hl.id
-                WHERE ll.gid = %s
-             ORDER BY ll.submitted
-               OFFSET %s""",
-            (str(mbid), offset)
-        )
-        metarow = result.fetchone()
-        if metarow is None:
-            raise db.exceptions.NoDataFoundException
+        meta_query = text("""
+            SELECT hl.id
+                 , hlm.data
+                 , ll.gid::text
+                 , ll.submission_offset::text
+              FROM highlevel hl
+              JOIN highlevel_meta hlm
+                ON hl.id = hlm.id
+              JOIN lowlevel ll
+                ON ll.id = hl.id
+             WHERE (ll.gid, ll.submission_offset)
+                IN :recordings
+        """)
 
-        hlid = metarow[0]
-        metadata = metarow[1]
+        meta_result = connection.execute(meta_query, {'recordings': tuple(recordings)})
+        # Return empty dictionary if no metadata is found
+        if not meta_result.rowcount:
+            return {}
 
-        # If we have a `highlevel` row but not a `highlevel_meta` row it means that
-        # the hl calculation failed and we added a placeholder row. There is a
-        # database row, but the metadata is blank
-        if metadata is None:
-            raise db.exceptions.NoDataFoundException
+        hlids = []
+        recordings_info = defaultdict(dict)
+        for row in meta_result.fetchall():
+            hlids.append(row['id'])
+            gid = row['gid']
+            submission_offset = row['submission_offset']
+            recordings_info[gid][submission_offset] = {'metadata': row['data'],
+                                                       'highlevel': {}}
 
-        # model data
-        query = text(
-            """select m.model
-                    , hlmo.data
-                    , version.data as version
-                 FROM highlevel_model hlmo
-                 JOIN model m
-                   ON m.id = hlmo.model
-                 JOIN version
-                   ON version.id = hlmo.version
-                WHERE hlmo.highlevel = :hlid
-                  AND m.status = 'show'
-            """)
-        result = connection.execute(query, {"hlid": hlid})
-        highlevel = {}
-        for row in result.fetchall():
-            model = row[0]
-            data = row[1]
-            version = row[2]
-            data["version"] = version
-            highlevel[model] = data
+        # Model data
+        model_query = text("""
+            SELECT m.model
+                 , hlmo.data
+                 , version.data as version
+                 , ll.gid::text
+                 , ll.submission_offset::text
+              FROM highlevel_model hlmo
+              JOIN model m
+                ON m.id = hlmo.model
+              JOIN version
+                ON version.id = hlmo.version
+              JOIN lowlevel ll
+                ON ll.id = hlmo.highlevel
+             WHERE hlmo.highlevel IN :hlids
+               AND m.status = 'show'
+        """)
 
-        return {"metadata": metadata, "highlevel": highlevel}
+        model_result = connection.execute(model_query, {'hlids': tuple(hlids)})
+        for row in model_result.fetchall():
+            model = row['model']
+            data = row['data']
+            data['version'] = row['version']
+
+            gid = row['gid']
+            submission_offset = row['submission_offset']
+            recordings_info[gid][submission_offset]['highlevel'][model] = data
+
+        return dict(recordings_info)
 
 
 def count_lowlevel(mbid):
@@ -457,7 +541,7 @@ def count_many_lowlevel(mbids):
                     , COUNT(*)
                  FROM lowlevel
                 WHERE gid IN :mbids
-             GROUP BY gid;""")
+             GROUP BY gid""")
         return {str(mbid): {"count": int(count)} for mbid, count
                 in connection.execute(query, {"mbids": tuple(mbids)})}
 
@@ -492,20 +576,21 @@ def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
         docs = result.fetchall()
         return docs
 
+
 def get_unprocessed_highlevel_documents():
     """Fetch up to 100 low-level documents which have no associated high level data."""
     with db.engine.connect() as connection:
         query = text(
-                """SELECT ll.gid::text
-                    , llj.data::text
-                    , ll.id
-                 FROM lowlevel AS ll
-                 JOIN lowlevel_json AS llj
-                   ON llj.id = ll.id
-            LEFT JOIN highlevel AS hl
-                   ON ll.id = hl.id
-                WHERE hl.mbid IS NULL
-                LIMIT 100""")
+            """SELECT ll.gid::text
+                , llj.data::text
+                , ll.id
+             FROM lowlevel AS ll
+             JOIN lowlevel_json AS llj
+               ON llj.id = ll.id
+        LEFT JOIN highlevel AS hl
+               ON ll.id = hl.id
+            WHERE hl.mbid IS NULL
+            LIMIT 100""")
         result = connection.execute(query)
         docs = result.fetchall()
         return docs

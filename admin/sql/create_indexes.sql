@@ -5,6 +5,7 @@ CREATE INDEX gid_type_ndx_lowlevel ON lowlevel (gid_type);
 CREATE INDEX build_sha1_ndx_lowlevel ON lowlevel (build_sha1);
 CREATE INDEX submitted_ndx_lowlevel ON lowlevel (submitted);
 CREATE INDEX lossless_ndx_lowlevel ON lowlevel (lossless);
+CREATE INDEX gid_submission_offset_ndx_lowlevel ON lowlevel (gid, submission_offset);
 
 CREATE UNIQUE INDEX data_sha256_ndx_lowlevel_json ON lowlevel_json (data_sha256);
 
@@ -25,7 +26,5 @@ CREATE UNIQUE INDEX lower_musicbrainz_id_ndx_user ON "user" (lower(musicbrainz_i
 
 CREATE INDEX collected_ndx_statistics ON statistics (collected);
 CREATE INDEX collected_hour_ndx_statistics ON statistics (date_part('hour'::text, timezone('UTC'::text, collected)));
-
-CREATE INDEX submission_offset_ndx_lowlevel ON lowlevel (submission_offset);
 
 COMMIT;

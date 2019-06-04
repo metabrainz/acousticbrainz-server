@@ -146,16 +146,18 @@ class DataDBTestCase(DatabaseTestCase):
                 ret.append(row[0])
             return ret
 
-
     def test_load_many_low_level(self):
         """Lowlevel data corresponds to the specified offsets, returns first submission without offset"""
-        one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        three = {"data": "three", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        one = {"data": "one",
+               "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        two = {"data": "two",
+               "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        three = {"data": "three",
+                 "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
         db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
         db.data.write_low_level(self.test_mbid, two, gid_types.GID_TYPE_MBID)
         db.data.write_low_level(self.test_mbid_two, three, gid_types.GID_TYPE_MBID)
-        
+
         recordings = [(self.test_mbid, 0),
                       (self.test_mbid, 1),
                       (self.test_mbid_two, 0)]
@@ -164,12 +166,12 @@ class DataDBTestCase(DatabaseTestCase):
             self.test_mbid: {'0': one, '1': two},
             self.test_mbid_two: {'0': three}
         }
-        
+
         self.assertEqual(ll_expected, db.data.load_many_low_level(list(recordings)))
 
     def test_load_many_low_level_none(self):
         """Exception is raised if no lowlevel data is loaded. 
-           If offset is too high or there are no submissions for the mbid, it is skipped.""" 
+           If offset is too high or there are no submissions for the mbid, it is skipped."""
 
         # No submitted lowlevel data for any mbid, and offset combinations
         recordings = [('4ee71816-e0be-4257-a5f9-98dca3ec8bcd', 0),
@@ -177,11 +179,13 @@ class DataDBTestCase(DatabaseTestCase):
                       ('ffcc4249-28bb-4c91-9195-a60b21d4fb94', 0)]
         self.assertEqual({}, db.data.load_many_low_level(list(recordings)))
 
-        one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
-        two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        one = {"data": "one",
+               "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        two = {"data": "two",
+               "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
         db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
         db.data.write_low_level(self.test_mbid_two, two, gid_types.GID_TYPE_MBID)
-        
+
         recordings = [(self.test_mbid, 0),
                       (self.test_mbid, 1),
                       (self.test_mbid_two, 0),
@@ -416,18 +420,18 @@ class DataDBTestCase(DatabaseTestCase):
         ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
         hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
                "metadata": {"meta": "here",
-                           "version": {"highlevel": ver}
-                          }
+                            "version": {"highlevel": ver}
+                            }
                }
         hl2 = {"highlevel": {"model1": {"1": "2"}, "model2": {"3": "3"}},
                "metadata": {"meta": "for hl2",
-                           "version": {"highlevel": ver}
-                          }
+                            "version": {"highlevel": ver}
+                            }
                }
         hl3 = {"highlevel": {"model1": {"3": "4"}, "model2": {"4": "4"}},
                "metadata": {"meta": "for hl3",
-                           "version": {"highlevel": ver}
-                          }
+                            "version": {"highlevel": ver}
+                            }
                }
         db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
         db.data.write_high_level(self.test_mbid, ll_id3, hl3, build_sha)
@@ -440,34 +444,33 @@ class DataDBTestCase(DatabaseTestCase):
             hl2_expected["highlevel"][mname]["version"] = ver
             hl3_expected["highlevel"][mname]["version"] = ver
 
-        recordings =  [(self.test_mbid, 0),
-                       (self.test_mbid, 1),
-                       (self.test_mbid, 2)]
+        recordings = [(self.test_mbid, 0),
+                      (self.test_mbid, 1),
+                      (self.test_mbid, 2)]
 
         # Second item skipped
         # The hl are added in a different order to ll, but offset should return ll order
-        expected = { self.test_mbid: {'0': hl1_expected, '2': hl3_expected} }
+        expected = {self.test_mbid: {'0': hl1_expected, '2': hl3_expected}}
         self.assertDictEqual(expected, db.data.load_many_high_level(list(recordings)))
 
         # After adding the hl, the second is included
         db.data.write_high_level(self.test_mbid, ll_id2, hl2, build_sha)
-        expected = { self.test_mbid: {'0': hl1_expected, '1': hl2_expected, '2': hl3_expected} }        
-        
+        expected = {self.test_mbid: {'0': hl1_expected, '1': hl2_expected, '2': hl3_expected}}
+
         self.assertDictEqual(expected, db.data.load_many_high_level(list(recordings)))
 
     def test_load_many_high_level_offset(self):
         # If no hl data is found, empty dictionary is returned
         recordings = [(self.test_mbid, 0),
                       (self.test_mbid_two, 0)]
-                      
+
         self.assertEqual({}, db.data.load_many_high_level(list(recordings)))
-        
+
         # If an offset doesn't exist or recording doesn't exist, it is skipped.
         db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         db.data.write_low_level(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
         ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
         ll_id2 = self._get_ll_id_from_mbid(self.test_mbid_two)[0]
-
 
         db.data.add_model("model1", "v1", "show")
         db.data.add_model("model2", "v1", "show")
@@ -476,13 +479,13 @@ class DataDBTestCase(DatabaseTestCase):
         ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
         hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
                "metadata": {"meta": "here",
-                           "version": {"highlevel": ver}
-                          }
+                            "version": {"highlevel": ver}
+                            }
                }
         hl2 = {"highlevel": {"model1": {"1": "2"}, "model2": {"3": "3"}},
                "metadata": {"meta": "for hl2",
-                           "version": {"highlevel": ver}
-                          }
+                            "version": {"highlevel": ver}
+                            }
                }
 
         db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
@@ -494,15 +497,15 @@ class DataDBTestCase(DatabaseTestCase):
             hl1_expected["highlevel"][mname]["version"] = ver
             hl2_expected["highlevel"][mname]["version"] = ver
 
-        recordings =  [(self.test_mbid, 0),
-                       (self.test_mbid, 3),
-                       (self.test_mbid_two, 0),
-                       ("ffcc4249-28bb-4c91-9195-a60b31d4fb94", 0)]
+        recordings = [(self.test_mbid, 0),
+                      (self.test_mbid, 3),
+                      (self.test_mbid_two, 0),
+                      ("ffcc4249-28bb-4c91-9195-a60b31d4fb94", 0)]
 
-        expected = { 
+        expected = {
             self.test_mbid: {'0': hl1_expected},
             self.test_mbid_two: {'0': hl2_expected}
-        }        
+        }
         self.assertEqual(expected, db.data.load_many_high_level(list(recordings)))
 
     def test_count_lowlevel(self):

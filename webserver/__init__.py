@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 from brainzutils.flask import CustomFlask
-from brainzutils.ratelimit import inject_x_rate_headers
+from brainzutils.ratelimit import set_rate_limits, inject_x_rate_headers
 from flask import request, url_for, redirect
 from flask_login import current_user
 from pprint import pprint
@@ -66,6 +66,10 @@ def create_app(debug=None):
     @app.after_request
     def after_request_callbacks(response):
         return inject_x_rate_headers(response)
+
+    # check for ratelimit config values and set them if present
+    if 'RATELIMIT_PER_IP' in app.config and 'RATELIMIT_WINDOW' in app.config:
+        set_rate_limits(app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_WINDOW'])
 
     # Database connection
     from db import init_db_engine

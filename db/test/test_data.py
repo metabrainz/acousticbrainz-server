@@ -170,8 +170,7 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(ll_expected, db.data.load_many_low_level(list(recordings)))
 
     def test_load_many_low_level_none(self):
-        """Exception is raised if no lowlevel data is loaded. 
-           If offset is too high or there are no submissions for the mbid, it is skipped."""
+        """If offset is too high or there are no submissions for the mbid, it is skipped."""
 
         # No submitted lowlevel data for any mbid, and offset combinations
         recordings = [('4ee71816-e0be-4257-a5f9-98dca3ec8bcd', 0),

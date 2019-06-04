@@ -281,11 +281,18 @@ def remove_failed_rows():
 
 @cli.command(name='set_rate_limits')
 @click.argument('per_ip')
-@click.argument('per_token')
 @click.argument('window_size')
-def set_rate_limits(per_ip, per_token, window_size):
-    ratelimit.set_rate_limits(per_token, per_ip, window_size)
-    print("new ratelimit parameters set!")
+def set_rate_limits(per_ip, window_size):
+    """ Set rate limit parameters for the AcousticBrainz webserver
+
+    Args:
+        per_ip (int): the number of requests allowed per IP address
+        window_size (int): the window in number of seconds for how long the limit is applied
+    """
+    if per_ip / float(window_size) <= 1:
+        print("Warning: Effective rate limit per IP address is less than 1!")
+    ratelimit.set_rate_limits(per_ip, per_ip, window_size)
+    print("New ratelimit parameters set to %d requests over a window of %d seconds!" % (per_ip, window_size))
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

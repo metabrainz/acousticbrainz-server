@@ -55,7 +55,6 @@ def get_high_level(mbid):
 
 
 @api_legacy_bp.route("/<uuid:mbid>/low-level", methods=["POST"])
-@ratelimit()
 def submit_low_level(mbid):
     """Endpoint for submitting low-level information to AcousticBrainz."""
     raw_data = request.get_data()

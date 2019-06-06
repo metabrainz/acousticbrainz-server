@@ -27,6 +27,6 @@ Datasets
 Constants
 ^^^^^^^^^
 
-Constants that are releavant to using the API:
+Constants that are relevant to using the API:
 
 .. autodata:: webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST

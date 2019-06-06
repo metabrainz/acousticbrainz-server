@@ -23,3 +23,10 @@ Datasets
    :blueprints: api_v1_datasets
    :include-empty-docstring:
    :undoc-static:
+
+Constants
+^^^^^^^^^
+
+Constants that are releavant to using the API:
+
+.. autodata:: webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST

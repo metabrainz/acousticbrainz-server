@@ -14,6 +14,16 @@ from webserver.decorators import crossdomain
 bp_core = Blueprint('api_v1_core', __name__)
 
 
+# If this value is increased, ensure that it still fits within the uwsgi header size:
+# https://uwsgi-docs.readthedocs.io/en/latest/ThingsToKnow.html
+# > By default uWSGI allocates a very small buffer (4096 bytes) for the headers of each request.
+# > If you start receiving "invalid request block size" in your logs, it could mean you need a bigger buffer.
+# > Increase it (up to 65535) with the buffer-size option.
+
+#: The maximum number of items that you can pass as a recording_ids parameter to bulk lookup endpoints
+MAX_ITEMS_PER_BULK_REQUEST = 25
+
+
 @bp_core.route("/<uuid:mbid>/count", methods=["GET"])
 @crossdomain()
 def count(mbid):
@@ -156,13 +166,20 @@ def _parse_bulk_params(params):
 
 
 def check_bad_request_for_multiple_recordings():
-    """Check whether the recording ids are not more than 200 
-    and whether the recording ids are found or not.
+    """
+    Check if a request for multiple recording ids is valid. The ?recording_ids parameter
+    to the current flask request is checked to see if it is present and if it follows
+    the format
+        mbid:n;mbid:n
+    where mbid is a recording MBID and n is an optional integer offset. If the offset is
+    missing or non-integer, it is replaced with 0
 
-    If recording_ids are missing, an APIBadRequest Exception is
-    raised stating the missing MBIDs message.
-    If there are more than 200 recordings, then an APIBadRequest Exception is raised.
-    In both cases, no further processing is done.
+    Returns:
+        a list of (mbid, offset) tuples representing the parsed query string.
+
+    Raises:
+        APIBadRequest if there is no recording_ids parameter, there are more than 25 MBIDs in the parameter,
+        or the format of the mbids or offsets are invalid
     """
     recording_ids = request.args.get("recording_ids")
 
@@ -170,8 +187,8 @@ def check_bad_request_for_multiple_recordings():
         raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
 
     recordings = _parse_bulk_params(recording_ids)
-    if len(recordings) > 200:
-        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
+    if len(recordings) > MAX_ITEMS_PER_BULK_REQUEST:
+        raise webserver.views.api.exceptions.APIBadRequest("More than %s recordings not allowed per request" % MAX_ITEMS_PER_BULK_REQUEST)
 
     return recordings
 
@@ -190,9 +207,9 @@ def get_many_lowlevel():
         "mbid2": {"offset1": {document}}
        }
 
-    Offset keys are returned as strings, as per JSON encoding rules.
-    If an offset was not specified in the request for an mbid, the offset
-    will be 0.
+    MBIDs and offset keys are returned as strings (as per JSON encoding rules).
+    If an offset is not specified in the request for an mbid or is not a valid integer >=0,
+    the offset will be 0.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -202,6 +219,8 @@ def get_many_lowlevel():
 
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
+
+      You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
 
     :resheader Content-Type: *application/json*
     """
@@ -225,9 +244,9 @@ def get_many_highlevel():
         "mbid2": {"offset1": {document}}
        }
 
-    Offset keys are returned as strings, as per JSON encoding rules.
-    If an offset was not specified in the request for an mbid, the offset
-    will be 0.
+    MBIDs and offset keys are returned as strings (as per JSON encoding rules).
+    If an offset is not specified in the request for an mbid or is not a valid integer >=0,
+    the offset will be 0.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -237,6 +256,8 @@ def get_many_highlevel():
 
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
+
+      You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
 
     :resheader Content-Type: *application/json*
     """
@@ -263,6 +284,8 @@ def get_many_count():
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 
       Takes the form `mbid;mbid`.
+
+    You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
 
     :resheader Content-Type: *application/json*
     """

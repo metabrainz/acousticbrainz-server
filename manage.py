@@ -280,8 +280,8 @@ def remove_failed_rows():
 
 
 @cli.command(name='set_rate_limits')
-@click.argument('per_ip')
-@click.argument('window_size')
+@click.argument('per_ip', type=int)
+@click.argument('window_size', type=int)
 def set_rate_limits(per_ip, window_size):
     """ Set rate limit parameters for the AcousticBrainz webserver
 
@@ -289,8 +289,23 @@ def set_rate_limits(per_ip, window_size):
         per_ip (int): the number of requests allowed per IP address
         window_size (int): the window in number of seconds for how long the limit is applied
     """
+    print("Current values:")
+    print("Requests per IP:\t", int(cache.get(ratelimit.ratelimit_per_ip_key) or -1))
+    print("Window size:\t", int(cache.get(ratelimit.ratelimit_window_key) or -1))
+
+
     if per_ip / float(window_size) <= 1:
         print("Warning: Effective rate limit per IP address is less than 1!")
+
+    if per_ip <= 0:
+        print("Invalid per IP limit, must be greater than zero")
+        raise ValueError("Invalid per IP limit, must be greater than zero")
+
+    if window_size <= 0:
+        print("Invalid window size, must be greater than zero")
+        raise ValueError("Invalid window size, must be greater than zero")
+
+
     ratelimit.set_rate_limits(per_ip, per_ip, window_size)
     print("New ratelimit parameters set to %d requests over a window of %d seconds!" % (per_ip, window_size))
 

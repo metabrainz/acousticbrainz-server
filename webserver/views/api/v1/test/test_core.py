@@ -196,11 +196,11 @@ class CoreViewsTestCase(ServerTestCase):
 
     def test_get_bulk_ll_more_than_200(self):
         # Create many random uuids, because of parameter deduplication
-        manyids = [str(uuid.uuid4()) for i in range(205)]
+        manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
         resp = self.client.get('api/v1/low-level?recording_ids=' + limit_exceed_url)
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
+        self.assertEqual('More than 25 recordings not allowed per request', resp.json['message'])
 
     @mock.patch('db.data.load_high_level')
     def test_get_bulk_hl_no_param(self, load_high_level):
@@ -276,11 +276,11 @@ class CoreViewsTestCase(ServerTestCase):
 
     def test_get_bulk_hl_more_than_200(self):
         # Create many random uuids, because of parameter deduplication
-        manyids = [str(uuid.uuid4()) for i in range(205)]
+        manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
         resp = self.client.get('api/v1/high-level?recording_ids=' + limit_exceed_url)
         self.assert400(resp)
-        self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
+        self.assertEqual('More than 25 recordings not allowed per request', resp.json['message'])
 
     def submit_fake_data(self):
         mbids = ["c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
@@ -323,11 +323,11 @@ class CoreViewsTestCase(ServerTestCase):
 
     def test_get_bulk_count_more_than_200(self):
         # Create many random uuids, because of parameter deduplication
-        manyids = [str(uuid.uuid4()) for i in range(205)]
+        manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
         resp = self.client.get('api/v1/count?recording_ids=' + limit_exceed_url)
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual('More than 200 recordings not allowed per request',
+        self.assertEqual('More than 25 recordings not allowed per request',
                          resp.json['message'])
 
 

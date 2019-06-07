@@ -306,42 +306,58 @@ def get_many_highlevel():
 
 def parse_select_features():
     """Check whether the features are found or not.
-    Parse the query string of features to create a list of features,
-    excluding those that are not offered.
+    Parse the query string of features to create a list of 
+    the json paths to features, excluding those that are 
+    not offered.
+
     If features are missing, an APIBadRequest Exception is
     raised stating the missing features message.
-    Returns a list of features ['feature1',...,'featureN']
+    
+    Returns a string of feature paths with alias:
+        "llj.data->'feature1' AS feature1, ..., llj.data->'featureN' AS featureN"
     """
-    features = request.args.get("features")
-
-    if not features:
+    features_param = request.args.get("features")
+    if not features_param:
         raise webserver.views.api.exceptions.APIBadRequest("Missing `features` parameter")
 
-    ret = []
     selectable_features = ['lowlevel.average_loudness', 
-        'lowlevel.dynamic_complexity', 
-        'metadata.audio_properties.replay_gain', 
-        'rhythm.beats_count', 
-        'rhythm.beats_loudness.mean', 
-        'rhythm.bpm', 
-        'rhythm.bpm_histogram_first_peak_bpm.mean', 
-        'rhythm.bpm_histogram_second_peak_bpm.mean', 
-        'bpm.danceability', 
-        'bpm.onset_rate', 
-        'tonal.chords_key', 
-        'tonal.chords_scale', 
-        'tonal.key_key', 
-        'tonal.key_scale', 
-        'tonal.tuning_frequency', 
-        'tonal.tuning_equal_tempered_deviation']
+                            'lowlevel.dynamic_complexity', 
+                            'metadata.audio_properties.replay_gain', 
+                            'rhythm.beats_count', 
+                            'rhythm.beats_loudness.mean', 
+                            'rhythm.bpm', 
+                            'rhythm.bpm_histogram_first_peak_bpm.mean', 
+                            'rhythm.bpm_histogram_second_peak_bpm.mean', 
+                            'rhythm.danceability', 
+                            'rhythm.onset_rate', 
+                            'tonal.chords_key', 
+                            'tonal.chords_scale', 
+                            'tonal.key_key', 
+                            'tonal.key_scale', 
+                            'tonal.tuning_frequency', 
+                            'tonal.tuning_equal_tempered_deviation']
 
-    for feature in features.split(';'):
+    parsed_features = []
+    raw_paths = []
+    for feature in features_param.split(';'):
         if feature in selectable_features:
-            ret.append(feature)
+            raw_paths.append(feature)
+            # Build feature path
+            feature_path = 'llj.data'
+            for element in feature.split('.'):
+                feature_path += '->\'' + element + '\''
+            parsed_features.append(feature_path)
 
     # Remove duplicates, preserving order
     seen = set()
-    return [x for x in ret if not (x in seen or seen.add(x))]
+    parsed_features = [x for x in parsed_features if not (x in seen or seen.add(x))]
+
+    features_string = parsed_features[0] + ' AS "' + raw_paths[0] + '", '
+    for feature, alias in zip(parsed_features[1:len(parsed_features)-1], raw_paths[1:len(raw_paths)-1]):
+        features_string += feature + ' AS "' +  alias + '", '
+    features_string += parsed_features[len(parsed_features)-1] + ' AS "' + raw_paths[len(raw_paths)-1] + '"'
+
+    return features_string
 
 
 @bp_core.route("/low-level/select", methods=["GET"])
@@ -369,8 +385,8 @@ def get_many_select_features():
     :resheader Content-Type: *application/json*
     """
     recordings = check_bad_request_for_multiple_recordings()
-    features = parse_select_features()
-    recording_details = db.data.load_many_select_features(recordings, features)
+    features_string = parse_select_features()
+    recording_details = db.data.load_many_select_features(recordings, features_string)
 
     return jsonify(recording_details)
 

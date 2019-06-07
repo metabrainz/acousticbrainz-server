@@ -593,6 +593,44 @@ def load_many_high_level(recordings, map_classes=False):
         return dict(recordings_info)
 
 
+def load_many_select_features(recordings, features):
+    """Load select features for multiple recordings.
+    
+    Args:
+        recordings: A list of tuples (mbid, offset).
+        features: A string of paths to features 
+            "llj.data->'feature1' AS feature1, ..., llj.data->'featureN' AS featureN"
+
+    Returns:
+        {"mbid-1": {"offset-1": {"feature1": feature1, ..., "featureN": featureN},
+                    ...
+                    "offset-n": {"feature1": feature1, ..., "featureN": featureN}},
+         ...
+         "mbid-n": {"offset-1": {"feature1": feature1, ..., "featureN": featureN}}
+        } 
+    """
+    with db.engine.connect() as connection:
+        result = connection.execute(
+            "SELECT ll.gid::text, ll.submission_offset::text, %(features)s " 
+              "FROM lowlevel ll "
+              "JOIN lowlevel_json llj "
+                "ON ll.id = llj.id "
+             "WHERE (ll.gid, ll.submission_offset) "
+                "IN %(recordings)s" % {'recordings': tuple(recordings), 
+                                        'features': features})
+
+        feature_names = result.keys()[2:]
+        features_info = {}
+        recordings_info = defaultdict(dict)
+        for row in result.fetchall():
+            # Build dictionary of feature columns
+            for name in feature_names:
+                features_info[name] = row[name]
+            recordings_info[row['gid']][row['submission_offset']] = features_info
+
+        return dict(recordings_info)
+
+
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
     with db.engine.connect() as connection:

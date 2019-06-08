@@ -23,6 +23,25 @@ bp_core = Blueprint('api_v1_core', __name__)
 
 #: The maximum number of items that you can pass as a recording_ids parameter to bulk lookup endpoints
 MAX_ITEMS_PER_BULK_REQUEST = 25
+# Individual features selectable in get_many_select_features.
+# Note: metadata.version and metadata.audio_properties will be included in all responses.
+SELECTABLE_FEATURES = ['lowlevel.average_loudness', 
+                        'lowlevel.dynamic_complexity', 
+                        'metadata.audio_properties.replay_gain',
+                        'metadata.tags', 
+                        'rhythm.beats_count', 
+                        'rhythm.beats_loudness.mean', 
+                        'rhythm.bpm', 
+                        'rhythm.bpm_histogram_first_peak_bpm.mean', 
+                        'rhythm.bpm_histogram_second_peak_bpm.mean', 
+                        'rhythm.danceability', 
+                        'rhythm.onset_rate', 
+                        'tonal.chords_key', 
+                        'tonal.chords_scale', 
+                        'tonal.key_key', 
+                        'tonal.key_scale', 
+                        'tonal.tuning_frequency', 
+                        'tonal.tuning_equal_tempered_deviation']
 
 
 @bp_core.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
@@ -320,27 +339,10 @@ def parse_select_features():
     if not features_param:
         raise webserver.views.api.exceptions.APIBadRequest("Missing `features` parameter")
 
-    selectable_features = ['lowlevel.average_loudness', 
-                            'lowlevel.dynamic_complexity', 
-                            'metadata.audio_properties.replay_gain', 
-                            'rhythm.beats_count', 
-                            'rhythm.beats_loudness.mean', 
-                            'rhythm.bpm', 
-                            'rhythm.bpm_histogram_first_peak_bpm.mean', 
-                            'rhythm.bpm_histogram_second_peak_bpm.mean', 
-                            'rhythm.danceability', 
-                            'rhythm.onset_rate', 
-                            'tonal.chords_key', 
-                            'tonal.chords_scale', 
-                            'tonal.key_key', 
-                            'tonal.key_scale', 
-                            'tonal.tuning_frequency', 
-                            'tonal.tuning_equal_tempered_deviation']
-
     parsed_features = []
     raw_paths = []
     for feature in features_param.split(';'):
-        if feature in selectable_features:
+        if feature in SELECTABLE_FEATURES:
             raw_paths.append(feature)
             # Build feature path
             feature_path = 'llj.data'

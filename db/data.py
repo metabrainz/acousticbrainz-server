@@ -432,10 +432,10 @@ def load_low_level(mbid, offset=0):
 
 def load_many_low_level(recordings):
     """Collect low-level JSON data for multiple recordings.
-    
+
     Args:
         recordings: A list of tuples (mbid, offset).
-    
+
     Returns:
         A dictionary of mbids containing a dictionary of offsets. If an (mbid, offset) doesn't exist
         in the database, it is ommitted from the returned data.
@@ -673,6 +673,7 @@ def get_summary_data(mbid, offset=0):
     """Fetches the low-level and high-level features from for the specified MBID.
 
     Args:
+        mbid: musicbrainz id to get data for
         offset: Offset can be specified if you need to get summary for a
         different submission. They are ordered by creation time.
 
@@ -700,6 +701,8 @@ def get_summary_data(mbid, offset=0):
     try:
         highlevel = load_high_level(mbid, offset)
         summary['highlevel'] = highlevel
+        models = get_active_models()
+        summary['models'] = models
     except db.exceptions.NoDataFoundException:
         pass
 

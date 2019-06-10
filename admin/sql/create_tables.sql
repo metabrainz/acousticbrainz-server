@@ -53,7 +53,8 @@ CREATE TABLE model (
   model         TEXT         NOT NULL,
   model_version TEXT         NOT NULL,
   date          TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  status        model_status NOT NULL    DEFAULT 'hidden'
+  status        model_status NOT NULL    DEFAULT 'hidden',
+  class_mapping JSONB
 );
 
 CREATE TABLE statistics (

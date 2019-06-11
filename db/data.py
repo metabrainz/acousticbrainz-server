@@ -593,7 +593,7 @@ def load_many_high_level(recordings, map_classes=False):
         return dict(recordings_info)
 
 
-def load_many_select_features(recordings, features):
+def load_many_select_features(recordings, features, aliases):
     """Load select features for multiple recordings.
     
     Args:
@@ -609,24 +609,39 @@ def load_many_select_features(recordings, features):
          "mbid-n": {"offset-1": {"feature1": feature1, ..., "featureN": featureN}}
         } 
     """
-    with db.engine.connect() as connection:
-        result = connection.execute(
-            "SELECT ll.gid::text, ll.submission_offset::text, %(features)s " 
-              "FROM lowlevel ll "
-              "JOIN lowlevel_json llj "
-                "ON ll.id = llj.id "
-             "WHERE (ll.gid, ll.submission_offset) "
-                "IN %(recordings)s" % {'recordings': tuple(recordings), 
-                                        'features': features})
+    # Build string of select features with aliases
+    feature_string = features[0] + ' AS "' + aliases[0] + '", '
+    for feature, alias in zip(features[1:len(features)-1], aliases[1:len(aliases)-1]):
+        feature_string += feature + ' AS "' +  alias + '", '
+    feature_string += features[len(features)-1] + ' AS "' + aliases[len(aliases)-1] + '"'
 
-        feature_names = result.keys()[2:]
-        features_info = {}
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT ll.gid::text
+                 , ll.submission_offset::text
+                 , %(features)s
+              FROM lowlevel ll
+              JOIN lowlevel_json llj
+                ON ll.id = llj.id
+             WHERE (ll.gid, ll.submission_offset)
+                IN :recordings
+        """ % {'features': feature_string})
+        result = connection.execute(query, {'recordings': tuple(recordings)})
+
         recordings_info = defaultdict(dict)
         for row in result.fetchall():
             # Build dictionary of feature columns
-            for name in feature_names:
-                features_info[name] = row[name]
-            recordings_info[row['gid']][row['submission_offset']] = features_info
+            data = defaultdict(dict)
+            for alias in aliases:
+                current = temp = {}
+                count = 0
+                alias_keys = alias.split('.')
+                for key in alias_keys[1:-1]:
+                    temp[key] = {}
+                    temp = temp[key]
+                temp[alias_keys[-1]] = row[alias]
+                data[alias_keys[0]].update(current)
+            recordings_info[row['gid']][row['submission_offset']] = data
 
         return dict(recordings_info)
 

@@ -340,26 +340,30 @@ def parse_select_features():
         raise webserver.views.api.exceptions.APIBadRequest("Missing `features` parameter")
 
     parsed_features = []
-    raw_paths = []
+    aliases = []
     for feature in features_param.split(';'):
         if feature in SELECTABLE_FEATURES:
-            raw_paths.append(feature)
+            aliases.append(feature)
             # Build feature path
             feature_path = 'llj.data'
             for element in feature.split('.'):
-                feature_path += '->\'' + element + '\''
+                feature_path += "->'" + element + "'"
             parsed_features.append(feature_path)
+
+    # Always include metadata.version and metadata.audio_properties
+    metadata_version = "llj.data->'metadata'->'version'"
+    metadata_version_alias = "metadata.version"
+    metadata_audio_properties = "llj.data->'metadata'->'audio_properties'"
+    metadata_audio_properties_alias = "metadata.audio_properties"
+    
+    parsed_features.append(metadata_version)
+    parsed_features.append(metadata_audio_properties)
+    aliases.append(metadata_version_alias)
+    aliases.append(metadata_audio_properties_alias)
 
     # Remove duplicates, preserving order
     seen = set()
-    parsed_features = [x for x in parsed_features if not (x in seen or seen.add(x))]
-
-    features_string = parsed_features[0] + ' AS "' + raw_paths[0] + '", '
-    for feature, alias in zip(parsed_features[1:len(parsed_features)-1], raw_paths[1:len(raw_paths)-1]):
-        features_string += feature + ' AS "' +  alias + '", '
-    features_string += parsed_features[len(parsed_features)-1] + ' AS "' + raw_paths[len(raw_paths)-1] + '"'
-
-    return features_string
+    return [x for x in parsed_features if not (x in seen or seen.add(x))], aliases
 
 
 @bp_core.route("/low-level/select", methods=["GET"])
@@ -387,8 +391,8 @@ def get_many_select_features():
     :resheader Content-Type: *application/json*
     """
     recordings = check_bad_request_for_multiple_recordings()
-    features_string = parse_select_features()
-    recording_details = db.data.load_many_select_features(recordings, features_string)
+    parsed_features, aliases = parse_select_features()
+    recording_details = db.data.load_many_select_features(recordings, parsed_features, aliases)
 
     return jsonify(recording_details)
 

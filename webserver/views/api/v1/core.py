@@ -376,15 +376,27 @@ def get_many_select_features():
                   "offset2": {document}},
         "mbid2": {"offset1": {document}}
        }
+
+    MBIDs and offset keys are returned as strings (as per JSON encoding rules).
+    If an offset is not specified in the request for an mbid or is not a valid integer >=0,
+    the offset will be 0.
+
+    If the list of MBIDs in the query string has a recording which is not
+    present in the database, then it is silently ignored and will not appear
+    in the returned data.
     
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve.
         
         Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
-        be >= 0
+        be >= 0.
+
+        You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
     
     :query features: *Required.* A list of features to be returned for each mbid.
         
         Takes the form `feature1;feature2`.
+
+        The following features can be specified :py:const:`~webserver.views.api.v1.core.SELECTABLE_FEATURES` in a request.
     
     :resheader Content-Type: *application/json*
     """

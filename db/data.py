@@ -598,15 +598,17 @@ def load_many_select_features(recordings, features, aliases):
     
     Args:
         recordings: A list of tuples (mbid, offset).
-        features: A string of paths to features 
-            "llj.data->'feature1' AS feature1, ..., llj.data->'featureN' AS featureN"
+        features: A list of string of paths to features. 
+            ["llj.data->'feature1', ..., llj.data->'featureN']
+        aliases: A list of aliases for querying the features.
+            ["lowlevel.feature1", ..., "metadata.featureN"]
 
     Returns:
-        {"mbid-1": {"offset-1": {"feature1": feature1, ..., "featureN": featureN},
+        {"mbid-1": {"offset-1": {lowlevel document},
                     ...
-                    "offset-n": {"feature1": feature1, ..., "featureN": featureN}},
+                    "offset-n": {lowlevel document},
          ...
-         "mbid-n": {"offset-1": {"feature1": feature1, ..., "featureN": featureN}}
+         "mbid-n": {"offset-1": {lowlevel document}}
         } 
     """
     # Build string of select features with aliases
@@ -634,7 +636,6 @@ def load_many_select_features(recordings, features, aliases):
             data = defaultdict(dict)
             for alias in aliases:
                 current = temp = {}
-                count = 0
                 alias_keys = alias.split('.')
                 for key in alias_keys[1:-1]:
                     temp[key] = {}

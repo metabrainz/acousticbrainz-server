@@ -25,23 +25,23 @@ bp_core = Blueprint('api_v1_core', __name__)
 MAX_ITEMS_PER_BULK_REQUEST = 25
 # Individual features selectable in get_many_select_features.
 # Note: metadata.version and metadata.audio_properties will be included in all responses.
-SELECTABLE_FEATURES = ['lowlevel.average_loudness', 
-                        'lowlevel.dynamic_complexity', 
-                        'metadata.audio_properties.replay_gain',
-                        'metadata.tags', 
-                        'rhythm.beats_count', 
-                        'rhythm.beats_loudness.mean', 
-                        'rhythm.bpm', 
-                        'rhythm.bpm_histogram_first_peak_bpm.mean', 
-                        'rhythm.bpm_histogram_second_peak_bpm.mean', 
-                        'rhythm.danceability', 
-                        'rhythm.onset_rate', 
-                        'tonal.chords_key', 
-                        'tonal.chords_scale', 
-                        'tonal.key_key', 
-                        'tonal.key_scale', 
-                        'tonal.tuning_frequency', 
-                        'tonal.tuning_equal_tempered_deviation']
+SELECTABLE_FEATURES = {"lowlevel.average_loudness": "llj.data->'lowlevel'->'average_loudness'", 
+                        "lowlevel.dynamic_complexity": "llj.data->'lowlevel'->'dynamic_complexity'", 
+                        "metadata.audio_properties.replay_gain": "llj.data->'metadata'->'audio_properties'->'replay_gain'",
+                        "metadata.tags": "llj.data->'metadata'->'tags'", 
+                        "rhythm.beats_count": "llj.data->'rhythm'->'beats_count'", 
+                        "rhythm.beats_loudness.mean": "llj.data->'rhythm'->'beats_loudness'->'mean'", 
+                        "rhythm.bpm": "llj.data->'rhythm'->'bpm'", 
+                        "rhythm.bpm_histogram_first_peak_bpm.mean": "llj.data->'bpm_histogram_first_peak_bpm'->'mean'", 
+                        "rhythm.bpm_histogram_second_peak_bpm.mean": "llj.data->'bpm_histogram_second_peak_bpm'->'mean'", 
+                        "rhythm.danceability": "llj.data->'rhythm'->'danceability'", 
+                        "rhythm.onset_rate": "llj.data->'rhythm'->'onset_rate'", 
+                        "tonal.chords_key": "llj.data->'tonal'->'chords_key'", 
+                        "tonal.chords_scale": "llj.data->'tonal'->'chords_scale'", 
+                        "tonal.key_key": "llj.data->'tonal'->'key_key'", 
+                        "tonal.key_scale": "llj.data->'tonal'->'key_scale'", 
+                        "tonal.tuning_frequency": "llj.data->'tonal'->'tuning_frequency'", 
+                        "tonal.tuning_equal_tempered_deviation": "llj.data->'tonal'->'tuning_equal_tempered_deviation'"}
 
 
 @bp_core.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
@@ -345,9 +345,7 @@ def parse_select_features():
         if feature in SELECTABLE_FEATURES:
             aliases.append(feature)
             # Build feature path
-            feature_path = 'llj.data'
-            for element in feature.split('.'):
-                feature_path += "->'" + element + "'"
+            feature_path = SELECTABLE_FEATURES[feature]
             parsed_features.append(feature_path)
 
     # Always include metadata.version and metadata.audio_properties

@@ -527,8 +527,7 @@ class DataDBTestCase(DatabaseTestCase):
         get_id = db.data._get_model_id("modelname", "v1")
         self.assertEqual(modelid, get_id)
 
-    def test_show_failed_rows(self):
-        
+    def test_get_failed_highlevel_submissions(self):
         hl = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
               "metadata": {}
               }
@@ -537,12 +536,11 @@ class DataDBTestCase(DatabaseTestCase):
             self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         ll_id = self._get_ll_id_from_mbid(self.test_mbid)[0]
         db.data.write_high_level(self.test_mbid, ll_id, hl, build_sha)
-        
-        row = db.data.show_failed_rows()
 
-        for id in row[0]:
-            self.assertEqual(self.test_mbid, str(row[0][id][0]))
-        
+        rows = db.data.get_failed_highlevel_submissions()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["gid"], self.test_mbid)
+
     def test_get_summary_data(self):
         pass
 

@@ -61,55 +61,53 @@ def _has_key(dictionary, key):
         dictionary = dictionary[part]
     return True
 
-def show_failed_rows():
-    """
-        checks for rows in highlevel table which havent been processed.
-        Returns:
-        (id, mbid, offset) of unprocessed rows sorted by submission date
-        where
-        1. Id : id of the failed row in highlevel table, 
-        2. Mbid : Musicbrainz Identifier, 
-        3. Offset : It is the position of the failed row in a set of rows
-                    having same mbids  
+
+def get_failed_highlevel_submissions():
+    """Get all submissions where the highlevel extractor was run but failed.
+    This is characterised by a highlevel row with a missing highlevel_meta row.
+
+    Returns:
+        (List[dict]): A list of dictionaries containing lowlevel id, mbid, submission offset
     """
     with db.engine.begin() as connection:
         query = text("""
-                        SELECT id,mbid,
-                    ROW_NUMBER ()
-                          OVER (PARTITION BY mbid) RowNum
-                          FROM highlevel
+                        SELECT ll.id
+                             , ll.gid::text
+                             , ll.submission_offset
+                          FROM lowlevel ll
+                          JOIN highlevel
+                         USING (id)
                      LEFT JOIN highlevel_meta
                          USING (id)
                          WHERE highlevel_meta.id is null
-                      ORDER BY submitted
+                      ORDER BY ll.id
                     """)
+
         result = connection.execute(query).fetchall()
+        rows = [dict(row) for row in result]
 
-        result = [{row[0]: (row[1], int(row[2]))} for row in result]
-        
-    return result
+    return rows
 
 
-def remove_failed_rows():
-    """
-        Function for for removing rows in highlevel table which havent
-        been processed.
-    """
+def remove_failed_highlevel_submissions():
+    """Remove all highlevel rows with no matching highlevel_meta rows.
+    These rows represent rows that failed highlevel processing. Removing the rows
+    will cause them to be processed again."""
 
     with db.engine.connect() as connection:
-        with connection.begin() as transaction:
-            query = text("""
-                        DELETE
-                          FROM highlevel
-                         WHERE highlevel.id
-                            IN (SELECT highlevel.id
-                                  FROM highlevel
-                                  LEFT JOIN highlevel_meta
-                                 USING (id)
-                                 WHERE highlevel_meta.id is null
-                               )
-                        """)
-            connection.execute(query)
+        query = text("""
+                    DELETE
+                      FROM highlevel
+                     WHERE highlevel.id
+                        IN (SELECT highlevel.id
+                              FROM highlevel
+                         LEFT JOIN highlevel_meta
+                             USING (id)
+                             WHERE highlevel_meta.id is null
+                           )
+                    """)
+        connection.execute(query)
+
 
 def sanity_check_data(data):
     """Checks if data about the recording contains all required keys.

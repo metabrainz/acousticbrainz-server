@@ -172,22 +172,7 @@ def compute_stats():
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
-    incomplete = db.stats.has_incomplete_stats_rows()
-    if incomplete:
-        click.echo("Incomplete stats row detected", err=True)
 
-
-@cli.command(name='cleanup_stats')
-def cleanup_stats():
-    """Clean up submission_stats table to store daily data instead of hourly data"""
-    db.stats.cleanup_stats()
-
-
-@cli.command(name='stats_to_json')
-def stats_to_json():
-    """Move stats rows from the statistics table to submission_stats
-    and store name-value pairs as json grouped by collected time"""
-    db.stats.move_stats_rows_to_json()
 
 @cli.command(name='cache_stats')
 def cache_stats():

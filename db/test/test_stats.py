@@ -1,5 +1,3 @@
-import sqlalchemy
-
 from db.testing import DatabaseTestCase
 import unittest
 import db
@@ -17,14 +15,14 @@ class StatsTestCase(unittest.TestCase):
     """Statistics methods which use mocked database methods for testing"""
 
     def test_get_next_day(self):
-        date1 = datetime.datetime(2016, 01, 07, 10, 20, 39, tzinfo=pytz.utc)
+        date1 = datetime.datetime(2016, 1, 7, 10, 20, 39, tzinfo=pytz.utc)
         next_day = db.stats._get_next_day(date1)
-        expected = datetime.datetime(2016, 01, 8, 0, 0, 0, tzinfo=pytz.utc)
+        expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
         self.assertEqual(next_day, expected)
 
-        date2 = datetime.datetime(2016, 01, 07, 13, 0, 0, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 1, 7, 13, 0, 0, tzinfo=pytz.utc)
         next_day = db.stats._get_next_day(date2)
-        expected = datetime.datetime(2016, 01, 8, 0, 0, 0, tzinfo=pytz.utc)
+        expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
         self.assertEqual(next_day, expected)
 
     @mock.patch("brainzutils.cache.get")
@@ -69,7 +67,7 @@ class StatsTestCase(unittest.TestCase):
         stats, last_collected = db.stats.get_stats_summary()
         self.assertIsNone(last_collected)
         expected = {"lowlevel-lossy": 0, "lowlevel-lossy-unique": 0, "lowlevel-lossless": 0,
-                "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
+                    "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
         self.assertEquals(expected, stats)
 
         # No cache and yes database, return db
@@ -90,9 +88,9 @@ class StatsTestCase(unittest.TestCase):
 
     @mock.patch("brainzutils.cache.get")
     def test_get_stats_from_cache(self, cacheget):
-
         db.stats._get_stats_from_cache()
-        getcalls = [mock.call("recent-stats", namespace="statistics"), mock.call("recent-stats-last-updated", namespace="statistics")]
+        getcalls = [mock.call("recent-stats", namespace="statistics"),
+                    mock.call("recent-stats-last-updated", namespace="statistics")]
         cacheget.assert_has_calls(getcalls)
 
     @mock.patch("db.engine.connect")
@@ -113,11 +111,9 @@ class StatsTestCase(unittest.TestCase):
         count.assert_called_once_with(connection, datetimenow)
         connect.assert_called_once_with()
         dt.datetime.now.assert_called_once_with(pytz.utc)
-        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=3600, namespace="statistics"), mock.call("recent-stats-last-updated", datetimenow, time=3600, namespace="statistics")]
+        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=3600, namespace="statistics"),
+                    mock.call("recent-stats-last-updated", datetimenow, time=3600, namespace="statistics")]
         cacheset.assert_has_calls(setcalls)
-
-    def test_compute_stats(self):
-        pass
 
 
 class StatsDatabaseTestCase(DatabaseTestCase):
@@ -206,7 +202,6 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
-
     def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""
 
@@ -254,7 +249,6 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
-
     def test_get_earliest_submission_date(self):
         # If nothing is in the database, the date should be None
         with db.engine.connect() as connection:
@@ -297,10 +291,10 @@ def add_empty_lowlevel(mbid, lossless, date):
               RETURNING id
         """)
         result = connection.execute(query,
-                {"mbid": mbid, "build_sha1": build_sha1,
-                 "lossless": lossless, "submitted": date,
-                 "gid_type": gid_types.GID_TYPE_MSID,
-                 "submission_offset": submission_offset})
+                                    {"mbid": mbid, "build_sha1": build_sha1,
+                                     "lossless": lossless, "submitted": date,
+                                     "gid_type": gid_types.GID_TYPE_MSID,
+                                     "submission_offset": submission_offset})
         id = result.fetchone()[0]
 
         version_id = db.data.insert_version(connection, {}, db.data.VERSION_TYPE_LOWLEVEL)
@@ -309,8 +303,8 @@ def add_empty_lowlevel(mbid, lossless, date):
                VALUES (:id, :data, :data_sha256, :version)
         """)
         connection.execute(query,
-                {"id": id, "data": data_json,
-                 "data_sha256": data_sha256, "version": version_id})
+                           {"id": id, "data": data_json,
+                            "data_sha256": data_sha256, "version": version_id})
 
 
 class StatsHighchartsTestCase(DatabaseTestCase):

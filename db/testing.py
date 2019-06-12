@@ -51,7 +51,6 @@ class DatabaseTestCase(TestCase):
             connection.execute('DROP TABLE IF EXISTS lowlevel             CASCADE;')
             connection.execute('DROP TABLE IF EXISTS version              CASCADE;')
             connection.execute('DROP TABLE IF EXISTS statistics           CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS submission_stats     CASCADE;')
             connection.execute('DROP TABLE IF EXISTS incremental_dumps    CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_snapshot     CASCADE;')
             connection.execute('DROP TABLE IF EXISTS dataset_eval_jobs    CASCADE;')

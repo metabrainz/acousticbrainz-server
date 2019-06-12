@@ -4,6 +4,8 @@ Values are stored in `statistics` table and are referenced by <name, timestamp>
 pair.
 """
 from brainzutils import cache
+from sqlalchemy.dialects.postgresql import JSONB
+
 import db
 import db.exceptions
 import datetime
@@ -12,7 +14,7 @@ import calendar
 import six
 import json
 
-from sqlalchemy import text
+from sqlalchemy import text, bindparam
 
 STATS_CACHE_TIMEOUT = 60 * 60  # 1 hour
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
@@ -80,7 +82,7 @@ def compute_stats(to_date):
 
     Take the date of most recent statistics, or if no statistics
     are added, the earliest date of a submission, and compute and write
-    for every hour from that date to `to_date` the number of items
+    for every day from that date to `to_date` the number of items
     in the database.
 
     Args:
@@ -107,48 +109,10 @@ def compute_stats(to_date):
 
 def _write_stats(connection, date, stats):
     """Records a value with a given name and current timestamp."""
-    with connection.begin():
-        q = text("""
-            INSERT INTO submission_stats (collected, stats)
-                 VALUES (:collected, :stats)""")
-        connection.execute(q, {"collected": date, "stats": json.dumps(stats)})
-
-
-def cleanup_stats():
-    """Keeps only one statistics row of the last hour for each day in the table 
-    submission_stats"""
-    with db.engine.connect() as connection:
-        with connection.begin() as transaction:
-            query = text("""DELETE 
-                              FROM submission_stats
-                             WHERE collected
-                               NOT IN( SELECT max(collected) 
-                                         FROM submission_stats 
-                                     GROUP BY date(collected)
-                                    )  
-                        """)
-            connection.execute(query)
-            
-def move_stats_rows_to_json():
-    """Combines key-value pairs from the statistics table in a single json entity grouped 
-    by collected date and stores them in the table submission_stats"""
-
-    with db.engine.connect() as connection:
-        with connection.begin() as transaction:
-            query_select = text("""SELECT collected, jsonb_object_agg(name,value) 
-                                     FROM statistics
-                                 GROUP BY collected
-                                 ORDER BY collected DESC            
-                                """)
-            stats_rows = connection.execute(query_select).fetchall()
-            query_insert = text("""INSERT INTO submission_stats
-                                   VALUES (:collected, :stats)                        
-                                """)
-            for row in stats_rows:
-                #check for incomplete rows
-                if len(stats_key_map) == len(row[1]):
-                    connection.execute(query_insert, {"collected": row[0], 
-                                                        "stats": json.dumps(row[1])})
+    query = text("""
+        INSERT INTO statistics (collected, stats)
+             VALUES (:collected, :stats)""").bindparams(bindparam('stats', type_=JSONB))
+    connection.execute(query, {"collected": date, "stats": stats})
 
 
 def add_stats_to_cache():
@@ -160,21 +124,6 @@ def add_stats_to_cache():
                   time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
         cache.set(STATS_CACHE_LAST_UPDATE_KEY, now,
                   time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
-
-
-def has_incomplete_stats_rows():
-    """Check if there are any statistics rows that are missing a key.
-    Returns: True if any stats hour has less than 6 stats keys, otherwise False"""
-
-    with db.engine.connect() as connection:
-        query = text("""
-            SELECT collected
-                 , count(name)
-              FROM statistics
-          GROUP BY collected
-            HAVING count(name) < :numitems""")
-        result = connection.execute(query, {"numitems": len(stats_key_map)})
-        return result.rowcount > 0
 
 
 def get_stats_summary():
@@ -198,7 +147,7 @@ def _get_stats_from_cache():
     """Get submission statistics from cache"""
     stats = cache.get(STATS_CACHE_KEY, namespace=STATS_CACHE_NAMESPACE)
     last_collected = cache.get(STATS_CACHE_LAST_UPDATE_KEY,
-                                  namespace=STATS_CACHE_NAMESPACE)
+                               namespace=STATS_CACHE_NAMESPACE)
 
     return last_collected, stats
 
@@ -228,14 +177,9 @@ def format_statistics_for_highcharts(data):
 
 
 def load_statistics_data(limit=None):
-    # Postgres doesn't let you create a json dictionary using values
-    # from one column as keys and another column as values. Instead we
-    # create an array of {"name": name, "value": value} objects and change
-    # it in python
     args = {}
-    qtext = """
-            SELECT collected, stats
-              FROM submission_stats
+    qtext = """SELECT collected, stats
+                 FROM statistics
              ORDER BY collected DESC
           """
     if limit:
@@ -244,16 +188,9 @@ def load_statistics_data(limit=None):
     query = text(qtext)
     with db.engine.connect() as connection:
         stats_result = connection.execute(query, args)
-        ret = []
-        for line in stats_result:
-            row = {"collected": line["collected"], "stats": {}}
-            for name, value in line["stats"].iteritems():                
-                row["stats"][name] = value
-            ret.append(row)
-
-    # We order by DESC in order to use the `limit` parameter, but
-    # we actually need the stats in increasing order.
-    return list(reversed(ret))
+        # We order by DESC in order to use the `limit` parameter, but
+        # we actually need the stats in increasing order.
+        return list(reversed([dict(r) for r in stats_result]))
 
 
 def get_statistics_history():
@@ -338,7 +275,7 @@ def _get_earliest_submission_date(connection):
 
 def _get_most_recent_stats_date(connection):
     q = text("""SELECT collected
-                  FROM submission_stats
+                  FROM statistics
               ORDER BY collected DESC
                  LIMIT 1""")
     cur = connection.execute(q)
@@ -349,8 +286,9 @@ def _get_most_recent_stats_date(connection):
 
 def _get_next_day(date):
     """Round up a date to the nearest day:00:00:00
+
     Arguments:
-      date: a datetime
+        date: a datetime
     """
     delta = datetime.timedelta(days=1)
     date = date + delta

@@ -58,13 +58,7 @@ CREATE TABLE model (
 
 CREATE TABLE statistics (
   collected TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  name      TEXT                     NOT NULL,
-  value     INTEGER                  NOT NULL
-);
-
-CREATE TABLE submission_stats (
-  collected TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  stats     JSONB NOT NULL
+  stats     JSONB                    NOT NULL
 );
 
 CREATE TABLE incremental_dumps (

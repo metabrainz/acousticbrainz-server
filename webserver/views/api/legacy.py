@@ -11,7 +11,7 @@ import uuid
 api_legacy_bp = Blueprint('api', __name__)
 
 
-@api_legacy_bp.route("/<uuid:mbid>/count", methods=["GET"])
+@api_legacy_bp.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
 @crossdomain()
 def count(mbid):
     return jsonify({

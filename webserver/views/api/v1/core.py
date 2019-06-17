@@ -24,25 +24,28 @@ bp_core = Blueprint('api_v1_core', __name__)
 
 #: The maximum number of items that you can pass as a recording_ids parameter to bulk lookup endpoints
 MAX_ITEMS_PER_BULK_REQUEST = 25
+
 # Individual features selectable in get_many_select_features.
 # Note: metadata.version and metadata.audio_properties will be included in all responses.
-SELECTABLE_FEATURES = {"lowlevel.average_loudness": "llj.data->'lowlevel'->'average_loudness'", 
-                        "lowlevel.dynamic_complexity": "llj.data->'lowlevel'->'dynamic_complexity'", 
-                        "metadata.audio_properties.replay_gain": "llj.data->'metadata'->'audio_properties'->'replay_gain'",
-                        "metadata.tags": "llj.data->'metadata'->'tags'", 
-                        "rhythm.beats_count": "llj.data->'rhythm'->'beats_count'", 
-                        "rhythm.beats_loudness.mean": "llj.data->'rhythm'->'beats_loudness'->'mean'", 
-                        "rhythm.bpm": "llj.data->'rhythm'->'bpm'", 
-                        "rhythm.bpm_histogram_first_peak_bpm.mean": "llj.data->'bpm_histogram_first_peak_bpm'->'mean'", 
-                        "rhythm.bpm_histogram_second_peak_bpm.mean": "llj.data->'bpm_histogram_second_peak_bpm'->'mean'", 
-                        "rhythm.danceability": "llj.data->'rhythm'->'danceability'", 
-                        "rhythm.onset_rate": "llj.data->'rhythm'->'onset_rate'", 
-                        "tonal.chords_key": "llj.data->'tonal'->'chords_key'", 
-                        "tonal.chords_scale": "llj.data->'tonal'->'chords_scale'", 
-                        "tonal.key_key": "llj.data->'tonal'->'key_key'", 
-                        "tonal.key_scale": "llj.data->'tonal'->'key_scale'", 
-                        "tonal.tuning_frequency": "llj.data->'tonal'->'tuning_frequency'", 
-                        "tonal.tuning_equal_tempered_deviation": "llj.data->'tonal'->'tuning_equal_tempered_deviation'"}
+AVAILABLE_FEATURES = {
+    "lowlevel.average_loudness": ["llj.data->'lowlevel'->'average_loudness'", None], 
+    "lowlevel.dynamic_complexity": ["llj.data->'lowlevel'->'dynamic_complexity'", None], 
+    "metadata.audio_properties.replay_gain": ["llj.data->'metadata'->'audio_properties'->'replay_gain'", None],
+    "metadata.tags": ["llj.data->'metadata'->'tags'", {}], 
+    "rhythm.beats_count": ["llj.data->'rhythm'->'beats_count'", None], 
+    "rhythm.beats_loudness.mean": ["llj.data->'rhythm'->'beats_loudness'->'mean'", None], 
+    "rhythm.bpm": ["llj.data->'rhythm'->'bpm'", None], 
+    "rhythm.bpm_histogram_first_peak_bpm.mean": ["llj.data->'rhythm'->bpm_histogram_first_peak_bpm'->'mean'", None], 
+    "rhythm.bpm_histogram_second_peak_bpm.mean": ["llj.data->'rhythm'->bpm_histogram_second_peak_bpm'->'mean'", None], 
+    "rhythm.danceability": ["llj.data->'rhythm'->'danceability'", None], 
+    "rhythm.onset_rate": ["llj.data->'rhythm'->'onset_rate'", None], 
+    "tonal.chords_key": ["llj.data->'tonal'->'chords_key'", None], 
+    "tonal.chords_scale": ["llj.data->'tonal'->'chords_scale'", None], 
+    "tonal.key_key": ["llj.data->'tonal'->'key_key'", None], 
+    "tonal.key_scale": ["llj.data->'tonal'->'key_scale'", None], 
+    "tonal.tuning_frequency": ["llj.data->'tonal'->'tuning_frequency'", None], 
+    "tonal.tuning_equal_tempered_deviation": ["llj.data->'tonal'->'tuning_equal_tempered_deviation'", None]
+}
 
 
 @bp_core.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
@@ -332,21 +335,29 @@ def parse_select_features():
     If features are missing, an APIBadRequest Exception is
     raised stating the missing features message.
     
-    Returns a string of feature paths with alias:
-        "llj.data->'feature1' AS feature1, ..., llj.data->'featureN' AS featureN"
+    Returns:
+        parsed_features, a list of tuples of the form:
+            (<feature_path>, <alias>, <default_type>)
+            
+            <feature_path> is a string holding the path to a feature:
+            "llj.data->feature_name"
+
+            <alias> is a string alias for a feature:
+            "lowlevel.feature_name"
+
+            <default_type> is the type to which a feature value will default,
+            if it is non-existent, depending on the alias from AVAILABLE_FEATURES.
     """
     features_param = request.args.get("features")
     if not features_param:
         raise webserver.views.api.exceptions.APIBadRequest("Missing `features` parameter")
 
     parsed_features = []
-    aliases = []
-    for feature in features_param.split(';'):
-        if feature in SELECTABLE_FEATURES:
-            aliases.append(feature)
-            # Build feature path
-            feature_path = SELECTABLE_FEATURES[feature]
-            parsed_features.append(feature_path)
+    for alias in features_param.split(';'):
+        if alias in AVAILABLE_FEATURES:
+            default_type = AVAILABLE_FEATURES[alias][1]
+            feature_path = AVAILABLE_FEATURES[alias][0]
+            parsed_features.append((feature_path, alias, default_type))
 
     # Always include metadata.version and metadata.audio_properties
     metadata_version = "llj.data->'metadata'->'version'"
@@ -354,14 +365,12 @@ def parse_select_features():
     metadata_audio_properties = "llj.data->'metadata'->'audio_properties'"
     metadata_audio_properties_alias = "metadata.audio_properties"
     
-    parsed_features.append(metadata_version)
-    parsed_features.append(metadata_audio_properties)
-    aliases.append(metadata_version_alias)
-    aliases.append(metadata_audio_properties_alias)
+    parsed_features.append((metadata_version, metadata_version_alias, {}))
+    parsed_features.append((metadata_audio_properties, metadata_audio_properties_alias, {}))
 
     # Remove duplicates, preserving order
-    parsed_features = remove_duplicates(parsed_features)
-    return parsed_features, aliases
+    ret = []
+    return [x for x in parsed_features if not (x in ret or ret.append(x))]
 
 
 @bp_core.route("/low-level/select", methods=["GET"])
@@ -378,8 +387,9 @@ def get_many_select_features():
        }
 
     MBIDs and offset keys are returned as strings (as per JSON encoding rules).
-    If an offset is not specified in the request for an mbid or is not a valid integer >=0,
+    If an offset is not specified in the request for an MBID or is not a valid integer >=0,
     the offset will be 0.
+    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -401,8 +411,8 @@ def get_many_select_features():
     :resheader Content-Type: *application/json*
     """
     recordings = check_bad_request_for_multiple_recordings()
-    parsed_features, aliases = parse_select_features()
-    recording_details = db.data.load_many_select_features(recordings, parsed_features, aliases)
+    parsed_features = parse_select_features()
+    recording_details = db.data.load_many_select_features(recordings, parsed_features)
 
     return jsonify(recording_details)
 

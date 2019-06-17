@@ -593,15 +593,23 @@ def load_many_high_level(recordings, map_classes=False):
         return dict(recordings_info)
 
 
-def load_many_select_features(recordings, features, aliases):
+def load_many_select_features(recordings, features):
     """Load select lowlevel features for multiple recordings.
     
     Args:
         recordings: A list of tuples (mbid, offset).
-        features: A list of string of paths to features. 
-            ["llj.data->'feature1', ..., llj.data->'featureN']
-        aliases: A list of aliases for querying the features.
-            ["lowlevel.feature1", ..., "metadata.featureN"]
+        features: Contains information about the
+        select features, a list of tuples of the form: 
+            [(<feature_path>, <alias>, <default_type>), ...]
+
+            <feature_path> is a string holding the path to a feature:
+            "llj.data->feature_name"
+
+            <alias> is a string alias for a feature:
+            "lowlevel.feature_name"
+            
+            <default_type> is the type to which a feature value will default
+            if it is non-existent: None, {}, or [].
 
     Returns:
         {"mbid-1": {"offset-1": {lowlevel document},
@@ -612,10 +620,10 @@ def load_many_select_features(recordings, features, aliases):
         } 
     """
     # Build string of select features with aliases
-    feature_string = features[0] + ' AS "' + aliases[0] + '", '
-    for feature, alias in zip(features[1:len(features)-1], aliases[1:len(aliases)-1]):
-        feature_string += feature + ' AS "' +  alias + '", '
-    feature_string += features[len(features)-1] + ' AS "' + aliases[len(aliases)-1] + '"'
+    feature_string = features[0][0] + ' AS "' + features[0][1] + '", '
+    for path, alias, _ in features[1:len(features)-1]:
+        feature_string += path + ' AS "' +  alias + '", '
+    feature_string += features[len(features)-1][0] + ' AS "' + features[len(features)-1][1] + '"'
 
     with db.engine.connect() as connection:
         query = text("""
@@ -634,13 +642,16 @@ def load_many_select_features(recordings, features, aliases):
         for row in result.fetchall():
             # Build dictionary of feature columns
             data = defaultdict(dict)
-            for alias in aliases:
+            for _, alias, default_type in features:
                 current = temp = {}
                 alias_keys = alias.split('.')
                 for key in alias_keys[1:-1]:
                     temp[key] = {}
                     temp = temp[key]
-                temp[alias_keys[-1]] = row[alias]
+                if row[alias]:
+                    temp[alias_keys[-1]] = row[alias]
+                else:
+                    temp[alias_keys[-1]] = default_type
                 data[alias_keys[0]].update(current)
             recordings_info[row['gid']][row['submission_offset']] = data
 

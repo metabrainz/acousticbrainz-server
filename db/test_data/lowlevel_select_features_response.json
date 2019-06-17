@@ -1,0 +1,217 @@
+{"0dad432b-16cc-4bf0-8961-fd31d124b01b": 
+    {"0": { "lowlevel": {
+                "average_loudness": 0.048737552017,
+                "dynamic_complexity": 6.21206188202
+            },
+            "metadata": {
+                "audio_properties": {
+                    "replay_gain": -9.43081283569
+                },
+                "tags": {
+                    "acoustid_id": ["25343079-d20f-4827-9e83-840e278a67ff"],
+                    "album": ["Journey"],
+                    "albumartist": ["Austin Wintory"],
+                    "albumartistsort": ["Wintory, Austin"],
+                    "artist": ["Austin Wintory"],
+                    "artistsort": ["Wintory, Austin"],
+                    "artistwebpage": ["http://austinwintory.com/"],
+                    "date": ["2012"],
+                    "discnumber": ["1/1"],
+                    "file_name": "01 Nascence.mp3",
+                    "media": ["Digital Media"],
+                    "musicbrainz album release country": ["XW"],
+                    "musicbrainz album status": ["official"],
+                    "musicbrainz album type": ["album/soundtrack"],
+                    "musicbrainz_albumartistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                    "musicbrainz_albumid": ["1f3abcda-15a7-4465-92c6-9926cdc4f247"],
+                    "musicbrainz_artistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                    "musicbrainz_recordingid": ["0dad432b-16cc-4bf0-8961-fd31d124b01b"],
+                    "musicbrainz_releasegroupid": ["d1850227-c7c7-42c8-b469-6e99023412de"],
+                    "originaldate": ["2012"],
+                    "script": ["Latn"],
+                    "title": ["Nascence"],
+                    "tracknumber": ["1/18"]
+                }
+            },
+            "rhythm": {
+                "beats_loudness": {
+                    "mean": 0.0246992316097
+                },
+                "bpm_histogram_second_peak_bpm": {
+                    "mean": 133
+                }
+            },
+            "tonal": {
+                "key_key": "D"
+            }
+        },
+    "1": { "lowlevel": {
+                "average_loudness": 0.048737552017,
+                "dynamic_complexity": 6.21206188202
+            },
+            "metadata": {
+                "audio_properties": {
+                    "replay_gain": -9.43081283569
+                },
+                "tags": {
+                    "acoustid_id": ["25343079-d20f-4827-9e83-840e278a67ff"],
+                    "album": ["Another album"],
+                    "albumartist": ["Austin Wintory"],
+                    "albumartistsort": ["Wintory, Austin"],
+                    "artist": ["Austin Wintory"],
+                    "artistsort": ["Wintory, Austin"],
+                    "artistwebpage": ["http://austinwintory.com/"],
+                    "date": ["2012"],
+                    "discnumber": ["1/1"],
+                    "file_name": "01 Nascence.mp3",
+                    "media": ["Digital Media"],
+                    "musicbrainz album release country": ["XW"],
+                    "musicbrainz album status": ["official"],
+                    "musicbrainz album type": ["album/soundtrack"],
+                    "musicbrainz_albumartistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                    "musicbrainz_albumid": ["1f3abcda-15a7-4465-92c6-9926cdc4f247"],
+                    "musicbrainz_artistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                    "musicbrainz_recordingid": ["0dad432b-16cc-4bf0-8961-fd31d124b01b"],
+                    "musicbrainz_releasegroupid": ["d1850227-c7c7-42c8-b469-6e99023412de"],
+                    "originaldate": ["2012"],
+                    "script": ["Latn"],
+                    "title": ["Nascence"],
+                    "tracknumber": ["1/18"]
+                }
+            },
+            "rhythm": {
+                "beats_loudness": {
+                    "mean": 0.0246992316097
+                },
+                "bpm_histogram_second_peak_bpm": {
+                    "mean": 133
+                }
+            },
+            "tonal": {
+                "key_key": "D"
+            }
+        }
+    },
+"e8afe383-1478-497e-90b1-7885c7f37f6e": 
+    {"0": { "lowlevel": {
+                "average_loudness": 0.28302448988,
+                "dynamic_complexity": 5.1763920784
+            },
+            "metadata": {
+                "audio_properties": {
+                    "replay_gain": -9.99079704285
+                },
+                "tags": {
+                    "album": [
+                        "The Rise and Fall of Ziggy Stardust and the Spiders From Mars"
+                    ],
+                    "albumartist": [
+                        "David Bowie"
+                    ],
+                    "albumartistsort": [
+                        "Bowie, David"
+                    ],
+                    "artist": [
+                        "David Bowie"
+                    ],
+                    "artistsort": [
+                        "Bowie, David"
+                    ],
+                    "asin": [
+                        "B0007MUR2W"
+                    ],
+                    "barcode": [
+                        "724352190003"
+                    ],
+                    "catalognumber": [
+                        "RCD 10134"
+                    ],
+                    "composer": [
+                        "David Bowie"
+                    ],
+                    "composersort": [
+                        "Bowie, David"
+                    ],
+                    "date": [
+                        "1990-06-06"
+                    ],
+                    "discnumber": [
+                        "01"
+                    ],
+                    "disctotal": [
+                        "01"
+                    ],
+                    "file_name": "02_soul_love.flac",
+                    "genre": [
+                        "Rock"
+                    ],
+                    "isrc": [
+                        "USJT10200020"
+                    ],
+                    "label": [
+                        "Rykodisc"
+                    ],
+                    "language": [
+                        "English"
+                    ],
+                    "media": [
+                        "CD"
+                    ],
+                    "musicbrainz_albumartistid": [
+                        "5441c29d-3602-4898-b1a1-b77fa23b8e50"
+                    ],
+                    "musicbrainz_albumid": [
+                        "85f61d36-afa0-3977-9b0e-45329574175b"
+                    ],
+                    "musicbrainz_artistid": [
+                        "5441c29d-3602-4898-b1a1-b77fa23b8e50"
+                    ],
+                    "musicbrainz_discid": [
+                        "574CMRWvKzrO9gC1s9VIxQR.FwA-",
+                        "7EPvKqpvNIeQts9y6gkz1XXssN8-",
+                        "CblmKqXfvgbq4Ue2.Agr8IUkRWU-",
+                        "NtVtShORDb3LhPIBV2o7etyYFkU-",
+                        "iBrBc..4sp57lnxGqilWNWbylAc-",
+                        "jA.sQ6_Avuu8C6s3dn6bAA_Yydo-",
+                        "oqhayjQyo98j6qJRLZm8OomIZe0-"
+                    ],
+                    "musicbrainz_recordingid": [
+                        "e8afe383-1478-497e-90b1-7885c7f37f6e"
+                    ],
+                    "musicbrainz_releasegroupid": [
+                        "a176b42b-fb6c-3156-aba1-c1fc1ee75752"
+                    ],
+                    "musicip_puid": [
+                        "b1e7eb4b-6337-1700-6b05-9e343f1ff148"
+                    ],
+                    "releasecountry": [
+                        "United States"
+                    ],
+                    "script": [
+                        "Latin"
+                    ],
+                    "title": [
+                        "Soul Love"
+                    ],
+                    "tracknumber": [
+                        "02"
+                    ],
+                    "tracktotal": [
+                        "16"
+                    ]
+                }
+            },
+            "rhythm": {
+                "beats_loudness": {
+                    "mean": 0.0168792642653
+                },
+                "bpm_histogram_second_peak_bpm": {
+                    "mean": 136
+                }                                        
+            },
+            "tonal": {
+                "key_key": "D"
+            }
+        }
+    }
+}

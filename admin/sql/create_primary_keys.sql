@@ -20,5 +20,8 @@ ALTER TABLE challenge ADD CONSTRAINT challenge_pkey PRIMARY KEY (id);
 ALTER TABLE dataset_eval_challenge ADD CONSTRAINT dataset_eval_challenge_pkey PRIMARY KEY (dataset_eval_job, challenge_id);
 ALTER TABLE api_key ADD CONSTRAINT api_key_pkey PRIMARY KEY (value);
 ALTER TABLE feedback ADD CONSTRAINT feedback_pkey PRIMARY KEY (user_id, highlevel_model_id);
+ALTER TABLE similarity ADD CONSTRAINT similarity_pkey PRIMARY KEY (id);
+ALTER TABLE similarity_metrics ADD CONSTRAINT similarity_metrics_pkey PRIMARY KEY (metric);
+ALTER TABLE similarity_stats ADD CONSTRAINT similarity_stats_pkey PRIMARY KEY (metric);
 
 COMMIT;

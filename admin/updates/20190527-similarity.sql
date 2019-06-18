@@ -13,19 +13,19 @@ ALTER TABLE similarity
 
 
 CREATE TABLE similarity_metrics (
-  metric TEXT, -- PK
-  is_hybrid BOOLEAN,
+  metric 	  TEXT, -- PK
+  is_hybrid   BOOLEAN,
   description TEXT,
-  category TEXT,
-  visible BOOLEAN
+  category    TEXT,
+  visible     BOOLEAN
 );
 
 ALTER TABLE similarity_metrics ADD CONSTRAINT similarity_metrics_pkey PRIMARY KEY (metric);
 
 
 CREATE TABLE similarity_stats (
-  metric TEXT,  -- FK to metric
-  means DOUBLE PRECISION[],
+  metric  TEXT,  -- FK to metric
+  means   DOUBLE PRECISION[],
   stddevs DOUBLE PRECISION[]
 );
 

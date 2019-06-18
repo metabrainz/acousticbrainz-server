@@ -10,23 +10,36 @@ class Metric(object):
 
     def _create(self, hybrid, column):
         hybrid = str(hybrid).upper()
-        insert_query = text("""
+        metrics_query = text("""
             INSERT INTO similarity_metrics (metric, is_hybrid, description, category, visible)
                  VALUES (:metric, :hybrid, :description, :category, TRUE)
             ON CONFLICT (metric)
           DO UPDATE SET visible=TRUE
         """)
-        self.connection.execute(insert_query, {'metric': self.name, 
+        self.connection.execute(metrics_query, {'metric': self.name, 
                                                 'hybrid': hybrid, 
                                                 'description': self.description,
                                                 'category': self.category})
+
+        # This can be removed if not using postgres similarity solution
+        index_query = text("""
+            CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity
+             USING gist(cube(%(column)s))
+        """ % {'metric': self.name, 'column': column})
+        self.connection.execute(index_query)
         
     def delete(self):
-        query = text("""
+        metrics_query = text("""
             DELETE FROM similarity_metrics
                   WHERE metric = %s
         """  % self.name)
-        self.connection.execute(query)
+        self.connection.execute(metrics_query)
+
+        # This can be removed if not using postgres similarity solution
+        index_query = text("""
+            DROP INDEX IF EXISTS %s_ndx_similarity
+        """ % self.name)
+        self.connection.execute(index_query)
 
 
 class BaseMetric(Metric):

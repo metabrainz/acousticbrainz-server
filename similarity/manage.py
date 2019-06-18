@@ -146,3 +146,79 @@ def delete_hybrid(name):
     with db.engine.begin() as connection:
         metric = HybridMetric(connection, name)
         metric.delete()
+
+
+# @cli.command(name='add-index')
+# @click.argument("metric")
+# @click.option("--batch_size", "-b", type=int, help="Size of batches")
+# @click.option("--n_trees", "-n", type=int, help="Number of trees for building")
+def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
+    """Creates an annoy index for the specified metric, adds all items to the index."""
+    with db.engine.connect() as connection:
+        click.echo("Initializing index...")
+        index = AnnoyModel(connection, metric, n_trees, distance_type)
+
+        batch_size = batch_size or PROCESS_BATCH_SIZE
+        offset = 0
+        count = 0
+
+        result = connection.execute("""
+            SELECT MAX(id)
+              FROM similarity
+        """)
+        total = result.fetchone()[0]
+
+        batch_query = text("""
+            SELECT *
+              FROM similarity
+             ORDER BY id
+             LIMIT :batch_size
+            OFFSET :offset
+        """)
+
+        click.echo("Inserting items...")
+        while True:
+            # Get ids and vectors for specific metric in batches
+            batch_result = connection.execute(batch_query, { "batch_size": batch_size, "offset": offset })
+            if not batch_result.rowcount:
+                click.echo("Finished adding items. Building index...")
+                break
+
+            for row in batch_result.fetchall():
+                while not row["id"] == count:
+                    # Rows are empty, add zero vector
+                    placeholder = [0] * index.dimension
+                    index.add_recording(count, placeholder)
+                    count += 1
+                index.add_recording(row["id"], row[index.metric_name])
+                count += 1
+
+            offset += batch_size
+            click.echo("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
+
+        index.build()
+        click.echo("Saving index...")
+        index.save()
+        click.echo("Done!")
+
+
+@cli.command(name='add-indices')
+@click.option("--n-trees", "-n", type=int)
+@click.option("--distance-type", "-d")
+def add_indices(n_trees=10, distance_type='angular'):
+    metrics = ["mfccs",
+    "mfccsw",
+    "gfccs",
+    "gfccsw",
+    "key",
+    "bpm",
+    "onsetrate",
+    "moods",
+    "instruments",
+    "dortmund",
+    "rosamerica",
+    "tzanetakis"]
+    for metric in metrics:
+        click.echo("Adding index: {}".format(metric))
+        add_index(metric, batch_size=None, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Finished.") 

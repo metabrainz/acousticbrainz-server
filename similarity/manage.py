@@ -218,6 +218,7 @@ def add_indices(n_trees=10, distance_type='angular'):
     "dortmund",
     "rosamerica",
     "tzanetakis"]
+    
     for metric in metrics:
         click.echo("Adding index: {}".format(metric))
         add_index(metric, batch_size=None, n_trees=n_trees, distance_type=distance_type)

@@ -5,7 +5,7 @@ import click
 
 import webserver
 
-from api import get_all_metrics, get_similar_recordings
+from utils import get_all_metrics, get_similar_recordings
 
 PROCESS_BATCH_SIZE = 10000
 
@@ -28,6 +28,6 @@ def probe_endpoints():
         for category, metric_list in metrics_dict.items():
             for metric, _ in metric_list:
                 time = timeit.timeit("get_similar_recordings('{}', '{}')".format(mbid, metric),
-                                     setup='from similarity.api import get_similar_recordings',
+                                     setup='from similarity.utils import get_similar_recordings',
                                      number=1)
                 print(mbid, metric, time)

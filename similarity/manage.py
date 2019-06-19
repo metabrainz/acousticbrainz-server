@@ -7,6 +7,7 @@ import metrics
 from operations import HybridMetric
 import db
 
+from sqlalchemy import text
 
 PROCESS_BATCH_SIZE = 10000
 
@@ -17,12 +18,22 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 def init_similarity():
     click.echo('Copying data')
     with db.engine.begin() as connection:
-        connection.execute("INSERT INTO similarity(id) SELECT id FROM lowlevel")
+        query = text("""
+        INSERT INTO similarity(id)
+             SELECT id
+               FROM lowlevel
+        """)
+        connection.execute(query)
 
 
 def _get_recordings_without_similarity(connection, name, batch_size):
-    result = connection.execute("SELECT id FROM similarity WHERE %(metric)s IS NULL LIMIT %(limit)s"
-                                % {'metric': name, 'limit': batch_size})
+    query = text("""
+        SELECT id
+          FROM similarity
+         WHERE %(metric)s IS NULL
+         LIMIT %(limit)s
+    """ % {'metric': name, 'limit': batch_size})
+    result = connection.execute(query)
     rows = result.fetchall()
     if not rows:
         return []
@@ -32,8 +43,12 @@ def _get_recordings_without_similarity(connection, name, batch_size):
 
 def _update_similarity(connection, name, row_id, vector, isnan=False):
     value = '[' + ', '.join(["'NaN'::double precision"] * len(vector)) + ']' if isnan else str(list(vector))
-    connection.execute("UPDATE similarity SET %(metric)s = %(value)s WHERE id = %(id)s" %
-                       {'metric': name, 'value': 'ARRAY' + value, 'id': row_id})
+    query = text("""
+        UPDATE similarity
+           SET %(metric)s = %(value)s
+         WHERE id = %(id)s
+    """ % {'metric': name, 'value': 'ARRAY' + value, 'id': row_id})
+    connection.execute(query)
 
 
 @cli.command(name="add-metric")
@@ -52,7 +67,11 @@ def add_metric(name, force=False, to_process=None, batch_size=None):
         metric = metric_cls(connection)
         metric.create(clear=force)
 
-        result = connection.execute("SELECT count(*), count(%s) FROM similarity" % name)
+        query = text("""
+            SELECT count(*), count(%s)
+              FROM similarity
+        """ % name)
+        result = connection.execute(query)
         total, past = result.fetchone()
         current = past
         to_process = to_process or total - past

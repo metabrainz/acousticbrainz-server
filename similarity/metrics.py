@@ -1,6 +1,8 @@
 import numpy as np
 from operations import BaseMetric
 
+from sqlalchemy import text
+
 NORMALIZATION_SAMPLE_SIZE = 10000
 
 
@@ -9,8 +11,12 @@ class LowLevelMetric(BaseMetric):
     indices = None
 
     def get_data_batch(self, ids):
-        result = self.connection.execute("SELECT id, %(path)s FROM lowlevel_json WHERE id IN %(ids)s" %
-                                         {'ids': str(ids), 'path': self.path})
+        query = text("""
+            SELECT id, %(path)s
+              FROM lowlevel_json
+             WHERE id IN :ids
+        """ % {"path": self.path})
+        result = self.connection.execute(query, {'ids': ids})
         return result.fetchall()
 
     def length(self):
@@ -22,16 +28,25 @@ class NormalizedLowLevelMetric(LowLevelMetric):
     stddevs = None
 
     def _calculate_stats_for(self, path):
-        result = self.connection.execute("SELECT avg(x), stddev_pop(x) "
-                                         "FROM (SELECT (%(path)s)::double precision as x "
-                                         "FROM lowlevel_json "
-                                         "LIMIT %(limit)s) as res" %
-                                         {'path': path, 'limit': NORMALIZATION_SAMPLE_SIZE})
+        query = text("""
+            SELECT avg(x), stddev_pop(x)
+              FROM (
+            SELECT (%(path)s)::double precision AS x
+              FROM lowlevel_json
+             LIMIT :limit)
+                AS res
+        """ % {"path": path})
+        result = self.connection.execute(query, {'limit': NORMALIZATION_SAMPLE_SIZE})
         return result.fetchone()
 
     def calculate_stats(self):
         # TODO: use same stats for weighted and normal metrics (e.g. mfccs and mfccsw)
-        result = self.connection.execute("SELECT means, stddevs FROM similarity_stats WHERE metric='%s'" % self.name)
+        query = text("""
+            SELECT means, stddevs
+              FROM similarity_stats
+             WHERE metric = :metric
+        """)
+        result = self.connection.execute(query, {"metric": self.name})
         row = result.fetchone()
 
         if row:
@@ -52,15 +67,21 @@ class NormalizedLowLevelMetric(LowLevelMetric):
                 self.means.append(mean)
                 self.stddevs.append(stddev)
 
-        self.connection.execute("INSERT INTO similarity_stats (metric, means, stddevs) "
-                                "VALUES (%(metric)s, %(means)s, %(stddevs)s)"
-                                % {'metric': "'{}'".format(self.name),
-                                   'means': 'ARRAY' + str(self.means),
-                                   'stddevs': 'ARRAY' + str(self.stddevs)})
+        query = text("""
+        INSERT INTO similarity_stats (metric, means, stddevs)
+             VALUES (%(metric)s, %(means)s, %(stddevs)s)
+        """ % {'metric': "'{}'".format(self.name),
+               'means': 'ARRAY' + str(self.means),
+               'stddevs': 'ARRAY' + str(self.stddevs)})
+        self.connection.execute(query)
 
     def delete_stats(self):
         print('Deleting global stats')
-        self.connection.execute("DELETE FROM similarity_stats WHERE metric='%s'" % self.name)
+        query = text("""
+            DELETE FROM similarity_stats
+                  WHERE metric = :metric
+        """)
+        self.connection.execute(query, {"metric": self.name})
 
     def transform(self, data):
         if not data:
@@ -165,9 +186,13 @@ class HighLevelMetric(BaseMetric):
     category = 'high-level'
 
     def get_data_batch(self, ids):
-        result = self.connection.execute("SELECT highlevel, jsonb_object_agg(model, data) "
-                                         "FROM highlevel_model WHERE highlevel IN %s "
-                                         "GROUP BY highlevel" % str(ids))
+        query = text("""
+            SELECT highlevel, jsonb_object_agg(model, data)
+              FROM highlevel_model
+             WHERE highlevel IN :ids
+          GROUP BY highlevel
+        """)
+        result = self.connection.execute(query, {"ids": ids})
         rows = result.fetchall()
         if len(rows) < len(ids):
             existing_ids = [row[0] for row in rows]

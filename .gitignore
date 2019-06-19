@@ -38,3 +38,7 @@ export
 /files
 ve
 *.swp
+
+cache_namespaces
+package-lock.json
+

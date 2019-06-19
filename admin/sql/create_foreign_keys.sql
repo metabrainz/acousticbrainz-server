@@ -115,4 +115,10 @@ ALTER TABLE feedback
   FOREIGN KEY (user_id)
   REFERENCES "user" (id);
 
+ALTER TABLE similarity
+  ADD CONSTRAINT similarity_fk_lowlevel
+  FOREIGN KEY (id)
+  REFERENCES lowlevel (id);
+
+
 COMMIT;

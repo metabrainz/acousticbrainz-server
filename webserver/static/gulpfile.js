@@ -102,6 +102,7 @@ function buildScripts() {
   var statsBundle = runYarb('stats.js');
   var homepageBundle = runYarb('homepage.js');
   var profileBundle = runYarb('profile.js');
+  var similarityBundle = runYarb('similarity.js');
 
   return Q.all([
     writeScript(commonBundle, 'common.js'),
@@ -109,6 +110,7 @@ function buildScripts() {
     writeScript(statsBundle, 'stats.js'),
     writeScript(homepageBundle, 'homepage.js'),
     writeScript(profileBundle, 'profile.js'),
+    writeScript(similarityBundle, 'similarity.js')
   ]).then(writeManifest);
 }
 

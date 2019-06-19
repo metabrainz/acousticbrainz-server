@@ -1,5 +1,6 @@
 from sqlalchemy import text
 
+
 class Metric(object):
     name = ''
     description = ''
@@ -16,8 +17,8 @@ class Metric(object):
             ON CONFLICT (metric)
           DO UPDATE SET visible=TRUE
         """)
-        self.connection.execute(metrics_query, {'metric': self.name, 
-                                                'hybrid': hybrid, 
+        self.connection.execute(metrics_query, {'metric': self.name,
+                                                'hybrid': hybrid,
                                                 'description': self.description,
                                                 'category': self.category})
 
@@ -32,7 +33,7 @@ class Metric(object):
         metrics_query = text("""
             DELETE FROM similarity_metrics
                   WHERE metric = %s
-        """  % self.name)
+        """ % self.name)
         self.connection.execute(metrics_query)
 
         # # This can be removed if not using postgres similarity solution
@@ -45,8 +46,8 @@ class Metric(object):
 class BaseMetric(Metric):
     def create(self, clear=False):
         query = text("""
-            ALTER TABLE similarity 
-             ADD COLUMN 
+            ALTER TABLE similarity
+             ADD COLUMN
           IF NOT EXISTS %s DOUBLE PRECISION[]
         """ % self.name)
         self.connection.execute(query)
@@ -89,7 +90,8 @@ class HybridMetric(Metric):
 
     def create(self):
         if not self.category or not self.description:
-            raise ValueError('Category and description are required for creating new hybrid metric')
+            raise ValueError('Category and description are \
+                required for creating new hybrid metric')
         column = self.get_pseudo_column(self.name)
         self._create(hybrid=True, column=column)
 
@@ -98,4 +100,4 @@ class HybridMetric(Metric):
         metrics = metric.split('_')
         if len(metrics) > 1:
             return ' || '.join(metrics)
-        return metric 
+        return metric

@@ -24,7 +24,7 @@ def get_all_metrics():
 
         return metrics
 
-
+# Postgres method
 def get_similar_recordings(mbid, metric, limit=QUERY_RESULT_SIZE):
     with db.engine.begin() as connection:
         # check both existence and if it is hybrid
@@ -41,7 +41,7 @@ def get_similar_recordings(mbid, metric, limit=QUERY_RESULT_SIZE):
         # actual query
         result = connection.execute("""
             SELECT 
-              gid
+              gid, submission_offset
             FROM lowlevel
             JOIN similarity ON lowlevel.id = similarity.id
             WHERE gid != '%(gid)s'
@@ -53,20 +53,9 @@ def get_similar_recordings(mbid, metric, limit=QUERY_RESULT_SIZE):
                 LIMIT 1
               )) 
             LIMIT %(max)s
-        """ % {'metric': metric, 'gid': mbid, 'max': limit * QUERY_PADDING_FACTOR})
-        rows = result.fetchall()
-        rows = zip(*rows)
-        return list(np.unique(rows)[:limit]), category, description
+        """ % {'metric': metric, 'gid': mbid, 'max': limit})
+        recordings = []
+        for row in result.fetchall():
+            recordings.append((row["gid"], row["submission_offset"]))
 
-
-def add_evaluation(user_id, query_mbid, result_mbids, metric, rating, suggestion='NULL'):
-    result_mbids_str = 'NULL' if result_mbids is None else 'ARRAY' + str(result_mbids)
-    user_id = user_id or 'NULL'
-
-    with db.engine.begin() as connection:
-        connection.execute("""
-            INSERT INTO similarity_eval (user_id, query_mbid, result_mbids, metric, rating, suggestion) 
-            VALUES (%(user)s, '%(query_mbid)s', %(result_mbids)s, '%(metric)s', %(rating)s, %(suggestion)s)
-        """ % {'user': user_id, 'query_mbid': query_mbid, 'result_mbids': result_mbids_str, 'metric': metric,
-               'rating': rating, 'suggestion': suggestion})
-
+        return recordings, category, description

@@ -160,6 +160,14 @@ CREATE TABLE similarity (
   id INTEGER -- PK, FK to lowlevel
 );
 
+CREATE TABLE similarity_metrics (
+  metric TEXT, -- PK
+  is_hybrid BOOLEAN,
+  description TEXT,
+  category TEXT,
+  visible BOOLEAN
+);
+
 CREATE TABLE similarity_stats (
   metric TEXT,
   means DOUBLE PRECISION[],

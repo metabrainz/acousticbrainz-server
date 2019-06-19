@@ -1,5 +1,7 @@
 import db
 from operations import HybridMetric
+from index_model import AnnoyModel
+
 import numpy as np
 from collections import defaultdict
 
@@ -47,6 +49,15 @@ def get_all_indices(n_trees=10):
         for metric in metrics: 
             indices[distance].append((metric, n_trees))
     return indices
+
+
+def load_index_model(metric, n_trees=10, distance_type="angular"):
+    with db.engine.connect() as connection:
+        try:
+            index = AnnoyModel(connection, metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
+            return index
+        except:
+            raise similarity.exceptions.IndexNotFoundException()
 
 
 # Postgres method

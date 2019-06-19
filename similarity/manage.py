@@ -188,9 +188,9 @@ def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
                 while not row["id"] == count:
                     # Rows are empty, add zero vector
                     placeholder = [0] * index.dimension
-                    index.add_recording(count, placeholder)
+                    index.add_recording_with_vector(count, placeholder)
                     count += 1
-                index.add_recording(row["id"], row[index.metric_name])
+                index.add_recording_with_vector(row["id"], row[index.metric_name])
                 count += 1
 
             offset += batch_size

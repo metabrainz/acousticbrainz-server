@@ -1,3 +1,6 @@
+from sqlalchemy import text
+
+
 class Metric(object):
     name = ''
     description = ''
@@ -8,35 +11,70 @@ class Metric(object):
 
     def _create(self, hybrid, column):
         hybrid = str(hybrid).upper()
-        self.connection.execute("INSERT INTO similarity_metrics (metric, is_hybrid, description, category, visible) "
-                                "VALUES ('%(metric)s', %(hybrid)s, '%(description)s', '%(category)s', TRUE) "
-                                "ON CONFLICT(metric) DO UPDATE SET visible=TRUE "
-                                % {'metric': self.name, 'hybrid': hybrid, 'description': self.description,
-                                   'category': self.category})
-        
-        # Only required for Postgres similarity indexing
-        # self.connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity "
-        #                         "USING gist(cube(%(column)s))" % {'metric': self.name, 'column': column})
+        metrics_query = text("""
+            INSERT INTO similarity_metrics (metric, is_hybrid, description, category, visible)
+                 VALUES (:metric, :hybrid, :description, :category, TRUE)
+            ON CONFLICT (metric)
+          DO UPDATE SET visible=TRUE
+        """)
+        self.connection.execute(metrics_query, {'metric': self.name,
+                                                'hybrid': hybrid,
+                                                'description': self.description,
+                                                'category': self.category})
+
+        # This can be removed if not using postgres similarity solution
+        # index_query = text("""
+        #     CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity
+        #      USING gist(cube(%(column)s))
+        # """ % {'metric': self.name, 'column': column})
+        # self.connection.execute(index_query)
 
     def delete(self):
-        self.connection.execute("DELETE FROM similarity_metrics WHERE metric='%s'" % self.name)
-        # Only required for Postgres similarity indexing
-        # self.connection.execute("DROP INDEX IF EXISTS %s_ndx_similarity" % self.name)
+        metrics_query = text("""
+            DELETE FROM similarity_metrics
+                  WHERE metric = %s
+        """ % self.name)
+        self.connection.execute(metrics_query)
+
+        # # This can be removed if not using postgres similarity solution
+        # index_query = text("""
+        #     DROP INDEX IF EXISTS %s_ndx_similarity
+        # """ % self.name)
+        # self.connection.execute(index_query)
 
 
 class BaseMetric(Metric):
     def create(self, clear=False):
-        self.connection.execute("ALTER TABLE similarity ADD COLUMN IF NOT EXISTS %s DOUBLE PRECISION[]" % self.name)
+        query = text("""
+            ALTER TABLE similarity
+             ADD COLUMN
+          IF NOT EXISTS %s DOUBLE PRECISION[]
+        """ % self.name)
+        self.connection.execute(query)
         self._create(hybrid=False, column=self.name)
         if clear:
-            self.connection.execute("UPDATE similarity SET %s = NULL" % self.name)
+            query = text("""
+                UPDATE similarity
+                   SET %(metric)s = NULL
+            """ % {"metric": self.name})
+            self.connection.execute(query)
 
     def delete(self, soft=False):
         if soft:
-            self.connection.execute("UPDATE similarity_metrics SET visible=FALSE WHERE metric='%s'" % self.name)
+            query = text("""
+                UPDATE similarity_metrics
+                   SET visible = FALSE
+                 WHERE metric = %s
+            """ % self.name)
+            self.connection.execute(query)
         else:
             super(BaseMetric, self).delete()
-            self.connection.execute("ALTER TABLE similarity DROP COLUMN IF EXISTS %s " % self.name)
+            query = text("""
+                ALTER TABLE similarity
+                DROP COLUMN
+                  IF EXISTS %s
+            """ % self.name)
+            self.connection.execute(query)
 
 
 class HybridMetric(Metric):

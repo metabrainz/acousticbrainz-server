@@ -245,7 +245,7 @@ def toggle_site_status():
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
 cli.add_command(similarity.manage.cli, name="similarity")
-cli.add_command(similarity.script.cli, name="script")
+cli.add_command(similarity.script.cli, name="similarity-script")
 
 if __name__ == '__main__':
     cli()

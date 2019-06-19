@@ -1,12 +1,10 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request, jsonify
-from flask_login import current_user
+from flask import Blueprint, render_template, redirect, url_for, request
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
 import db.data
 import db.exceptions
-import similarity.api
 
 import json
 import time
@@ -80,57 +78,6 @@ def view_high_level(mbid):
         raise NotFound
 
 
-def _get_extended_info(mbid):
-    info = _get_recording_info(mbid, None)
-    if not info:
-        raise NotFound('No info for the recording {}'.format(mbid))
-    info['mbid'] = mbid
-    info['youtube_query'] = _get_youtube_query(info)
-    return info
-
-
-@data_bp.route("/<uuid:mbid>/similar")
-def metrics(mbid):
-    ref_metadata = _get_extended_info(mbid)
-    metrics_map = similarity.api.get_all_metrics()
-    row_width = 12 / len(metrics_map)
-
-    return render_template(
-        'data/metrics.html',
-        ref_metadata=ref_metadata,
-        metrics=metrics_map,
-        col_width=row_width
-    )
-
-
-@data_bp.route("/<uuid:mbid>/similar/<string:metric>")
-def get_similar(mbid, metric):
-    try:
-        similar_recordings, category, description = similarity.api.get_similar_recordings(mbid, metric)
-    except db.exceptions.NoDataFoundException:
-        raise NotFound
-
-    ref_metadata = _get_extended_info(mbid)
-    metadata = [_get_extended_info(row) for row in similar_recordings]
-
-    return render_template(
-        "data/similar.html",
-        metric=metric,
-        ref_metadata=ref_metadata,
-        metadata=metadata,
-        category=category,
-        description=description
-    )
-
-
-@data_bp.route("/<uuid:mbid>/similar/<string:metric>/rate/<int:rating>", methods=['POST'])
-def rate_similar(mbid, metric, rating):
-    result_mbids = request.form.get('result') or similarity.api.get_similar_recordings(mbid, metric)[0]
-    user_id = current_user.id if current_user.is_authenticated else None
-    similarity.api.add_evaluation(user_id, mbid, result_mbids, metric, rating)
-    return jsonify({'success': True}), 200
-
-
 @data_bp.route("/<uuid:mbid>")
 def summary(mbid):
     offset = request.args.get("n")
@@ -179,7 +126,6 @@ def summary(mbid):
             """MusicBrainz does not have data for this track. 
                 If the recording has been recently added to MusicBrainz, 
                 we might not have heard of it yet.""")
-
 
 
 def _get_youtube_query(metadata):

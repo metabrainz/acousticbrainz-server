@@ -18,6 +18,9 @@ import db.exceptions
 import db.stats
 import db.user
 import webserver
+import similarity.manage
+import similarity.script
+
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -241,6 +244,8 @@ def toggle_site_status():
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
+cli.add_command(similarity.manage.cli, name="similarity")
+cli.add_command(similarity.script.cli, name="script")
 
 if __name__ == '__main__':
     cli()

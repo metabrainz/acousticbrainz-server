@@ -13,12 +13,12 @@ class Metric(object):
                                 "ON CONFLICT(metric) DO UPDATE SET visible=TRUE "
                                 % {'metric': self.name, 'hybrid': hybrid, 'description': self.description,
                                    'category': self.category})
-        self.connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity "
-                                "USING gist(cube(%(column)s))" % {'metric': self.name, 'column': column})
+        # self.connection.execute("CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity "
+        #                         "USING gist(cube(%(column)s))" % {'metric': self.name, 'column': column})
 
     def delete(self):
         self.connection.execute("DELETE FROM similarity_metrics WHERE metric='%s'" % self.name)
-        self.connection.execute("DROP INDEX IF EXISTS %s_ndx_similarity" % self.name)
+        # self.connection.execute("DROP INDEX IF EXISTS %s_ndx_similarity" % self.name)
 
 
 class BaseMetric(Metric):

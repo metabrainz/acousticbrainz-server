@@ -119,6 +119,10 @@ ALTER TABLE similarity
   ADD CONSTRAINT similarity_fk_lowlevel
   FOREIGN KEY (id)
   REFERENCES lowlevel (id);
-
+  
+ALTER TABLE similarity_stats
+  ADD CONSTRAINT similarity_stats_fk_metric
+  FOREIGN KEY (metric)
+  REFERENCES similarity_metrics (metric);
 
 COMMIT;

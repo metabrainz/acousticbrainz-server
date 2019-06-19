@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE EXTENSION IF NOT EXISTS "cube";
+-- CREATE EXTENSION IF NOT EXISTS "cube"; -- Only required for postgres similarity
 
 CREATE TABLE similarity (
   id INTEGER -- PK, FK to lowlevel

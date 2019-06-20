@@ -243,7 +243,7 @@ def toggle_site_status():
 @cli.group()
 @click.pass_context
 def highlevel(ctx):
-    """Stuff"""
+    """Analyse highlevel results"""
     pass
 
 

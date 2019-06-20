@@ -12,6 +12,7 @@ from flask.cli import FlaskGroup
 from shutil import copyfile
 
 import db
+import db.data
 import db.dump
 import db.dump_manage
 import db.exceptions
@@ -239,7 +240,48 @@ def toggle_site_status():
         print('Done!')
 
 
-# Please keep additional sets of commands down there
+@cli.group()
+@click.pass_context
+def highlevel(ctx):
+    """Analyse highlevel results"""
+    pass
+
+
+@highlevel.command(name="list_failed_rows")
+@click.option("--verbose", "-v", is_flag=True, help="Lists failed highlevel rows.")
+def list_failed_rows(verbose):
+    """ Displays the number of rows which do not contain highlevel metadata
+
+    When run with -v, also output rowid, mbid, submission offset of each failed submission
+    """
+
+    try:
+        rows = db.data.get_failed_highlevel_submissions()
+        num_failed_rows = len(rows)
+        click.echo("Number of highlevel rows that failed processing: %s" % num_failed_rows)
+        if verbose:
+            click.echo("rowid,mbid,submission_offset")
+            for row in rows:
+                click.echo("%s,%s,%s" % (row["id"], row["gid"], row["submission_offset"]))
+
+    except db.exceptions.DatabaseException as e:
+        click.echo("Error: %s" % e, err=True)
+        sys.exit(1)
+
+
+@highlevel.command(name="remove_failed_rows")
+def remove_failed_rows():
+    """ Deletes highlevel rows which do not have highlevel metadata"""
+    try:
+        click.echo("removing failed highlevel rows...")
+        db.data.remove_failed_highlevel_submissions()
+        click.echo("done")
+    except db.exceptions.DatabaseException as e:
+        click.echo("Error: %s" % e, err=True)
+        sys.exit(1)
+
+
+# Keep additional sets of commands down here
 cli.add_command(db.dump_manage.cli, name="dump")
 
 if __name__ == '__main__':

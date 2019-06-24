@@ -32,3 +32,19 @@ class AnnoyModel(object):
         self.in_loaded_state = False
         if load_existing:
             self.load()
+
+    def get_vector_dimension(self):
+        """
+        Get dimension of metric vectors. If there is no metric of this type
+        already created then we need to raise an error.
+        """
+        result = self.connection.execute("""
+            SELECT *
+              FROM similarity
+             LIMIT 1
+        """)
+        try:
+            dimension = len(result.fetchone()[self.metric_name])
+            return dimension
+        except ValueError:
+            raise similarity.exceptions.IndexNotFoundException("No existing metric named \"{}\"".format(self.metric_name))

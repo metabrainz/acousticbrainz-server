@@ -381,15 +381,17 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {"message": "Missing `features` parameter"}
         self.assertEqual(expected_result, resp.json)
 
+    # Once PR #349 adds conversion to lowercase in _parse_bulk_params, this skip should be removed
+    @unittest.skip('Conversion to lowercase in _parse_bulk_params not yet added via PR #349.')
     @mock.patch('db.data.load_many_select_features')
     def test_get_bulk_select_features(self, load_many_select_features):
         """Check that many items are returned, including two offsets of the
-        same MBID. 
+        same MBID.
 
-        If metadata.audio_properties and metadata.version are not requested, 
-        they are still included. 
-        
-        Duplicate features and (MBID, offset) combinations are removed.""" 
+        If metadata.audio_properties and metadata.version are not requested,
+        they are still included.
+
+        Duplicate features and (MBID, offset) combinations are removed."""
 
         recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:0;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
         features = "lowlevel.average_loudness;rhythm.onset_rate;lowlevel.average_loudness"

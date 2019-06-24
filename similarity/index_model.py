@@ -83,3 +83,55 @@ class AnnoyModel(object):
         # Need to add specific exception here.
         except:
             raise similarity.exceptions.IndexNotFoundException
+
+    def add_recording_by_mbid(self, mbid, offset):
+        """Add a single recording specified by (mbid, offset) to the index.
+        Note that when adding a single recording, space is allocated for
+        the lowlevel.id + 1 items.
+        """
+        if self.in_loaded_state:
+            raise similarity.exceptions.CannotAddItemException
+
+        query = text("""
+            SELECT *
+              FROM similarity
+             WHERE id = (
+                SELECT id
+                  FROM lowlevel
+                 WHERE gid = :mbid
+                   AND submission_offset = :offset )
+        """)
+        result = self.connection.execute(query, { "mbid": mbid, "submission_offset": offset})
+        row = result.fetchone()
+        if row:
+            recording_vector = row[self.metric_name]
+            id = row['id']
+            if not self.index.get_item_vector(id):
+                self.index.add_item(id, recording_vector)
+
+
+    def add_recording_by_id(self, id):
+        """Add a single recording specified by its lowlevel.id to the index.
+        Note that when adding a single recording, space is allocated for
+        lowlevel.id + 1 items.
+        """
+        if self.in_loaded_state:
+            raise similarity.exceptions.CannotAddItemException
+
+        query = text("""
+            SELECT *
+              FROM similarity
+             WHERE id = :id
+        """)
+        result = self.connection.execute(query, {"id": id})
+        if not result.rowcount:
+            raise similarity.exceptions.ItemNotFoundException
+        row = result.fetchone()
+        if not self.index.get_item_vector(id):
+            self.index.add_item(row[id], row[self.metric_name])
+
+    def add_recording_with_vector(self, id, vector):
+        if self.in_loaded_state:
+            raise similarity.exceptions.CannotAddItemException
+        if not self.index.get_item_vector(id):
+            self.index.add_item(id, vector)

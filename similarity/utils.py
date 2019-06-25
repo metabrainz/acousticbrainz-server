@@ -70,6 +70,14 @@ def load_index_model(metric, n_trees=10, distance_type="angular"):
         return index
 
 
+def remove_index(metric, n_trees=10, distance_type="angular"):
+    file_path = os.path.join(os.getcwd(), 'annoy_indices')
+    name = '_'.join([metric, distance_type, str(n_trees)]) + '.ann'
+    full_path = os.path.join(file_path, name)
+    if os.path.exists(full_path):
+        os.remove(full_path)
+
+
 # Postgres method
 def get_similar_recordings(mbid, metric, limit=QUERY_RESULT_SIZE):
     with db.engine.begin() as connection:

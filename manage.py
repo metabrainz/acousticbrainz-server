@@ -20,6 +20,7 @@ import db.submission_stats
 import db.user
 import webserver
 import similarity.manage
+import similarity.script
 
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
@@ -290,6 +291,7 @@ def remove_failed_rows():
 # Keep additional sets of commands down here
 cli.add_command(db.dump_manage.cli, name="dump")
 cli.add_command(similarity.manage.cli, name="similarity")
+cli.add_command(similarity.script.cli, name="similarity-script")
 
 if __name__ == '__main__':
     cli()

@@ -163,6 +163,7 @@ def get_many_similar_recordings(metric):
 
     similar_recordings = index.get_bulk_nns_by_mbid(recordings, n_neighbours)
     return jsonify(similar_recordings)
+<<<<<<< HEAD
 
 
 def check_bad_request_between_recordings():
@@ -189,12 +190,15 @@ def check_bad_request_between_recordings():
     recordings = _parse_bulk_params(recording_ids)
     if not len(recordings) == 2:
         raise webserver.views.api.exceptions.APIBadRequest("Does not contain 2 recordings in the request")
+=======
+>>>>>>> Add bulk get functionality to index model
 
     return recordings
 
 
 @bp_similarity.route("/<metric>/between", methods=["GET"])
 @crossdomain()
+<<<<<<< HEAD
 def get_similarity_between(metric):
     """Get the distance measure for similarity between two MBIDs.
     The distance measure will correspond to the index of the
@@ -242,3 +246,7 @@ def get_similarity_between(metric):
         return jsonify({metric: distance})
     except (NoDataFoundException, ItemNotFoundException):
         return jsonify({})
+=======
+def get_similarity_between(mbid_one, mbid_two):
+    pass
+>>>>>>> Add bulk get functionality to index model

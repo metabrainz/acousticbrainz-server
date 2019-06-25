@@ -109,7 +109,6 @@ class AnnoyModel(object):
             if not self.index.get_item_vector(id):
                 self.index.add_item(id, recording_vector)
 
-
     def add_recording_by_id(self, id):
         """Add a single recording specified by its lowlevel.id to the index.
         Note that when adding a single recording, space is allocated for

@@ -200,3 +200,26 @@ def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
         click.echo("Saving index...")
         index.save()
         click.echo("Done!")
+
+
+@cli.command(name='add-indices')
+@click.option("--n-trees", "-n", type=int)
+@click.option("--distance-type", "-d")
+def add_indices(n_trees=10, distance_type='angular'):
+    metrics = ["mfccs",
+               "mfccsw",
+               "gfccs",
+               "gfccsw",
+               "key",
+               "bpm",
+               "onsetrate",
+               "moods",
+               "instruments",
+               "dortmund",
+               "rosamerica",
+               "tzanetakis"]
+
+    for metric in metrics:
+        click.echo("Adding index: {}".format(metric))
+        add_index(metric, batch_size=None, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Finished.")

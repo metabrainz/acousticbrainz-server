@@ -80,8 +80,7 @@ class AnnoyModel(object):
         try:
             self.index.load(full_path)
             self.in_loaded_state = True
-        # Need to add specific exception here.
-        except:
+        except FileNotFoundError:
             raise similarity.exceptions.IndexNotFoundException
 
     def add_recording_by_mbid(self, mbid, offset):
@@ -134,3 +133,61 @@ class AnnoyModel(object):
             raise similarity.exceptions.CannotAddItemException
         if not self.index.get_item_vector(id):
             self.index.add_item(id, vector)
+
+    def get_nns_by_id(self, id, num_neighbours, return_ids=False):
+        """Get the most similar recordings for a recording with the
+           specified id.
+
+        Args:
+            id: non-negative integer lowlevel.id for a recording.
+
+            num_neighbours: positive integer, number of similar recordings
+            to be returned in the query.
+
+            return_ids: boolean, determines whether (mbid, offset), or lowlevel.id
+            is returned for each similar recording.
+
+        Returns:
+            If return_ids = True: A list of lowlevel.ids [id1, ..., idn]
+            If return_ids = False: A list of tuples [(mbid1, offset), ..., (mbidn, offset)]
+        """
+        try:
+            ids = self.index.get_nns_by_item(id, num_neighbours)
+        except IndexError:
+            raise similarity.exceptions.ItemNotFoundException
+        if return_ids:
+            # Return only ids
+            return ids
+        else:
+            # Get corresponding (mbid, offset) for the most similar ids
+            query = text("""
+                SELECT id
+                     , gid
+                     , submission_offset
+                  FROM lowlevel
+                 WHERE id IN :ids
+            """)
+            result = self.connection.execute(query, {"ids": tuple(ids)})
+
+            recordings = []
+            for row in result.fetchall():
+                recordings.append((row["gid"], row["submission_offset"]))
+
+            return recordings
+
+    def get_nns_by_mbid(self, mbid, offset, num_neighbours, return_ids=False):
+        # Find corresponding lowlevel.id to (mbid, offset) combination,
+        # then call get_nns_by_id
+        mbid = mbid.lower()
+        query = text("""
+            SELECT id
+              FROM lowlevel
+             WHERE gid = :mbid
+               AND submission_offset = :offset
+        """)
+        result = self.connection.execute(query, {"mbid": mbid, "offset": offset})
+        if not result.rowcount:
+            print("That (mbid, offset) combination does not exist")
+        else:
+            id = result.fetchone()[0]
+            return self.get_nns_by_id(id, num_neighbours, return_ids)

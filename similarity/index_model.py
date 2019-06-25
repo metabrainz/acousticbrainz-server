@@ -5,6 +5,7 @@ import similarity.exceptions
 
 from annoy import AnnoyIndex
 from sqlalchemy import text
+from collections import defaultdict
 
 
 class AnnoyModel(object):
@@ -253,7 +254,15 @@ class AnnoyModel(object):
                           }
                 }
         """
+        recordings_info = defaultdict(dict)
         for mbid, offset in recordings:
+            try:
+                similar_recordings = self.get_nns_by_mbid(id, num_neighbours, return_ids)
+                recordings_info[mbid][offset] = similar_recordings
+            except similarity.exceptions.ItemNotFoundException:
+                continue
+
+        return recordings_info
 
 
 """

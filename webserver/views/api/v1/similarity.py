@@ -163,50 +163,11 @@ def get_many_similar_recordings():
     except IndexNotFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
 
-    for mbid, offset in recordings:
-        try:
-            similar_recordings = index.get_nns_by_mbid(mbid, offset, n_neighbours)
-            return jsonify(similar_recordings)
-        except ItemNotFoundException:
-            raise webserver.views.api.exceptions.APIBadRequest("The item of interest is not indexed.")
+    similar_recordings = index.get_bulk_nns_by_mbid(recordings, n_neighbours)
+    return jsonify(similar_recordings)
 
 
 @bp_similarity.route("/<uuid(strict=False):mbid>/<uuid(strict=False):mbid>/similarity", methods=["GET"])
 @crossdomain()
 def get_similarity_between(mbid_one, mbid_two):
-    """Get the most similar submissions to an MBID.
-    If there are many submissions for an MBID, one can be specified
-    with an offset parameter ``n``. Documents are sorted by their
-    submission time.
-    You can the get total number of low-level submissions using the ``/<mbid>/count``
-    endpoint.
-    **Example response**:
-    .. sourcecode:: json
-        {"mbid": {"offset": [(most_similar_mbid, offset),
-                                ...,
-                            (least_similar_mbid, offset)]
-                 }
-        }
-    :query n: *Optional.* Integer specifying an offset for a document.
-        The first submission has offset n=0. If not specified, this
-        submission will be used as the default value.
-    **NOTE** This parameter will currently default to angular. We need to decide with evaluation which distance measure is most appropriate.
-    :query distance_type: *Optional.* String determining the distance
-        formula that an index will use when computing similarity.
-        Default is angular.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
-    :query n_trees: *Optional.* Integer determines the number of trees
-        in the index that is used to compute similarity.
-        Default is 10 trees.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
-    :query n_neighbours *Optional.* Integer determines the number of
-        similar recordings that should be returned.
-        Default is 200 recordings.
-    :query metric: *Required.* String specifying the metric name to be
-        used when finding the most similar recordings.
-        The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRICS`.
-    :resheader Content-Type: *application/json*
-    """
     pass

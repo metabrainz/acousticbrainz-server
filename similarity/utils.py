@@ -76,7 +76,7 @@ def load_index_model(metric, n_trees=10, distance_type="angular"):
 
 def remove_index(metric, n_trees=10, distance_type="angular"):
     file_path = os.path.join(os.getcwd(), 'annoy_indices')
-    name = '_'.join([metric, n_trees, distance_type]) + '.ann'
+    name = '_'.join([metric, distance_type, str(n_trees)]) + '.ann'
     full_path = os.path.join(file_path, name)
     if os.path.exists(full_path):
         os.remove(full_path)

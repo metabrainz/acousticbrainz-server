@@ -8,6 +8,7 @@ from sqlalchemy import text
 from collections import defaultdict
 
 
+
 class AnnoyModel(object):
     def __init__(self, connection, metric_name, n_trees=10, distance_type='angular', load_existing=False):
         """

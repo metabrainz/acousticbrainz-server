@@ -231,6 +231,50 @@ class AnnoyModel(object):
         except IndexError:
             return None
 
+    def get_bulk_nns_by_mbid(self, recordings, num_neighbours, return_ids=False):
+        """Get most similar recordings for each (MBID, offset) tuple provided.
+        Similar recordings list returned is ordered with the most similar at
+        index 0.
+
+        Arguments:
+            recordings: a list of tuples of form (MBID, offset), for which
+            similar recordings will be found
+
+            num_neighbours: an integer, the number of similar recordings desired
+            for each recording specified.
+
+            return_ids: boolean, determines whether lowlevel.id or (MBID, offset)
+            should be returned for similar recordings.
+
+        Returns:
+            if return_ids = True, a list of similar lowlevel.ids:
+
+                {"mbid1": {"offset1": [similar_lowlevel.ids],
+                           ...,
+                           "offsetn": [similar_lowlevel.ids]
+                          },
+                 ...,
+                 "mbidn": {"offset1": [similar_lowlevel.ids],
+                           ...,
+                           "offsetn": [similar_lowlevel.ids]
+                          }
+                }
+
+            if return_ids = False, a list of (MBID, offset) tuples:
+
+                {"mbid1": {"offset1": [(MBID, offset), ..., (MBID, offset)],
+                           ...,
+                           "offsetn": [(MBID, offset), ..., (MBID, offset)]
+                          },
+                 ...,
+                 "mbidn": {"offset1": [(MBID, offset), ..., (MBID, offset)],
+                           ...,
+                           "offsetn": [(MBID, offset), ..., (MBID, offset)]
+                          }
+                }
+        """
+        for mbid, offset in recordings:
+
 
 """
 A dictionary to track the base indices that should be built.

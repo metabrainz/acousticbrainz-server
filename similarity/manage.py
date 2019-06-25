@@ -6,6 +6,7 @@ import webserver
 import metrics
 from operations import HybridMetric
 from index_model import AnnoyModel
+import similarity.utils
 import db
 import db.similarity
 
@@ -133,8 +134,8 @@ def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
 
 
 @cli.command(name='add-indices')
-@click.option("--n-trees", "-n", type=int)
-@click.option("--distance-type", "-d")
+@click.option("--n-trees", "-n", default=10, type=int)
+@click.option("--distance-type", "-d", default='angular')
 def add_indices(n_trees=10, distance_type='angular'):
     metrics = ["mfccs",
                "mfccsw",
@@ -153,3 +154,11 @@ def add_indices(n_trees=10, distance_type='angular'):
         click.echo("Adding index: {}".format(metric))
         add_index(metric, batch_size=None, n_trees=n_trees, distance_type=distance_type)
     click.echo("Finished.")
+
+
+@cli.command(name='remove-index')
+@click.argument("metric")
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building")
+@click.option("--distance_type", "-d", default='angular', help="Number of trees for building")
+def remove_index(metric, n_trees=10, distance_type='angular'):
+    similarity.utils.remove_index(metric, n_trees, distance_type)

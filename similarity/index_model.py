@@ -1,9 +1,11 @@
 import os
 
+from similarity.metrics import BASE_METRICS
 import similarity.exceptions
 
 from annoy import AnnoyIndex
 from sqlalchemy import text
+
 
 class AnnoyModel(object):
     def __init__(self, connection, metric_name, n_trees=10, distance_type='angular', load_existing=False):
@@ -21,9 +23,22 @@ class AnnoyModel(object):
               called upon initialization.
         """
         self.connection = connection
-        self.metric_name = metric_name
-        self.n_trees = n_trees
-        self.distance_type = distance_type
+        # Check params
+        if metric_name in BASE_INDICES:
+            self.metric_name = metric_name
+        else:
+            raise similarity.exceptions.IndexNotFoundException('Index for specified metric is not possible.')
+
+        if distance_type in BASE_INDICES[self.metric_name]:
+            self.distance_type = distance_type
+        else:
+            raise similarity.exceptions.IndexNotFoundException('Index for specified distance_type is not possible.')
+
+        if n_trees in BASE_INDICES[self.metric_name][self.distance_type]:
+            self.n_trees = n_trees
+        else:
+            raise similarity.exceptions.IndexNotFoundException('Index for specified number of trees is not possible.')
+
         self.dimension = self.get_vector_dimension()
         self.index = AnnoyIndex(self.dimension, metric=self.distance_type)
 
@@ -55,7 +70,7 @@ class AnnoyModel(object):
 
     def save(self, location=os.path.join(os.getcwd(), 'annoy_indices'), name=None):
         # Save and load the index using the metric name.
-        try: 
+        try:
             os.makedirs(location)
         except OSError:
             if not os.path.isdir(location):
@@ -131,7 +146,11 @@ class AnnoyModel(object):
     def add_recording_with_vector(self, id, vector):
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException
-        if not self.index.get_item_vector(id):
+        # If an item already exists, this should not error
+        # and we should not add the item.
+        try:
+            self.index.get_item_vector(id)
+        except IndexError:
             self.index.add_item(id, vector)
 
     def get_nns_by_id(self, id, num_neighbours, return_ids=False):
@@ -187,7 +206,30 @@ class AnnoyModel(object):
         """)
         result = self.connection.execute(query, {"mbid": mbid, "offset": offset})
         if not result.rowcount:
-            print("That (mbid, offset) combination does not exist")
+            raise similarity.exceptions.ItemNotFoundException('That (mbid, offset) combination does not exist')
         else:
             id = result.fetchone()[0]
             return self.get_nns_by_id(id, num_neighbours, return_ids)
+
+
+"""
+A dictionary to track the base indices that should be built.
+Naming convention for a saved index is "<metric_name>_<distance_type>_<n_trees>.ann"
+e.g. "mfccs_angular_10.ann"
+Format of BASE_INDICES dictionary:
+{"metric_name": {"distance_type": [n_trees, ..., n_trees]}
+"""
+BASE_INDICES = {
+    "mfccs": {"angular": [10]},
+    "mfccsw": {"angular": [10]},
+    "gfccs": {"angular": [10]},
+    "gfccsw": {"angular": [10]},
+    "key": {"angular": [10]},
+    "bpm": {"angular": [10]},
+    "onsetrate": {"angular": [10]},
+    "moods": {"angular": [10]},
+    "instruments": {"angular": [10]},
+    "dortmund": {"angular": [10]},
+    "rosamerica": {"angular": [10]},
+    "tzanetakis": {"angular": [10]}
+}

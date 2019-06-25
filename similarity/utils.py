@@ -1,3 +1,5 @@
+import os
+
 import db
 from operations import HybridMetric
 from index_model import AnnoyModel
@@ -72,6 +74,16 @@ def load_index_model(metric, n_trees=10, distance_type="angular"):
     with db.engine.connect() as connection:
         index = AnnoyModel(connection, metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
         return index
+
+
+def remove_index(metric, n_trees=10, distance_type="angular"):
+    file_path = os.path.join(os.getcwd(), 'annoy_indices')
+    name = '_'.join([metric, n_trees, distance_type]) + '.ann'
+    full_path = os.path.join(file_path, name)
+    if os.path.exists(full_path):
+        os.remove(full_path)
+
+
 
 
 # Postgres method

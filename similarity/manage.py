@@ -77,15 +77,16 @@ def delete_hybrid(name):
         metric.delete()
 
 
-# @cli.command(name='add-index')
-# @click.argument("metric")
-# @click.option("--batch_size", "-b", type=int, help="Size of batches")
-# @click.option("--n_trees", "-n", type=int, help="Number of trees for building")
+@cli.command(name='add-index')
+@click.argument("metric")
+@click.option("--batch_size", "-b", type=int, default=None, help="Size of batches")
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building")
+@click.option("--distance_type", "-d", default='angular', help="Number of trees for building")
 def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
     """Creates an annoy index for the specified metric, adds all items to the index."""
     with db.engine.connect() as connection:
         click.echo("Initializing index...")
-        index = AnnoyModel(connection, metric, n_trees, distance_type)
+        index = AnnoyModel(connection, metric, n_trees=n_trees, distance_type=distance_type)
 
         batch_size = batch_size or PROCESS_BATCH_SIZE
         offset = 0

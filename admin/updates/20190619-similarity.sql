@@ -1,9 +1,19 @@
 BEGIN;
 
--- CREATE EXTENSION IF NOT EXISTS "cube"; -- Only required for postgres similarity
-
 CREATE TABLE similarity (
-  id INTEGER -- PK, FK to lowlevel
+  id          INTEGER, -- PK, FK to lowlevel
+  mfccs       DOUBLE PRECISION[] NOT NULL,
+  mfccsw      DOUBLE PRECISION[] NOT NULL,
+  gfccs       DOUBLE PRECISION[] NOT NULL,
+  gfccsw      DOUBLE PRECISION[] NOT NULL,
+  key         DOUBLE PRECISION[] NOT NULL,
+  bpm         DOUBLE PRECISION[] NOT NULL,
+  onsetrate   DOUBLE PRECISION[] NOT NULL,
+  moods       DOUBLE PRECISION[] NOT NULL,
+  instruments DOUBLE PRECISION[] NOT NULL,
+  dortmund    DOUBLE PRECISION[] NOT NULL,
+  rosamerica  DOUBLE PRECISION[] NOT NULL,
+  tzanetakis  DOUBLE PRECISION[] NOT NULL
 );
 
 ALTER TABLE similarity ADD CONSTRAINT similarity_pkey PRIMARY KEY (id);

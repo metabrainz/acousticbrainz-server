@@ -22,25 +22,12 @@ class Metric(object):
                                                 'description': self.description,
                                                 'category': self.category})
 
-        # This can be removed if not using postgres similarity solution
-        # index_query = text("""
-        #     CREATE INDEX IF NOT EXISTS %(metric)s_ndx_similarity ON similarity
-        #      USING gist(cube(%(column)s))
-        # """ % {'metric': self.name, 'column': column})
-        # self.connection.execute(index_query)
-
     def delete(self):
         metrics_query = text("""
             DELETE FROM similarity_metrics
                   WHERE metric = %s
         """ % self.name)
         self.connection.execute(metrics_query)
-
-        # # This can be removed if not using postgres similarity solution
-        # index_query = text("""
-        #     DROP INDEX IF EXISTS %s_ndx_similarity
-        # """ % self.name)
-        # self.connection.execute(index_query)
 
 
 class BaseMetric(Metric):
@@ -83,7 +70,6 @@ class HybridMetric(Metric):
         self.name = name
         self.category = category
         self.description = description
-        self.index_name = 'hybrid_%s_ndx_similarity' % name
         self.pseudo_column = self.get_pseudo_column(name)
 
         # TODO: automatic inferring of category and description

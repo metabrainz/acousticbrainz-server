@@ -507,6 +507,103 @@ class DataDBTestCase(DatabaseTestCase):
         }
         self.assertEqual(expected, db.data.load_many_high_level(list(recordings)))
 
+    def test_get_lowlevel_metric_feature(self):
+        # If path and id exist, returns value of path in lowlevel_json.data
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        id = db.data.get_lowlevel_id(self.test_mbid)
+        path = "data->'lowlevel'->'mfcc'->'mean'"
+
+        expected_data = [
+            -809.079956055,
+            196.693603516,
+            14.5762844086,
+            6.08403015137,
+            0.968960940838,
+            -4.33947467804,
+            -6.33537626266,
+            -1.52541470528,
+            -1.90009725094,
+            -4.04138422012,
+            -9.53146743774,
+            -6.10197162628,
+            -1.44469249249
+        ]
+
+        self.assertEqual(expected_data, db.data.get_lowlevel_metric_feature(id, path))
+
+    def test_get_lowlevel_metric_feature_none(self):
+        # If id provided cannot be cast as an integer, BadDataException is raised
+        id = 'id_1'
+        path = "data->'lowlevel'->'mfcc'->'mean'"
+        with self.assertRaises(db.data.BadDataException):
+            db.data.get_lowlevel_metric_feature(id, path)
+
+        # If id does not exist as a lowlevel.id, return is None
+        id = 100000000
+        expected_data = None
+        self.assertEqual(expected_data, db.data.get_lowlevel_metric_feature(id, path))
+
+        # If data path provided does not exist, return is None
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        id = db.data.get_lowlevel_id(self.test_mbid)
+        path = "data->'lowlevel'->'mfcc'->'meen'"
+        self.assertEqual(expected_data, db.data.get_lowlevel_metric_feature(id, path))
+
+    def test_get_highlevel_models(self):
+        # Check that if highlevel data exists for id, highlevel models are returned.
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        ll_id1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+
+        db.data.add_model("model1", "v1", "show")
+        db.data.add_model("model2", "v1", "show")
+
+        build_sha = "sha"
+        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
+        hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
+               "metadata": {"meta": "here",
+                            "version": {"highlevel": ver}
+                            }
+               }
+
+        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+
+        expected_data = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '_highlevel_models.json')).read()
+        self.assertEqual(expected_data, db.data.get_highlevel_models(ll_id1))
+
+    def test_get_highlevel_models_none(self):
+        # If id provided cannot be cast as an integer, BadDataException is raised
+        id = 'id_1'
+        with self.assertRaises(db.data.BadDataException):
+            db.data.get_highlevel_models(id)
+        # If data does not exist for the id provided, None is returned
+        id = 10000000
+        self.assertEqual(None, db.data.get_highlevel_models(id))
+
+    def test_get_lowlevel_id(self):
+        # Check that if an (MBID, offset) combination doesn't exist,
+        # NoDataFoundException is raised
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.data.get_lowlevel_id(self.test_mbid, 0)
+
+        # Result is the same with uppercase and lowercase MBID.
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        self.assertEqual(db.data.get_lowlevel_id(self.test_mbid, 0), db.data.get_lowlevel_id(self.test_mbid.upper(), 0))
+
+
+    def test_count_all_lowlevel(self):
+        # Write lowlevel then check count
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        self.assertEqual(1, db.data.count_all_lowlevel())
+        # Submit exact same data, no change
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        self.assertEqual(1, db.data.count_all_lowlevel())
+
+        # make a copy of the data and change it
+        second_data = copy.deepcopy(self.test_lowlevel_data)
+        second_data["metadata"]["tags"]["album"] = ["Another album"]
+        db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
+        self.assertEqual(2, db.data.count_all_lowlevel())
+
     def test_count_lowlevel(self):
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(1, db.data.count_lowlevel(self.test_mbid))

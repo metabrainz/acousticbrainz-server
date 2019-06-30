@@ -29,7 +29,7 @@ def update_metric(metric, batch_size=None):
     """Recomputes and updates a single metric in the
     similarity table for all recordings."""
     click.echo("Computing metric {}".format(metric))
-    db.metric.update_metric(metric, batch_size=batch_size)
+    pass
     click.echo("Finished updating metric, exiting...")
 
 

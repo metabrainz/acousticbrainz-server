@@ -211,17 +211,3 @@ def remove_visibility(metric):
              WHERE metric = :metric
         """)
         connection.execute(query, {"metric": metric})
-
-
-
-
-
-
-
-
-
-
-
-
-
-

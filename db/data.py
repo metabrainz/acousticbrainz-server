@@ -520,6 +520,75 @@ def load_many_high_level(recordings):
         return dict(recordings_info)
 
 
+# I noticed that we usually only do things by (MBID, offset), not id - should this work match that pattern?
+def get_lowlevel_metric_feature(id, path):
+    # Get lowlevel data only for a specified path.
+    try:
+        id = int(id)
+    except ValueError:
+        raise db.exceptions.BadDataException("The parameter `id` must be an integer.")
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id, %(path)s AS data
+              FROM lowlevel_json
+             WHERE id = :id
+        """ % {"path": path})
+        result = connection.execute(query, {'id': id})
+        if not result.rowcount:
+            # No data for specified id
+            return None
+        row = result.fetchone()
+        return row["data"]
+
+
+def get_highlevel_models(id):
+    # Get highlevel model data for a specified id.
+    try:
+        id = int(id)
+    except ValueError:
+        raise db.exceptions.BadDataException("The parameter `id` must be an integer.")
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT highlevel, jsonb_object_agg(model, data) AS data
+              FROM highlevel_model
+             WHERE highlevel = :id
+          GROUP BY highlevel
+        """)
+        result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            return None
+        row = result.fetchone()
+        return row["data"]
+
+
+def get_lowlevel_id(mbid, offset):
+    # Get lowlevel.id for (MBID, offset)
+    mbid = str(mbid).lower()
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id
+            FROM lowlevel
+            WHERE gid = :mbid AND submission_offset = :offset
+        """)
+        result = connection.execute(query, {"mbid": mbid, "offset": offset})
+        if not result.rowcount:
+            raise NoDataFoundException('No data exists for the (MBID, offset) pair specified')
+        return result.fetchone()["id"]
+
+
+def count_all_lowlevel():
+    """Get total number of low-level submissions"""
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT COUNT(*)
+            FROM lowlevel
+        """)
+        result = connection.execute(query)
+        return result.fetchone()[0]
+
+
 def count_lowlevel(mbid):
     """Count number of stored low-level submissions for a specified MBID."""
     with db.engine.connect() as connection:

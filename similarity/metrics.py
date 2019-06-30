@@ -1,7 +1,8 @@
 import numpy as np
-from operations import BaseMetric
 
-from sqlalchemy import text
+import db.data
+import db.similarity_stats
+from operations import BaseMetric
 
 NORMALIZATION_SAMPLE_SIZE = 10000
 
@@ -10,14 +11,9 @@ class LowLevelMetric(BaseMetric):
     path = ''
     indices = None
 
-    def get_data_batch(self, ids):
-        query = text("""
-            SELECT id, %(path)s
-              FROM lowlevel_json
-             WHERE id IN :ids
-        """ % {"path": self.path})
-        result = self.connection.execute(query, {'ids': ids})
-        return result.fetchall()
+    def get_data(self, id):
+        data = db.data.get_lowlevel_metric_feature(id, self.path)
+        return data
 
     def length(self):
         return len(self.indices) if self.indices else 1
@@ -27,31 +23,12 @@ class NormalizedLowLevelMetric(LowLevelMetric):
     means = None
     stddevs = None
 
-    def _calculate_stats_for(self, path):
-        query = text("""
-            SELECT avg(x), stddev_pop(x)
-              FROM (
-            SELECT (%(path)s)::double precision AS x
-              FROM lowlevel_json
-             LIMIT :limit)
-                AS res
-        """ % {"path": path})
-        result = self.connection.execute(query, {'limit': NORMALIZATION_SAMPLE_SIZE})
-        return result.fetchone()
-
     def calculate_stats(self):
         # TODO: use same stats for weighted and normal metrics (e.g. mfccs and mfccsw)
-        query = text("""
-            SELECT means, stddevs
-              FROM similarity_stats
-             WHERE metric = :metric
-        """)
-        result = self.connection.execute(query, {"metric": self.name})
-        row = result.fetchone()
-
-        if row:
+        stats = db.stats.check_global_stats(self.name)
+        if stats:
             print('Global stats already calculated')
-            self.means, self.stddevs = row
+            self.means, self.stddevs = stats
             return
 
         print('Calculating global stats for {}'.format(self.name))
@@ -59,29 +36,19 @@ class NormalizedLowLevelMetric(LowLevelMetric):
         self.stddevs = []
 
         if self.indices is None:
-            self.means[0], self.stddevs[0] = self._calculate_stats_for(self.path)
+            self.means[0], self.stddevs[0] = db.stats.calculate_stats_for_feature(self.path)
         else:
             for i in self.indices:
                 print('Index {} (out of {})'.format(i, len(self.indices)))
-                mean, stddev = self._calculate_stats_for('{}->>{}'.format(self.path, i))
+                mean, stddev = db.stats.calculate_stats_for_feature('{}->>{}'.format(self.path, i))
                 self.means.append(mean)
                 self.stddevs.append(stddev)
 
-        query = text("""
-        INSERT INTO similarity_stats (metric, means, stddevs)
-             VALUES (%(metric)s, %(means)s, %(stddevs)s)
-        """ % {'metric': "'{}'".format(self.name),
-               'means': 'ARRAY' + str(self.means),
-               'stddevs': 'ARRAY' + str(self.stddevs)})
-        self.connection.execute(query)
+        db.stats.insert_similarity_stats(self.name, self.means, self.stddevs)
 
     def delete_stats(self):
         print('Deleting global stats')
-        query = text("""
-            DELETE FROM similarity_stats
-                  WHERE metric = :metric
-        """)
-        self.connection.execute(query, {"metric": self.name})
+        db.stats.delete_similarity_stats(self.name)
 
     def transform(self, data):
         if not data:
@@ -185,20 +152,9 @@ class OnsetRateMetric(LogCircularMetric):
 class HighLevelMetric(BaseMetric):
     category = 'high-level'
 
-    def get_data_batch(self, ids):
-        query = text("""
-            SELECT highlevel, jsonb_object_agg(model, data)
-              FROM highlevel_model
-             WHERE highlevel IN :ids
-          GROUP BY highlevel
-        """)
-        result = self.connection.execute(query, {"ids": ids})
-        rows = result.fetchall()
-        if len(rows) < len(ids):
-            existing_ids = [row[0] for row in rows]
-            for row_id in set(ids) - set(existing_ids):
-                rows.append((row_id, None))
-        return rows
+    def get_data(self, id):
+        data = db.data.get_highlevel_models(id)
+        return data
 
 
 class BinaryCollectiveMetric(HighLevelMetric):

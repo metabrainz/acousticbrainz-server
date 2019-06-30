@@ -1,4 +1,4 @@
-from sqlalchemy import text
+import db.similarity
 
 
 class Metric(object):
@@ -10,79 +10,21 @@ class Metric(object):
         self.connection = connection
 
     def _create(self, hybrid, column):
-        hybrid = str(hybrid).upper()
-        metrics_query = text("""
-            INSERT INTO similarity_metrics (metric, is_hybrid, description, category, visible)
-                 VALUES (:metric, :hybrid, :description, :category, TRUE)
-            ON CONFLICT (metric)
-          DO UPDATE SET visible=TRUE
-        """)
-        self.connection.execute(metrics_query, {'metric': self.name,
-                                                'hybrid': hybrid,
-                                                'description': self.description,
-                                                'category': self.category})
+        self.hybrid = str(hybrid).upper()
+        db.similarity.insert_similarity_meta(self.name, hybrid, self.description, self.category)
 
     def delete(self):
-        metrics_query = text("""
-            DELETE FROM similarity_metrics
-                  WHERE metric = %s
-        """ % self.name)
-        self.connection.execute(metrics_query)
+        db.similarity.delete_similarity_meta(self.name)
 
 
 class BaseMetric(Metric):
     def create(self, clear=False):
-        query = text("""
-            ALTER TABLE similarity
-             ADD COLUMN
-          IF NOT EXISTS %s DOUBLE PRECISION[]
-        """ % self.name)
-        self.connection.execute(query)
+        db.similarity.create_similarity_metric(self.name, clear)
         self._create(hybrid=False, column=self.name)
-        if clear:
-            query = text("""
-                UPDATE similarity
-                   SET %(metric)s = NULL
-            """ % {"metric": self.name})
-            self.connection.execute(query)
 
     def delete(self, soft=False):
         if soft:
-            query = text("""
-                UPDATE similarity_metrics
-                   SET visible = FALSE
-                 WHERE metric = %s
-            """ % self.name)
-            self.connection.execute(query)
+            db.similarity.remove_visibility(self.name)
         else:
             super(BaseMetric, self).delete()
-            query = text("""
-                ALTER TABLE similarity
-                DROP COLUMN
-                  IF EXISTS %s
-            """ % self.name)
-            self.connection.execute(query)
-
-
-class HybridMetric(Metric):
-    def __init__(self, connection, name, category=None, description=None):
-        super(HybridMetric, self).__init__(connection)
-        self.name = name
-        self.category = category
-        self.description = description
-        self.pseudo_column = self.get_pseudo_column(name)
-
-        # TODO: automatic inferring of category and description
-
-    def create(self):
-        if not self.category or not self.description:
-            raise ValueError('Category and description are required for creating new hybrid metric')
-        column = self.get_pseudo_column(self.name)
-        self._create(hybrid=True, column=column)
-
-    @staticmethod
-    def get_pseudo_column(metric):
-        metrics = metric.split('_')
-        if len(metrics) > 1:
-            return ' || '.join(metrics)
-        return metric
+            db.similarity.delete_similarity_metric(self.name)

@@ -127,6 +127,21 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(one, db.data.load_low_level(self.test_mbid, 0))
         self.assertEqual(two, db.data.load_low_level(self.test_mbid, 1))
 
+    def test_load_low_level_uuid_case(self):
+        """A query with an upper-case uuid will return the correct data"""
+        one = {"data": "one",
+               "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID)
+
+        self.assertEqual(one, db.data.load_low_level(self.test_mbid.upper()))
+
+        many_ll_expected = {
+            self.test_mbid: {'0': one}
+        }
+        recordings = [(self.test_mbid.upper(), 0)]
+
+        self.assertEqual(many_ll_expected, db.data.load_many_low_level(list(recordings)))
+
     def test_load_low_level_none(self):
         """If no lowlevel data is loaded, or offset is too high, an exception is raised"""
         with self.assertRaises(db.exceptions.NoDataFoundException):
@@ -321,6 +336,37 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(hl1_expected, db.data.load_high_level(self.test_mbid))
         self.assertEqual(hl2_expected, db.data.load_high_level(self.test_mbid, offset=1))
 
+    def test_load_high_level_uuid_case(self):
+        """A query with an upper-case uuid will return the correct data"""
+
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
+
+        db.data.add_model("model1", "v1", "show")
+
+        build_sha = "sha"
+        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
+        hl1 = {"highlevel": {"model1": {"x": "y"}},
+               "metadata": {"meta": "here",
+                            "version": {"highlevel": ver}
+                            }
+               }
+        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+
+        hl1_expected = copy.deepcopy(hl1)
+        hl1_expected["highlevel"]["model1"]["version"] = ver
+
+        # upper-case mbid returns correct value
+        self.assertEqual(hl1_expected, db.data.load_high_level(self.test_mbid.upper()))
+
+        # load_many
+        recordings = [(self.test_mbid.upper(), 0)]
+
+        # Second item skipped
+        # The hl are added in a different order to ll, but offset should return ll order
+        expected = {self.test_mbid: {'0': hl1_expected}}
+        self.assertDictEqual(expected, db.data.load_many_high_level(list(recordings)))
+
     def test_load_high_level_none(self):
         """If no highlevel data has been calculated, or offset is too high,
         an exception is raised"""
@@ -397,8 +443,8 @@ class DataDBTestCase(DatabaseTestCase):
 
     def test_load_many_high_level_skip(self):
         """If two ll items exist but hl fails for second, the second is skipped.
-           
-           If one submission hl fails to compute, hl for subsquent submission 
+
+           If one submission hl fails to compute, hl for subsquent submission
            is still retrievable.
         """
         second_data = copy.deepcopy(self.test_lowlevel_data)

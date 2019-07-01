@@ -424,7 +424,7 @@ def load_low_level(mbid, offset=0):
         NoDataFoundException: if this mbid doesn't exist or the offset is too high"""
 
     # in case it's a uuid
-    mbid = str(mbid)
+    mbid = str(mbid).lower()
     result = load_many_low_level([(mbid, offset)])
     if not result:
         raise db.exceptions.NoDataFoundException
@@ -434,10 +434,10 @@ def load_low_level(mbid, offset=0):
 
 def load_many_low_level(recordings):
     """Collect low-level JSON data for multiple recordings.
-    
+
     Args:
         recordings: A list of tuples (mbid, offset).
-    
+
     Returns:
         A dictionary of mbids containing a dictionary of offsets. If an (mbid, offset) doesn't exist
         in the database, it is ommitted from the returned data.
@@ -483,7 +483,7 @@ def load_high_level(mbid, offset=0):
     """
 
     # in case it's a uuid
-    mbid = str(mbid)
+    mbid = str(mbid).lower()
     result = load_many_high_level([(mbid, offset)])
     if not result:
         raise db.exceptions.NoDataFoundException

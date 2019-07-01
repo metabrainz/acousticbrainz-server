@@ -86,12 +86,14 @@ def get_high_level(mbid):
     endpoint.
 
     :query n: *Optional.* Integer specifying an offset for a document.
+    :query map_classes: *Optional.* If set to 'true', map class names to human-readable values
 
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
+    map_classes = _validate_map_classes(request.args.get("map_classes"))
     try:
-        return jsonify(db.data.load_high_level(str(mbid), offset))
+        return jsonify(db.data.load_high_level(str(mbid), offset, map_classes))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -115,6 +117,18 @@ def submit_low_level(mbid):
     except BadDataException as e:
         raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
+
+
+def _validate_map_classes(map_classes):
+    """Validate the map_classes parameter
+
+    Arguments:
+        map_classes (Optional[str]): the value of the query parameter
+
+    Returns:
+        (bool): True if the map_classes parameter is 'true', False otherwise"""
+
+    return map_classes is not None and map_classes.lower() == 'true'
 
 
 def _validate_offset(offset):
@@ -272,10 +286,13 @@ def get_many_highlevel():
 
       You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
 
+    :query map_classes: *Optional.* If set to 'true', map class names to human-readable values
+
     :resheader Content-Type: *application/json*
     """
+    map_classes = _validate_map_classes(request.args.get("map_classes"))
     recordings = check_bad_request_for_multiple_recordings()
-    recording_details = db.data.load_many_high_level(recordings)
+    recording_details = db.data.load_many_high_level(recordings, map_classes)
 
     return jsonify(recording_details)
 

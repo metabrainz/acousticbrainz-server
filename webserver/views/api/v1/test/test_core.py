@@ -124,19 +124,19 @@ class CoreViewsTestCase(ServerTestCase):
         hl.return_value = {}
         resp = self.client.get("/api/v1/%s/high-level" % self.uuid)
         self.assertEqual(200, resp.status_code)
-        hl.assert_called_with(self.uuid, 0)
+        hl.assert_called_with(self.uuid, 0, False)
 
         # upper-case
         resp = self.client.get("/api/v1/%s/high-level" % self.uuid.upper())
         self.assertEqual(200, resp.status_code)
-        hl.assert_called_with(self.uuid, 0)
+        hl.assert_called_with(self.uuid, 0, False)
 
     @mock.patch("db.data.load_high_level")
     def test_hl_numerical_offset(self, hl):
         hl.return_value = {}
         resp = self.client.get("/api/v1/%s/high-level?n=3" % self.uuid)
         self.assertEqual(200, resp.status_code)
-        hl.assert_called_with(self.uuid, 3)
+        hl.assert_called_with(self.uuid, 3, False)
 
     @mock.patch('db.data.load_many_low_level')
     def test_get_bulk_ll_no_param(self, load_many_low_level):
@@ -274,7 +274,31 @@ class CoreViewsTestCase(ServerTestCase):
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
                       ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
                       ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
-        load_many_high_level.assert_called_with(recordings)
+        load_many_high_level.assert_called_with(recordings, False)
+
+    @mock.patch('db.data.load_many_high_level')
+    def test_get_bulk_hl_map_classes(self, load_many_high_level):
+        # Check that many items are returned, including two offsets of the
+        # same mbid
+
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"
+
+        rec_c5 = {"recording": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"}
+
+        load_many_high_level.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+        }
+
+        resp = self.client.get('api/v1/high-level?map_classes=true&recording_ids=' + params)
+        self.assert200(resp)
+
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+        }
+        self.assertDictEqual(resp.json, expected_result)
+
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
+        load_many_high_level.assert_called_with(recordings, True)
 
         # upper-case
         params = "c5f4909e-1d7b-4f15-a6f6-1AF376BC01C9"
@@ -289,7 +313,7 @@ class CoreViewsTestCase(ServerTestCase):
         # to load_many_high_level is always lower-case regardless of what we pass in
         self.assertDictEqual(resp.json, expected_result)
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
-        load_many_high_level.assert_called_with(recordings)
+        load_many_high_level.assert_called_with(recordings, False)
 
     @mock.patch('db.data.load_many_high_level')
     def test_get_bulk_hl_absent_mbid(self, load_many_high_level):
@@ -318,9 +342,9 @@ class CoreViewsTestCase(ServerTestCase):
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
                       ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
-        load_many_high_level.assert_called_with(recordings)
+        load_many_high_level.assert_called_with(recordings, False)
 
-    def test_get_bulk_hl_more_than_200(self):
+    def test_get_bulk_hl_more_than_25(self):
         # Create many random uuids, because of parameter deduplication
         manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
@@ -381,7 +405,7 @@ class CoreViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertDictEqual(resp.json, expected_result)
 
-    def test_get_bulk_count_more_than_200(self):
+    def test_get_bulk_count_more_than_25(self):
         # Create many random uuids, because of parameter deduplication
         manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)

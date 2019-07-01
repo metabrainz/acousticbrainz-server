@@ -237,7 +237,6 @@ def toggle_site_status():
         print('Done!')
 
 
-<<<<<<< HEAD
 @cli.group()
 @click.pass_context
 def highlevel(ctx):

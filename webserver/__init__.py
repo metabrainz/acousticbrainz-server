@@ -7,8 +7,11 @@ from pprint import pprint
 
 import os
 import time
+import urlparse
 
 API_PREFIX = '/api/'
+PRODUCTION_BASE_URL = 'acousticbrainz.org'
+PRODUCTION_BASE_URL_HTTPS = 'https://acousticbrainz.org'
 
 
 # Check to see if we're running under a docker deployment. If so, don't second guess
@@ -130,6 +133,17 @@ def create_app(debug=None):
         # redirect them to agree to terms page.
         elif current_user.is_authenticated and current_user.gdpr_agreed is None:
             return redirect(url_for('index.gdpr_notice', next=request.full_path))
+
+    @app.before_request
+    def prod_https_login_redirect():
+        """ Redirect to HTTPS on the production login page
+        """
+        split_url = urlparse.urlsplit(request.url)
+        if split_url.scheme == 'http' \
+            and split_url.netloc == PRODUCTION_BASE_URL \
+            and split_url.path == url_for('login.index'):
+            redirect_url = urlparse.urljoin(PRODUCTION_BASE_URL_HTTPS, url_for('login.index', next=request.args.get('next')))
+            return redirect(redirect_url)
 
     return app
 

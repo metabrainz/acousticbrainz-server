@@ -28,4 +28,6 @@ DROP INDEX IF EXISTS collected_hour_ndx_statistics;
 -- now that the stats column is populated, set it not null
 ALTER TABLE statistics ALTER COLUMN stats SET NOT NULL;
 
+ALTER TABLE statistics ADD CONSTRAINT statistics_pkey PRIMARY KEY (collected);
+
 COMMIT;

@@ -20,7 +20,8 @@ class StatsTestCase(unittest.TestCase):
         expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
         self.assertEqual(next_day, expected)
 
-        date2 = datetime.datetime(2016, 1, 7, 13, 0, 0, tzinfo=pytz.utc)
+        # midnight on one day goes forward to midnight the next day
+        date2 = datetime.datetime(2016, 1, 7, 0, 0, 0, tzinfo=pytz.utc)
         next_day = db.stats._get_next_day(date2)
         expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
         self.assertEqual(next_day, expected)
@@ -88,6 +89,13 @@ class StatsTestCase(unittest.TestCase):
 
     @mock.patch("brainzutils.cache.get")
     def test_get_stats_from_cache(self, cacheget):
+
+        # magicmocks have all properties set to non-null, but timezone.localize
+        # in _get_stats_from_cache checks this field to see if it's naive or not.
+        # Explicitly set it to None so that 'localize' succeeds and the date is converted
+        mockdt = mock.MagicMock()
+        mockdt.tzinfo = None
+        cacheget.side_effect = [mock.MagicMock(), mockdt]
         db.stats._get_stats_from_cache()
         getcalls = [mock.call("recent-stats", namespace="statistics"),
                     mock.call("recent-stats-last-updated", namespace="statistics")]
@@ -202,6 +210,27 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
+    def test_write_stats_error(self):
+        """Test that we can generate highcharts format, even if some
+           data is missing for a date."""
+
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                  "lowlevel-lossless": 15, "lowlevel-lossless-unique": "not-a-number",
+                  "lowlevel-total": 25, "lowlevel-total-unique": 16}
+
+        with self.assertRaises(ValueError):
+            with db.engine.connect() as connection:
+                db.stats._write_stats(connection, date1, stats1)
+
+        stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
+                  "lowlevel-lossless": 20,  # missing lowlevel-lossless-unique
+                  "lowlevel-total": 35, "lowlevel-total-unique": 20}
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
+        with self.assertRaises(ValueError):
+            with db.engine.connect() as connection:
+                db.stats._write_stats(connection, date2, stats2)
+
     def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""
 
@@ -314,14 +343,13 @@ class StatsHighchartsTestCase(DatabaseTestCase):
         super(StatsHighchartsTestCase, self).setUp()
 
     def test_get_statistics_history(self):
-        """Test that we can generate highcharts format, even if some
-           data is missing for a date."""
+        """Test that we can generate highcharts format."""
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                   "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 25, "lowlevel-total-unique": 16}
         date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
-                  "lowlevel-lossless": 20,  # missing lowlevel-lossless-unique
+                  "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
         date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
@@ -337,23 +365,39 @@ class StatsHighchartsTestCase(DatabaseTestCase):
         # Example of date conversion
         self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
 
-    def test_stats_daily(self):
-        """Show stats computed for each day"""
+    @mock.patch("db.stats._get_stats_from_cache")
+    def test_stats_cache(self, get_stats_from_cache):
+        """If there are stats calculated and stored in the cache since the last time
+        they were added to the database, also include them"""
 
         stats = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                  "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                  "lowlevel-total": 25, "lowlevel-total-unique": 16}
         date = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
-        delta = datetime.timedelta(days=1)
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
-            # writing values for 5 consecutive days
-            for i in range(5):
-                db.stats._write_stats(connection, date, stats)
-                date += delta
+            db.stats._write_stats(connection, date, stats)
+            db.stats._write_stats(connection, date2, stats)
 
+        # No items returned from cache, don't add anything
+        get_stats_from_cache.return_value = (None, None)
         history = db.stats.get_statistics_history()
         # 6 data types
         self.assertEqual(len(history), 6)
-        # each item has 5 dates
+        # each item has 2 dates
         for h in history:
-            self.assertEqual(len(h["data"]), 5)
+            self.assertEqual(len(h["data"]), 2)
+
+        # Cache item is earlier than most recent database value, don't add anything
+        datecache = datetime.datetime(2016, 1, 10, 22, 0, tzinfo=pytz.utc)
+        get_stats_from_cache.return_value = (datecache, stats)
+        history = db.stats.get_statistics_history()
+        self.assertEqual(len(history[0]["data"]), 2)
+
+        # Cache item is later than most recent database value, add it to the stats
+        datecache = datetime.datetime(2016, 1, 11, 1, 0, tzinfo=pytz.utc)
+        get_stats_from_cache.return_value = (datecache, stats)
+        history = db.stats.get_statistics_history()
+        # Each item now has 3 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 3)

@@ -109,6 +109,14 @@ def compute_stats(to_date):
 
 def _write_stats(connection, date, stats):
     """Records a value with a given name and current timestamp."""
+
+    if len(stats) != len(stats_key_map):
+        raise ValueError("provided stats map is of unexpected size")
+    for k, v in stats.items():
+        try:
+            int(v)
+        except ValueError:
+            raise ValueError("value %s in map isn't an integer" % v)
     query = text("""
         INSERT INTO statistics (collected, stats)
              VALUES (:collected, :stats)""").bindparams(bindparam('stats', type_=JSONB))
@@ -149,6 +157,10 @@ def _get_stats_from_cache():
     last_collected = cache.get(STATS_CACHE_LAST_UPDATE_KEY,
                                namespace=STATS_CACHE_NAMESPACE)
 
+    # TODO: See BU-28, a datetime from the cache loses its timezone. In this case we
+    #       know that it's at utc, so force it
+    if last_collected:
+        last_collected = pytz.utc.localize(last_collected)
     return last_collected, stats
 
 
@@ -194,7 +206,15 @@ def load_statistics_data(limit=None):
 
 
 def get_statistics_history():
-    return format_statistics_for_highcharts(load_statistics_data())
+    stats = load_statistics_data()
+    cached_stats_date, cached_stats = _get_stats_from_cache()
+    # If cached stats exist and it's newer than the most recent database stats,
+    # add it to the end. Don't add cached stats if there are no database stats
+    if cached_stats_date and stats:
+        last_stats_collected = stats[-1]["collected"]
+        if cached_stats_date > last_stats_collected:
+            stats.append({"collected": cached_stats_date, "stats": cached_stats})
+    return format_statistics_for_highcharts(stats)
 
 
 def _count_submissions_to_date(connection, to_date):

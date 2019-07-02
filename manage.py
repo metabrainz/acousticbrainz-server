@@ -173,9 +173,6 @@ def compute_stats():
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
-    incomplete = db.stats.has_incomplete_stats_rows()
-    if incomplete:
-        click.echo("Incomplete stats row detected", err=True)
 
 
 @cli.command(name='cache_stats')

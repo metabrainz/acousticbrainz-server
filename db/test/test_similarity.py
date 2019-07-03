@@ -10,6 +10,7 @@ import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
 import similarity.metrics
 
+from sqlalchemy import text
 
 class SimilarityDBTestCase(DatabaseTestCase):
 
@@ -81,13 +82,13 @@ class SimilarityDBTestCase(DatabaseTestCase):
         ('tzanetakis', [1.30118269347339, 1.08436025250102, -0.439034532349894, 0.177506236399918, -1.49602752970215, -0.737996348117037, -0.608238495163597, -0.0994916172403261, -1.11919342422039, -1.58447220399166, -1.08427389857258, -0.252746253303151], False)]
 
         with db.engine.connect() as connection:
-            # expected_metrics = []
-            # for name in similarity.metrics.BASE_METRICS:
-            #     metric_cls = similarity.metrics.BASE_METRICS[name]
-            #     metric = metric_cls(connection)
-            #     expected_metrics.append(metric)
+            expected_metrics = []
+            for name in similarity.metrics.BASE_METRICS:
+                metric_cls = similarity.metrics.BASE_METRICS[name]
+                metric = metric_cls(connection)
+                expected_metrics.append(metric)
 
-            # get_metrics_data.assert_called_with(id, expected_metrics)
+            get_metrics_data.assert_called_with(id, expected_metrics)
             insert_similarity.assert_called_with(connection, id, vectors_info)
 
     @unittest.skip
@@ -135,18 +136,4 @@ class SimilarityDBTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
 
-    # Not sure that I need to test get_metrics_data?
-    # Not sure how to test add_metrics or insert_similarity
-    # @mock.patch("db.similarity.submit_similarity_by_id")
-    # def test_submit_similarity_by_mbid(self, submit_similarity_by_id):
-    #     """If the given (MBID, offset) combination exists, the lowlevel.id
-    #     should be retrieved and passed to submit_similarity_by_id.
-    #     """
-    #     submit_similarity_by_id.assert_called_with()
-    #     # Upper case MBID
-    #     submit_similarity_by_id.assert_called_with()
-
-    # def test_submit_similarity_by_mbid_none(self):
-    #     """If the given (MBID, offset) combination does not exist, a
-    #     NoDataFoundException should be raised.
-    #     """
+    

@@ -10,7 +10,6 @@ import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
 import similarity.metrics
 
-from sqlalchemy import text
 
 class SimilarityDBTestCase(DatabaseTestCase):
 
@@ -136,4 +135,3 @@ class SimilarityDBTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
 
-    

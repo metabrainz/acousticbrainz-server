@@ -7,6 +7,7 @@ import mock
 import db.data
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
+import similarity.metrics
 
 
 class DataDBTestCase(DatabaseTestCase):
@@ -510,7 +511,7 @@ class DataDBTestCase(DatabaseTestCase):
     def test_get_lowlevel_metric_feature(self):
         # If path and id exist, returns value of path in lowlevel_json.data
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid)
+        id = db.data.get_lowlevel_id(self.test_mbid, 0)
         path = "data->'lowlevel'->'mfcc'->'mean'"
 
         expected_data = [
@@ -535,7 +536,7 @@ class DataDBTestCase(DatabaseTestCase):
         # If id provided cannot be cast as an integer, BadDataException is raised
         id = 'id_1'
         path = "data->'lowlevel'->'mfcc'->'mean'"
-        with self.assertRaises(db.data.BadDataException):
+        with self.assertRaises(db.exceptions.BadDataException):
             db.data.get_lowlevel_metric_feature(id, path)
 
         # If id does not exist as a lowlevel.id, return is None
@@ -545,7 +546,7 @@ class DataDBTestCase(DatabaseTestCase):
 
         # If data path provided does not exist, return is None
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid)
+        id = db.data.get_lowlevel_id(self.test_mbid, 0)
         path = "data->'lowlevel'->'mfcc'->'meen'"
         self.assertEqual(expected_data, db.data.get_lowlevel_metric_feature(id, path))
 
@@ -554,26 +555,22 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         ll_id1 = db.data.get_lowlevel_id(self.test_mbid, 0)
 
-        db.data.add_model("model1", "v1", "show")
-        db.data.add_model("model2", "v1", "show")
+        # Add all models required for similarity
+        for name, version, status in similarity.metrics.BASE_MODELS:
+            db.data.add_model(name, version, status)
 
         build_sha = "sha"
-        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
-        hl1 = {"highlevel": {"model1": {"x": "y"}, "model2": {"a": "b"}},
-               "metadata": {"meta": "here",
-                            "version": {"highlevel": ver}
-                            }
-               }
+        hl = json.loads(open(os.path.join(TEST_DATA_PATH, self.test_mbid + '_highlevel.json')).read())
 
-        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+        db.data.write_high_level(self.test_mbid, ll_id1, hl, build_sha)
 
-        expected_data = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '_highlevel_models.json')).read()
+        expected_data = json.loads(open(os.path.join(TEST_DATA_PATH, self.test_mbid + '_highlevel_models.json')).read())
         self.assertEqual(expected_data, db.data.get_highlevel_models(ll_id1))
 
     def test_get_highlevel_models_none(self):
         # If id provided cannot be cast as an integer, BadDataException is raised
         id = 'id_1'
-        with self.assertRaises(db.data.BadDataException):
+        with self.assertRaises(db.exceptions.BadDataException):
             db.data.get_highlevel_models(id)
         # If data does not exist for the id provided, None is returned
         id = 10000000

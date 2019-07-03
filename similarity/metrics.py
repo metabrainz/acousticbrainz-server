@@ -1,7 +1,7 @@
 import numpy as np
 
 import db.data
-import db.similarity_stats
+import db.stats
 from operations import BaseMetric
 
 NORMALIZATION_SAMPLE_SIZE = 10000
@@ -27,19 +27,21 @@ class NormalizedLowLevelMetric(LowLevelMetric):
         # TODO: use same stats for weighted and normal metrics (e.g. mfccs and mfccsw)
         stats = db.stats.check_global_stats(self.name)
         if stats:
-            print('Global stats already calculated')
+            # print('Global stats already calculated')
             self.means, self.stddevs = stats
             return
 
-        print('Calculating global stats for {}'.format(self.name))
+        # print('Calculating global stats for {}'.format(self.name))
         self.means = []
         self.stddevs = []
 
         if self.indices is None:
-            self.means[0], self.stddevs[0] = db.stats.calculate_stats_for_feature(self.path)
+            mean, stddev = db.stats.calculate_stats_for_feature(self.path)
+            self.means.append(mean)
+            self.stddevs.append(stddev)
         else:
             for i in self.indices:
-                print('Index {} (out of {})'.format(i, len(self.indices)))
+                # print('Index {} (out of {})'.format(i, len(self.indices)))
                 mean, stddev = db.stats.calculate_stats_for_feature('{}->>{}'.format(self.path, i))
                 self.means.append(mean)
                 self.stddevs.append(stddev)
@@ -55,7 +57,10 @@ class NormalizedLowLevelMetric(LowLevelMetric):
             raise ValueError('Invalid data value: {}'.format(data))
         # normalize
         data = np.array(data)[self.indices]
-        return (data - np.array(self.means)) / np.array(self.stddevs)
+        if np.count_nonzero(np.array(self.stddevs)):
+            return (data - np.array(self.means)) / np.array(self.stddevs)
+        else:
+            return data
 
 
 class WeightedNormalizedLowLevelMetric(NormalizedLowLevelMetric):
@@ -167,12 +172,15 @@ class BinaryCollectiveMetric(HighLevelMetric):
         vector = []
         try:
             for model_id in self.models:
-                model_data = data[str(model_id)]['all']
-                assert len(model_data) == 2
-                for key, value in model_data.items():
-                    if not key.startswith('not'):
-                        vector.append(value)
-                        break
+                if str(model_id) in data.keys():
+                    model_data = data[str(model_id)]['all']
+                    assert len(model_data) == 2
+                    for key, value in model_data.items():
+                        if not key.startswith('not'):
+                            vector.append(value)
+                            break
+                else:
+                    vector.append(None)
             return vector
         except KeyError:
             raise ValueError('Invalid data value: {}'.format(data))
@@ -211,7 +219,10 @@ class SingleClassifierMetric(HighLevelMetric):
         if not data:
             raise ValueError('Invalid data value: {}'.format(data))
 
-        return data[str(self.model)]['all'].values()
+        if str(self.model) in data.keys():
+            return data[str(self.model)]['all'].values()
+        else:
+            return [None]
 
     def length(self):
         return self.size
@@ -256,3 +267,24 @@ _BASE_METRICS_LIST = [
 ]
 
 BASE_METRICS = {cls.name: cls for cls in _BASE_METRICS_LIST}
+
+
+# Highlevel models required to compute all similarity metrics
+BASE_MODELS = [("danceability", "v2.1_beta1", "show"),
+               ("gender", "v2.1_beta1", "show"),
+               ("genre_dortmund", "v2.1_beta1", "show"),
+               ("genre_electronic", "v2.1_beta1", "show"),
+               ("genre_rosamerica", "v2.1_beta1", "show"),
+               ("genre_tzanetakis", "v2.1_beta1", "show"),
+               ("ismir04_rhythm", "v2.1_beta1", "show"),
+               ("mood_acoustic", "v2.1_beta1", "show"),
+               ("mood_aggressive", "v2.1_beta1", "show"),
+               ("mood_electronic", "v2.1_beta1", "show"),
+               ("mood_happy", "v2.1_beta1", "show"),
+               ("mood_party", "v2.1_beta1", "show"),
+               ("mood_relaxed", "v2.1_beta1", "show"),
+               ("mood_sad", "v2.1_beta1", "show"),
+               ("moods_mirex", "v2.1_beta1", "show"),
+               ("timbre", "v2.1_beta1", "show"),
+               ("tonal_atonal", "v2.1_beta1", "show"),
+               ("voice_instrumental", "v2.1_beta1", "show")]

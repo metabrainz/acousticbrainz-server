@@ -125,11 +125,36 @@ def submit_similarity_by_id(id):
     except ValueError:
         raise BadDataException('Parameter `id` must be an integer.')
 
-    metrics = []
     with db.engine.connect() as connection:
+        # Check that lowlevel submission exists for given id
+        query = text("""
+            SELECT *
+              FROM lowlevel
+             WHERE id = :id
+        """)
+        result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            raise db.exceptions.NoDataFoundException('No submission for parameter `id`.')
+
+        metrics = []
         for name in similarity.metrics.BASE_METRICS:
             metric_cls = similarity.metrics.BASE_METRICS[name]
             metric = metric_cls(connection)
+            # Check that metric is initialized
+            query = text("""
+                SELECT *
+                  FROM similarity_metrics
+                 WHERE metric = :metric
+            """)
+            result = connection.execute(query, {"metric": metric.name})
+            if not result.rowcount:
+                # Must init metric
+                metric.create()
+
+            try:
+                metric.calculate_stats()
+            except AttributeError:
+                pass
             metrics.append(metric)
 
         vectors_info = []
@@ -141,6 +166,7 @@ def submit_similarity_by_id(id):
                 vector = [None] * metric.length()
                 isnan = True
             vectors_info.append((metric.name, vector, isnan))
+
         insert_similarity(connection, id, vectors_info)
 
 
@@ -181,9 +207,9 @@ def create_similarity_metric(metric, clear):
         query = text("""
             ALTER TABLE similarity
              ADD COLUMN
-          IF NOT EXISTS :metric DOUBLE PRECISION[]
-        """)
-        connection.execute(query, {"metric: metric"})
+          IF NOT EXISTS %s DOUBLE PRECISION[]
+        """ % metric)
+        connection.execute(query)
 
         if clear:
             # Delete all existing rows.

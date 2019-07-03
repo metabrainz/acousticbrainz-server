@@ -25,6 +25,5 @@ CREATE INDEX highlevel_ndx_highlevel_model ON highlevel_model (highlevel);
 CREATE UNIQUE INDEX lower_musicbrainz_id_ndx_user ON "user" (lower(musicbrainz_id));
 
 CREATE INDEX collected_ndx_statistics ON statistics (collected);
-CREATE INDEX collected_hour_ndx_statistics ON statistics (date_part('hour'::text, timezone('UTC'::text, collected)));
 
 COMMIT;

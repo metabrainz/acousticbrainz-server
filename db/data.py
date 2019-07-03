@@ -62,6 +62,53 @@ def _has_key(dictionary, key):
     return True
 
 
+def get_failed_highlevel_submissions():
+    """Get all submissions where the highlevel extractor was run but failed.
+    This is characterised by a highlevel row with a missing highlevel_meta row.
+
+    Returns:
+        (List[dict]): A list of dictionaries containing lowlevel id, mbid, submission offset
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+                        SELECT ll.id
+                             , ll.gid::text
+                             , ll.submission_offset
+                          FROM lowlevel ll
+                          JOIN highlevel
+                         USING (id)
+                     LEFT JOIN highlevel_meta
+                         USING (id)
+                         WHERE highlevel_meta.id is null
+                      ORDER BY ll.id
+                    """)
+
+        result = connection.execute(query).fetchall()
+        rows = [dict(row) for row in result]
+
+    return rows
+
+
+def remove_failed_highlevel_submissions():
+    """Remove all highlevel rows with no matching highlevel_meta rows.
+    These rows represent rows that failed highlevel processing. Removing the rows
+    will cause them to be processed again."""
+
+    with db.engine.connect() as connection:
+        query = text("""
+                    DELETE
+                      FROM highlevel
+                     WHERE highlevel.id
+                        IN (SELECT highlevel.id
+                              FROM highlevel
+                         LEFT JOIN highlevel_meta
+                             USING (id)
+                             WHERE highlevel_meta.id is null
+                           )
+                    """)
+        connection.execute(query)
+
+
 def sanity_check_data(data):
     """Checks if data about the recording contains all required keys.
 
@@ -265,17 +312,15 @@ def set_model_status(model_name, model_version, model_status):
                             "model_status": model_status})
 
 
-def get_model(model_name, model_version):
+def get_active_models():
     with db.engine.begin() as connection:
         query = text(
             """SELECT *
                  FROM model
-                WHERE model = :model_name
-                  AND model_version = :model_version""")
+                WHERE status = :model_status""")
         result = connection.execute(query,
-                                    {"model_name": model_name,
-                                     "model_version": model_version})
-        return result.fetchone()
+                                    {"model_status": STATUS_SHOW})
+        return [dict(row) for row in result.fetchall()]
 
 
 def _get_model_id(model_name, version):
@@ -377,7 +422,7 @@ def load_low_level(mbid, offset=0):
         NoDataFoundException: if this mbid doesn't exist or the offset is too high"""
 
     # in case it's a uuid
-    mbid = str(mbid)
+    mbid = str(mbid).lower()
     result = load_many_low_level([(mbid, offset)])
     if not result:
         raise db.exceptions.NoDataFoundException
@@ -387,10 +432,10 @@ def load_low_level(mbid, offset=0):
 
 def load_many_low_level(recordings):
     """Collect low-level JSON data for multiple recordings.
-    
+
     Args:
         recordings: A list of tuples (mbid, offset).
-    
+
     Returns:
         A dictionary of mbids containing a dictionary of offsets. If an (mbid, offset) doesn't exist
         in the database, it is ommitted from the returned data.
@@ -424,31 +469,54 @@ def load_many_low_level(recordings):
         return dict(recordings_info)
 
 
-def load_high_level(mbid, offset=0):
+def map_highlevel_class_names(highlevel, mapping):
+    """Convert class names from the classifier output to human readable names.
+
+    Arguments:
+        highlevel (dict): highlevel data dict containing shortened keys
+        mapping (dict): a mapping from class names -> human readable names
+
+    Returns:
+        the highlevel input with the keys of the `all` item, and the `value` item
+        changed to the values from the provided mapping
+    """
+
+    new_all = {}
+    for cl, val in highlevel["all"].items():
+        new_all[mapping[cl]] = val
+    highlevel["all"] = new_all
+    highlevel["value"] = mapping[highlevel["value"]]
+
+    return highlevel
+
+
+def load_high_level(mbid, offset=0, map_classes=False):
     """Load high-level data for a given MBID.
 
     Arguments:
         mbid (str): MBID to load
         offset (int): submission offset for this MBID, starting from 0
+        map_classes (bool): if True, map class names to human readable values in the returned data
 
     Raises:
         NoDataFoundException: if this mbid doesn't exist or the offset is too high
     """
 
     # in case it's a uuid
-    mbid = str(mbid)
-    result = load_many_high_level([(mbid, offset)])
+    mbid = str(mbid).lower()
+    result = load_many_high_level([(mbid, offset)], map_classes)
     if not result:
         raise db.exceptions.NoDataFoundException
 
     return result[mbid][str(offset)]
 
 
-def load_many_high_level(recordings):
+def load_many_high_level(recordings, map_classes=False):
     """Collect high-level data for multiple recordings.
 
     Args:
         recordings: A list of tuples (mbid, offset).
+        map_classes (bool): if True, map class names to human readable values in the returned data
 
     Returns:
         {"mbid-1": {"offset-1": {"metadata-1": metadata, "highlevel-1": highlevel},
@@ -496,6 +564,7 @@ def load_many_high_level(recordings):
                  , version.data as version
                  , ll.gid::text
                  , ll.submission_offset::text
+                 , m.class_mapping
               FROM highlevel_model hlmo
               JOIN model m
                 ON m.id = hlmo.model
@@ -511,6 +580,10 @@ def load_many_high_level(recordings):
         for row in model_result.fetchall():
             model = row['model']
             data = row['data']
+            mapping = row['class_mapping']
+            if map_classes and mapping:
+                data = map_highlevel_class_names(data, mapping)
+
             data['version'] = row['version']
 
             gid = row['gid']
@@ -669,6 +742,7 @@ def get_summary_data(mbid, offset=0):
     """Fetches the low-level and high-level features from for the specified MBID.
 
     Args:
+        mbid: musicbrainz id to get data for
         offset: Offset can be specified if you need to get summary for a
         different submission. They are ordered by creation time.
 
@@ -696,6 +770,8 @@ def get_summary_data(mbid, offset=0):
     try:
         highlevel = load_high_level(mbid, offset)
         summary['highlevel'] = highlevel
+        models = get_active_models()
+        summary['models'] = models
     except db.exceptions.NoDataFoundException:
         pass
 

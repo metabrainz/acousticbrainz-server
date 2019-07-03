@@ -24,11 +24,22 @@ bp_core = Blueprint('api_v1_core', __name__)
 MAX_ITEMS_PER_BULK_REQUEST = 25
 
 
-@bp_core.route("/<uuid:mbid>/count", methods=["GET"])
+@bp_core.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
 @crossdomain()
 def count(mbid):
     """Get the number of low-level data submissions for a recording with a
     given MBID.
+
+    **Example response**:
+
+    .. sourcecode:: json
+
+        {
+            "mbid": mbid,
+            "count": n
+        }
+
+    MBID values are always lower-case, even if the provided recording MBID is upper-case or mixed case.
 
     :resheader Content-Type: *application/json*
     """
@@ -38,7 +49,7 @@ def count(mbid):
     })
 
 
-@bp_core.route("/<uuid:mbid>/low-level", methods=["GET"])
+@bp_core.route("/<uuid(strict=False):mbid>/low-level", methods=["GET"])
 @crossdomain()
 def get_low_level(mbid):
     """Get low-level data for a recording with a given MBID.
@@ -61,7 +72,7 @@ def get_low_level(mbid):
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
 
-@bp_core.route("/<uuid:mbid>/high-level", methods=["GET"])
+@bp_core.route("/<uuid(strict=False):mbid>/high-level", methods=["GET"])
 @crossdomain()
 def get_high_level(mbid):
     """Get high-level data for recording with a given MBID.
@@ -75,12 +86,14 @@ def get_high_level(mbid):
     endpoint.
 
     :query n: *Optional.* Integer specifying an offset for a document.
+    :query map_classes: *Optional.* If set to 'true', map class names to human-readable values
 
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
+    map_classes = _validate_map_classes(request.args.get("map_classes"))
     try:
-        return jsonify(db.data.load_high_level(str(mbid), offset))
+        return jsonify(db.data.load_high_level(str(mbid), offset, map_classes))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -104,6 +117,18 @@ def submit_low_level(mbid):
     except BadDataException as e:
         raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
+
+
+def _validate_map_classes(map_classes):
+    """Validate the map_classes parameter
+
+    Arguments:
+        map_classes (Optional[str]): the value of the query parameter
+
+    Returns:
+        (bool): True if the map_classes parameter is 'true', False otherwise"""
+
+    return map_classes is not None and map_classes.lower() == 'true'
 
 
 def _validate_offset(offset):
@@ -134,7 +159,7 @@ def _parse_bulk_params(params):
     If an mbid is not valid, an APIBadRequest Exception is
     raised listing the bad MBID and no further processing is done.
 
-    Returns a list of tuples (mbid, offset)
+    Returns a list of tuples (mbid, offset). MBIDs are converted to lower-case
     """
 
     ret = []
@@ -158,7 +183,7 @@ def _parse_bulk_params(params):
         else:
             offset = 0
 
-        ret.append((recording_id, offset))
+        ret.append((recording_id.lower(), offset))
 
     # Remove duplicates, preserving order
     seen = set()
@@ -208,8 +233,9 @@ def get_many_lowlevel():
        }
 
     MBIDs and offset keys are returned as strings (as per JSON encoding rules).
-    If an offset is not specified in the request for an mbid or is not a valid integer >=0,
+    If an offset is not specified in the request for an MBID or is not a valid integer >=0,
     the offset will be 0.
+    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -234,7 +260,7 @@ def get_many_lowlevel():
 @crossdomain()
 def get_many_highlevel():
     """Get high-level data for many recordings at once.
-    
+
     **Example response**:
 
     .. sourcecode:: json
@@ -247,6 +273,7 @@ def get_many_highlevel():
     MBIDs and offset keys are returned as strings (as per JSON encoding rules).
     If an offset is not specified in the request for an mbid or is not a valid integer >=0,
     the offset will be 0.
+    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -259,11 +286,14 @@ def get_many_highlevel():
 
       You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
 
+    :query map_classes: *Optional.* If set to 'true', map class names to human-readable values
+
     :resheader Content-Type: *application/json*
     """
+    map_classes = _validate_map_classes(request.args.get("map_classes"))
     recordings = check_bad_request_for_multiple_recordings()
-    recording_details = db.data.load_many_high_level(recordings)
-    
+    recording_details = db.data.load_many_high_level(recordings, map_classes)
+
     return jsonify(recording_details)
 
 
@@ -280,6 +310,8 @@ def get_many_count():
        {"mbid1": {"count": 3},
         "mbid2": {"count": 1}
        }
+
+    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 

@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS dataset_class_member   CASCADE;
 DROP TABLE IF EXISTS dataset_class          CASCADE;
 DROP TABLE IF EXISTS dataset                CASCADE;
 DROP TABLE IF EXISTS dataset_eval_sets      CASCADE;
-DROP TABLE IF EXISTS user                   CASCADE;
+DROP TABLE IF EXISTS "user"                 CASCADE;
 DROP TABLE IF EXISTS api_key                CASCADE;
 DROP TABLE IF EXISTS challenge              CASCADE;
 DROP TABLE IF EXISTS dataset_eval_challenge CASCADE;
@@ -24,4 +24,4 @@ DROP TABLE IF EXISTS similarity             CASCADE;
 DROP TABLE IF EXISTS similarity_metrics     CASCADE;
 DROP TABLE IF EXISTS similarity_stats       CASCADE;
 
-COMMIT:
+COMMIT;

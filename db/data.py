@@ -574,7 +574,7 @@ def get_lowlevel_id(mbid, offset):
         """)
         result = connection.execute(query, {"mbid": mbid, "offset": offset})
         if not result.rowcount:
-            raise NoDataFoundException('No data exists for the (MBID, offset) pair specified')
+            raise db.exceptions.NoDataFoundException('No data exists for the (MBID, offset) pair specified')
         return result.fetchone()["id"]
 
 

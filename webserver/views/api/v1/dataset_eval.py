@@ -114,4 +114,3 @@ def job_details(job_id):
 
     job['dataset'] = datasets.get_check_dataset(job['dataset_id'])
     return jsonify(job)
-

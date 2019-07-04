@@ -1,5 +1,4 @@
 import db
-from operations import HybridMetric
 from index_model import AnnoyModel
 import similarity.exceptions
 import similarity.metrics
@@ -76,40 +75,3 @@ def remove_index(metric, n_trees=10, distance_type="angular"):
     full_path = os.path.join(file_path, name)
     if os.path.exists(full_path):
         os.remove(full_path)
-
-
-# Postgres method
-def get_similar_recordings(mbid, metric, limit=QUERY_RESULT_SIZE):
-    with db.engine.begin() as connection:
-        # check both existence and if it is hybrid
-        # TODO (refactor): separate metric info from similarity
-        result = connection.execute("SELECT is_hybrid, category, description FROM similarity_metrics WHERE metric='%s'" % metric)
-        row = result.fetchone()
-        if not row:
-            return None
-
-        # translate metric name to array_cat expression if hybrid
-        is_hybrid, category, description = row
-        metric = HybridMetric.get_pseudo_column(metric) if is_hybrid else metric
-
-        # actual query
-        result = connection.execute("""
-            SELECT
-              gid, submission_offset
-            FROM lowlevel
-            JOIN similarity ON lowlevel.id = similarity.id
-            WHERE gid != '%(gid)s'
-            ORDER BY cube(%(metric)s) <-> cube((
-                SELECT %(metric)s
-                FROM similarity
-                JOIN lowlevel on similarity.id = lowlevel.id
-                WHERE lowlevel.gid='%(gid)s'
-                LIMIT 1
-              ))
-            LIMIT %(max)s
-        """ % {'metric': metric, 'gid': mbid, 'max': limit})
-        recordings = []
-        for row in result.fetchall():
-            recordings.append((row["gid"], row["submission_offset"]))
-
-        return recordings, category, description

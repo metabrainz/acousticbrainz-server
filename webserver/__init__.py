@@ -61,16 +61,6 @@ def create_app(debug=None):
                      sentry_config=app.config.get('LOG_SENTRY')
                      )
 
-
-    # Add rate limiting support
-    @app.after_request
-    def after_request_callbacks(response):
-        return inject_x_rate_headers(response)
-
-    # check for ratelimit config values and set them if present
-    if 'RATELIMIT_PER_IP' in app.config and 'RATELIMIT_WINDOW' in app.config:
-        set_rate_limits(app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_WINDOW'])
-
     # Database connection
     from db import init_db_engine
     init_db_engine(app.config['SQLALCHEMY_DATABASE_URI'])
@@ -91,6 +81,15 @@ def create_app(debug=None):
             ns_versions_loc=app.config['REDIS_NS_VERSIONS_LOCATION'])
     else:
         raise Exception('One or more redis cache configuration options are missing from config.py')
+
+    # Add rate limiting support
+    @app.after_request
+    def after_request_callbacks(response):
+        return inject_x_rate_headers(response)
+
+    # check for ratelimit config values and set them if present
+    if 'RATELIMIT_PER_IP' in app.config and 'RATELIMIT_WINDOW' in app.config:
+        set_rate_limits(app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_WINDOW'])
 
     # MusicBrainz
     import musicbrainzngs

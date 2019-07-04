@@ -283,6 +283,25 @@ class AnnoyModel(object):
 
         return recordings_info
 
+    def get_similarity_between(self, rec_one, rec_two):
+        """Get the distance of the similarity measure between
+        two recordings.
+
+        Args:
+            rec_one and rec_two are tuples of the form (MBID, offset)
+
+        Returns:
+            Distance between two recordings, of type float.
+            If an IndexError occurs (one or more of ids is not indexed)
+            then None is returned.
+        """
+        id_1 = db.data.get_lowlevel_id(rec_one[0], rec_one[1])
+        id_2 = db.data.get_lowlevel_id(rec_two[0], rec_two[1])
+        try:
+            return self.index.get_distance(id_1, id_2)
+        except IndexError:
+            return None
+
 
 """
 A dictionary to track the base indices that should be built.

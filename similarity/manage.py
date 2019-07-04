@@ -4,7 +4,6 @@ import click
 
 import webserver
 import metrics
-from operations import HybridMetric
 from index_model import AnnoyModel
 import similarity.utils
 import db
@@ -57,25 +56,6 @@ def delete_metric(name, soft=False, leave_stats=False):
                 metric.delete_stats()
             except AttributeError:
                 pass
-
-
-@cli.command(name="add-hybrid")
-@click.argument("name")
-@click.argument("category")
-@click.option("--description", "-d", type=str, help="Description of metric")
-def add_hybrid(name, category, description=None):
-    description = description or name
-    with db.engine.begin() as connection:
-        metric = HybridMetric(connection, name, category, description)
-        metric.create()
-
-
-@cli.command(name="delete-hybrid")
-@click.argument("name")
-def delete_hybrid(name):
-    with db.engine.begin() as connection:
-        metric = HybridMetric(connection, name)
-        metric.delete()
 
 
 @cli.command(name='add-index')

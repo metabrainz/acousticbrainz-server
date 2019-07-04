@@ -5,10 +5,6 @@ import db.data
 import db.exceptions
 
 from annoy import AnnoyIndex
-<<<<<<< HEAD
-=======
-from sqlalchemy import text
->>>>>>> Add bulk get functionality to index model
 from collections import defaultdict
 
 

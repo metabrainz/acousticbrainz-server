@@ -247,21 +247,3 @@ def get_similarity_between(metric):
         return {metric: distance}
     except (NoDataFoundException, ItemNotFoundException):
         return {}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

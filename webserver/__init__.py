@@ -11,7 +11,9 @@ import urlparse
 
 API_PREFIX = '/api/'
 PRODUCTION_BASE_URL = 'acousticbrainz.org'
-PRODUCTION_BASE_URL_HTTPS = 'https://acousticbrainz.org'
+BETA_BASE_URL = 'beta.acousticbrainz.org'
+PRODUCTION_URL_HTTPS = 'https://acousticbrainz.org'
+BETA_URL_HTTPS = 'https://beta.acousticbrainz.org'
 
 
 # Check to see if we're running under a docker deployment. If so, don't second guess
@@ -136,14 +138,17 @@ def create_app(debug=None):
 
     @app.before_request
     def prod_https_login_redirect():
-        """ Redirect to HTTPS on the production login page
+        """ Redirect to HTTPS in production except for the API endpoints
         """
         split_url = urlparse.urlsplit(request.url)
-        if split_url.scheme == 'http' \
-            and split_url.netloc == PRODUCTION_BASE_URL \
-            and split_url.path == url_for('login.index'):
-            redirect_url = urlparse.urljoin(PRODUCTION_BASE_URL_HTTPS, url_for('login.index', next=request.args.get('next')))
-            return redirect(redirect_url)
+        if request.headers.get('X-Forwarded-Proto') == 'http' and not request.path.startswith(API_PREFIX):
+            if split_url.netloc == PRODUCTION_BASE_URL:
+                redirect_url_base = PRODUCTION_URL_HTTPS
+            elif split_url.netloc == BETA_BASE_URL:
+                redirect_url_base = BETA_URL_HTTPS
+            else:
+                return
+            return redirect(urlparse.urljoin(redirect_url_base, request.full_path))
 
     return app
 

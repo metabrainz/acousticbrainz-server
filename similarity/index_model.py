@@ -3,6 +3,7 @@ import os
 from similarity.metrics import BASE_METRICS
 import similarity.exceptions
 import db.data
+import db.exceptions
 
 from annoy import AnnoyIndex
 from sqlalchemy import text
@@ -208,7 +209,7 @@ class AnnoyModel(object):
         """)
         result = self.connection.execute(query, {"mbid": mbid, "offset": offset})
         if not result.rowcount:
-            raise similarity.exceptions.ItemNotFoundException('That (mbid, offset) combination does not exist')
+            raise db.exceptions.NoDataFoundException('That (mbid, offset) combination does not exist')
         else:
             id = result.fetchone()[0]
             return self.get_nns_by_id(id, num_neighbours, return_ids)

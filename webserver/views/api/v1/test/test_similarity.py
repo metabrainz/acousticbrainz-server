@@ -277,6 +277,97 @@ class APISimilarityViewsTestCase(ServerTestCase):
         expected_result = {"message": "Does not contain 2 recordings in the request"}
         self.assertEqual(expected_result, resp.json)
 
+    def test_get_many_similar_recordings_no_params(self):
+        # No recording_ids parameter results in APIBadRequest
+        resp = self.client.get("/api/v1/similarity/mfccs")
+        self.assertEqual(400, resp.status_code)
+        expected_result = {"message": "Missing `recording_ids` parameter"}
+        self.assertEqual(resp.json, expected_result)
+
+    @mock.patch("similarity.utils.load_index_model")
+    @mock.patch("similarity.index_model.AnnoyIndex.get_bulk_nns_by_mbid")
+    def test_get_many_similar_recordings(self, load_index_model, get_bulk_nns):
+        # Check that similar recordings are returned for many recordings,
+        # including two offsets of the same MBID
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
+        get_bulk_nns.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": ["similar_rec1", "similar_rec2"]},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": ["similar_rec1", "similar_rec2"], "3": ["similar_rec1", "similar_rec2"]}
+        }
+
+        resp = self.client.get('api/v1/similarity/mfccs?recording_ids=' + params)
+        self.assertEqual(200, resp.status_code)
+
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": ["similar_rec1", "similar_rec2"]},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": ["similar_rec1", "similar_rec2"], "3": ["similar_rec1", "similar_rec2"]}
+        }
+        self.assertEqual(expected_result, resp.json)
+
+        # Index parameters should default if not specified by query string
+        load_index_model.assert_called_with("mfccs", "angular", 10)
+
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                      ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
+
+        get_bulk_nns.assert_called_with(recordings, 200)
+
+        # upper-case
+        params = "c5f4909e-1d7b-4f15-a6f6-1AF376BC01C9"
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]}
+        }
+        get_bulk_nns.return_value = expected_result
+        resp = self.client.get('api/v1/similarity/mfccs?recording_ids=' + params)
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(resp.json, expected_result)
+
+        # Recordings passed in should be lowercased when parsing
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
+        get_bulk_nns.assert_called_with(recordings, 200)
+
+    @mock.patch("similarity.utils.load_index_model")
+    @mock.patch("similarity.index_model.AnnoyIndex.get_bulk_nns_by_mbid")
+    def test_get_many_similar_recordings_missing_mbid(self, load_index_model, get_bulk_nns):
+        # Check that within a set of mbid parameters, the ones absent
+        # from the database are ignored.
+        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
+        end = "&n_trees=-1&distance_type=x&n_neighbours=2000"
+        get_bulk_nns.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": ["similar_rec1", "similar_rec2"]}
+        }
+
+        resp = self.client.get("/api/v1/similarity/mfccs?recording_ids=" + recordings + end)
+        self.assertEqual(200, resp.status_code)
+
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": ["similar_rec1", "similar_rec2"]}
+        }
+        self.assertEqual(expected_result, resp.json)
+
+        # If index parameters are invalid, they are defaulted.
+        load_index_model.assert_called_with("mfccs", "angular", 10)
+
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                      ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
+        get_bulk_nns.assert_called_with(recordings, 200)
+
+    def test_get_many_similar_recordings_more_than_200(self):
+        # Check that a request for over 200 recordings raises an error
+        manyids = [str(uuid.uuid4()) for i in range(26)]
+        limit_exceed_url = ";".join(manyids)
+        resp = self.client.get("/api/v1/similarity/mfccs?recording_ids=" + limit_exceed_url)
+        self.assertEqual(400, resp.status_code)
+        expected_result = {"message": "More than 25 recordings not allowed per request"}
+        self.assertEqual(expected_result, resp.json)
+
 
 class SimilarityValidationTest(unittest.TestCase):
 

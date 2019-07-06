@@ -51,6 +51,7 @@ def get_similar_recordings(metric, mbid):
     :query metric: *Required.* String specifying the metric name to be
         used when finding the most similar recordings.
         The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRICS`.
+
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
@@ -63,38 +64,31 @@ def get_similar_recordings(metric, mbid):
     try:
         similar_recordings = index.get_nns_by_mbid(mbid, offset, n_neighbours)
         return jsonify(similar_recordings)
+    except NoDataFoundException:
+        raise webserver.views.api.exceptions.APIBadRequest("No submission exists for the given (MBID, offset) combination.")
     except ItemNotFoundException:
-        raise webserver.views.api.exceptions.APIBadRequest("The item of interest is not indexed.")
+        raise webserver.views.api.exceptions.APIBadRequest("The submission of interest is not indexed.")
 
 
 def _check_index_params(metric):
-    if not metric:
-        raise webserver.views.api.exceptions.APIBadRequest("Missing `metric` parameter.")
     if metric not in BASE_INDICES:
         raise webserver.views.api.exceptions.APIBadRequest("An index with the specified metric does not exist.")
 
     distance_type = request.args.get("distance_type")
-    if not distance_type:
+    if not distance_type or distance_type not in BASE_INDICES[metric]:
         distance_type = "angular"
-    else:
-        if distance_type not in BASE_INDICES[metric]:
-            raise webserver.views.api.exceptions.APIBadRequest("An index for metric {} does not exist with the specified distance type.".format(metric))
+        # can we raise an error here that isn't fatal to let the user know that the value is being defaulted when index doesn't exist?
 
     n_trees = request.args.get("n_trees")
-    if not n_trees:
+    if not n_trees or n_trees not in BASE_INDICES[metric][distance_type]:
         n_trees = 10
-    else:
-        if n_trees not in BASE_INDICES[metric][distance_type]:
-            raise webserver.views.api.exceptions.APIBadRequest("An index for metric `{}` with distance type `{}` does not exist with the specified number of trees.".format(metric, distance_type))
 
     n_neighbours = request.args.get("n_neighbours")
     if not n_neighbours or n_neighbours > 1000:
-        n_neighbours = 200
-    else:
         try:
             n_neighbours = int(n_neighbours)
         except ValueError:
-            raise webserver.views.api.exceptions.APIBadRequest("Number of neighbours must be an integer value.")
+            n_neighbours = 200
 
     return metric, distance_type, n_trees, n_neighbours
 

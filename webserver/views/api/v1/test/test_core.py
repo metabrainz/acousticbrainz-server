@@ -150,7 +150,7 @@ class CoreViewsTestCase(ServerTestCase):
     @mock.patch('db.data.load_many_low_level')
     def test_get_bulk_ll(self, load_many_low_level):
         # Check that many items are returned, including two offsets of the
-        # same mbid
+        # same MBID
 
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
 

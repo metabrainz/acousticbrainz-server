@@ -53,10 +53,10 @@ class APISimilarityViewsTestCase(ServerTestCase):
         self.assertEqual(200, resp.status_code)
 
         offset = 0
-        distance = "angular"
+        distance_type = "angular"
         n_trees = 10
         n_neighbours = 200
-        load_index_model.assert_called_with(metric, distance, n_trees)
+        load_index_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type)
         annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
 
     @mock.patch("similarity.utils.load_index_model")
@@ -74,18 +74,18 @@ class APISimilarityViewsTestCase(ServerTestCase):
         self.assertEqual(200, resp.status_code)
 
         offset = 0
-        distance = "angular"
+        distance_type = "angular"
         n_trees = 10
         n_neighbours = 200
         metric = "mfccs"
-        load_index_model.assert_called_with(metric, distance, n_trees)
+        load_index_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type)
         annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
 
         # If n_neighbours is not numerical, it defaults
         resp = self.client.get("/api/v1/similarity/mfccs/%s?n_trees=-1&distance_type=7&n_neighbours=x" % self.uuid)
         self.assertEqual(200, resp.status_code)
 
-        load_index_model.assert_called_with(metric, distance, n_trees)
+        load_index_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type)
         annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
 
     @mock.patch("similarity.utils.load_index_model")
@@ -149,7 +149,7 @@ class APISimilarityViewsTestCase(ServerTestCase):
         self.assertEqual(expected_result, resp.json)
 
         # Index parameters should default if not specified by query string.
-        load_index_model.assert_called_with("mfccs", "angular", 10)
+        load_index_model.assert_called_with("mfccs", n_trees=10, distance_type="angular")
 
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
@@ -193,7 +193,7 @@ class APISimilarityViewsTestCase(ServerTestCase):
         self.assertEqual(expected_result, resp.json)
 
         # If index parameters are invalid, they are defaulted.
-        load_index_model.assert_called_with("mfccs", "angular", 10)
+        load_index_model.assert_called_with("mfccs", n_trees=10, distance_type="angular")
 
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),

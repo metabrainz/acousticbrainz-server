@@ -4,6 +4,7 @@ import db
 from index_model import AnnoyModel
 
 from collections import defaultdict
+from sqlalchemy import text
 
 NORMALIZATION_SAMPLE_SIZE = 10000
 PROCESS_BATCH_SIZE = 10000

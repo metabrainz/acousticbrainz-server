@@ -4,21 +4,83 @@ from flask import current_app
 import db
 from db.data import count_all_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
-import db.similarity_stats
+from similarity.index_model import AnnoyModel
 import similarity.metrics
-import similarity.utils
+import similarity.exceptions
 
 from sqlalchemy import text
 from collections import defaultdict
 
 
-def add_metrics(batch_size):
-    """Computes each metric from the similarity_metrics table for
-    each recording in the lowlevel table, in batches.
 
-    Args:
-        batch_size: the number of recordings to be inserted, per batch.
-    """
+def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
+    """Creates an annoy index for the specified metric, adds all items to the index."""
+    print("Initializing index...")
+    index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)
+
+    batch_size = batch_size or PROCESS_BATCH_SIZE
+    offset = 0
+    count = 0
+
+    with db.engine.connect() as connection:
+        result = connection.execute("""
+            SELECT MAX(id)
+              FROM similarity
+        """)
+        total = result.fetchone()[0]
+
+        batch_query = text("""
+            SELECT *
+              FROM similarity
+             ORDER BY id
+             LIMIT :batch_size
+            OFFSET :offset
+        """)
+
+        print("Inserting items...")
+        while True:
+            # Get ids and vectors for specific metric in batches
+            batch_result = connection.execute(batch_query, { "batch_size": batch_size, "offset": offset })
+            if not batch_result.rowcount:
+                print("Finished adding items. Building index...")
+                break
+
+            for row in batch_result.fetchall():
+                while not row["id"] == count:
+                    # Rows are empty, add zero vector
+                    placeholder = [0] * index.dimension
+                    index.add_recording_with_vector(count, placeholder)
+                    count += 1
+                index.add_recording_with_vector(row["id"], row[index.metric_name])
+                count += 1
+
+            offset += batch_size
+            print("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
+
+        index.build()
+        print("Saving index...")
+        index.save()
+
+
+def get_all_metrics():
+    with db.engine.begin() as connection:
+        result = connection.execute("""
+            SELECT category, metric, description
+            FROM similarity_metrics
+            WHERE visible = TRUE
+        """)
+
+        metrics = {}
+        for category, metric, description in result.fetchall():
+            if category not in metrics:
+                metrics[category] = []
+            metrics[category].append([metric, description])
+
+        return metrics
+
+
+def add_metrics(force=False, batch_size=None):
+    batch_size = batch_size or PROCESS_BATCH_SIZE
     lowlevel_count = count_all_lowlevel()
 
     with db.engine.connect() as connection:

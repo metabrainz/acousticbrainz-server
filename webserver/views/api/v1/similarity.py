@@ -239,6 +239,6 @@ def get_similarity_between(metric):
 
     try:
         distance = index.get_similarity_between(recordings[0], recordings[1])
-        return jsonify(distance)
+        return jsonify({metric: distance})
     except (NoDataFoundException, ItemNotFoundException):
         return jsonify({})

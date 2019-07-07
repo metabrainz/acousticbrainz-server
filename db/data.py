@@ -593,6 +593,26 @@ def load_many_high_level(recordings, map_classes=False):
         return dict(recordings_info)
 
 
+def get_mbids_by_ids(ids):
+    # Get (MBID, offset) combinations for a list of lowlevel.ids
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id
+                 , gid
+                 , submission_offset
+              FROM lowlevel
+             WHERE id IN :ids
+        """)
+        result = connection.execute(query, {"ids": tuple(ids)})
+
+        recordings = []
+        for row in result.fetchall():
+            recordings.append((row["gid"], row["submission_offset"]))
+
+        return recordings
+
+
+# I noticed that we usually only do things by (MBID, offset), not id - should this work match that pattern?
 def get_lowlevel_metric_feature(id, path):
     # Get lowlevel data only for a specified path.
     try:

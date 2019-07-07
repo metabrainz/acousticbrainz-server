@@ -85,6 +85,8 @@ def _check_index_params(metric):
 
     n_neighbours = request.args.get("n_neighbours")
     if not n_neighbours or n_neighbours > 1000:
+        n_neighbours = 200
+    else:
         try:
             n_neighbours = int(n_neighbours)
         except ValueError:

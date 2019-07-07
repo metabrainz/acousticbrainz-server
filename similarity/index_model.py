@@ -11,11 +11,9 @@ from collections import defaultdict
 
 
 class AnnoyModel(object):
-    def __init__(self, connection, metric_name, n_trees=10, distance_type='angular', load_existing=False):
+    def __init__(self, metric_name, n_trees=10, distance_type='angular', load_existing=False):
         """
         Args:
-            - connection: a connection to the database that will be used by an
-              instance of the index.
             - metric_name: the name of the metric that vectors in the index will
               represent, a string.
             - n_trees: the number of trees used in building the index, a positive
@@ -25,7 +23,6 @@ class AnnoyModel(object):
             - load_existing: if load_existing is True, then load function will be
               called upon initialization.
         """
-        self.connection = connection
         # Check params
         if metric_name in BASE_INDICES:
             self.metric_name = metric_name
@@ -56,16 +53,17 @@ class AnnoyModel(object):
         Get dimension of metric vectors. If there is no metric of this type
         already created then we need to raise an error.
         """
-        result = self.connection.execute("""
-            SELECT *
-              FROM similarity
-             LIMIT 1
-        """)
-        try:
-            dimension = len(result.fetchone()[self.metric_name])
-            return dimension
-        except ValueError:
-            raise similarity.exceptions.IndexNotFoundException("No existing metric named \"{}\"".format(self.metric_name))
+        with db.engine.connect() as connection:
+            result = connection.execute("""
+                SELECT *
+                  FROM similarity
+                 LIMIT 1
+            """)
+            try:
+                dimension = len(result.fetchone()[self.metric_name])
+                return dimension
+            except ValueError:
+                raise similarity.exceptions.IndexNotFoundException("No existing metric named \"{}\"".format(self.metric_name))
 
     def build(self):
         self.index.build(self.n_trees)
@@ -109,22 +107,23 @@ class AnnoyModel(object):
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException
 
-        query = text("""
-            SELECT *
-              FROM similarity
-             WHERE id = (
-                SELECT id
-                  FROM lowlevel
-                 WHERE gid = :mbid
-                   AND submission_offset = :offset )
-        """)
-        result = self.connection.execute(query, { "mbid": mbid, "submission_offset": offset})
-        row = result.fetchone()
-        if row:
-            recording_vector = row[self.metric_name]
-            id = row['id']
-            if not self.index.get_item_vector(id):
-                self.index.add_item(id, recording_vector)
+        with db.engine.connect() as connection:
+            query = text("""
+                SELECT *
+                  FROM similarity
+                 WHERE id = (
+                    SELECT id
+                      FROM lowlevel
+                     WHERE gid = :mbid
+                       AND submission_offset = :offset )
+            """)
+            result = connection.execute(query, { "mbid": mbid, "submission_offset": offset})
+            row = result.fetchone()
+            if row:
+                recording_vector = row[self.metric_name]
+                id = row['id']
+                if not self.index.get_item_vector(id):
+                    self.index.add_item(id, recording_vector)
 
     def add_recording_by_id(self, id):
         """Add a single recording specified by its lowlevel.id to the index.
@@ -134,17 +133,18 @@ class AnnoyModel(object):
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException
 
-        query = text("""
-            SELECT *
-              FROM similarity
-             WHERE id = :id
-        """)
-        result = self.connection.execute(query, {"id": id})
-        if not result.rowcount:
-            raise similarity.exceptions.ItemNotFoundException
-        row = result.fetchone()
-        if not self.index.get_item_vector(id):
-            self.index.add_item(row[id], row[self.metric_name])
+        with db.engine.connect() as connection:
+            query = text("""
+                SELECT *
+                  FROM similarity
+                 WHERE id = :id
+            """)
+            result = connection.execute(query, {"id": id})
+            if not result.rowcount:
+                raise similarity.exceptions.ItemNotFoundException
+            row = result.fetchone()
+            if not self.index.get_item_vector(id):
+                self.index.add_item(row[id], row[self.metric_name])
 
     def add_recording_with_vector(self, id, vector):
         if self.in_loaded_state:
@@ -182,37 +182,39 @@ class AnnoyModel(object):
             return ids
         else:
             # Get corresponding (mbid, offset) for the most similar ids
-            query = text("""
-                SELECT id
-                     , gid
-                     , submission_offset
-                  FROM lowlevel
-                 WHERE id IN :ids
-            """)
-            result = self.connection.execute(query, {"ids": tuple(ids)})
+            with db.engine.connect() as connection:
+                query = text("""
+                    SELECT id
+                         , gid
+                         , submission_offset
+                      FROM lowlevel
+                     WHERE id IN :ids
+                """)
+                result = connection.execute(query, {"ids": tuple(ids)})
 
-            recordings = []
-            for row in result.fetchall():
-                recordings.append((row["gid"], row["submission_offset"]))
+                recordings = []
+                for row in result.fetchall():
+                    recordings.append((row["gid"], row["submission_offset"]))
 
-            return recordings
+                return recordings
 
     def get_nns_by_mbid(self, mbid, offset, num_neighbours, return_ids=False):
         # Find corresponding lowlevel.id to (mbid, offset) combination,
         # then call get_nns_by_id
         mbid = mbid.lower()
-        query = text("""
-            SELECT id
-              FROM lowlevel
-             WHERE gid = :mbid
-               AND submission_offset = :offset
-        """)
-        result = self.connection.execute(query, {"mbid": mbid, "offset": offset})
-        if not result.rowcount:
-            raise db.exceptions.NoDataFoundException('That (mbid, offset) combination does not exist')
-        else:
-            id = result.fetchone()[0]
-            return self.get_nns_by_id(id, num_neighbours, return_ids)
+        with db.engine.connect() as connection:
+            query = text("""
+                SELECT id
+                  FROM lowlevel
+                 WHERE gid = :mbid
+                   AND submission_offset = :offset
+            """)
+            result = connection.execute(query, {"mbid": mbid, "offset": offset})
+            if not result.rowcount:
+                raise db.exceptions.NoDataFoundException('That (mbid, offset) combination does not exist')
+            else:
+                id = result.fetchone()[0]
+                return self.get_nns_by_id(id, num_neighbours, return_ids)
 
     def get_bulk_nns_by_mbid(self, recordings, num_neighbours, return_ids=False):
         """Get most similar recordings for each (MBID, offset) tuple provided.

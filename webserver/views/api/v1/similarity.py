@@ -187,9 +187,8 @@ def check_bad_request_between_recordings():
         raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
 
     recordings = _parse_bulk_params(recording_ids)
-    if len(recordings) > 2:
-        raise webserver.views.api.exceptions.APIBadRequest("More than 2 recordings \
-            not allowed in request")
+    if not len(recordings) == 2:
+        raise webserver.views.api.exceptions.APIBadRequest("Does not contain 2 recordings in the request")
 
     return recordings
 
@@ -231,15 +230,15 @@ def get_similarity_between(metric):
 
     :resheader Content-Type: *application/json*
     """
-    rec_one, rec_two = check_bad_request_between_recordings()
-    distance_type, n_trees, n_neighbours = _check_index_params(metric)
+    recordings = check_bad_request_between_recordings()
+    metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
     try:
-        index = similarity.utils.load_index_model(metric, distance_type, n_trees)
+        index = similarity.utils.load_index_model(metric, n_trees=n_trees, distance_type=distance_type)
     except IndexNotFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
 
     try:
-        distance = index.get_similarity_between(rec_one, rec_two)
-        return {metric: distance}
+        distance = index.get_similarity_between(recordings[0], recordings[1])
+        return jsonify(distance)
     except (NoDataFoundException, ItemNotFoundException):
-        return {}
+        return jsonify({})

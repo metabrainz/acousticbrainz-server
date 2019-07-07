@@ -57,7 +57,7 @@ def get_similar_recordings(metric, mbid):
     offset = _validate_offset(request.args.get("n"))
     metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
     try:
-        index = similarity.utils.load_index_model(metric, distance_type, n_trees)
+        index = similarity.utils.load_index_model(metric, n_trees=n_trees, distance_type=distance_type)
     except IndexNotFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
 
@@ -157,7 +157,7 @@ def get_many_similar_recordings(metric):
     recordings = check_bad_request_for_multiple_recordings()
     metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
     try:
-        index = similarity.utils.load_index_model(metric, distance_type, n_trees)
+        index = similarity.utils.load_index_model(metric, n_trees=n_trees, distance_type=distance_type)
     except IndexNotFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
 

@@ -277,13 +277,6 @@ class APISimilarityViewsTestCase(ServerTestCase):
         expected_result = {"message": "Does not contain 2 recordings in the request"}
         self.assertEqual(expected_result, resp.json)
 
-        # If index does not load with given parameters, APIBadRequest is raised.
-        load_index_model.side_effect = IndexNotFoundException
-        resp = self.client.get("/api/v1/similarity/mfccs/%s" % self.uuid)
-        self.assertEqual(400, resp.status_code)
-        expected_result = {"message": "Index does not exist with specified parameters."}
-        self.assertEqual(expected_result, resp.json)
-
 
 class SimilarityValidationTest(unittest.TestCase):
 

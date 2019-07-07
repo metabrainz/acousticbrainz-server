@@ -62,7 +62,7 @@ class AnnoyModel(object):
             try:
                 dimension = len(result.fetchone()[self.metric_name])
                 return dimension
-            except ValueError:
+            except (ValueError, TypeError):
                 raise similarity.exceptions.IndexNotFoundException("No existing metric named \"{}\"".format(self.metric_name))
 
     def build(self):

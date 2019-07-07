@@ -218,7 +218,7 @@ class APISimilarityViewsTestCase(ServerTestCase):
         rec_2 = ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 2)
 
         annoy_mock = mock.Mock()
-        annoy_mock.get_similarity_between.return_value = {"mfccs": 1}
+        annoy_mock.get_similarity_between.return_value = 1
         load_index_model.return_value = annoy_mock
 
         resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)

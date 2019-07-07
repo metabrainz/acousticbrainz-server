@@ -209,6 +209,74 @@ class APISimilarityViewsTestCase(ServerTestCase):
         expected_result = {"message": "More than 25 recordings not allowed per request"}
         self.assertEqual(expected_result, resp.json)
 
+    @mock.patch("similarity.utils.load_index_model")
+    def test_get_similarity_between_no_params(self, load_index_model):
+        # If no index params are provided, they default.
+        # Submissions can be selected using offset.
+        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:2"
+        rec_1 = ("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)
+        rec_2 = ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 2)
+
+        annoy_mock = mock.Mock()
+        annoy_mock.get_similarity_between.return_value = {"mfccs": 1}
+        load_index_model.return_value = annoy_mock
+
+        resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual({"mfccs": 1}, resp.json)
+
+        load_index_model.assert_called_with("mfccs", n_trees=10, distance_type="angular")
+        annoy_mock.get_similarity_between.assert_called_with(rec_1, rec_2)
+
+    @mock.patch("similarity.utils.load_index_model")
+    def test_get_similarity_between_exceptions(self, load_index_model):
+        # If there is no submission for an (MBID, offset) combination,
+        # empty dictionary is returned.
+        annoy_mock = mock.Mock()
+        annoy_mock.get_similarity_between.side_effect = NoDataFoundException
+        load_index_model.return_value = annoy_mock
+
+        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:2"
+        resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
+        self.assertEqual(200, resp.status_code)
+
+        expected_result = {}
+        self.assertEqual(expected_result, resp.json)
+
+        # If item is not yet loaded in index, returns empty dictionary.
+        annoy_mock.get_similarity_between.side_effect = ItemNotFoundException
+        resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(expected_result, resp.json)
+
+        # If index is unable to load, APIBadRequest is raised.
+        load_index_model.side_effect = IndexNotFoundException
+        resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
+        self.assertEqual(400, resp.status_code)
+
+        expected_result = {"message": "Index does not exist with specified parameters."}
+        self.assertEqual(expected_result, resp.json)
+
+    def test_get_similarity_between_no_recordings(self):
+        # Without recording_ids parameter, APIBadRequest is raised.
+        resp = self.client.get("/api/v1/similarity/mfccs/between")
+        self.assertEqual(400, resp.status_code)
+        expected_result = {"message": "Missing `recording_ids` parameter"}
+        self.assertEqual(expected_result, resp.json)
+
+        # If more or less than 2 recordings are specified, APIBadRequest is raised.
+        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"
+        resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
+        self.assertEqual(400, resp.status_code)
+        expected_result = {"message": "Does not contain 2 recordings in the request"}
+        self.assertEqual(expected_result, resp.json)
+
+        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d;405a5ff4-7ee2-436b-95c1-90ce8a83b359"
+        resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
+        self.assertEqual(400, resp.status_code)
+        expected_result = {"message": "Does not contain 2 recordings in the request"}
+        self.assertEqual(expected_result, resp.json)
+
 
 class SimilarityValidationTest(unittest.TestCase):
 

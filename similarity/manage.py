@@ -24,17 +24,6 @@ def add_metrics(force=False, batch_size=None):
     click.echo("Finished adding all metrics, exiting...")
 
 
-@cli.command(name="update-metric")
-@click.argument("metric")
-@click.option("--batch-size", "-b", type=int, help="Override processing batch size.")
-def update_metric(metric, batch_size=None):
-    """Recomputes and updates a single metric in the
-    similarity table for all recordings."""
-    click.echo("Computing metric {}".format(metric))
-    pass
-    click.echo("Finished updating metric, exiting...")
-
-
 @cli.command(name="delete-metric")
 @click.argument("metric")
 @click.option("--soft", "-s", is_flag=True, help="Don't delete data")
@@ -65,7 +54,7 @@ def delete_metric(name, soft=False, leave_stats=False):
 @click.option("--distance_type", "-d", default='angular', help="Number of trees for building")
 def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
     """Creates an annoy index for the specified metric, adds all items to the index."""
-    similarity.utils.add_index(metric, batch_size=batch_size, n_trees=n_trees, distance_type=distance_type)
+    db.similarity.add_index(metric, batch_size=batch_size, n_trees=n_trees, distance_type=distance_type)
     click.echo("Done!")
 
 
@@ -88,7 +77,7 @@ def add_indices(n_trees=10, distance_type='angular'):
 
     for metric in metrics:
         click.echo("Adding index: {}".format(metric))
-        similarity.utils.add_index(metric, batch_size=None, n_trees=n_trees, distance_type=distance_type)
+        db.similarity.add_index(metric, batch_size=None, n_trees=n_trees, distance_type=distance_type)
     click.echo("Finished.")
 
 

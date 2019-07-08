@@ -10,11 +10,6 @@ import time
 import urlparse
 
 API_PREFIX = '/api/'
-PRODUCTION_BASE_URL = 'acousticbrainz.org'
-BETA_BASE_URL = 'beta.acousticbrainz.org'
-PRODUCTION_URL_HTTPS = 'https://acousticbrainz.org'
-BETA_URL_HTTPS = 'https://beta.acousticbrainz.org'
-
 
 # Check to see if we're running under a docker deployment. If so, don't second guess
 # the config file setup and just wait for the correct configuration to be generated.
@@ -140,15 +135,11 @@ def create_app(debug=None):
     def prod_https_login_redirect():
         """ Redirect to HTTPS in production except for the API endpoints
         """
-        split_url = urlparse.urlsplit(request.url)
-        if request.headers.get('X-Forwarded-Proto') == 'http' and not request.path.startswith(API_PREFIX):
-            if split_url.netloc == PRODUCTION_BASE_URL:
-                redirect_url_base = PRODUCTION_URL_HTTPS
-            elif split_url.netloc == BETA_BASE_URL:
-                redirect_url_base = BETA_URL_HTTPS
-            else:
-                return
-            return redirect(urlparse.urljoin(redirect_url_base, request.full_path))
+        if request.headers.get('X-Forwarded-Proto') == 'http' \
+                and not app.debug \
+                and request.blueprint not in ('api', 'api_v1_core'):
+            url = request.url[7:] # remove http:// from url
+            return redirect('https://{}'.format(url))
 
     return app
 

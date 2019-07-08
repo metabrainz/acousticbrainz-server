@@ -50,18 +50,24 @@ def delete_metric(name, soft=False, leave_stats=False):
 @cli.command(name='add-index')
 @click.argument("metric")
 @click.option("--batch_size", "-b", type=int, default=None, help="Size of batches")
-@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building")
-@click.option("--distance_type", "-d", default='angular', help="Number of trees for building")
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
+@click.option("--distance_type", "-d", default='angular', help="Method of measuring distance between metric vectors")
 def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
-    """Creates an annoy index for the specified metric, adds all items to the index."""
+    """Creates an annoy index for the specified metric, adds all recordings to the index."""
     db.similarity.add_index(metric, batch_size=batch_size, n_trees=n_trees, distance_type=distance_type)
     click.echo("Done!")
 
 
 @cli.command(name='add-indices')
-@click.option("--n-trees", "-n", default=10, type=int)
+@click.option("--n-trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
 @click.option("--distance-type", "-d", default='angular')
 def add_indices(n_trees=10, distance_type='angular'):
+    """Creates an annoy index then adds all recordings to the index,
+    for each of the base metrics."""
     metrics = ["mfccs",
                "mfccsw",
                "gfccs",
@@ -83,7 +89,43 @@ def add_indices(n_trees=10, distance_type='angular'):
 
 @cli.command(name='remove-index')
 @click.argument("metric")
-@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building")
-@click.option("--distance_type", "-d", default='angular', help="Number of trees for building")
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
+@click.option("--distance_type", "-d", default='angular', help="Method of measuring distance between metric vectors.")
 def remove_index(metric, n_trees=10, distance_type='angular'):
-    similarity.utils.remove_index(metric, n_trees, distance_type)
+    """Removes the index with the specified parameters, if it exists.
+
+        Note that each index is built with a distinct number of trees,
+        metric, and distance type.
+    """
+    click.echo("Removing index: {}".format(metric))
+    similarity.utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Finished.")
+
+
+@cli.command(name='remove-indices')
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
+@click.option("--distance_type", "-d", default='angular', help="Method of measuring distance between metric vectors.")
+def remove_indices(n_trees=10, distance_type='angular'):
+    """Removes indices for each of the following metrics, if they
+    exist with the specified parameters."""
+    metrics = ["mfccs",
+               "mfccsw",
+               "gfccs",
+               "gfccsw",
+               "key",
+               "bpm",
+               "onsetrate",
+               "moods",
+               "instruments",
+               "dortmund",
+               "rosamerica",
+               "tzanetakis"]
+
+    for metric in metrics:
+        click.echo("Removing index: {}".format(metric))
+        similarity.utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Finished.")

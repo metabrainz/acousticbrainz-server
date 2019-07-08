@@ -117,7 +117,25 @@ def create_app(debug=None):
     admin = Admin(app, index_view=admin_views.HomeView(name='Admin'))
     admin.add_view(admin_views.AdminsView(name='Admins'))
 
-    @ app.before_request
+    @app.before_request
+    def prod_https_login_redirect():
+        """ Redirect to HTTPS in production except for the API endpoints
+        """
+
+        #app.logger.error("""
+        #    schema: %s
+        #    debug: %s
+        #    blueprint: %s
+        #""", urlparse.urlsplit(request.url).scheme, app.debug, request.blueprint)
+        if urlparse.urlsplit(request.url).scheme == 'http' \
+                and app.config['DEBUG'] == False \
+                and request.blueprint not in ('api', 'api_v1_core', 'api_v1_datasets', 'api_v1_dataset_eval'):
+            app.logger.error("redirecting...")
+            url = request.url[7:] # remove http:// from url
+            return redirect('https://{}'.format(url))
+
+
+    @app.before_request
     def before_request_gdpr_check():
         # skip certain pages, static content and the API
         if request.path == url_for('index.gdpr_notice') \
@@ -130,17 +148,6 @@ def create_app(debug=None):
         # redirect them to agree to terms page.
         elif current_user.is_authenticated and current_user.gdpr_agreed is None:
             return redirect(url_for('index.gdpr_notice', next=request.full_path))
-
-    @app.before_request
-    def prod_https_login_redirect():
-        """ Redirect to HTTPS in production except for the API endpoints
-        """
-
-        if urlparse.urlsplit(request.url).scheme == 'http' \
-                and not app.debug \
-                and request.blueprint not in ('api', 'api_v1_core'):
-            url = request.url[7:] # remove http:// from url
-            return redirect('https://{}'.format(url))
 
     return app
 

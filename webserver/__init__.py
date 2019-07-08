@@ -135,7 +135,8 @@ def create_app(debug=None):
     def prod_https_login_redirect():
         """ Redirect to HTTPS in production except for the API endpoints
         """
-        if request.headers.get('X-Forwarded-Proto') == 'http' \
+
+        if urlparse.urlsplit(request.url).scheme == 'http' \
                 and not app.debug \
                 and request.blueprint not in ('api', 'api_v1_core'):
             url = request.url[7:] # remove http:// from url

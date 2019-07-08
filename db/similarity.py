@@ -202,6 +202,7 @@ def submit_similarity_by_mbid(mbid, offset):
 
 # TODO: Write tests for these and for stats, also add docstrings.
 def insert_similarity_meta(metric, hybrid, description, category):
+    # Adds a new row to similarity_metrics, containing metadata about a metric.
     with db.engine.connect() as connection:
         metrics_query = text("""
             INSERT INTO similarity_metrics (metric, is_hybrid, description, category, visible)
@@ -216,6 +217,7 @@ def insert_similarity_meta(metric, hybrid, description, category):
 
 
 def delete_similarity_meta(metric):
+    # Removes the metadata about a given metric.
     with db.engine.connect() as connection:
         query = text("""
             DELETE FROM similarity_metrics
@@ -225,6 +227,7 @@ def delete_similarity_meta(metric):
 
 
 def create_similarity_metric(metric, clear):
+    # Adds metric column to similarity table, holding a vector for each recording.
     with db.engine.connect() as connection:
         query = text("""
             ALTER TABLE similarity
@@ -242,6 +245,7 @@ def create_similarity_metric(metric, clear):
 
 
 def delete_similarity_metric(metric):
+    # Removes a metric column.
     with db.engine.connect() as connection:
         query = text("""
             ALTER TABLE similarity
@@ -252,6 +256,7 @@ def delete_similarity_metric(metric):
 
 
 def remove_visibility(metric):
+    # Removes visibility of a metric in similarity_metrics table.
     with db.engine.connect() as connection:
         query = text("""
             UPDATE similarity_metrics

@@ -41,6 +41,8 @@ def get_all_metrics():
 
 
 def get_all_indices(n_trees=10):
+    """Returns a dictionary of the indices that must be built for the
+    specified distance measures and metrics"""
     distance_measures = [
         "angular",
         "manhattan"]
@@ -64,11 +66,13 @@ def get_all_indices(n_trees=10):
 
 
 def load_index_model(metric, n_trees=10, distance_type="angular"):
+    """Loads an existing model for an Annoy index."""
     index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
     return index
 
 
 def remove_index(metric, n_trees=10, distance_type="angular"):
+    """Deletes the static index originally saved when an index is computed."""
     file_path = os.path.join(os.getcwd(), 'annoy_indices')
     name = '_'.join([metric, distance_type, str(n_trees)]) + '.ann'
     full_path = os.path.join(file_path, name)

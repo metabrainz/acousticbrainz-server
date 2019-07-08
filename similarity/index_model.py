@@ -5,7 +5,6 @@ import db.data
 import db.exceptions
 
 from annoy import AnnoyIndex
-from sqlalchemy import text
 from collections import defaultdict
 
 
@@ -48,14 +47,14 @@ class AnnoyModel(object):
             self.load()
 
     def get_vector_dimension(self):
-        """
-        Get dimension of metric vectors. If there is no metric of this type
-        already created then we need to raise an error.
-        """
+        """Get dimension of metric vectors. If there is no metric of this type
+        already created then we need to raise an error."""
         dimension = db.similarity.get_metric_dimension(self.metric_name)
         return dimension
 
     def build(self):
+        """Build and load the index using the specified number of trees. An index
+        must be built before it can be queried."""
         self.index.build(self.n_trees)
         self.in_loaded_state = True
 
@@ -115,6 +114,8 @@ class AnnoyModel(object):
             self.index.add_item(item[id], item[self.metric_name])
 
     def add_recording_with_vector(self, id, vector):
+        """Add a single recording to the index using its lowlevel.id and
+        a precomputed metric vector."""
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException
         # If an item already exists, this should not error

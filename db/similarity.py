@@ -6,11 +6,10 @@ from db.data import count_all_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from similarity.index_model import AnnoyModel
 import similarity.metrics
-import similarity.exceptions
+import similarity.utils
 
 from sqlalchemy import text
 from collections import defaultdict
-
 
 
 def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):

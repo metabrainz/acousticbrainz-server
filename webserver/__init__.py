@@ -81,10 +81,6 @@ def create_app(debug=None):
     else:
         raise Exception('One or more redis cache configuration options are missing from config.py')
 
-    # Extensions
-    from flask_uuid import FlaskUUID
-    FlaskUUID(app)
-
     # MusicBrainz
     import musicbrainzngs
     from db import SCHEMA_VERSION
@@ -145,7 +141,7 @@ def create_app_sphinx():
     that we use, so we have to ignore these initialization steps. Only
     blueprints/views are needed to build documentation.
     """
-    app = CustomFlask(import_name=__name__)
+    app = CustomFlask(import_name=__name__, use_flask_uuid=True)
     _register_blueprints(app)
     return app
 

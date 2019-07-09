@@ -651,6 +651,20 @@ def get_lowlevel_id(mbid, offset):
         return result.fetchone()["id"]
 
 
+def check_for_submission(id):
+    # Check that a submission with the given lowlevel.id exists
+    with db.engine.connect() as connection:
+        query = text("""
+                    SELECT *
+                      FROM lowlevel
+                     WHERE id = :id
+                """)
+        result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            return False
+        return True
+
+
 def count_all_lowlevel():
     """Get total number of low-level submissions"""
     with db.engine.connect() as connection:

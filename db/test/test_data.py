@@ -705,6 +705,14 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(2, db.data.count_lowlevel(self.test_mbid))
 
+    def test_check_for_submission(self):
+        # If submission does not exist, returns False
+        self.assertEqual(db.data.check_for_submission(10), False)
+        # If submission does exist, returns True
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        id = db.data.get_lowlevel_id(self.test_mbid, 0)
+        self.assertEqual(db.data.check_for_submission(id), True)
+
     def test_add_get_model(self):
         self.assertIsNone(db.data._get_model_id("modelname", "v1"))
 

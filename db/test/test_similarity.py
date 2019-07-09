@@ -9,6 +9,7 @@ import db.similarity
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
 import similarity.metrics
+import similarity.utils
 
 
 class SimilarityDBTestCase(DatabaseTestCase):
@@ -39,10 +40,10 @@ class SimilarityDBTestCase(DatabaseTestCase):
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 1)
         self.assertEqual(2, db.similarity.count_similarity())
 
-    @unittest.skip
+    @mock.patch("similarity.utils.init_metrics")
     @mock.patch("db.similarity.get_metrics_data")
     @mock.patch("db.similarity.insert_similarity")
-    def test_submit_similarity_by_id(self, insert_similarity, get_metrics_data):
+    def test_submit_similarity_by_id(self, insert_similarity, get_metrics_data, init_metrics):
         """If highlevel and lowlevel data exists for id, check that insert_similarity 
         is called with the specified id, as well as all metrics and their vectors, for
         which none are empty (`isnan` must be False).
@@ -53,7 +54,7 @@ class SimilarityDBTestCase(DatabaseTestCase):
         If highlevel does not exist for a model, the corresponding metric should have
         vector with `isnan` as True and be of the form [None, ..., None]
         """
-        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         ll_id1 = db.data.get_lowlevel_id(self.test_mbid, 0)
 
         # Add all models required for similarity
@@ -66,6 +67,9 @@ class SimilarityDBTestCase(DatabaseTestCase):
 
         id = db.data.get_lowlevel_id(self.test_mbid, 0)
         db.similarity.submit_similarity_by_id(id)
+
+        # Metrics not passed in, so they must be initialized
+        init_metrics.assert_called_once()
 
         vectors_info = [('mfccs', [0.988367855549, 0.0248921476305, 0.965500116348], False),
         ('mfccsw', [0.690790155245792, 0.723055296236391], False),
@@ -81,26 +85,22 @@ class SimilarityDBTestCase(DatabaseTestCase):
         ('tzanetakis', [1.30118269347339, 1.08436025250102, -0.439034532349894, 0.177506236399918, -1.49602752970215, -0.737996348117037, -0.608238495163597, -0.0994916172403261, -1.11919342422039, -1.58447220399166, -1.08427389857258, -0.252746253303151], False)]
 
         with db.engine.connect() as connection:
-            expected_metrics = []
-            for name in similarity.metrics.BASE_METRICS:
-                metric_cls = similarity.metrics.BASE_METRICS[name]
-                metric = metric_cls(connection)
-                expected_metrics.append(metric)
-
-            get_metrics_data.assert_called_with(id, expected_metrics)
             insert_similarity.assert_called_with(connection, id, vectors_info)
 
-    @unittest.skip
+    @mock.patch("similarity.utils.init_metrics")
     @mock.patch("db.similarity.get_metrics_data")
     @mock.patch("db.similarity.insert_similarity")
-    def test_submit_similarity_by_id_metrics_none(self, insert_similarity, get_metrics_data):
+    def test_submit_similarity_by_id_metrics_none(self, insert_similarity, get_metrics_data, init_metrics):
         """If some data does not exist, vectors for those metrics should have `isnan`
         as True, and be of the form [None, ..., None]. E.g. if highlevel is not written.
         """
-        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
 
         id = db.data.get_lowlevel_id(self.test_mbid, 0)
         db.similarity.submit_similarity_by_id(id)
+
+        # Metrics not passed in, so they must be initialized
+        init_metrics.assert_called_once()
 
         vectors_info = [('mfccs', [0.988367855549, 0.0248921476305, 0.965500116348], False),
         ('mfccsw', [0.690790155245792, 0.723055296236391], False),
@@ -130,8 +130,38 @@ class SimilarityDBTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.similarity.submit_similarity_by_id(100)
 
+    @mock.patch("db.similarity.insert_similarity")
+    def test_submit_similarity_by_id_metrics(self, insert_similarity):
+        # If metrics are provided, they should not be initialized
+        metrics = similarity.utils.init_metrics()
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        id = db.data.get_lowlevel_id(self.test_mbid, 0)
+        db.similarity.submit_similarity_by_id(id, metrics=metrics)
+
+        vectors_info = [('mfccs', [0.988367855549, 0.0248921476305, 0.965500116348], False),
+        ('mfccsw', [0.690790155245792, 0.723055296236391], False),
+        ('gfccs', [1.77530184126608, 0.944378506164033, -0.873178308877563, -0.101202090509241, -0.413312439649938, -0.435524397547275, -0.226877337223418, -0.442540751135574, -0.554835175091169, -0.538162986673237, -0.278829360964993, 0.234642688200534], False),
+        ('gfccsw', [0.00617602840066, 0.195983037353, 0.0784998983145, 0.0032169369515, 0.00680347532034, 0.663908660412, 0.0344416685402, 0.010970310308], False),
+        ('key', [2.0131596472614, 0.416072194918468, -0.82365613396016, -0.405594718040805, 0.0598732233828964, -1.17039410061734, -0.225057107206926, -0.654149626932212, -0.783917722845553, -1.13555180528494, -0.283614006958337, 0.487294088725762], False),
+        ('bpm', [0.154698759317, 0.311486542225, 0.0707420706749, 0.0773398503661, 0.0344257615507, 0.0618693865836, 0.0442127361894, 0.0775808021426, 0.0620644688606, 0.10557962954], False),
+        ('onsetrate', [0.0581060945988, 0.953247070312, 0.0500397793949, 0.995198726654, 0.0156338009983], False),
+        ('moods', [None, None], True),
+        ('instruments', [None, None, None, None, None, None, None, None, None], True),
+        ('dortmund', [None, None, None, None, None, None, None, None, None, None, None, None], True),
+        ('rosamerica', [None, None], True),
+        ('tzanetakis', [None, None, None, None, None, None, None, None, None, None, None, None], True)]
+        with db.engine.connect() as connection:
+            insert_similarity.assert_called_with(connection, id, vectors_info)
+
     def test_submit_similarity_by_mbid_none(self):
         # If no submission exists, NoDataFoundException should be raised.
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
 
+    @mock.patch("db.data.get_lowlevel_id")
+    @mock.patch("db.similarity.submit_similarity_by_id")
+    def test_submit_similarity_by_mbid(self, submit_similarity_by_id, get_lowlevel_id):
+        get_lowlevel_id.return_value = 0
+        db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
+        get_lowlevel_id.assert_called_with(self.test_mbid, 0)
+        submit_similarity_by_id.assert_called_with(0)

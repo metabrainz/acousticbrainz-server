@@ -6,9 +6,6 @@ class Metric(object):
     description = ''
     category = ''
 
-    def __init__(self, connection):
-        self.connection = connection
-
     def _create(self, hybrid, column):
         self.hybrid = str(hybrid).upper()
         db.similarity.insert_similarity_meta(self.name, hybrid, self.description, self.category)

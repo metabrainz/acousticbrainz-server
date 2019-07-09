@@ -82,7 +82,6 @@ class CoreViewsTestCase(ServerTestCase):
         # if either DEBUG *or* TESTING is True. In order to actually test
         # that a programming error in the API results in a nice error message
         # being set, we temporarily disable it
-        self.app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
         old_propagate_exceptions = self.app.config['PROPAGATE_EXCEPTIONS']
         self.app.config['PROPAGATE_EXCEPTIONS'] = False
 

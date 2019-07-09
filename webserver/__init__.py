@@ -121,16 +121,10 @@ def create_app(debug=None):
     def prod_https_login_redirect():
         """ Redirect to HTTPS in production except for the API endpoints
         """
-
-        #app.logger.error("""
-        #    schema: %s
-        #    debug: %s
-        #    blueprint: %s
-        #""", urlparse.urlsplit(request.url).scheme, app.debug, request.blueprint)
         if urlparse.urlsplit(request.url).scheme == 'http' \
                 and app.config['DEBUG'] == False \
+                and app.config['TESTING'] == False \
                 and request.blueprint not in ('api', 'api_v1_core', 'api_v1_datasets', 'api_v1_dataset_eval'):
-            app.logger.error("redirecting...")
             url = request.url[7:] # remove http:// from url
             return redirect('https://{}'.format(url))
 

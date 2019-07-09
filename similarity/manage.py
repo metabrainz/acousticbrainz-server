@@ -35,8 +35,8 @@ def update_metric(metric, batch_size=None):
 
 @cli.command(name="delete-metric")
 @click.argument("metric")
-@click.option("--soft", "-s", is_flag=True, help="Don't delete data")
-@click.option("--leave-stats", "-l", is_flag=True, help="Don't delete computed statistics")
+@click.option("--soft", "-s", is_flag=True, help="Don't delete data.")
+@click.option("--leave-stats", "-l", is_flag=True, help="Don't delete computed statistics.")
 def delete_metric(name, soft=False, leave_stats=False):
     """Deletes the metric specified by the `metric` argument."""
     try:

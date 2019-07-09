@@ -43,46 +43,44 @@ def add_metrics(force=False, batch_size=None):
                                                        float(offset) / lowlevel_count * 100))
 
 
-def get_metrics_data(id, metrics):
-    ret = []
-    for metric in metrics:
-        data = metric.get_data(id)
-        ret.append((metric, data))
-    return ret
+def insert_similarity(id, vectors_info):
+    """Inserts a row of similarity vectors for a given lowlevel.id into
+    the similarity table.
 
+        Args: lowlevel.id to be submitted
+              vectors_info, list of tuples of the form:
+              (metric_name, vector, isnan)
+    """
+    with db.engine.connect() as connection:
+        values = []
+        for metric, vector, isnan in vectors_info:
+            value = ('ARRAY' + ('[' + ', '.join(["'NaN'::double precision"] *
+                     len(vector)) + ']' if isnan else str(list(vector))))
+            values.append(value)
 
-def insert_similarity(connection, id, vectors_info):
-    # vectors_info = [(metric_name, vector, isnan)]
-    values = []
-    for metric, vector, isnan in vectors_info:
-        value = ('ARRAY' + ('[' + ', '.join(["'NaN'::double precision"] *
-                 len(vector)) + ']' if isnan else str(list(vector))))
-        values.append(value)
-
-    values_string = ', '.join(values)
-
-    query = text("""
-        INSERT INTO similarity (
-                    id,
-                    mfccs,
-                    mfccsw,
-                    gfccs,
-                    gfccsw,
-                    key,
-                    bpm,
-                    onsetrate,
-                    moods,
-                    instruments,
-                    dortmund,
-                    rosamerica,
-                    tzanetakis)
-             VALUES (
-                    :id,
-                    %(values)s)
-        ON CONFLICT (id)
-         DO NOTHING
-    """ % {"values": values_string})
-    connection.execute(query, {'id': id})
+        values_string = ', '.join(values)
+        query = text("""
+            INSERT INTO similarity (
+                        id,
+                        mfccs,
+                        mfccsw,
+                        gfccs,
+                        gfccsw,
+                        key,
+                        bpm,
+                        onsetrate,
+                        moods,
+                        instruments,
+                        dortmund,
+                        rosamerica,
+                        tzanetakis)
+                 VALUES (
+                        :id,
+                        %(values)s)
+            ON CONFLICT (id)
+             DO NOTHING
+        """ % {"values": values_string})
+        connection.execute(query, {'id': id})
 
 
 def count_similarity():
@@ -105,31 +103,25 @@ def submit_similarity_by_id(id, metrics=None):
     except ValueError:
         raise BadDataException('Parameter `id` must be an integer.')
 
-    with db.engine.connect() as connection:
-        # Check that lowlevel submission exists for given id
-        query = text("""
-            SELECT *
-              FROM lowlevel
-             WHERE id = :id
-        """)
-        result = connection.execute(query, {"id": id})
-        if not result.rowcount:
-            raise NoDataFoundException('No submission for parameter `id`.')
+    # Check that lowlevel submission exists for given id
+    if not db.data.check_for_submission(id):
+        raise NoDataFoundException('No submission for parameter `id`.')
 
-        if not metrics:
-            metrics = similarity.utils.init_metrics()
+    if not metrics:
+        metrics = similarity.utils.init_metrics()
 
-        vectors_info = []
-        for metric, data in get_metrics_data(id, metrics):
-            try:
-                vector = metric.transform(data)
-                isnan = False
-            except ValueError:
-                vector = [None] * metric.length()
-                isnan = True
-            vectors_info.append((metric.name, vector, isnan))
+    vectors_info = []
+    for metric in metrics:
+        data = metric.get_data(id)
+        try:
+            vector = metric.transform(data)
+            isnan = False
+        except ValueError:
+            vector = [None] * metric.length()
+            isnan = True
+        vectors_info.append((metric.name, vector, isnan))
 
-        insert_similarity(connection, id, vectors_info)
+    insert_similarity(id, vectors_info)
 
 
 def submit_similarity_by_mbid(mbid, offset):

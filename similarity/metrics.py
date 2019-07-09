@@ -1,8 +1,10 @@
 import numpy as np
 
+import db
 import db.data
 import db.stats
 from operations import BaseMetric
+from sqlalchemy import text
 
 NORMALIZATION_SAMPLE_SIZE = 10000
 
@@ -46,7 +48,9 @@ class NormalizedLowLevelMetric(LowLevelMetric):
                 self.means.append(mean)
                 self.stddevs.append(stddev)
 
-        db.stats.insert_similarity_stats(self.name, self.means, self.stddevs)
+        # Check if means and stddevs are None incase there are not yet submissions
+        if not self.means == [None] * len(self.means) or not self.stddevs == [None] * len(self.stddevs):
+            db.stats.insert_similarity_stats(self.name, self.means, self.stddevs)
 
     def delete_stats(self):
         print('Deleting global stats')
@@ -66,8 +70,7 @@ class NormalizedLowLevelMetric(LowLevelMetric):
 class WeightedNormalizedLowLevelMetric(NormalizedLowLevelMetric):
     weight = 0.95
 
-    def __init__(self, connection):
-        super(WeightedNormalizedLowLevelMetric, self).__init__(connection)
+    def __init__(self):
         indices = np.array(self.indices)
         indices -= np.min(indices)
         self.weight_vector = np.array([self.weight ** i for i in indices])

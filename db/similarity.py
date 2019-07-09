@@ -15,17 +15,7 @@ def add_metrics(force=False, batch_size=None):
     lowlevel_count = count_all_lowlevel()
 
     with db.engine.connect() as connection:
-        metrics = []
-        for name in similarity.metrics.BASE_METRICS:
-            metric_cls = similarity.metrics.BASE_METRICS[name]
-            metric = metric_cls(connection)
-            metric.create(clear=force)
-            metrics.append(metric)
-            try:
-                metric.calculate_stats()
-            except AttributeError:
-                pass
-
+        metrics = similarity.utils.init_metrics(force=force)
         offset = count_similarity()
         print("Processed {} / {} ({:.3f}%)".format(offset,
                                                    lowlevel_count,
@@ -44,18 +34,8 @@ def add_metrics(force=False, batch_size=None):
                 print("Metric {} added for all recordings".format(metric.name))
                 break
 
-            with connection.begin():
-                for row in result.fetchall():
-                    vectors_info = []
-                    for metric, data in get_metrics_data(row["id"], metrics):
-                        try:
-                            vector = metric.transform(data)
-                            isnan = False
-                        except ValueError:
-                            vector = [None] * metric.length()
-                            isnan = True
-                        vectors_info.append((metric.name, vector, isnan))
-                    insert_similarity(connection, row["id"], vectors_info)
+            for row in result.fetchall():
+                submit_similarity_by_id(row["id"], metrics=metrics)
 
             offset = count_similarity()
             print("Processed {} / {} ({:.3f}%)".format(offset,
@@ -116,7 +96,7 @@ def count_similarity():
         return result.fetchone()[0]
 
 
-def submit_similarity_by_id(id):
+def submit_similarity_by_id(id, metrics=None):
     """Computes similarity metrics for a single recording specified
     by lowlevel.id, then inserts the metrics as a new row in the
     similarity table."""
@@ -134,28 +114,10 @@ def submit_similarity_by_id(id):
         """)
         result = connection.execute(query, {"id": id})
         if not result.rowcount:
-            raise db.exceptions.NoDataFoundException('No submission for parameter `id`.')
+            raise NoDataFoundException('No submission for parameter `id`.')
 
-        metrics = []
-        for name in similarity.metrics.BASE_METRICS:
-            metric_cls = similarity.metrics.BASE_METRICS[name]
-            metric = metric_cls(connection)
-            # Check that metric is initialized
-            query = text("""
-                SELECT *
-                  FROM similarity_metrics
-                 WHERE metric = :metric
-            """)
-            result = connection.execute(query, {"metric": metric.name})
-            if not result.rowcount:
-                # Must init metric
-                metric.create()
-
-            try:
-                metric.calculate_stats()
-            except AttributeError:
-                pass
-            metrics.append(metric)
+        if not metrics:
+            metrics = similarity.utils.init_metrics()
 
         vectors_info = []
         for metric, data in get_metrics_data(id, metrics):

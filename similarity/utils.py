@@ -23,23 +23,6 @@ def init_metrics():
     return metrics
 
 
-def get_all_metrics():
-    with db.engine.begin() as connection:
-        result = connection.execute("""
-            SELECT category, metric, description
-            FROM similarity_metrics
-            WHERE visible = TRUE
-        """)
-
-        metrics = {}
-        for category, metric, description in result.fetchall():
-            if category not in metrics:
-                metrics[category] = []
-            metrics[category].append([metric, description])
-
-        return metrics
-
-
 def get_all_indices(n_trees=10):
     """Returns a dictionary of the indices that must be built for the
     specified distance measures and metrics"""

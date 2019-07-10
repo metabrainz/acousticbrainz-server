@@ -4,7 +4,6 @@ import click
 
 import webserver
 import metrics
-from index_model import AnnoyModel
 import similarity.utils
 import db
 import db.similarity
@@ -13,14 +12,13 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 
 
 @cli.command(name="add-metrics")
-@click.option("--force", "-f", is_flag=True, help="Recompute existing metrics.")
 @click.option("--batch-size", "-b", type=int, help="Override processing batch size.")
-def add_metrics(force=False, batch_size=None):
+def add_metrics(batch_size=None):
     """Computes all 12 base metrics for each recording
     in the lowlevel table, inserting these values in
     the similarity table."""
     click.echo("Adding all metrics...")
-    db.similarity.add_metrics(force=force, batch_size=batch_size)
+    db.similarity.add_metrics(batch_size=batch_size)
     click.echo("Finished adding all metrics, exiting...")
 
 

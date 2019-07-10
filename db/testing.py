@@ -39,6 +39,7 @@ class DatabaseTestCase(TestCase):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'populate_tables.sql'))
 
     def drop_tables(self):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_tables.sql'))

@@ -4,11 +4,10 @@ import os.path
 
 import mock
 
+import db
 import db.similarity
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
-import similarity.metrics
-import similarity.utils
 
 
 class SimilarityDBTestCase(DatabaseTestCase):

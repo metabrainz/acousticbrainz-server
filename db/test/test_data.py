@@ -555,6 +555,50 @@ class DataDBTestCase(DatabaseTestCase):
         }
         self.assertEqual(expected, db.data.load_many_high_level(list(recordings)))
 
+    def test_load_high_level_map_class_names(self):
+        recordings = [(self.test_mbid, 0)]
+
+        # If an offset doesn't exist or recording doesn't exist, it is skipped.
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
+
+        db.data.add_model("model1", "v1", "show")
+
+        build_sha = "sha"
+        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
+        hl1 = {"highlevel": {"model1": {"all": {"one": 0.4, "two": 0.6}, "probability": 0.6, "value": "two"}},
+               "metadata": {"meta": "here",
+                            "version": {"highlevel": ver}
+                            }
+               }
+        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
+
+        hl1_expected = copy.deepcopy(hl1)
+        hl1_expected["highlevel"]["model1"]["version"] = ver
+
+        expected = {
+            self.test_mbid: {'0': hl1_expected},
+        }
+        # If we set map_classes, but there is no mapping, the results are the same as the original version
+        self.assertEqual(expected, db.data.load_many_high_level(list(recordings), map_classes=True))
+
+        # We have only one model, so for testing we just unconditionally set the mapping
+        with db.engine.connect() as connection:
+            connection.execute(
+                sqlalchemy.text("""UPDATE model set class_mapping = '{"one": "Class One", "two": "Class Two"}'::jsonb""")
+            )
+
+        # Now with the mapping, the values in the expected values have been changed
+        hl1_expected = copy.deepcopy(hl1)
+        hl1_expected["highlevel"]["model1"]["version"] = ver
+        hl1_expected["highlevel"]["model1"]["value"] = "Class Two"
+        hl1_expected["highlevel"]["model1"]["all"] = {"Class One": 0.4, "Class Two": 0.6}
+
+        expected = {
+            self.test_mbid: {'0': hl1_expected},
+        }
+        self.assertEqual(expected, db.data.load_many_high_level(list(recordings), map_classes=True))
+
     def test_get_lowlevel_metric_feature(self):
         # If path and id exist, returns value of path in lowlevel_json.data
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
@@ -647,50 +691,6 @@ class DataDBTestCase(DatabaseTestCase):
         second_data["metadata"]["tags"]["album"] = ["Another album"]
         db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(2, db.data.count_all_lowlevel())
-
-    def test_load_high_level_map_class_names(self):
-        recordings = [(self.test_mbid, 0)]
-
-        # If an offset doesn't exist or recording doesn't exist, it is skipped.
-        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        ll_id1 = self._get_ll_id_from_mbid(self.test_mbid)[0]
-
-        db.data.add_model("model1", "v1", "show")
-
-        build_sha = "sha"
-        ver = {"hlversion": "123", "models_essentia_git_sha": "v1"}
-        hl1 = {"highlevel": {"model1": {"all": {"one": 0.4, "two": 0.6}, "probability": 0.6, "value": "two"}},
-               "metadata": {"meta": "here",
-                            "version": {"highlevel": ver}
-                            }
-               }
-        db.data.write_high_level(self.test_mbid, ll_id1, hl1, build_sha)
-
-        hl1_expected = copy.deepcopy(hl1)
-        hl1_expected["highlevel"]["model1"]["version"] = ver
-
-        expected = {
-            self.test_mbid: {'0': hl1_expected},
-        }
-        # If we set map_classes, but there is no mapping, the results are the same as the original version
-        self.assertEqual(expected, db.data.load_many_high_level(list(recordings), map_classes=True))
-
-        # We have only one model, so for testing we just unconditionally set the mapping
-        with db.engine.connect() as connection:
-            connection.execute(
-                sqlalchemy.text("""UPDATE model set class_mapping = '{"one": "Class One", "two": "Class Two"}'::jsonb""")
-            )
-
-        # Now with the mapping, the values in the expected values have been changed
-        hl1_expected = copy.deepcopy(hl1)
-        hl1_expected["highlevel"]["model1"]["version"] = ver
-        hl1_expected["highlevel"]["model1"]["value"] = "Class Two"
-        hl1_expected["highlevel"]["model1"]["all"] = {"Class One": 0.4, "Class Two": 0.6}
-
-        expected = {
-            self.test_mbid: {'0': hl1_expected},
-        }
-        self.assertEqual(expected, db.data.load_many_high_level(list(recordings), map_classes=True))
 
     def test_count_lowlevel(self):
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)

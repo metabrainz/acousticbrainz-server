@@ -78,6 +78,7 @@ def init_db(archive, force, skip_create_db=False):
     2. Data is imported from the archive if it is specified.
     3. Primary keys and foreign keys are created.
     4. Indexes are created.
+    5. Similarity metrics metadata is populated.
 
     Data dump needs to be a .tar.xz archive produced by export command.
 
@@ -124,6 +125,9 @@ def init_db(archive, force, skip_create_db=False):
 
     print('Creating indexes...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+
+    print('Populating similarity_metrics table...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'populate_tables.sql'))
 
     print("Done!")
 

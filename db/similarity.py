@@ -178,9 +178,9 @@ def delete_similarity_metric(metric):
         query = text("""
             ALTER TABLE similarity
             DROP COLUMN
-              IF EXISTS :metric
-        """)
-        connection.execute(query, {"metric": metric})
+              IF EXISTS %s
+        """ % metric)
+        connection.execute(query)
 
 
 def remove_visibility(metric):

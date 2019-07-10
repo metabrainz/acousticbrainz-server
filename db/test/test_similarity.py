@@ -8,10 +8,6 @@ import db
 import db.similarity
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
-import similarity.metrics
-import similarity.utils
-
-from sqlalchemy import text
 
 
 class SimilarityDBTestCase(DatabaseTestCase):
@@ -129,77 +125,3 @@ class SimilarityDBTestCase(DatabaseTestCase):
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
         get_lowlevel_id.assert_called_with(self.test_mbid, 0)
         submit_similarity_by_id.assert_called_with(0)
-
-    def test_insert_delete_similarity_meta(self):
-        metric = "mfccs"
-        hybrid = "FALSE"
-        is_hybrid = False
-        description = "MFCCS_test"
-        category = "timbre"
-        # Create metric, assert properties of the row
-        db.similarity.insert_similarity_meta(metric, hybrid, description, category)
-        with db.engine.connect() as connection:
-            query = text("""
-                SELECT *
-                  FROM similarity_metrics
-                 WHERE metric = :metric
-            """)
-            result = connection.execute(query, {"metric": metric})
-            row = result.fetchone()
-            self.assertEqual(row["metric"], metric)
-            self.assertEqual(row["is_hybrid"], is_hybrid)
-            self.assertEqual(row["description"], description)
-            self.assertEqual(row["category"], category)
-
-            # Delete metric
-            db.similarity.delete_similarity_meta(metric)
-            result = connection.execute(query, {"metric": metric})
-            self.assertEqual(result.rowcount, 0)
-
-    def test_create_delete_similarity_metric(self):
-        # Add some row to similarity table
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
-        db.similarity.submit_similarity_by_id(id)
-
-        # If clear is False, the row should remain after inserting new metric
-        metric = "tzanetakis_test"
-        clear = False
-        db.similarity.create_similarity_metric(metric, clear)
-
-        with db.engine.connect() as connection:
-            query = text("""
-                SELECT *
-                  FROM similarity
-                 LIMIT 1
-            """)
-            result = connection.execute(query)
-            self.assertEqual(result.rowcount, 1)
-            row = result.fetchone()
-            self.assertEqual(row[metric], None)
-
-        # Delete metric
-        db.similarity.delete_similarity_metric(metric)
-        with db.engine.connect() as connection:
-            result = connection.execute(query)
-            row = result.fetchone()
-            assert metric not in row
-
-    def test_remove_visibility(self):
-        # Insert similarity with visibility set to True
-        metric = "mfccs"
-        hybrid = "FALSE"
-        description = "MFCCS_test"
-        category = "timbre"
-        db.similarity.insert_similarity_meta(metric, hybrid, description, category)
-        # Remove visibility
-        db.similarity.remove_visibility(metric)
-        with db.engine.connect() as connection:
-            query = text("""
-                SELECT visible
-                  FROM similarity_metrics
-                 WHERE metric = :metric
-            """)
-            result = connection.execute(query, {"metric": metric})
-            row = result.fetchone()
-            self.assertEqual(row["visible"], False)

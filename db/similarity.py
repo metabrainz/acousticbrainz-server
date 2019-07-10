@@ -200,7 +200,6 @@ def submit_similarity_by_mbid(mbid, offset):
     submit_similarity_by_id(id)
 
 
-# TODO: Write tests for these and for stats, also add docstrings.
 def insert_similarity_meta(metric, hybrid, description, category):
     # Adds a new row to similarity_metrics, containing metadata about a metric.
     with db.engine.connect() as connection:

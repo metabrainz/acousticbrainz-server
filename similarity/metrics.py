@@ -1,12 +1,16 @@
-import numpy as np
-
 import db
 import db.data
 import db.stats
-from operations import BaseMetric
-from sqlalchemy import text
+
+import numpy as np
 
 NORMALIZATION_SAMPLE_SIZE = 10000
+
+
+class BaseMetric(object):
+    name = ''
+    description = ''
+    category = ''
 
 
 class LowLevelMetric(BaseMetric):
@@ -29,11 +33,11 @@ class NormalizedLowLevelMetric(LowLevelMetric):
         # TODO: use same stats for weighted and normal metrics (e.g. mfccs and mfccsw)
         stats = db.stats.check_global_stats(self.name)
         if stats:
-            # print('Global stats already calculated')
+            # Global stats already calculated
             self.means, self.stddevs = stats
             return
 
-        # print('Calculating global stats for {}'.format(self.name))
+        # Calculate global stats for metric
         self.means = []
         self.stddevs = []
 
@@ -43,7 +47,6 @@ class NormalizedLowLevelMetric(LowLevelMetric):
             self.stddevs.append(stddev)
         else:
             for i in self.indices:
-                # print('Index {} (out of {})'.format(i, len(self.indices)))
                 mean, stddev = db.stats.calculate_stats_for_feature('{}->>{}'.format(self.path, i))
                 self.means.append(mean)
                 self.stddevs.append(stddev)
@@ -59,7 +62,7 @@ class NormalizedLowLevelMetric(LowLevelMetric):
     def transform(self, data):
         if not data:
             raise ValueError('Invalid data value: {}'.format(data))
-        # normalize
+        # Normalize
         data = np.array(data)[self.indices]
         if np.count_nonzero(np.array(self.stddevs)):
             return (data - np.array(self.means)) / np.array(self.stddevs)

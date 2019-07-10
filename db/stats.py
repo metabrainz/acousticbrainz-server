@@ -107,11 +107,11 @@ def insert_similarity_stats(metric_name, means, stddevs):
     with db.engine.connect() as connection:
         query = text("""
             INSERT INTO similarity_stats (metric, means, stddevs)
-                 VALUES (%(metric)s, %(means)s, %(stddevs)s)
-        """ % {'metric': "'{}'".format(metric_name),
-               'means': 'ARRAY' + str(means),
-               'stddevs': 'ARRAY' + str(stddevs)})
-        connection.execute(query)
+                 VALUES (:metric, :means, :stddevs)
+        """)
+        connection.execute(query, {"metric": str(metric_name),
+                                   "means": means,
+                                   "stddevs": stddevs})
 
 
 def delete_similarity_stats(metric):

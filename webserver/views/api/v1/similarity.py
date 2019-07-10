@@ -84,13 +84,12 @@ def _check_index_params(metric):
         n_trees = 10
 
     n_neighbours = request.args.get("n_neighbours")
-    if not n_neighbours or n_neighbours > 1000:
+    try:
+        n_neighbours = int(n_neighbours)
+        if n_neighbours > 1000:
+            raise ValueError
+    except (ValueError, TypeError):
         n_neighbours = 200
-    else:
-        try:
-            n_neighbours = int(n_neighbours)
-        except ValueError:
-            n_neighbours = 200
 
     return metric, distance_type, n_trees, n_neighbours
 

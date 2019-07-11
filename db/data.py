@@ -593,7 +593,6 @@ def load_many_high_level(recordings, map_classes=False):
         return dict(recordings_info)
 
 
-# I noticed that we usually only do things by (MBID, offset), not id - should this work match that pattern?
 def get_lowlevel_metric_feature(id, path):
     # Get lowlevel data only for a specified path.
     try:

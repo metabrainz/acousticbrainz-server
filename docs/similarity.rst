@@ -22,31 +22,31 @@ one, or many features of high and low-level data.
 Thus far, the following metrics can be used to assess similarity:
 
 ==================== ============ ====================
-**Metric**			 **Hybrid**	  **Category**
+**Metric**           **Hybrid**   **Category**
 ==================== ============ ====================
-MFCCs				 False	      Timbre
+MFCCs                False        Timbre
 ==================== ============ ====================
-MFCCs (Weighted)	 False	      Timbre
+MFCCs (Weighted)     False        Timbre
 ==================== ============ ====================
-GFCCs				 False	      Timbre
+GFCCs                False        Timbre
 ==================== ============ ====================
-GFCCs (Weighted)	 False	      Timbre
+GFCCs (Weighted)     False        Timbre
 ==================== ============ ====================
-Key					 False	      Rhythm (Key/Scale)
+Key                  False        Rhythm (Key/Scale)
 ==================== ============ ====================
-BPM					 False	      Rhythm
+BPM                  False        Rhythm
 ==================== ============ ====================
-OnsetRate			 False	      Rhythm
+OnsetRate            False        Rhythm
 ==================== ============ ====================
-Moods				 False	      High-Level
+Moods                False        High-Level
 ==================== ============ ====================
-Instruments			 False	      High-Level
+Instruments          False        High-Level
 ==================== ============ ====================
-Dortmund			 False	      High-Level (Genre)
+Dortmund             False        High-Level (Genre)
 ==================== ============ ====================
-Rosamerica			 False	      High-Level (Genre)
+Rosamerica           False        High-Level (Genre)
 ==================== ============ ====================
-Tzanetakis			 False	      High-Level (Genre)
+Tzanetakis           False        High-Level (Genre)
 ==================== ============ ====================
 
 Note: Hybrid metrics are combinations of multiple metrics. In the future, 

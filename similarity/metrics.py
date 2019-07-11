@@ -88,7 +88,7 @@ class MfccsMetric(NormalizedLowLevelMetric):
     description = 'MFCCs'
     category = 'timbre'
     path = "data->'lowlevel'->'mfcc'->'mean'"
-    indices = range(1, 13)
+    indices = range(0, 13)
 
 
 class WeightedMfccsMetric(WeightedNormalizedLowLevelMetric, MfccsMetric):
@@ -101,7 +101,7 @@ class GfccsMetric(NormalizedLowLevelMetric):
     description = 'GFCCs'
     category = 'timbre'
     path = "data->'lowlevel'->'gfcc'->'mean'"
-    indices = range(1, 13)
+    indices = range(0, 13)
 
 
 class WeightedGfccsMetric(WeightedNormalizedLowLevelMetric, GfccsMetric):

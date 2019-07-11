@@ -7,6 +7,8 @@ Contents:
    :maxdepth: 2
 
    api
+   /dev/similarity
+   similarity
 
 Indices and tables
 ==================

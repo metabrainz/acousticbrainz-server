@@ -612,7 +612,6 @@ def get_mbids_by_ids(ids):
         return recordings
 
 
-# I noticed that we usually only do things by (MBID, offset), not id - should this work match that pattern?
 def get_lowlevel_metric_feature(id, path):
     # Get lowlevel data only for a specified path.
     try:

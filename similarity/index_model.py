@@ -22,6 +22,18 @@ class AnnoyModel(object):
               called upon initialization.
         """
         # Check params
+        self.parse_initial_params(metric_name, n_trees, distance_type)
+        self.dimension = self.get_vector_dimension()
+        self.index = AnnoyIndex(self.dimension, metric=self.distance_type)
+
+        # in_loaded_state set to True if the index is built, loaded, or saved.
+        # At any of these points, items can no longer be added to the index.
+        self.in_loaded_state = False
+        if load_existing:
+            self.load()
+
+    def parse_initial_params(self, metric_name, n_trees, distance_type):
+        # Validate the index parameters passed to AnnoyModel.
         if metric_name in BASE_INDICES:
             self.metric_name = metric_name
         else:
@@ -36,15 +48,6 @@ class AnnoyModel(object):
             self.n_trees = n_trees
         else:
             raise similarity.exceptions.IndexNotFoundException('Index for specified number of trees is not possible.')
-
-        self.dimension = self.get_vector_dimension()
-        self.index = AnnoyIndex(self.dimension, metric=self.distance_type)
-
-        # in_loaded_state set to True if the index is built, loaded, or saved.
-        # At any of these points, items can no longer be added to the index.
-        self.in_loaded_state = False
-        if load_existing:
-            self.load()
 
     def get_vector_dimension(self):
         """Get dimension of metric vectors. If there is no metric of this type
@@ -95,7 +98,7 @@ class AnnoyModel(object):
         """
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException
-        item = db.similarity.get_similarity_metrics_row(mbid, offset)
+        item = db.similarity.get_similarity_row_mbid(mbid, offset)
         if item:
             recording_vector = item[self.metric_name]
             id = item['id']
@@ -110,7 +113,7 @@ class AnnoyModel(object):
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException
         if not self.index.get_item_vector(id):
-            item = db.similarity.get_similarity_metrics_row_id(id)
+            item = db.similarity.get_similarity_row_id(id)
             self.index.add_item(item[id], item[self.metric_name])
 
     def add_recording_with_vector(self, id, vector):

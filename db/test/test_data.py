@@ -644,6 +644,28 @@ class DataDBTestCase(DatabaseTestCase):
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(db.data.get_lowlevel_id(self.test_mbid, 0), db.data.get_lowlevel_id(self.test_mbid.upper(), 0))
 
+    def test_get_mbids_by_ids(self):
+        # Check that (MBID, offset) combinations returned match ids
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        id_1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+        db.data.submit_low_level_data(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
+        id_2 = db.data.get_lowlevel_id(self.test_mbid_two, 0)
+
+        second_data = copy.deepcopy(self.test_lowlevel_data)
+        second_data["metadata"]["tags"]["album"] = ["Another album"]
+        db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
+        id_3 = db.data.get_lowlevel_id(self.test_mbid, 1)
+
+        ids = [id_1, id_2, id_3]
+        expected_result = [(self.test_mbid, 0), (self.test_mbid_two, 0), (self.test_mbid, 1)]
+        self.assertEqual(expected_result, db.data.get_mbids_by_ids(ids))
+
+    def test_get_mbids_by_ids_none(self):
+        # If none of the ids exist, empty list is returned
+        ids = [7, 8, 9]
+        expected_result = []
+        self.assertEqual(expected_result, db.data.get_mbids_by_ids(ids))
+
     def test_count_all_lowlevel(self):
         # Write lowlevel then check count
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)

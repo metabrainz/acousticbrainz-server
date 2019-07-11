@@ -607,7 +607,7 @@ def get_mbids_by_ids(ids):
 
         recordings = []
         for row in result.fetchall():
-            recordings.append((row["gid"], row["submission_offset"]))
+            recordings.append((str(row["gid"]), row["submission_offset"]))
 
         return recordings
 

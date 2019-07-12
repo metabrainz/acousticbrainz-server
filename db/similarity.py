@@ -4,7 +4,6 @@ from flask import current_app
 import db
 from db.data import count_all_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
-from similarity.index_model import AnnoyModel
 import similarity.metrics
 import similarity.utils
 
@@ -78,11 +77,8 @@ def get_all_metrics():
         return metrics
 
 
-def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
-    """Creates an annoy index for the specified metric, adds all items to the index."""
-    print("Initializing index...")
-    index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)
-
+def add_index(index, batch_size=None):
+    """Adds all items to the initialized Annoy index."""
     batch_size = batch_size or PROCESS_BATCH_SIZE
     offset = 0
     count = 0

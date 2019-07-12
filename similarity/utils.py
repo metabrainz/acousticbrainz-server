@@ -1,5 +1,5 @@
-import db
-from index_model import AnnoyModel
+import os
+
 import similarity.exceptions
 import similarity.metrics
 
@@ -46,12 +46,6 @@ def get_all_indices(n_trees=10):
         for metric in metrics:
             indices[distance].append((metric, n_trees))
     return indices
-
-
-def load_index_model(metric, n_trees=10, distance_type="angular"):
-    """Loads an existing model for an Annoy index."""
-    index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
-    return index
 
 
 def remove_index(metric, n_trees=10, distance_type="angular"):

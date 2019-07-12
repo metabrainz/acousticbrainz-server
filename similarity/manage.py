@@ -22,29 +22,6 @@ def add_metrics(batch_size=None):
     click.echo("Finished adding all metrics, exiting...")
 
 
-@cli.command(name="delete-metric")
-@click.argument("metric")
-@click.option("--soft", "-s", is_flag=True, help="Don't delete data.")
-@click.option("--leave-stats", "-l", is_flag=True, help="Don't delete computed statistics.")
-def delete_metric(name, soft=False, leave_stats=False):
-    """Deletes the metric specified by the `metric` argument."""
-    try:
-        metric_cls = metrics.BASE_METRICS[metric]
-    except KeyError:
-        click.echo('No such metric is implemented: {}'.format(metric))
-        return
-
-    with db.engine.begin() as connection:
-        metric = metric_cls(connection)
-        metric.delete(soft=soft)
-
-        if not leave_stats:
-            try:
-                metric.delete_stats()
-            except AttributeError:
-                pass
-
-
 @cli.command(name='add-index')
 @click.argument("metric")
 @click.option("--batch_size", "-b", type=int, default=None, help="Size of batches")

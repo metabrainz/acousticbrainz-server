@@ -341,3 +341,52 @@ def submit_similarity_by_mbid(mbid, offset):
     row in the similarity table."""
     id = db.data.get_lowlevel_id(mbid, offset)
     submit_similarity_by_id(id)
+
+
+def get_metric_dimension(metric_name):
+    # Get dimension of vectors for a metric in similarity table
+    if metric_name not in similarity.metrics.BASE_METRICS:
+        raise db.exceptions.NoDataFoundException("No existing metric named \"{}\"".format(metric_name))
+    with db.engine.connect() as connection:
+        result = connection.execute("""
+            SELECT *
+              FROM similarity
+             LIMIT 1
+        """)
+        try:
+            dimension = len(result.fetchone()[metric_name])
+            return dimension
+        except TypeError:
+            raise db.exceptions.NoDataFoundException("No existing similarity data.")
+
+
+def get_similarity_row_mbid(mbid, offset):
+    # Get a single row of the similarity table by (MBID, offset) combination
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT *
+              FROM similarity
+             WHERE id = (
+                SELECT id
+                  FROM lowlevel
+                 WHERE gid = :mbid
+                   AND submission_offset = :offset )
+        """)
+        result = connection.execute(query, { "mbid": mbid, "offset": offset})
+        if not result.rowcount:
+            raise db.exceptions.NoDataFoundException("No similarity metrics are computed for the given (MBID, offset) combination.")
+        return result.fetchone()
+
+
+def get_similarity_row_id(id):
+    # Get a single row of the similarity table by lowlevel.id
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT *
+              FROM similarity
+             WHERE id = :id
+        """)
+        result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            raise db.exceptions.NoDataFoundException("No similarity metrics are computed for the given (MBID, offset) combination.")
+        return result.fetchone()

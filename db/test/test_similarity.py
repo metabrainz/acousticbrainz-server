@@ -250,5 +250,6 @@ class SimilarityDBTestCase(DatabaseTestCase):
 
     def test_get_similarity_row_id(self):
         # If no similarity is submitted, error is raised.
+        id = 2
         with self.assertRaises(db.exceptions.NoDataFoundException):
-            db.similarity.get_similarity_row_mbid(self.test_mbid, 0)
+            db.similarity.get_similarity_row_id(id)

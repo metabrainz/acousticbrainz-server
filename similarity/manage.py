@@ -3,7 +3,6 @@ from flask.cli import FlaskGroup
 import click
 
 import webserver
-import metrics
 import similarity.utils
 import db
 import db.similarity
@@ -31,7 +30,10 @@ def add_metrics(batch_size=None):
 @click.option("--distance_type", "-d", default='angular', help="Method of measuring distance between metric vectors")
 def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
     """Creates an annoy index for the specified metric, adds all recordings to the index."""
-    db.similarity.add_index(metric, batch_size=batch_size, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Initializing index...")
+    index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Adding items")
+    db.similarity.add_index(index, batch_size=batch_size)
     click.echo("Done!")
 
 

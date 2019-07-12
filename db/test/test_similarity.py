@@ -8,8 +8,6 @@ import db
 import db.similarity
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
-import similarity.exceptions
-from sqlalchemy import text
 
 
 class SimilarityDBTestCase(DatabaseTestCase):

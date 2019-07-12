@@ -1,6 +1,7 @@
 import os
 
 import similarity.exceptions
+import db.similarity
 import db.data
 import db.exceptions
 
@@ -23,7 +24,7 @@ class AnnoyModel(object):
         """
         # Check params
         self.parse_initial_params(metric_name, n_trees, distance_type)
-        self.dimension = self.get_vector_dimension()
+        self.dimension = db.similarity.get_metric_dimension(self.metric_name)
         self.index = AnnoyIndex(self.dimension, metric=self.distance_type)
 
         # in_loaded_state set to True if the index is built, loaded, or saved.
@@ -48,12 +49,6 @@ class AnnoyModel(object):
             self.n_trees = n_trees
         else:
             raise similarity.exceptions.IndexNotFoundException('Index for specified number of trees is not possible.')
-
-    def get_vector_dimension(self):
-        """Get dimension of metric vectors. If there is no metric of this type
-        already created then we need to raise an error."""
-        dimension = db.similarity.get_metric_dimension(self.metric_name)
-        return dimension
 
     def build(self):
         """Build and load the index using the specified number of trees. An index

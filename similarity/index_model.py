@@ -58,6 +58,8 @@ class AnnoyModel(object):
 
     def save(self, location=os.path.join(os.getcwd(), 'annoy_indices'), name=None):
         # Save and load the index using the metric name.
+        if not self.in_loaded_state:
+            raise similarity.exceptions.LoadStateException('Index must be built before saving.')
         try:
             os.makedirs(location)
         except OSError:
@@ -66,7 +68,6 @@ class AnnoyModel(object):
         name = '_'.join([name or self.metric_name, self.distance_type, str(self.n_trees)]) + '.ann'
         file_path = os.path.join(location, name)
         self.index.save(file_path)
-        self.in_loaded_state = True
 
     def load(self, name=None):
         """

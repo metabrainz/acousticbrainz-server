@@ -84,7 +84,7 @@ class AnnoyModel(object):
         try:
             self.index.load(full_path)
             self.in_loaded_state = True
-        except FileNotFoundError:
+        except IOError:
             raise similarity.exceptions.IndexNotFoundException
 
     def add_recording_by_mbid(self, mbid, offset):

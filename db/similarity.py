@@ -368,7 +368,7 @@ def get_similarity_row_mbid(mbid, offset):
                  WHERE gid = :mbid
                    AND submission_offset = :offset )
         """)
-        result = connection.execute(query, { "mbid": mbid, "offset": offset})
+        result = connection.execute(query, {"mbid": mbid, "offset": offset})
         if not result.rowcount:
             raise db.exceptions.NoDataFoundException("No similarity metrics are computed for the given (MBID, offset) combination.")
         return result.fetchone()

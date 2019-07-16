@@ -27,43 +27,43 @@ class APISimilarityViewsTestCase(ServerTestCase):
         self.test_recording2_data_json = open(os.path.join(TEST_DATA_PATH, self.test_recording2_mbid + '.json')).read()
         self.test_recording2_data = json.loads(self.test_recording2_data_json)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_similar_recordings_bad_uuid(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_similar_recordings_bad_uuid(self, annoy_model):
         """ URL Endpoint returns 404 because url-part doesn't match UUID.
             This error is raised by Flask, but we special-case to json.
         """
         resp = self.client.get("/api/v1/similarity/mfccs/nothing")
         self.assertEqual(404, resp.status_code)
 
-        load_index_model.assert_not_called()
+        annoy_model.assert_not_called()
         expected_result = {"message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."}
         self.assertEqual(resp.json, expected_result)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_similar_recordings_no_params(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_similar_recordings_no_params(self, annoy_model):
         """When offset, distance, n_trees, and n_neighbours are not specified,
         they are set with default values. Metric must be specified.
         """
-        annoy_mock = mock.Mock()
-        annoy_mock.get_nns_by_mbid.return_value = {}
-        load_index_model.return_value = annoy_mock
-
         metric = "mfccs"
-        resp = self.client.get("/api/v1/similarity/{}/{}".format(metric, self.uuid))
-        self.assertEqual(200, resp.status_code)
-
         offset = 0
         distance_type = "angular"
         n_trees = 10
         n_neighbours = 200
-        load_index_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type)
-        annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
-
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_similar_recordings_invalid_params(self, load_index_model):
         annoy_mock = mock.Mock()
         annoy_mock.get_nns_by_mbid.return_value = {}
-        load_index_model.return_value = annoy_mock
+        annoy_model.return_value = annoy_mock
+
+        resp = self.client.get("/api/v1/similarity/{}/{}".format(metric, self.uuid))
+        self.assertEqual(200, resp.status_code)
+
+        annoy_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
+        annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
+
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_similar_recordings_invalid_params(self, annoy_model):
+        annoy_mock = mock.Mock()
+        annoy_mock.get_nns_by_mbid.return_value = {}
+        annoy_model.return_value = annoy_mock
         # If offset is not integer >= 0, APIBadRequest is raised
         resp = self.client.get("/api/v1/similarity/mfccs/%s?n=x" % self.uuid)
         self.assertEqual(400, resp.status_code)
@@ -78,31 +78,31 @@ class APISimilarityViewsTestCase(ServerTestCase):
         n_trees = 10
         n_neighbours = 200
         metric = "mfccs"
-        load_index_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type)
+        annoy_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
         annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
 
         # If n_neighbours is not numerical, it defaults
         resp = self.client.get("/api/v1/similarity/mfccs/%s?n_trees=-1&distance_type=7&n_neighbours=x" % self.uuid)
         self.assertEqual(200, resp.status_code)
 
-        load_index_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type)
+        annoy_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
         annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_similar_recordings_invalid_metric(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_similar_recordings_invalid_metric(self, annoy_model):
         # If metric does not exist, APIBadRequest is raised.
         resp = self.client.get("/api/v1/similarity/nothing/%s" % self.uuid)
         self.assertEqual(400, resp.status_code)
-        load_index_model.assert_not_called()
+        annoy_model.assert_not_called()
         expected_result = {"message": "An index with the specified metric does not exist."}
         self.assertEqual(expected_result, resp.json)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_similar_recordings_index_errors(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_similar_recordings_index_errors(self, annoy_model):
         # If the (MBID, offset) combination is not submitted, APIBadRequest is raised.
         annoy_mock = mock.Mock()
         annoy_mock.get_nns_by_mbid.side_effect = NoDataFoundException
-        load_index_model.return_value = annoy_mock
+        annoy_model.return_value = annoy_mock
         resp = self.client.get("/api/v1/similarity/mfccs/%s?n=2" % self.uuid)
         self.assertEqual(400, resp.status_code)
         expected_result = {"message": "No submission exists for the given (MBID, offset) combination."}
@@ -116,7 +116,7 @@ class APISimilarityViewsTestCase(ServerTestCase):
         self.assertEqual(expected_result, resp.json)
 
         # If index does not load with given parameters, APIBadRequest is raised.
-        load_index_model.side_effect = IndexNotFoundException
+        annoy_model.side_effect = IndexNotFoundException
         resp = self.client.get("/api/v1/similarity/mfccs/%s" % self.uuid)
         self.assertEqual(400, resp.status_code)
         expected_result = {"message": "Index does not exist with specified parameters."}
@@ -129,8 +129,8 @@ class APISimilarityViewsTestCase(ServerTestCase):
         expected_result = {"message": "Missing `recording_ids` parameter"}
         self.assertEqual(resp.json, expected_result)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_many_similar_recordings(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_many_similar_recordings(self, annoy_model):
         # Check that similar recordings are returned for many recordings,
         # including two offsets of the same MBID.
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
@@ -141,15 +141,14 @@ class APISimilarityViewsTestCase(ServerTestCase):
         }
         annoy_mock = mock.Mock()
         annoy_mock.get_bulk_nns_by_mbid.return_value = expected_result
-
-        load_index_model.return_value = annoy_mock
+        annoy_model.return_value = annoy_mock
 
         resp = self.client.get('api/v1/similarity/mfccs?recording_ids=' + params)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(expected_result, resp.json)
 
         # Index parameters should default if not specified by query string.
-        load_index_model.assert_called_with("mfccs", n_trees=10, distance_type="angular")
+        annoy_model.assert_called_with("mfccs", n_trees=10, distance_type="angular", load_existing=True)
 
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
@@ -174,8 +173,8 @@ class APISimilarityViewsTestCase(ServerTestCase):
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
         annoy_mock.get_bulk_nns_by_mbid.assert_called_with(recordings, 200)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_many_similar_recordings_missing_mbid(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_many_similar_recordings_missing_mbid(self, annoy_model):
         # Check that within a set of mbid parameters, the ones absent
         # from the database are ignored.
         recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
@@ -186,14 +185,14 @@ class APISimilarityViewsTestCase(ServerTestCase):
         }
         annoy_mock = mock.Mock()
         annoy_mock.get_bulk_nns_by_mbid.return_value = expected_result
-        load_index_model.return_value = annoy_mock
+        annoy_model.return_value = annoy_mock
 
         resp = self.client.get("/api/v1/similarity/mfccs?recording_ids=" + recordings + end)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(expected_result, resp.json)
 
         # If index parameters are invalid, they are defaulted.
-        load_index_model.assert_called_with("mfccs", n_trees=10, distance_type="angular")
+        annoy_model.assert_called_with("mfccs", n_trees=10, distance_type="angular", load_existing=True)
 
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
@@ -209,8 +208,8 @@ class APISimilarityViewsTestCase(ServerTestCase):
         expected_result = {"message": "More than 25 recordings not allowed per request"}
         self.assertEqual(expected_result, resp.json)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_similarity_between_no_params(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_similarity_between_no_params(self, annoy_model):
         # If no index params are provided, they default.
         # Submissions can be selected using offset.
         recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:2"
@@ -219,22 +218,22 @@ class APISimilarityViewsTestCase(ServerTestCase):
 
         annoy_mock = mock.Mock()
         annoy_mock.get_similarity_between.return_value = 1
-        load_index_model.return_value = annoy_mock
+        annoy_model.return_value = annoy_mock
 
         resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
         self.assertEqual(200, resp.status_code)
         self.assertEqual({"mfccs": 1}, resp.json)
 
-        load_index_model.assert_called_with("mfccs", n_trees=10, distance_type="angular")
+        annoy_model.assert_called_with("mfccs", n_trees=10, distance_type="angular", load_existing=True)
         annoy_mock.get_similarity_between.assert_called_with(rec_1, rec_2)
 
-    @mock.patch("similarity.utils.load_index_model")
-    def test_get_similarity_between_exceptions(self, load_index_model):
+    @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
+    def test_get_similarity_between_exceptions(self, annoy_model):
         # If there is no submission for an (MBID, offset) combination,
         # empty dictionary is returned.
         annoy_mock = mock.Mock()
         annoy_mock.get_similarity_between.side_effect = NoDataFoundException
-        load_index_model.return_value = annoy_mock
+        annoy_model.return_value = annoy_mock
 
         recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:2"
         resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
@@ -250,7 +249,7 @@ class APISimilarityViewsTestCase(ServerTestCase):
         self.assertEqual(expected_result, resp.json)
 
         # If index is unable to load, APIBadRequest is raised.
-        load_index_model.side_effect = IndexNotFoundException
+        annoy_model.side_effect = IndexNotFoundException
         resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
         self.assertEqual(400, resp.status_code)
 

@@ -5,6 +5,7 @@ from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
 import db.data
 import db.exceptions
+import db.similarity
 
 import json
 import time
@@ -128,6 +129,20 @@ def summary(mbid):
                 we might not have heard of it yet.""")
 
 
+@data_bp.route("/<uuid:mbid>/similar")
+def metrics(mbid):
+    ref_metadata = _get_extended_info(mbid)
+    metrics_map = db.similarity.get_all_metrics()
+    row_width = 12 / len(metrics_map)
+
+    return render_template(
+        'data/metrics.html',
+        ref_metadata=ref_metadata,
+        metrics=metrics_map,
+        col_width=row_width
+    )
+
+
 def _get_youtube_query(metadata):
     """Generates a query string to search youtube for this song
 
@@ -194,6 +209,15 @@ def _get_recording_info(mbid, metadata):
 
     else:
         return {}
+
+
+def _get_extended_info(mbid):
+    info = _get_recording_info(mbid, None)
+    if not info:
+        raise NotFound('No info for the recording {}'.format(mbid))
+    info['mbid'] = mbid
+    info['youtube_query'] = _get_youtube_query(info)
+    return info
 
 
 def _interpret_high_level(hl, models):

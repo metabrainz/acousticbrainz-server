@@ -98,7 +98,9 @@ class AnnoyModel(object):
         if item:
             recording_vector = item[self.metric_name]
             id = item['id']
-            if not self.index.get_item_vector(id):
+            try:
+                self.index.get_item_vector(id)
+            except IndexError:
                 self.index.add_item(id, recording_vector)
 
     def add_recording_by_id(self, id):
@@ -108,9 +110,12 @@ class AnnoyModel(object):
         """
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException
-        if not self.index.get_item_vector(id):
-            item = db.similarity.get_similarity_row_id(id)
-            self.index.add_item(item[id], item[self.metric_name])
+        item = db.similarity.get_similarity_row_id(id)
+        if item:
+            try:
+                self.index.get_item_vector(id)
+            except IndexError:
+                self.index.add_item(item["id"], item[self.metric_name])
 
     def add_recording_with_vector(self, id, vector):
         """Add a single recording to the index using its lowlevel.id and
@@ -205,7 +210,7 @@ class AnnoyModel(object):
         for mbid, offset in recordings:
             try:
                 similar_recordings = self.get_nns_by_mbid(mbid, offset, num_neighbours, return_ids=return_ids)
-                recordings_info[mbid][offset] = similar_recordings
+                recordings_info[mbid][str(offset)] = similar_recordings
             except (similarity.exceptions.ItemNotFoundException, db.exceptions.NoDataFoundException):
                 continue
 

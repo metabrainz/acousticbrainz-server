@@ -125,4 +125,14 @@ ALTER TABLE similarity.similarity_stats
   FOREIGN KEY (metric)
   REFERENCES similarity.similarity_metrics (metric);
 
+ALTER TABLE similarity_eval
+  ADD CONSTRAINT similarity_eval_fk_user
+  FOREIGN KEY (user_id)
+  REFERENCES "user" (id);
+
+ALTER TABLE similarity_eval
+  ADD CONSTRAINT similarity_eval_fk_metric
+  FOREIGN KEY (metric)
+  REFERENCES similarity_metrics (metric);
+
 COMMIT;

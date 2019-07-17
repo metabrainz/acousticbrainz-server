@@ -65,7 +65,6 @@ def get_all_metrics():
         result = connection.execute("""
             SELECT category, metric, description
             FROM similarity_metrics
-            WHERE visible = TRUE
         """)
 
         metrics = {}

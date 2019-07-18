@@ -16,7 +16,7 @@ import db.data
 import db.dump
 import db.dump_manage
 import db.exceptions
-import db.stats
+import db.submission_stats
 import db.user
 import webserver
 import similarity.manage
@@ -178,13 +178,13 @@ def compute_stats():
     """Compute outstanding hourly statistics."""
     import datetime
     import pytz
-    db.stats.compute_stats(datetime.datetime.now(pytz.utc))
+    db.submission_stats.compute_stats(datetime.datetime.now(pytz.utc))
 
 
 @cli.command(name='cache_stats')
 def cache_stats():
     """Compute recent stats and add to cache."""
-    db.stats.add_stats_to_cache()
+    db.submission_stats.add_stats_to_cache()
 
 
 @cli.command(name='clear_cache')

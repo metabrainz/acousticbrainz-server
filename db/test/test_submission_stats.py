@@ -9,24 +9,24 @@ from sqlalchemy import text
 
 from db.testing import DatabaseTestCase, TEST_DATA_PATH
 from db import gid_types
-import db.stats
+import db.submission_stats
 import db.data
 import db.similarity
 import db
 
 
-class StatsTestCase(unittest.TestCase):
+class SubmissionStatsTestCase(unittest.TestCase):
     """Statistics methods which use mocked database methods for testing"""
 
     def test_get_next_day(self):
         date1 = datetime.datetime(2016, 1, 7, 10, 20, 39, tzinfo=pytz.utc)
-        next_day = db.stats._get_next_day(date1)
+        next_day = db.submission_stats._get_next_day(date1)
         expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
         self.assertEqual(next_day, expected)
 
         # midnight on one day goes forward to midnight the next day
         date2 = datetime.datetime(2016, 1, 7, 0, 0, 0, tzinfo=pytz.utc)
-        next_day = db.stats._get_next_day(date2)
+        next_day = db.submission_stats._get_next_day(date2)
         expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
         self.assertEqual(next_day, expected)
 
@@ -50,7 +50,7 @@ class StatsTestCase(unittest.TestCase):
                 },
             }
             db.data.write_low_level(rand_mbid, data, gid_types.GID_TYPE_MBID)
-        last = db.stats.get_last_submitted_recordings()
+        last = db.submission_stats.get_last_submitted_recordings()
         dbget.assert_called_with("last-submitted-recordings")
 
         expected = [
@@ -62,14 +62,14 @@ class StatsTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, last)
 
-    @mock.patch("db.stats._get_stats_from_cache")
-    @mock.patch("db.stats.load_statistics_data")
+    @mock.patch("db.submission_stats._get_stats_from_cache")
+    @mock.patch("db.submission_stats.load_statistics_data")
     def test_get_stats_summary(self, load_stats, from_cache):
         # No cache and no database, return blank
         from_cache.return_value = (None, None)
         load_stats.return_value = []
 
-        stats, last_collected = db.stats.get_stats_summary()
+        stats, last_collected = db.submission_stats.get_stats_summary()
         self.assertIsNone(last_collected)
         expected = {"lowlevel-lossy": 0, "lowlevel-lossy-unique": 0, "lowlevel-lossless": 0,
                     "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
@@ -79,7 +79,7 @@ class StatsTestCase(unittest.TestCase):
         from_cache.return_value = (None, None)
         load_stats.return_value = [{"collected": "date", "stats": "stats"}]
 
-        stats, last_collected = db.stats.get_stats_summary()
+        stats, last_collected = db.submission_stats.get_stats_summary()
         self.assertEquals("date", last_collected)
         self.assertEquals("stats", stats)
 
@@ -87,7 +87,7 @@ class StatsTestCase(unittest.TestCase):
         from_cache.return_value = ("cachedate", "cachestats")
         load_stats.return_value = [{"collected": "date", "stats": "stats"}]
 
-        stats, last_collected = db.stats.get_stats_summary()
+        stats, last_collected = db.submission_stats.get_stats_summary()
         self.assertEquals("cachedate", last_collected)
         self.assertEquals("cachestats", stats)
 
@@ -100,14 +100,14 @@ class StatsTestCase(unittest.TestCase):
         mockdt = mock.MagicMock()
         mockdt.tzinfo = None
         cacheget.side_effect = [mock.MagicMock(), mockdt]
-        db.stats._get_stats_from_cache()
+        db.submission_stats._get_stats_from_cache()
         getcalls = [mock.call("recent-stats", namespace="statistics"),
                     mock.call("recent-stats-last-updated", namespace="statistics")]
         cacheget.assert_has_calls(getcalls)
 
     @mock.patch("db.engine.connect")
-    @mock.patch("db.stats._count_submissions_to_date")
-    @mock.patch("db.stats.datetime")
+    @mock.patch("db.submission_stats._count_submissions_to_date")
+    @mock.patch("db.submission_stats.datetime")
     @mock.patch("brainzutils.cache.set")
     def test_add_stats_to_cache(self, cacheset, dt, count, connect):
         datetimenow = datetime.datetime(2015, 12, 22, 14, 00, 00, tzinfo=pytz.utc)
@@ -118,7 +118,7 @@ class StatsTestCase(unittest.TestCase):
         stats = {"stats": "here"}
         count.return_value = stats
 
-        db.stats.add_stats_to_cache()
+        db.submission_stats.add_stats_to_cache()
 
         count.assert_called_once_with(connection, datetimenow)
         connect.assert_called_once_with()
@@ -128,11 +128,11 @@ class StatsTestCase(unittest.TestCase):
         cacheset.assert_has_calls(setcalls)
 
 
-class StatsDatabaseTestCase(DatabaseTestCase):
+class SubmissionStatsDatabaseTestCase(DatabaseTestCase):
     """Statistics methods which read and write from/to the database"""
 
     def setUp(self):
-        super(StatsDatabaseTestCase, self).setUp()
+        super(SubmissionStatsDatabaseTestCase, self).setUp()
 
         self.test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
         self.test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '.json')).read()
@@ -158,7 +158,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
             two_submissions_date = datetime.datetime(2016, 1, 7, 15, 00, 00, tzinfo=pytz.utc)
             three_submissions_date = datetime.datetime(2016, 1, 9, 15, 00, 00, tzinfo=pytz.utc)
             five_submissions_date = datetime.datetime(2016, 1, 10, 15, 00, 00, tzinfo=pytz.utc)
-            ret = db.stats._count_submissions_to_date(connection, two_submissions_date)
+            ret = db.submission_stats._count_submissions_to_date(connection, two_submissions_date)
             self.assertEqual({'lowlevel-lossless': 2,
                               'lowlevel-lossless-unique': 2,
                               'lowlevel-lossy': 0,
@@ -166,7 +166,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
                               'lowlevel-total': 2,
                               'lowlevel-total-unique': 2}, ret)
 
-            ret = db.stats._count_submissions_to_date(connection, three_submissions_date)
+            ret = db.submission_stats._count_submissions_to_date(connection, three_submissions_date)
             self.assertEqual({'lowlevel-lossless': 2,
                               'lowlevel-lossless-unique': 2,
                               'lowlevel-lossy': 1,
@@ -174,7 +174,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
                               'lowlevel-total': 3,
                               'lowlevel-total-unique': 3}, ret)
 
-            ret = db.stats._count_submissions_to_date(connection, five_submissions_date)
+            ret = db.submission_stats._count_submissions_to_date(connection, five_submissions_date)
             self.assertEqual({'lowlevel-lossless': 4,
                               'lowlevel-lossless-unique': 3,
                               'lowlevel-lossy': 2,
@@ -192,9 +192,9 @@ class StatsDatabaseTestCase(DatabaseTestCase):
                  'lowlevel-total': 2,
                  'lowlevel-total-unique': 2}
         with db.engine.connect() as connection:
-            db.stats._write_stats(connection, date, stats)
+            db.submission_stats._write_stats(connection, date, stats)
 
-            res_date = db.stats._get_most_recent_stats_date(connection)
+            res_date = db.submission_stats._get_most_recent_stats_date(connection)
             self.assertEqual(res_date, date)
 
     def test_write_and_get_statistics_data(self):
@@ -207,10 +207,10 @@ class StatsDatabaseTestCase(DatabaseTestCase):
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
         date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
-            db.stats._write_stats(connection, date1, stats1)
-            db.stats._write_stats(connection, date2, stats2)
+            db.submission_stats._write_stats(connection, date1, stats1)
+            db.submission_stats._write_stats(connection, date2, stats2)
 
-        data = db.stats.load_statistics_data()
+        data = db.submission_stats.load_statistics_data()
         self.assertEqual(2, len(data))
         expected_data = [
             {"collected": date1, "stats": stats1},
@@ -229,7 +229,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
 
         with self.assertRaises(ValueError):
             with db.engine.connect() as connection:
-                db.stats._write_stats(connection, date1, stats1)
+                db.submission_stats._write_stats(connection, date1, stats1)
 
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
                   "lowlevel-lossless": 20,  # missing lowlevel-lossless-unique
@@ -237,7 +237,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         with self.assertRaises(ValueError):
             with db.engine.connect() as connection:
-                db.stats._write_stats(connection, date2, stats2)
+                db.submission_stats._write_stats(connection, date2, stats2)
 
     def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""
@@ -255,7 +255,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
             {"collected": date2, "stats": stats2}
         ]
 
-        formatted = db.stats.format_statistics_for_highcharts(data)
+        formatted = db.submission_stats.format_statistics_for_highcharts(data)
         expected_formatted = [
             {'data': [[1452384000000, 15], [1452470400000, 20]], 'name': 'Lossless (all)'},
             {'data': [[1452384000000, 10], [1452470400000, 10]], 'name': 'Lossless (unique)'},
@@ -275,11 +275,11 @@ class StatsDatabaseTestCase(DatabaseTestCase):
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
         date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
-            db.stats._write_stats(connection, date1, stats1)
-            db.stats._write_stats(connection, date2, stats2)
+            db.submission_stats._write_stats(connection, date1, stats1)
+            db.submission_stats._write_stats(connection, date2, stats2)
 
         # If we ask for just 1 stats, it's the one that's later in time
-        data = db.stats.load_statistics_data(1)
+        data = db.submission_stats.load_statistics_data(1)
         self.assertEqual(1, len(data))
         expected_data = [
             {"collected": date2, "stats": stats2}
@@ -289,7 +289,7 @@ class StatsDatabaseTestCase(DatabaseTestCase):
     def test_get_earliest_submission_date(self):
         # If nothing is in the database, the date should be None
         with db.engine.connect() as connection:
-            earliest_date = db.stats._get_earliest_submission_date(connection)
+            earliest_date = db.submission_stats._get_earliest_submission_date(connection)
             self.assertIsNone(earliest_date)
 
             # otherwise, the first submitted date
@@ -298,83 +298,8 @@ class StatsDatabaseTestCase(DatabaseTestCase):
             add_empty_lowlevel(uuid.uuid4(), True, date1)
             add_empty_lowlevel(uuid.uuid4(), True, date2)
 
-            earliest_date = db.stats._get_earliest_submission_date(connection)
+            earliest_date = db.submission_stats._get_earliest_submission_date(connection)
             self.assertEqual(earliest_date, date1)
-
-    def test_calculate_stats_for_feature(self):
-        # If nothing is in the database, avg and stddev should be None
-        path = "data->'lowlevel'->'gfcc'->'mean'->>2"
-        mean, stddev = db.stats.calculate_stats_for_feature(path)
-        self.assertEqual(mean, None)
-        self.assertEqual(stddev, None)
-
-        # With only one submission in the database, mean should be the
-        # value of the submission, stddev should be 0
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
-        db.similarity.submit_similarity_by_id(id)
-        mean, stddev = db.stats.calculate_stats_for_feature(path)
-        self.assertEqual(mean, -89.7964019775)
-        self.assertEqual(stddev, 0)
-
-    def test_check_global_stats(self):
-        # Submit similarity data, verify global stats
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
-        db.similarity.submit_similarity_by_id(id)
-        means, stddevs = db.stats.check_global_stats("gfccs")
-        # Only one recording, mean is equal to gfccs of its data
-        self.assertEqual(means, [
-            -169.202331543,
-            164.232177734,
-            -89.7964019775,
-            -10.2318019867,
-            -47.1032066345,
-            -6.18469190598,
-            -33.0790672302,
-            -3.90048241615,
-            -20.4164390564,
-            -8.5227022171,
-            -15.5154972076,
-            -4.24216938019,
-            -5.64954137802
-        ])
-        self.assertEqual(stddevs, [0] * len(stddevs))
-
-    def test_insert_delete_similarity_stats(self):
-        # Check that similarity stats can be correctly inserted and deleted
-        metric = "gfccs"
-        means = [
-            -169.202331543,
-            164.232177734,
-            -89.7964019775,
-            -10.2318019867,
-            -47.1032066345,
-            -6.18469190598,
-            -33.0790672302,
-            -3.90048241615,
-            -20.4164390564,
-            -8.5227022171,
-            -15.5154972076,
-            -4.24216938019,
-            -5.64954137802
-        ]
-        stddevs = [0] * len(means)
-        db.stats.insert_similarity_stats(metric, means, stddevs)
-        query = text("""
-            SELECT *
-              FROM similarity_stats
-             WHERE metric = :metric
-        """)
-        with db.engine.connect() as connection:
-            result = connection.execute(query, {"metric": metric})
-            row = result.fetchone()
-            self.assertEqual(row["means"], means)
-            self.assertEqual(row["stddevs"], stddevs)
-        db.stats.delete_similarity_stats(metric)
-        with db.engine.connect() as connection:
-            result = connection.execute(query, {"metric": metric})
-            self.assertEqual(result.rowcount, 0)
 
 
 def add_empty_lowlevel(mbid, lossless, date):
@@ -419,11 +344,11 @@ def add_empty_lowlevel(mbid, lossless, date):
                             "data_sha256": data_sha256, "version": version_id})
 
 
-class StatsHighchartsTestCase(DatabaseTestCase):
+class SubmissionStatsHighchartsTestCase(DatabaseTestCase):
     """Statistics methods which test the graphs on the website"""
 
     def setUp(self):
-        super(StatsHighchartsTestCase, self).setUp()
+        super(SubmissionStatsHighchartsTestCase, self).setUp()
 
     def test_get_statistics_history(self):
         """Test that we can generate highcharts format."""
@@ -436,10 +361,10 @@ class StatsHighchartsTestCase(DatabaseTestCase):
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
         date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
-            db.stats._write_stats(connection, date1, stats1)
-            db.stats._write_stats(connection, date2, stats2)
+            db.submission_stats._write_stats(connection, date1, stats1)
+            db.submission_stats._write_stats(connection, date2, stats2)
 
-        history = db.stats.get_statistics_history()
+        history = db.submission_stats.get_statistics_history()
         # 6 data types
         self.assertEqual(len(history), 6)
         # each item has 2 dates
@@ -448,7 +373,7 @@ class StatsHighchartsTestCase(DatabaseTestCase):
         # Example of date conversion
         self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
 
-    @mock.patch("db.stats._get_stats_from_cache")
+    @mock.patch("db.submission_stats._get_stats_from_cache")
     def test_stats_cache(self, get_stats_from_cache):
         """If there are stats calculated and stored in the cache since the last time
         they were added to the database, also include them"""
@@ -459,12 +384,12 @@ class StatsHighchartsTestCase(DatabaseTestCase):
         date = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
         date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
-            db.stats._write_stats(connection, date, stats)
-            db.stats._write_stats(connection, date2, stats)
+            db.submission_stats._write_stats(connection, date, stats)
+            db.submission_stats._write_stats(connection, date2, stats)
 
         # No items returned from cache, don't add anything
         get_stats_from_cache.return_value = (None, None)
-        history = db.stats.get_statistics_history()
+        history = db.submission_stats.get_statistics_history()
         # 6 data types
         self.assertEqual(len(history), 6)
         # each item has 2 dates
@@ -474,13 +399,13 @@ class StatsHighchartsTestCase(DatabaseTestCase):
         # Cache item is earlier than most recent database value, don't add anything
         datecache = datetime.datetime(2016, 1, 10, 22, 0, tzinfo=pytz.utc)
         get_stats_from_cache.return_value = (datecache, stats)
-        history = db.stats.get_statistics_history()
+        history = db.submission_stats.get_statistics_history()
         self.assertEqual(len(history[0]["data"]), 2)
 
         # Cache item is later than most recent database value, add it to the stats
         datecache = datetime.datetime(2016, 1, 11, 1, 0, tzinfo=pytz.utc)
         get_stats_from_cache.return_value = (datecache, stats)
-        history = db.stats.get_statistics_history()
+        history = db.submission_stats.get_statistics_history()
         # Each item now has 3 dates
         for h in history:
             self.assertEqual(len(h["data"]), 3)

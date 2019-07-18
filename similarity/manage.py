@@ -11,7 +11,7 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 
 @cli.command(name="add-metrics")
 @click.option("--batch-size", "-b", type=int, help="Override processing batch size.")
-def add_metrics(batch_size=None):
+def add_metrics(batch_size=10000):
     """Computes all 12 base metrics for each recording
     in the lowlevel table, inserting these values in
     the similarity table."""

@@ -39,25 +39,19 @@ class SimilarityDBTestCase(DatabaseTestCase):
         self.assertEqual(2, db.similarity.count_similarity())
 
     def test_submit_similarity_by_id_none(self):
-        """If id cannot be cast as an integer, a ValueError should be raised.
-
-        If lowlevel is not submitted, a NoDataFoundException should be raised.
-        """
+        """If id cannot be cast as an integer, a ValueError should be raised."""
         id = 'test'
         with self.assertRaises(db.exceptions.BadDataException):
             db.similarity.submit_similarity_by_id(id)
 
-        id = 100
-        with self.assertRaises(db.exceptions.NoDataFoundException):
-            db.similarity.submit_similarity_by_id(100)
-
+    @mock.patch("db.engine.connect")
     @mock.patch("db.similarity.insert_similarity")
     @mock.patch("db.data.check_for_submission")
     @mock.patch("similarity.utils.init_metrics")
-    def test_submit_similarity_by_id_init_metrics(self, init_metrics, check_for_submission, insert_similarity):
+    def test_submit_similarity_by_id_init_metrics(self, init_metrics, check_for_submission, insert_similarity, connection):
         """Check that when called with a list of metrics, init_metrics is
-        not called. If data is not submitted for a metric, then isnan is
-        True for that metric, and the vector should be [None, ..., None]"""
+        not called. If data is not submitted for a metric, the vector 
+        should be [0, ..., 0]"""
         # Init metrics
         onset = mock.Mock()
         onset.name = "onset"
@@ -71,16 +65,15 @@ class SimilarityDBTestCase(DatabaseTestCase):
         mfccs.transform.return_value = [1.66, 2.44]
         mfccs.length.return_value = 2
         metrics = [onset, mfccs]
-        # init_metrics.return_value = [onset, mfccs]
-        vectors_info = [("onset", [None, None, None], True),
-                        ("mfccs", [1.66, 2.44], False)]
+
+        vectors = [[0, 0, 0], [1.66, 2.44]]
+        metric_names = ["onset", "mfccs"]
 
         id = 0
-        check_for_submission.return_value = True
         db.similarity.submit_similarity_by_id(id, metrics)
 
         init_metrics.assert_not_called()
-        insert_similarity.assert_called_with(id, vectors_info)
+        insert_similarity.assert_called_with(connection(), id, vectors, metric_names)
 
     @mock.patch("db.similarity.insert_similarity")
     @mock.patch("db.data.check_for_submission")
@@ -102,15 +95,15 @@ class SimilarityDBTestCase(DatabaseTestCase):
         mfccs.transform.return_value = [1.66, 2.44]
         mfccs.length.return_value = 2
         init_metrics.return_value = [onset, mfccs]
-        vectors_info = [("onset", [None, None, None], True),
-                        ("mfccs", [1.66, 2.44], False)]
+
+        vectors = [[0, 0, 0], [1.66, 2.44]]
+        metric_names = ["onset", "mfccs"]
 
         id = 0
-        check_for_submission.return_value = True
         db.similarity.submit_similarity_by_id(id)
 
         init_metrics.assert_called_once()
-        insert_similarity.assert_called_with(id, vectors_info)
+        insert_similarity.assert_called_with(id, vectors, metric_names)
 
     def test_submit_similarity_by_mbid_none(self):
         # If no submission exists, NoDataFoundException should be raised.

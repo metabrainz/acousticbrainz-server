@@ -127,7 +127,7 @@ def init_db(archive, force, skip_create_db=False):
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
 
     print('Populating similarity_metrics table...')
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'populate_tables.sql'))
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'populate_metrics_table.sql'))
 
     print("Done!")
 

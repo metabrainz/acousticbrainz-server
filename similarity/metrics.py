@@ -186,7 +186,7 @@ class BinaryCollectiveMetric(HighLevelMetric):
                             vector.append(value)
                             break
                 else:
-                    vector.append(None)
+                    vector.append(0)
             return vector
         except KeyError:
             raise ValueError('Invalid data value: {}'.format(data))

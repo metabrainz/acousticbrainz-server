@@ -187,12 +187,11 @@ CREATE TABLE similarity.similarity_stats (
 );
 
 CREATE TABLE similarity_eval (
-  user_id INTEGER, -- FK to user
-  query_mbid UUID,
-  result_mbids UUID[],
-  metric TEXT, -- FK to metric
-  rating SMALLINT, -- 1 through 5, 1 being this should be much more similar, 5 being much less similar, 3 similarity is ranked appropriately
-  suggestion TEXT
+  user_id     INTEGER, -- FK to user
+  query_rec   eval_recording,
+  result_recs eval_recording[],
+  metric      TEXT, -- FK to metric
+  suggestion  TEXT
 );
 
 COMMIT;

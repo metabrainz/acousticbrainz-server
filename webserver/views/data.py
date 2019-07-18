@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template, redirect, url_for, request
+from flask_login import current_user
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
@@ -131,7 +132,8 @@ def summary(mbid):
 
 @data_bp.route("/<uuid:mbid>/similar")
 def metrics(mbid):
-    ref_metadata = _get_extended_info(mbid)
+    offset = request.args.get("n")
+    ref_metadata = _get_extended_info(mbid, offset)
     metrics_map = db.similarity.get_all_metrics()
     row_width = 12 / len(metrics_map)
 
@@ -141,6 +143,40 @@ def metrics(mbid):
         metrics=metrics_map,
         col_width=row_width
     )
+
+
+@data_bp.route("/<uuid:mbid>/similar/<string:metric>")
+def get_similar(mbid, metric):
+    offset = request.args.get("n")
+    category, metric, description = db.similarity.get_metric_info(metric)
+    n_similar = 40
+    try:
+        id = db.data.get_lowlevel_id(mbid, offset)
+        index = AnnoyModel(metric, load_existing=True)
+        similar_recordings = index.get_nns_by_id(id, n_similar, return_ids=True)
+    except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException, similarity.exceptions.IndexNotFoundException):
+        raise NotFound
+
+    ref_metadata = _get_extended_info(mbid, offset)
+    metadata = [_get_extended_info(mbid, offset) for mbid, offset in similar_recordings]
+
+    return render_template(
+        "data/similar.html",
+        metric=metric,
+        ref_metadata=ref_metadata,
+        metadata=metadata,
+        category=category,
+        description=description
+    )
+
+
+@data_bp.route("/<uuid:mbid>/similar/<string:metric>/rate/<int:rating>", methods=['POST'])
+def rate_similar(mbid, metric, rating):
+    offset = request.args.get("n")
+    results = request.form.get('result') or similarity.api.get_similar_recordings(mbid, metric)[0]
+    user_id = current_user.id if current_user.is_authenticated else None
+    db.similarity.add_evaluation(user_id, recording, result_mbids, metric, rating)
+    return jsonify({'success': True}), 200
 
 
 def _get_youtube_query(metadata):
@@ -211,11 +247,12 @@ def _get_recording_info(mbid, metadata):
         return {}
 
 
-def _get_extended_info(mbid):
+def _get_extended_info(mbid, offset):
     info = _get_recording_info(mbid, None)
     if not info:
         raise NotFound('No info for the recording {}'.format(mbid))
     info['mbid'] = mbid
+    info['submission_offset'] = offset
     info['youtube_query'] = _get_youtube_query(info)
     return info
 

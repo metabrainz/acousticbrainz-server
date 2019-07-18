@@ -123,12 +123,17 @@ def add_index(index, batch_size=None):
 
 
 def get_all_metrics():
-    with db.engine.begin() as connection:
-        result = connection.execute("""
-            SELECT category, metric, description
-            FROM similarity_metrics
-            WHERE visible = TRUE
+    """Returns: a dictionary of all existing metrics, of the form:
+            {"category": [(metric_name, metric_description)]}
+    """
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT category
+                 , metric
+                 , description
+              FROM similarity_metrics
         """)
+        result = connection.execute(query)
 
         metrics = {}
         for category, metric, description in result.fetchall():
@@ -139,7 +144,28 @@ def get_all_metrics():
         return metrics
 
 
-def add_metrics(force=False, batch_size=None):
+def get_metric_info(metric):
+    """Returns metric info as a list in the form:
+            [category, metric_name, metric_description]
+
+    If no metric is available, a NoDataFoundException will
+    be raised.
+    """
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT category
+                 , metric
+                 , description
+              FROM similarity_metrics
+             WHERE metric = :metric
+        """)
+        result = connection.execute(query, {"metric": metric})
+        if not result.rowcount:
+            raise db.exceptions.NoDataFoundException("There is no existing metric for the `metric` parameter.")
+        return result.fetchone()
+
+
+def add_metrics(batch_size=None):
     batch_size = batch_size or PROCESS_BATCH_SIZE
     lowlevel_count = count_all_lowlevel()
 
@@ -385,3 +411,24 @@ def get_similarity_row_id(id):
         if not result.rowcount:
             raise db.exceptions.NoDataFoundException("No similarity metrics are computed for the given (MBID, offset) combination.")
         return result.fetchone()
+
+
+def add_evaluation(user_id, query_mbid, result_mbids, metric, rating, suggestion='NULL'):
+    # Adds a row to the evaluation table
+    user_id = user_id or None
+    if not result_mbids:
+        result_mbids = None
+    else:
+        result_mbids = tuple(result_mbids)
+
+    with db.engine.begin() as connection:
+        query = text("""
+            INSERT INTO similarity_eval (user_id, query_mbid, result_mbids, metric, rating, suggestion)
+                 VALUES (:user, :query_mbid, :result_mbids, :metric, :rating, :suggestion)
+        """)
+        connection.execute(query, {'user': user_id, 
+                                   'query_mbid': query_mbid, 
+                                   'result_mbids': result_mbids, 
+                                   'metric': metric,
+                                   'rating': rating, 
+                                   'suggestion': suggestion})

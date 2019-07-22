@@ -23,21 +23,34 @@ def add_metrics(batch_size):
                                                    float(sim_count) / lowlevel_count * 100))
         
         batch_query = text("""
-            SELECT id
-              FROM lowlevel
-         LEFT JOIN similarity
-             USING (id)
-             WHERE similarity.id IS NULL
+            SELECT ll.id
+                 , llj.data AS ll_data
+                 , jsonb_object_agg(hlm.model, hlm.data) as hl_data
+              FROM (
+            SELECT id 
+              FROM lowlevel 
+         LEFT JOIN similarity 
+             USING (id) 
+             WHERE similarity.id is NULL) ll
+              JOIN lowlevel_json AS llj USING (id)
+              JOIN highlevel_model AS hlm USING (id) 
+          GROUP BY (ll.id, llj.data)
              LIMIT :batch_size
         """)
+
         while True:
             with connection.begin():
                 result = connection.execute(batch_query, {"batch_size": batch_size})
                 if not result.rowcount:
                     break
 
-                for row in result.fetchall():
-                    submit_similarity_by_id(row["id"], metrics=metrics, connection=connection)
+                row = result.fetchone()
+                while row:
+                    lowlevel = row["ll_data"]
+                    models = row["hl_data"]
+                    data = (lowlevel, models)
+                    submit_similarity_by_id(row["id"], data, metrics=metrics, connection=connection)
+                    row = result.fetchone()
 
             sim_count = count_similarity()
             print("Processed {} / {} ({:.3f}%)".format(sim_count,
@@ -81,7 +94,7 @@ def count_similarity():
         return result.fetchone()[0]
 
 
-def submit_similarity_by_id(id, metrics=None, connection=None):
+def submit_similarity_by_id(id, data, metrics=None, connection=None):
     """Computes similarity metrics for a single recording specified
     by lowlevel.id, then inserts the metrics as a new row in the
     similarity table."""
@@ -96,9 +109,14 @@ def submit_similarity_by_id(id, metrics=None, connection=None):
     vectors = []
     metric_names = []
     for metric in metrics:
-        data = metric.get_data(id)
         try:
-            vector = metric.transform(data)
+            metric_data = metric.get_feature_data(data)
+        except AttributeError:
+            # High level metrics use models for transformation.
+            metric_data = data[1]
+
+        try:
+            vector = metric.transform(metric_data)
         except ValueError:
             vector = [0] * metric.length()
         vectors.append(vector)

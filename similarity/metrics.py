@@ -21,6 +21,15 @@ class LowLevelMetric(BaseMetric):
         data = db.data.get_lowlevel_metric_feature(id, self.path)
         return data
 
+    def get_feature_data(self, data):
+        # Get lowlevel from data, extract path
+        data = data[0]
+        features = self.path[7:-1]
+        feature_path = features.split("'->'")
+        for key in feature_path:
+            data = data[key]
+        return data
+
     def length(self):
         return len(self.indices) if self.indices else 1
 

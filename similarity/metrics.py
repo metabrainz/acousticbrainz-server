@@ -23,7 +23,6 @@ class LowLevelMetric(BaseMetric):
 
     def get_feature_data(self, data):
         # Get lowlevel from data, extract path
-        data = data[0]
         features = self.path[7:-1]
         feature_path = features.split("'->'")
         for key in feature_path:

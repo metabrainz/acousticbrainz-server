@@ -49,7 +49,7 @@ def add_metrics(batch_size):
                     lowlevel = row["ll_data"]
                     models = row["hl_data"]
                     data = (lowlevel, models)
-                    submit_similarity_by_id(row["id"], data, metrics=metrics, connection=connection)
+                    submit_similarity_by_id(row["id"], data=data, metrics=metrics, connection=connection)
                     row = result.fetchone()
 
             sim_count = count_similarity()
@@ -94,7 +94,7 @@ def count_similarity():
         return result.fetchone()[0]
 
 
-def submit_similarity_by_id(id, data, metrics=None, connection=None):
+def submit_similarity_by_id(id, data=None, metrics=None, connection=None):
     """Computes similarity metrics for a single recording specified
     by lowlevel.id, then inserts the metrics as a new row in the
     similarity table."""
@@ -106,11 +106,18 @@ def submit_similarity_by_id(id, data, metrics=None, connection=None):
     if not metrics:
         metrics = similarity.utils.init_metrics()
 
+    if not data:
+        # When a single recording is submitted, not in batch submission,
+        # data can be computed here.
+        ll_data = db.data.get_lowlevel_by_id(id)
+        models = db.data.get_highlevel_models(id)
+        data = (ll_data, models)
+
     vectors = []
     metric_names = []
     for metric in metrics:
         try:
-            metric_data = metric.get_feature_data(data)
+            metric_data = metric.get_feature_data(data[0])
         except AttributeError:
             # High level metrics use models for transformation.
             metric_data = data[1]

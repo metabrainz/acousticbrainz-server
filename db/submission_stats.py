@@ -39,8 +39,6 @@ stats_key_map = {
     LOWLEVEL_TOTAL_UNIQUE: "Total (unique)",
 }
 
-NORMALIZATION_SAMPLE_SIZE = 10000
-
 
 def get_last_submitted_recordings():
     """Get list of last submitted recordings.

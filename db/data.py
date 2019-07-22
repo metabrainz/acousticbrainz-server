@@ -614,6 +614,22 @@ def get_lowlevel_metric_feature(id, path):
         return row["data"]
 
 
+def get_lowlevel_by_id(id):
+    # Get lowlevel data for a specific id.
+    try:
+        id = int(id)
+    except ValueError:
+        raise BadDataException('Parameter `id` must be an integer.')
+    
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id, data
+              FROM lowlevel_json
+             WHERE id = :id
+        """)
+        result = connection.execute(query, {"id": id})
+
+
 def get_highlevel_models(id):
     # Get highlevel model data for a specified id.
     try:

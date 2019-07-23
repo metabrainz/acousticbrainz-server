@@ -97,7 +97,21 @@ def count_similarity():
 def submit_similarity_by_id(id, data=None, metrics=None, connection=None):
     """Computes similarity metrics for a single recording specified
     by lowlevel.id, then inserts the metrics as a new row in the
-    similarity table."""
+    similarity table.
+    
+    Args:
+        id: lowlevel.id for desired submission.
+        
+        data: a list (lowlevel_data, highlevel_models). Defaults to None,
+        in which case the data will be collected before submission.
+        
+        metrics: a list of initialized metric classes, for which similarity
+        vectors should be computed and submitted. Default is None, in which
+        case base metrics will be initialized.
+
+        connection: a connection to the database can be specified if this
+        submission should be part of an ongoing transaction.
+    """
     try:
         id = int(id)
     except ValueError:

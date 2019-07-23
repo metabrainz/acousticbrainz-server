@@ -11,7 +11,6 @@ from db.testing import DatabaseTestCase, TEST_DATA_PATH
 from db import gid_types
 import db.submission_stats
 import db.data
-import db.similarity
 import db
 
 

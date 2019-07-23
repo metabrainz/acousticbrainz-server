@@ -80,7 +80,7 @@ class SimilarityStatsDatabaseTestCase(DatabaseTestCase):
         db.similarity_stats.insert_similarity_stats(metric, means, stddevs)
         query = text("""
             SELECT *
-              FROM similarity_stats
+              FROM similarity.similarity_stats
              WHERE metric = :metric
         """)
         with db.engine.connect() as connection:

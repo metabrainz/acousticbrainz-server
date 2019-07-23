@@ -22,7 +22,7 @@ def check_global_stats(metric_name):
     with db.engine.connect() as connection:
         query = text("""
             SELECT means, stddevs
-              FROM similarity_stats
+              FROM similarity.similarity_stats
              WHERE metric = :metric
         """)
         result = connection.execute(query, {"metric": metric_name})
@@ -32,7 +32,7 @@ def check_global_stats(metric_name):
 def insert_similarity_stats(metric_name, means, stddevs):
     with db.engine.connect() as connection:
         query = text("""
-            INSERT INTO similarity_stats (metric, means, stddevs)
+            INSERT INTO similarity.similarity_stats (metric, means, stddevs)
                  VALUES (:metric, :means, :stddevs)
         """)
         connection.execute(query, {"metric": str(metric_name),
@@ -43,7 +43,7 @@ def insert_similarity_stats(metric_name, means, stddevs):
 def delete_similarity_stats(metric):
     with db.engine.connect() as connection:
         query = text("""
-            DELETE FROM similarity_stats
+            DELETE FROM similarity.similarity_stats
                   WHERE metric = :metric
         """)
         connection.execute(query, {"metric": metric})

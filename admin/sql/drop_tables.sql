@@ -20,9 +20,5 @@ DROP TABLE IF EXISTS api_key                CASCADE;
 DROP TABLE IF EXISTS challenge              CASCADE;
 DROP TABLE IF EXISTS dataset_eval_challenge CASCADE;
 DROP TABLE IF EXISTS feedback               CASCADE;
-DROP TABLE IF EXISTS similarity             CASCADE;
-DROP TABLE IF EXISTS similarity_metrics     CASCADE;
-DROP TABLE IF EXISTS similarity_stats       CASCADE;
-DROP TABLE IF EXISTS similarity_eval        CASCADE;
 
 COMMIT;

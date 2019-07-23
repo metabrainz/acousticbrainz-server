@@ -104,6 +104,9 @@ def init_db(archive, force, skip_create_db=False):
 
     db.init_db_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
 
+    print('Creating schema...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_schema.sql'))
+
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
 

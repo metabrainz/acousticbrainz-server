@@ -156,7 +156,7 @@ CREATE TABLE feedback (
   suggestion         TEXT
 );
 
-CREATE TABLE similarity (
+CREATE TABLE similarity.similarity (
   id          INTEGER, -- PK, FK to lowlevel
   mfccs       DOUBLE PRECISION[] NOT NULL,
   mfccsw      DOUBLE PRECISION[] NOT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE similarity (
   tzanetakis  DOUBLE PRECISION[] NOT NULL
 );
 
-CREATE TABLE similarity_metrics (
+CREATE TABLE similarity.similarity_metrics (
   metric TEXT, -- PK
   is_hybrid BOOLEAN,
   description TEXT,
@@ -180,7 +180,7 @@ CREATE TABLE similarity_metrics (
   visible BOOLEAN
 );
 
-CREATE TABLE similarity_stats (
+CREATE TABLE similarity.similarity_stats (
   metric TEXT,
   means DOUBLE PRECISION[],
   stddevs DOUBLE PRECISION[]

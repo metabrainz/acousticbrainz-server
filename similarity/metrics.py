@@ -23,9 +23,7 @@ class LowLevelMetric(BaseMetric):
 
     def get_feature_data(self, data):
         # Get lowlevel from data, extract path
-        features = self.path[7:-1]
-        feature_path = features.split("'->'")
-        for key in feature_path:
+        for key in self.keys:
             data = data[key]
         return data
 
@@ -96,6 +94,7 @@ class MfccsMetric(NormalizedLowLevelMetric):
     description = 'MFCCs'
     category = 'timbre'
     path = "data->'lowlevel'->'mfcc'->'mean'"
+    keys = ['lowlevel', 'mfcc', 'mean']
     indices = range(0, 13)
 
 
@@ -109,6 +108,7 @@ class GfccsMetric(NormalizedLowLevelMetric):
     description = 'GFCCs'
     category = 'timbre'
     path = "data->'lowlevel'->'gfcc'->'mean'"
+    keys = ['lowlevel', 'gfcc', 'mean']
     indices = range(0, 13)
 
 
@@ -135,6 +135,7 @@ SCALES_MAP = {'major': 0.0, 'minor': -3.0 / 12}
 class KeyMetric(CircularMetric):
     name = 'key'
     path = "data->'tonal'"
+    keys = ['tonal']
     category = 'rhythm'
     description = 'Key/Scale'
 
@@ -159,6 +160,7 @@ class BpmMetric(LogCircularMetric):
     description = 'BPM'
     category = 'rhythm'
     path = "data->'rhythm'->'bpm'"
+    keys = ['rhythm', 'bpm']
 
 
 class OnsetRateMetric(LogCircularMetric):
@@ -166,6 +168,7 @@ class OnsetRateMetric(LogCircularMetric):
     description = 'OnsetRate'
     category = 'rhythm'
     path = "data->'rhythm'->'onset_rate'"
+    keys = ['rhythm', 'onset_rate']
 
 
 class HighLevelMetric(BaseMetric):

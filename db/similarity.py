@@ -29,9 +29,9 @@ def add_metrics(batch_size):
               FROM (
             SELECT id 
               FROM lowlevel 
-         LEFT JOIN similarity 
+         LEFT JOIN similarity.similarity 
              USING (id) 
-             WHERE similarity.id is NULL) ll
+             WHERE similarity.similarity.id is NULL) ll
               JOIN lowlevel_json AS llj USING (id)
               JOIN highlevel_model AS hlm USING (id) 
           GROUP BY (ll.id, llj.data)
@@ -72,7 +72,7 @@ def insert_similarity(connection, id, vectors, metric_names):
         params[name] = list(vector)
 
     query = text("""
-        INSERT INTO similarity (
+        INSERT INTO similarity.similarity (
                     id, %(names)s)
              VALUES ( 
                     :id, %(values)s)
@@ -88,7 +88,7 @@ def count_similarity():
     with db.engine.connect() as connection:
         query = text("""
             SELECT COUNT(*)
-              FROM similarity
+              FROM similarity.similarity
         """)
         result = connection.execute(query)
         return result.fetchone()[0]

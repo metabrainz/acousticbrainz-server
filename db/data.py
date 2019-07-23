@@ -628,6 +628,9 @@ def get_lowlevel_by_id(id):
              WHERE id = :id
         """)
         result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            return None
+        return result.fetchone()["data"]
 
 
 def get_highlevel_models(id):

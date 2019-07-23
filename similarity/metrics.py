@@ -23,9 +23,11 @@ class LowLevelMetric(BaseMetric):
 
     def get_feature_data(self, data):
         # Get lowlevel from data, extract path
-        for key in self.keys:
-            data = data[key]
-        return data
+        if data:
+            for key in self.keys:
+                data = data[key]
+            return data
+        return None
 
     def length(self):
         return len(self.indices) if self.indices else 1

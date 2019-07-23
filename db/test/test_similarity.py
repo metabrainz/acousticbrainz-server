@@ -44,66 +44,84 @@ class SimilarityDBTestCase(DatabaseTestCase):
         with self.assertRaises(db.exceptions.BadDataException):
             db.similarity.submit_similarity_by_id(id)
 
+    @mock.patch("db.data.get_highlevel_models")
+    @mock.patch("db.data.get_lowlevel_by_id")
     @mock.patch("db.engine.connect")
     @mock.patch("db.similarity.insert_similarity")
-    @mock.patch("db.data.check_for_submission")
     @mock.patch("similarity.utils.init_metrics")
-    def test_submit_similarity_by_id_init_metrics(self, init_metrics, check_for_submission, insert_similarity, connection):
+    def test_submit_similarity_by_id_init_metrics(self, init_metrics, insert_similarity, connection, get_ll, get_hl):
         """Check that when called with a list of metrics, init_metrics is
         not called. If data is not submitted for a metric, the vector 
-        should be [0, ..., 0]"""
+        should be [0, ..., 0].
+        
+        If no data is passed as an argument, data is collected before submission.
+        """
         # Init metrics
         onset = mock.Mock()
         onset.name = "onset"
-        onset.get_data.return_value = [1.23, 12.10, 3.29]
+        onset.get_feature_data.return_value = [1.23, 12.10, 3.29]
         onset.transform.side_effect = ValueError
         onset.length.return_value = 3
 
         mfccs = mock.Mock()
         mfccs.name = "mfccs"
-        mfccs.get_data.return_value = {"means": [1, 2, 3, 4, 5, 6]}
+        mfccs.get_feature_data.return_value = {"means": [1, 2, 3, 4, 5, 6]}
         mfccs.transform.return_value = [1.66, 2.44]
         mfccs.length.return_value = 2
         metrics = [onset, mfccs]
 
+        conn = db.engine.connect()
+        connection.return_value = conn
         vectors = [[0, 0, 0], [1.66, 2.44]]
         metric_names = ["onset", "mfccs"]
 
         id = 0
-        db.similarity.submit_similarity_by_id(id, metrics)
+        db.similarity.submit_similarity_by_id(id, metrics=metrics)
 
         init_metrics.assert_not_called()
-        insert_similarity.assert_called_with(connection(), id, vectors, metric_names)
+        get_ll.assert_called_with(id)
+        get_hl.assert_called_with(id)
+        insert_similarity.assert_called_with(conn.__enter__(), id, vectors, metric_names)
 
+    @mock.patch("db.data.get_highlevel_models")
+    @mock.patch("db.data.get_lowlevel_by_id")
+    @mock.patch("db.engine.connect")
     @mock.patch("db.similarity.insert_similarity")
-    @mock.patch("db.data.check_for_submission")
     @mock.patch("similarity.utils.init_metrics")
-    def test_submit_similarity_by_id_no_metrics(self, init_metrics, check_for_submission, insert_similarity):
+    def test_submit_similarity_by_id_no_metrics(self, init_metrics, insert_similarity, connection, get_ll, get_hl):
         """Check that when called with a list of metrics, init_metrics is
         not called. If data is not submitted for a metric, then isnan is
-        True for that metric, and the vector should be [None, ..., None]"""
+        True for that metric, and the vector should be [None, ..., None]
+        
+        If data is passed as an argument, it is not collected.
+        """
         # Init metrics
         onset = mock.Mock()
         onset.name = "onset"
-        onset.get_data.return_value = [1.23, 12.10, 3.29]
+        onset.get_feature_data.return_value = [1.23, 12.10, 3.29]
         onset.transform.side_effect = ValueError
         onset.length.return_value = 3
 
         mfccs = mock.Mock()
         mfccs.name = "mfccs"
-        mfccs.get_data.return_value = {"means": [1, 2, 3, 4, 5, 6]}
+        mfccs.get_feature_data.return_value = {"means": [1, 2, 3, 4, 5, 6]}
         mfccs.transform.return_value = [1.66, 2.44]
         mfccs.length.return_value = 2
         init_metrics.return_value = [onset, mfccs]
 
+        conn = db.engine.connect()
+        connection.return_value = conn
         vectors = [[0, 0, 0], [1.66, 2.44]]
         metric_names = ["onset", "mfccs"]
 
         id = 0
-        db.similarity.submit_similarity_by_id(id)
+        data = [{"lowlevel": "document"}, {"1": "hl_model_1"}]
+        db.similarity.submit_similarity_by_id(id, data=data)
 
         init_metrics.assert_called_once()
-        insert_similarity.assert_called_with(id, vectors, metric_names)
+        db.data.get_lowlevel_by_id.assert_not_called()
+        db.data.get_highlevel_models.assert_not_called()
+        insert_similarity.assert_called_with(conn.__enter__(), id, vectors, metric_names)
 
     def test_submit_similarity_by_mbid_none(self):
         # If no submission exists, NoDataFoundException should be raised.

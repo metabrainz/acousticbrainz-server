@@ -623,6 +623,17 @@ class DataDBTestCase(DatabaseTestCase):
         id = 10000000
         self.assertEqual(None, db.data.get_highlevel_models(id))
 
+    def test_get_lowlevel_by_id_error(self):
+        # If id is not a valid integer, error is raised.
+        id = "x"
+        with self.assertRaises(db.exceptions.BadDataException):
+            db.data.get_lowlevel_by_id(id)
+
+        # If no submission exists, None is returned
+        expected = None
+        id = 1
+        self.assertEqual(expected, db.data.get_lowlevel_by_id(id))
+
     def test_get_lowlevel_id(self):
         # Check that if an (MBID, offset) combination doesn't exist,
         # NoDataFoundException is raised
@@ -632,7 +643,6 @@ class DataDBTestCase(DatabaseTestCase):
         # Result is the same with uppercase and lowercase MBID.
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(db.data.get_lowlevel_id(self.test_mbid, 0), db.data.get_lowlevel_id(self.test_mbid.upper(), 0))
-
 
     def test_count_all_lowlevel(self):
         # Write lowlevel then check count

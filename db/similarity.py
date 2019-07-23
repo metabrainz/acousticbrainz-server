@@ -91,7 +91,7 @@ def add_index(index, batch_size=None):
 
         batch_query = text("""
             SELECT *
-              FROM similarity
+              FROM similarity.similarity
              ORDER BY id
              LIMIT :batch_size
             OFFSET :offset
@@ -131,7 +131,7 @@ def get_all_metrics():
             SELECT category
                  , metric
                  , description
-              FROM similarity_metrics
+              FROM similarity.similarity_metrics
         """)
         result = connection.execute(query)
 
@@ -156,7 +156,7 @@ def get_metric_info(metric):
             SELECT category
                  , metric
                  , description
-              FROM similarity_metrics
+              FROM similarity.similarity_metrics
              WHERE metric = :metric
         """)
         result = connection.execute(query, {"metric": metric})
@@ -371,7 +371,7 @@ def get_metric_dimension(metric_name):
     with db.engine.connect() as connection:
         result = connection.execute("""
             SELECT *
-              FROM similarity
+              FROM similarity.similarity
              LIMIT 1
         """)
         try:
@@ -386,7 +386,7 @@ def get_similarity_row_mbid(mbid, offset):
     with db.engine.connect() as connection:
         query = text("""
             SELECT *
-              FROM similarity
+              FROM similarity.similarity
              WHERE id = (
                 SELECT id
                   FROM lowlevel
@@ -404,7 +404,7 @@ def get_similarity_row_id(id):
     with db.engine.connect() as connection:
         query = text("""
             SELECT *
-              FROM similarity
+              FROM similarity.similarity
              WHERE id = :id
         """)
         result = connection.execute(query, {"id": id})
@@ -423,7 +423,7 @@ def add_evaluation(user_id, query_mbid, result_mbids, metric, rating, suggestion
 
     with db.engine.begin() as connection:
         query = text("""
-            INSERT INTO similarity_eval (user_id, query_mbid, result_mbids, metric, rating, suggestion)
+            INSERT INTO similarity.similarity_eval (user_id, query_mbid, result_mbids, metric, rating, suggestion)
                  VALUES (:user, :query_mbid, :result_mbids, :metric, :rating, :suggestion)
         """)
         connection.execute(query, {'user': user_id, 

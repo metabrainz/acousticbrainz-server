@@ -27,13 +27,13 @@ def add_metrics(batch_size):
                  , llj.data AS ll_data
                  , jsonb_object_agg(hlm.model, hlm.data) as hl_data
               FROM (
-            SELECT id 
-              FROM lowlevel 
-         LEFT JOIN similarity.similarity 
-             USING (id) 
+            SELECT id
+              FROM lowlevel
+         LEFT JOIN similarity.similarity
+             USING (id)
              WHERE similarity.similarity.id is NULL) ll
               JOIN lowlevel_json AS llj USING (id)
-              JOIN highlevel_model AS hlm USING (id) 
+              JOIN highlevel_model AS hlm USING (id)
           GROUP BY (ll.id, llj.data)
              LIMIT :batch_size
         """)

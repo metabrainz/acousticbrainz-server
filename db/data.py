@@ -619,7 +619,7 @@ def get_lowlevel_by_id(id):
     try:
         id = int(id)
     except ValueError:
-        raise BadDataException('Parameter `id` must be an integer.')
+        raise db.exceptions.BadDataException('Parameter `id` must be an integer.')
     
     with db.engine.connect() as connection:
         query = text("""

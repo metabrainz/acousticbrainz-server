@@ -241,7 +241,7 @@ class SingleClassifierMetric(HighLevelMetric):
         if str(self.model) in data.keys():
             return data[str(self.model)]['all'].values()
         else:
-            return [None]
+            return [0] * self.length()
 
     def length(self):
         return self.size

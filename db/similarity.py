@@ -125,10 +125,7 @@ def submit_similarity_by_id(id, data=None, metrics=None, connection=None):
         # data can be computed here.
         ll_data = db.data.get_lowlevel_by_id(id)
         models = db.data.get_highlevel_models(id)
-        if ll_data:
-            data = (ll_data, models)
-        else:
-            raise NoDataFoundException('No submission exists with `id`: {}'.format(id))
+        data = (ll_data, models)
 
     vectors = []
     metric_names = []

@@ -7,8 +7,8 @@
 {%- block content -%}
   <div id="page-recording-summary">
 
-    <h2 class="page-title">Recording "{{ metadata['title'] }}" by {{ metadata['artist'] }}
-      <a href="{{ url_for('data.metrics', mbid=metadata['mbid']) }}">(see similar)</a></h2>
+    <h2 class="page-title">Recording "{{ metadata['title'] }}" by {{ metadata['artist'] }}</h2>
+    <p><a href="{{ url_for('data.metrics', mbid=metadata['mbid']) }}">See Similar</a></p>
 
     {%- include 'data/summary-metadata.html' -%}
 

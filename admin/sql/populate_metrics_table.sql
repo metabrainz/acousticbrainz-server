@@ -7,7 +7,7 @@ INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, categ
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('gfccsw', 'FALSE', 'GFCCs (weighted)', 'timbre');
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('key', 'FALSE', 'Key/Scale', 'rhythm');
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('bpm', 'FALSE', 'BPM', 'rhythm');
-INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('onsetrate', 'FALSE', 'MFCCs', 'timbre');
+INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('onsetrate', 'FALSE', 'OnsetRate', 'timbre');
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('moods', 'FALSE', 'Moods', 'high-level');
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('instruments', 'FALSE', 'Instruments', 'high-level');
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('dortmund','FALSE', 'Genre (dortmund model)', 'high-level');

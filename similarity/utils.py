@@ -2,6 +2,7 @@ import os
 
 import similarity.exceptions
 import similarity.metrics
+from similarity.index_model import AnnoyModel
 
 from collections import defaultdict
 
@@ -45,6 +46,16 @@ def get_all_indices(n_trees=10):
     for distance in distance_measures:
         for metric in metrics:
             indices[distance].append((metric, n_trees))
+    return indices
+
+
+def initialize_indices(n_trees="10", distance_type="angular", load_existing=False):
+    """Initializes indices for all base metrics, appending them 
+    to a list which is returned."""
+    indices = []
+    for name in similarity.metrics.BASE_METRICS:
+        index = AnnoyModel(name, n_trees=n_trees, distance_type=distance_type, load_existing=load_existing)
+        indices.append(index)
     return indices
 
 

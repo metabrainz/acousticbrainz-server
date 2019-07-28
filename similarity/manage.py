@@ -1,8 +1,11 @@
 from __future__ import print_function
 from flask.cli import FlaskGroup
 import click
+import time
 
 import webserver
+import similarity.utils
+from similarity.index_model import AnnoyModel
 import db
 import db.similarity
 import db.similarity_stats
@@ -13,7 +16,7 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 
 
 @cli.command(name="add-metrics")
-@click.option("--batch-size", "-b", type=int, default=10000, help="Override processing batch size.")
+@click.option("--batch-size", "-b", type=int, default=None, help="Override processing batch size.")
 def add_metrics(batch_size):
     """Computes all 12 base metrics for each recording
     in the lowlevel table, inserting these values in
@@ -84,3 +87,91 @@ def init(batch_size, sample_size, force):
     click.echo("Finished computing stats. Adding all metrics...")
     db.similarity.add_metrics(batch_size)
     click.echo("Finished adding all metrics, exiting...")
+@cli.command(name='add-index')
+@click.argument("metric")
+@click.option("--batch_size", "-b", type=int, default=None, help="Size of batches")
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
+@click.option("--distance_type", "-d", default='angular', help="Method of measuring distance between metric vectors")
+def add_index(metric, batch_size, n_trees, distance_type):
+    """Creates an annoy index for the specified metric using the given params.
+    This operates by creating a special case of `db.similarity.add_indices`,
+    where the list of indices only contains one index.
+    
+    *NOTE*: Using this command overwrites any existing index with the
+    same parameters.
+    """
+    click.echo("Adding index: {}".format(metric))
+    click.echo("Initializing index...")
+    index = [AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)]
+    click.echo("Inserting items...")
+    db.similarity.add_indices(index, batch_size=batch_size)
+    click.echo("Done!")
+
+
+@cli.command(name='add-indices')
+@click.option("--batch_size", "-b", type=int, default=None, help="Size of batches")
+@click.option("--n-trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
+@click.option("--distance-type", "-d", default='angular')
+def add_indices(batch_size, n_trees, distance_type):
+    """Creates an annoy index then adds all recordings to the index,
+    for each of the base metrics.
+    
+    *NOTE*: Using this command overwrites any existing index with the
+    same parameters.
+    """
+    s = time.time()
+    click.echo("Initializing indices...")
+    indices = similarity.utils.initialize_indices(n_trees=n_trees, distance_type=distance_type)
+    click.echo("Inserting items...")
+    db.similarity.add_indices(indices, batch_size=batch_size)
+    click.echo("Finished.")
+    e = time.time()
+    click.echo("Time: {}".format(e-s))
+
+
+@cli.command(name='remove-index')
+@click.argument("metric")
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
+@click.option("--distance_type", "-d", default='angular', help="Method of measuring distance between metric vectors.")
+def remove_index(metric, n_trees, distance_type):
+    """Removes the index with the specified parameters, if it exists.
+
+        Note that each index is built with a distinct number of trees,
+        metric, and distance type.
+    """
+    click.echo("Removing index: {}".format(metric))
+    similarity.utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Finished.")
+
+
+@cli.command(name='remove-indices')
+@click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
+                                                            Tradeoff: more trees gives more precision, \
+                                                            but takes longer to build.")
+@click.option("--distance_type", "-d", default='angular', help="Method of measuring distance between metric vectors.")
+def remove_indices(n_trees, distance_type):
+    """Removes indices for each of the following metrics, if they
+    exist with the specified parameters."""
+    metrics = ["mfccs",
+               "mfccsw",
+               "gfccs",
+               "gfccsw",
+               "key",
+               "bpm",
+               "onsetrate",
+               "moods",
+               "instruments",
+               "dortmund",
+               "rosamerica",
+               "tzanetakis"]
+
+    for metric in metrics:
+        click.echo("Removing index: {}".format(metric))
+        similarity.utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Finished.")

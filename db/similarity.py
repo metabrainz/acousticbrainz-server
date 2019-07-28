@@ -76,16 +76,14 @@ def get_all_metrics():
         return metrics
 
 
-def add_index(index, batch_size=None):
-    """Adds all items to the initialized Annoy index."""
+def add_indices(indices, batch_size=None):
     batch_size = batch_size or PROCESS_BATCH_SIZE
     offset = 0
     count = 0
-
     with db.engine.connect() as connection:
         result = connection.execute("""
             SELECT MAX(id)
-              FROM similarity
+              FROM similarity.similarity
         """)
         total = result.fetchone()[0]
 
@@ -97,29 +95,30 @@ def add_index(index, batch_size=None):
             OFFSET :offset
         """)
 
-        print("Inserting items...")
         while True:
-            # Get ids and vectors for specific metric in batches
+            # Get ids and vectors for all metrics in batches
             batch_result = connection.execute(batch_query, { "batch_size": batch_size, "offset": offset })
             if not batch_result.rowcount:
-                print("Finished adding items. Building index...")
+                print("Finished adding items. Building and saving indices...")
                 break
 
             for row in batch_result.fetchall():
                 while not row["id"] == count:
                     # Rows are empty, add zero vector
-                    placeholder = [0] * index.dimension
-                    index.add_recording_with_vector(count, placeholder)
+                    for index in indices:
+                        placeholder = [0] * index.dimension
+                        index.add_recording_with_vector(count, placeholder)
                     count += 1
-                index.add_recording_with_vector(row["id"], row[index.metric_name])
+                for index in indices:
+                    index.add_recording_with_vector(row["id"], row[index.metric_name])
                 count += 1
 
             offset += batch_size
             print("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
 
-        index.build()
-        print("Saving index...")
-        index.save()
+        for index in indices:
+            index.build()
+            index.save()
 
 
 def get_all_metrics():

@@ -136,7 +136,7 @@ def create_app(debug=None):
                 and app.config['TESTING'] == False \
                 and request.blueprint not in ('api', 'api_v1_core', 'api_v1_datasets', 'api_v1_dataset_eval'):
             url = request.url[7:] # remove http:// from url
-            return redirect('https://{}'.format(url))
+            return redirect('https://{}'.format(url), 301)
 
 
     @app.before_request

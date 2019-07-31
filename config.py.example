@@ -73,3 +73,5 @@ FILE_STORAGE_DIR = "/data/files"
 
 #Feature Flags
 FEATURE_EVAL_LOCATION = False
+
+DEBUG_TB_INTERCEPT_REDIRECTS = False

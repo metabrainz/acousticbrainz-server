@@ -7,7 +7,7 @@ $(function () {
 
     // Evaluation of the metrics
     let feedbackCallback = function () {
-        $('#feedback-request').hide();
+        $('.feedback-request').hide();
         $('#feedback-result').show();
     };
 
@@ -21,18 +21,32 @@ $(function () {
     if(history_set.has(location.pathname))
         feedbackCallback();
 
-    $('.btn-feedback').click(function () {
-        let value = $(this).attr('data-value');
+    $('form').submit(function (e) {
+        e.preventDefault();
         $.ajax({
             method: 'POST',
-            url: location.pathname + '/rate/' + value,
+            url: location.pathname + '/eval',
+            data: JSON.stringify({
+                form: $('form').serialize(),
+                metadata: metadata
+            }),
+            contentType: 'application/json',
             success: function () {
                 history.push(location.pathname);
                 localStorage['history'] = JSON.stringify(history);
                 feedbackCallback();
             },
             error: function () {
-                console.error('Failed to submit feedback');
+                console.log(error)
+                console.error('Failed to submit feedback.');
+            }
+        });
+
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken)
+                }
             }
         });
     });

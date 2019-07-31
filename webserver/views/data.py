@@ -1,12 +1,16 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import current_user
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
+
 import db.data
 import db.exceptions
 import db.similarity
+import similarity.exceptions
+from similarity.index_model import AnnoyModel
+from webserver import forms
 
 import json
 import time
@@ -148,35 +152,81 @@ def metrics(mbid):
 @data_bp.route("/<uuid:mbid>/similar/<string:metric>")
 def get_similar(mbid, metric):
     offset = request.args.get("n")
-    category, metric, description = db.similarity.get_metric_info(metric)
-    n_similar = 40
-    try:
-        id = db.data.get_lowlevel_id(mbid, offset)
-        index = AnnoyModel(metric, load_existing=True)
-        similar_recordings = index.get_nns_by_id(id, n_similar, return_ids=True)
-    except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException, similarity.exceptions.IndexNotFoundException):
-        raise NotFound
+    # Can make this a utility?
+    if offset:
+        try:
+            offset = int(offset)
+        except ValueError:
+            offset = 0
+    else:
+        offset = 0
 
+    category, metric, description = db.similarity.get_metric_info(metric)
+    n_similar = 10
     ref_metadata = _get_extended_info(mbid, offset)
+
+    try:
+        index = AnnoyModel(metric, load_existing=True)
+        similar_recordings = index.get_nns_by_mbid(mbid, offset, n_similar)
+    except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException, similarity.exceptions.IndexNotFoundException), e:
+        flash("We're sorry, this index is not currently available for this recording: {}".format(repr(e)))
+        return redirect(url_for("data.metrics", mbid=mbid, n=offset))
+
     metadata = [_get_extended_info(mbid, offset) for mbid, offset in similar_recordings]
 
+    # If it doesn't exist already, submit to eval_results
+    # query_rec = (mbid, offset)
+    # params = (metric, index.n_trees, index.distance_type)
+    # db.similarity.submit_eval_results(query_rec, similar_recordings, params)
+
+    form = forms.SimilarityEvaluationForm()
+    eval_data = zip(form.eval_list, metadata)
+    
     return render_template(
         "data/similar.html",
         metric=metric,
         ref_metadata=ref_metadata,
         metadata=metadata,
         category=category,
-        description=description
+        description=description,
+        form=form,
+        eval_data=eval_data
     )
 
 
-@data_bp.route("/<uuid:mbid>/similar/<string:metric>/rate/<int:rating>", methods=['POST'])
-def rate_similar(mbid, metric, rating):
+@data_bp.route("/<uuid:mbid>/similar/<string:metric>/eval", methods=['POST'])
+def rate_similar(mbid, metric):
     offset = request.args.get("n")
-    results = request.form.get('result') or similarity.api.get_similar_recordings(mbid, metric)[0]
-    user_id = current_user.id if current_user.is_authenticated else None
-    db.similarity.add_evaluation(user_id, recording, result_mbids, metric, rating)
-    return jsonify({'success': True}), 200
+    form = request.json["form"]
+    metadata = request.json["metadata"]
+    # Can make this a utility?
+    if offset:
+        try:
+            offset = int(offset)
+        except ValueError:
+            offset = 0
+    else:
+        offset = 0
+
+    form = forms.SimilarityEvaluationForm()
+    eval_data = zip(form.eval_list, metadata)
+
+    if form.validate_on_submit():
+        user_id = current_user.id if current_user.is_authenticated else None
+        query_rec = (mbid, offset)
+        for eval, rec_metadata in zip(form.eval_list.entries, metadata):
+            if eval.data['feedback']:
+                # Eval occurred for this recording, create evaluation
+                rating = eval.data['feedback']
+                suggestion = eval.data['suggestion'] if eval.data['suggestion'] else None
+                print(suggestion)
+                flash(eval.data['feedback'])
+                flash(suggestion)
+                result_rec = (rec_metadata['mbid'], rec_metadata['submission_offset'])
+                flash(result_rec)
+                # db.similarity.add_evaluation(user_id, query_rec, result_rec, rating, suggestion)
+        return jsonify({'success': True}), 200
+    return jsonify(form.errors)
 
 
 def _get_youtube_query(metadata):

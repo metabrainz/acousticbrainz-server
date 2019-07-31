@@ -93,11 +93,13 @@ class AnnoyModel(object):
         the lowlevel.id + 1 items.
         """
         if self.in_loaded_state:
-            raise similarity.exceptions.CannotAddItemException
+            raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
         item = db.similarity.get_similarity_row_mbid(mbid, offset)
         if item:
             recording_vector = item[self.metric_name]
             id = item['id']
+            # If an item already exists, this should not error
+            # and we should not add the item.
             try:
                 self.index.get_item_vector(id)
             except IndexError:
@@ -109,9 +111,11 @@ class AnnoyModel(object):
         lowlevel.id + 1 items.
         """
         if self.in_loaded_state:
-            raise similarity.exceptions.CannotAddItemException
+            raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
         item = db.similarity.get_similarity_row_id(id)
         if item:
+            # If an item already exists, this should not error
+            # and we should not add the item.
             try:
                 self.index.get_item_vector(id)
             except IndexError:
@@ -121,7 +125,7 @@ class AnnoyModel(object):
         """Add a single recording to the index using its lowlevel.id and
         a precomputed metric vector."""
         if self.in_loaded_state:
-            raise similarity.exceptions.CannotAddItemException
+            raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
         # If an item already exists, this should not error
         # and we should not add the item.
         try:

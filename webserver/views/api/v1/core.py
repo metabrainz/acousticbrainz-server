@@ -10,6 +10,7 @@ import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
+from brainzutils.ratelimit import ratelimit
 
 bp_core = Blueprint('api_v1_core', __name__)
 
@@ -26,6 +27,7 @@ MAX_ITEMS_PER_BULK_REQUEST = 25
 
 @bp_core.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def count(mbid):
     """Get the number of low-level data submissions for a recording with a
     given MBID.
@@ -51,6 +53,7 @@ def count(mbid):
 
 @bp_core.route("/<uuid(strict=False):mbid>/low-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_low_level(mbid):
     """Get low-level data for a recording with a given MBID.
 
@@ -74,6 +77,7 @@ def get_low_level(mbid):
 
 @bp_core.route("/<uuid(strict=False):mbid>/high-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_high_level(mbid):
     """Get high-level data for recording with a given MBID.
 
@@ -99,6 +103,7 @@ def get_high_level(mbid):
 
 
 @bp_core.route("/<uuid:mbid>/low-level", methods=["POST"])
+@ratelimit()
 def submit_low_level(mbid):
     """Submit low-level data to AcousticBrainz.
 
@@ -220,6 +225,7 @@ def check_bad_request_for_multiple_recordings():
 
 @bp_core.route("/low-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_many_lowlevel():
     """Get low-level data for many recordings at once.
 
@@ -258,6 +264,7 @@ def get_many_lowlevel():
 
 @bp_core.route("/high-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_many_highlevel():
     """Get high-level data for many recordings at once.
 
@@ -299,6 +306,7 @@ def get_many_highlevel():
 
 @bp_core.route("/count", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_many_count():
     """Get low-level count for many recordings at once. MBIDs not found in
     the database are omitted in the response.

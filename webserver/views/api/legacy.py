@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, request, jsonify
+from brainzutils.ratelimit import ratelimit
 from db.data import count_lowlevel, submit_low_level_data
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
@@ -13,6 +14,7 @@ api_legacy_bp = Blueprint('api', __name__)
 
 @api_legacy_bp.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def count(mbid):
     return jsonify({
         'mbid': mbid,
@@ -22,6 +24,7 @@ def count(mbid):
 
 @api_legacy_bp.route("/<string:mbid>/low-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_low_level(mbid):
     """Endpoint for fetching low-level data.
     If there is more than one document with the same mbid, you can specify
@@ -37,6 +40,7 @@ def get_low_level(mbid):
 
 @api_legacy_bp.route("/<string:mbid>/high-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_high_level(mbid):
     """Endpoint for fetching high-level data.
     If there is more than one document with the same mbid, you can specify

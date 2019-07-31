@@ -35,6 +35,10 @@ class CoreViewsTestCase(ServerTestCase):
 
         resp = self.client.get("/api/v1/%s/low-level" % mbid)
         self.assertEqual(resp.status_code, 200)
+        self.assertIn('X-RateLimit-Limit', resp.headers)
+        self.assertIn('X-RateLimit-Remaining', resp.headers)
+        self.assertIn('X-RateLimit-Reset-In', resp.headers)
+        self.assertIn('X-RateLimit-Reset', resp.headers)
 
         # upper-case MBID
         resp = self.client.get("/api/v1/%s/low-level" % mbid.upper())

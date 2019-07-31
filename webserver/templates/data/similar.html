@@ -6,7 +6,7 @@
 
 {%- block content -%}
 
-    <h2 class="page-title">Recording "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }}</h2>
+    <h2 class="page-title">Similar Recordings to "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }}</h2>
 
     <div class="row">
         <div class="col-md-8">
@@ -16,28 +16,46 @@
             </div>
 
             <div>
-                <h3>Most similar by {{ description }}:</h3>
-                <ul>
-                {% for recording in metadata %}
-                    <li><a href="{{ url_for('data.summary', mbid=recording['mbid']) }}">
-                        {{ recording['artist'] }} - {{ recording['title'] }}</a>
-                        <a href="#" class="change-youtube" data-youtube="{{ recording['youtube_query'] }}">(show)</a>
-                    </li>
-                {% endfor %}
-                </ul>
-            </div>
+            <h3>Most similar by {{ description }}:</h3>
+            <p class="feedback-request">Please give us feedback - in terms of {{ category }}, how similar are the result tracks to original one?</p>
 
-            <div>
-                <h3>Feedback</h3>
-                <div id="feedback-request">
-                    <p>When talking about {{ category }}, how similar are the result tracks to original one?</p>
-                    <a class="btn-feedback btn btn-success" data-value="2" href="#">Very similar</a>
-                    <a class="btn-feedback btn btn-warning" data-value="1" href="#">Somewhat similar</a>
-                    <a class="btn-feedback btn btn-danger" data-value="0" href="#">Not similar</a>
-                </div>
-                <div id="feedback-result" hidden>
-                    <p>Thank you for your feedback!</p>
-                </div>
+            <form id="feedback-select" method="post" action="{{ url_for('data.get_similar', metric=metric, mbid=ref_metadata['mbid'], submission_offset=ref_metadata['submission_offset']) }}">
+            {{ form.hidden_tag() }}
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Recording</th>
+                    <th class="feedback-request">Feedback</th>
+                    <th class="feedback-request">Suggestion</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for eval, recording in eval_data %}
+                    {{ eval.form.hidden_tag() }}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('data.summary', mbid=recording['mbid']) }}">
+                                    {{ recording['artist'] }} - {{ recording['title'] }}</a>
+                            <br>
+                            <a href="#" class="change-youtube" data-youtube="{{ recording['youtube_query'] }}">(show)</a>
+                        </td>
+                        <td class="feedback-request">
+                            {{ eval.form.feedback(style="background-colour: purple;") }}
+                        </td>
+                        <td class="feedback-request">
+                            {{ eval.form.suggestion(style="position: relative") }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <button class="btn btn-primary btn-feedback feedback-request" type="submit">
+                Submit Feedback
+            </button>
+            </form>
+            <div id="feedback-result" hidden>
+                <p>Thank you for your feedback!</p>
+            </div>
             </div>
 
         </div>
@@ -53,4 +71,8 @@
 {%- block scripts -%}
     {{ super() }}
     <script src="{{ get_static_path('similarity.js') }}"></script>
+    <script type="text/javascript">
+        var metadata = {{ metadata|tojson }};
+        var csrftoken = "{{ form.csrf_token._value() }}";
+    </script>
 {%- endblock -%}

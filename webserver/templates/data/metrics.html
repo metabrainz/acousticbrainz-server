@@ -8,13 +8,15 @@
 
     <h2 class="page-title">Recording "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }}</h2>
 
+    <h4>Please select a metric to measure similarity.</h4>
+
     <div class="row">
         {% for category, metrics in metrics.items() %}
         <div class="col-md-{{ col_width }}">
             <h3>{{ category | capitalize }}</h3>
             <ul>
             {% for name, description in metrics %}
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], metric=name) }}">
+                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], n=ref_metadata['submission_offset'], metric=name) }}">
                     {{ description }}
                 </a></li>
             {% endfor %}

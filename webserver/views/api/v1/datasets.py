@@ -87,9 +87,7 @@ def create_dataset():
 @auth_required
 def delete_dataset(dataset_id):
     """Delete a dataset."""
-    ds = get_dataset(dataset_id)
-    if ds["author"] != current_user.id:
-        raise api_exceptions.APIUnauthorized("You can't delete this dataset.")
+    ds = get_check_dataset(dataset_id, write=True)
     db.dataset.delete(ds["id"])
     return jsonify(
         success=True,

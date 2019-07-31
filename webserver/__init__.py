@@ -1,15 +1,16 @@
 from __future__ import print_function
 
 from brainzutils.flask import CustomFlask
+from brainzutils.ratelimit import set_rate_limits, inject_x_rate_headers
 from flask import request, url_for, redirect
 from flask_login import current_user
 from pprint import pprint
 
 import os
 import time
+import urlparse
 
 API_PREFIX = '/api/'
-
 
 # Check to see if we're running under a docker deployment. If so, don't second guess
 # the config file setup and just wait for the correct configuration to be generated.
@@ -81,6 +82,15 @@ def create_app(debug=None):
     else:
         raise Exception('One or more redis cache configuration options are missing from config.py')
 
+    # Add rate limiting support
+    @app.after_request
+    def after_request_callbacks(response):
+        return inject_x_rate_headers(response)
+
+    # check for ratelimit config values and set them if present
+    if 'RATELIMIT_PER_IP' in app.config and 'RATELIMIT_WINDOW' in app.config:
+        set_rate_limits(app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_WINDOW'])
+
     # MusicBrainz
     import musicbrainzngs
     from db import SCHEMA_VERSION
@@ -117,7 +127,19 @@ def create_app(debug=None):
     admin = Admin(app, index_view=admin_views.HomeView(name='Admin'))
     admin.add_view(admin_views.AdminsView(name='Admins'))
 
-    @ app.before_request
+    @app.before_request
+    def prod_https_login_redirect():
+        """ Redirect to HTTPS in production except for the API endpoints
+        """
+        if urlparse.urlsplit(request.url).scheme == 'http' \
+                and app.config['DEBUG'] == False \
+                and app.config['TESTING'] == False \
+                and request.blueprint not in ('api', 'api_v1_core', 'api_v1_datasets', 'api_v1_dataset_eval'):
+            url = request.url[7:] # remove http:// from url
+            return redirect('https://{}'.format(url))
+
+
+    @app.before_request
     def before_request_gdpr_check():
         # skip certain pages, static content and the API
         if request.path == url_for('index.gdpr_notice') \

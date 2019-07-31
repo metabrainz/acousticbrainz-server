@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user
 from webserver.decorators import auth_required
 from webserver.views.api import exceptions as api_exceptions
+from brainzutils.ratelimit import ratelimit
 import db.dataset
 import db.exceptions
 from utils import dataset_validator
@@ -19,6 +20,7 @@ def get_dataset(dataset_id):
     return jsonify(get_check_dataset(dataset_id))
 
 
+# don't ratelimit this function, since it is called from our JS
 @bp_datasets.route("/", methods=["POST"])
 @auth_required
 def create_dataset():
@@ -85,11 +87,10 @@ def create_dataset():
 
 @bp_datasets.route("/<uuid:dataset_id>", methods=["DELETE"])
 @auth_required
+@ratelimit()
 def delete_dataset(dataset_id):
     """Delete a dataset."""
-    ds = get_dataset(dataset_id)
-    if ds["author"] != current_user.id:
-        raise api_exceptions.APIUnauthorized("You can't delete this dataset.")
+    ds = get_check_dataset(dataset_id, write=True)
     db.dataset.delete(ds["id"])
     return jsonify(
         success=True,
@@ -99,6 +100,7 @@ def delete_dataset(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>", methods=["PUT"])
 @auth_required
+@ratelimit()
 def update_dataset_details(dataset_id):
     """Update dataset details.
 
@@ -138,6 +140,7 @@ def update_dataset_details(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["POST"])
 @auth_required
+@ratelimit()
 def add_class(dataset_id):
     """Add a class to a dataset.
 
@@ -187,6 +190,7 @@ def add_class(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["PUT"])
 @auth_required
+@ratelimit()
 def update_class(dataset_id):
     """Update class in a dataset.
 
@@ -232,6 +236,7 @@ def update_class(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["DELETE"])
 @auth_required
+@ratelimit()
 def delete_class(dataset_id):
     """Delete class and all of its recordings from a dataset.
 
@@ -265,6 +270,7 @@ def delete_class(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["PUT"])
 @auth_required
+@ratelimit()
 def add_recordings(dataset_id):
     """Add recordings to a class in a dataset.
 
@@ -309,6 +315,7 @@ def add_recordings(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["DELETE"])
 @auth_required
+@ratelimit()
 def delete_recordings(dataset_id):
     """Delete recordings from a class in a dataset.
 

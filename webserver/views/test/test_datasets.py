@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 
 import csv
@@ -339,6 +340,22 @@ class DatasetsViewsTestCase(ServerTestCase):
         expected_list = ["description,A dataset description"] + expected_list
         expected = terminator.join(expected_list) + terminator
         self.assertEqual(dataset_csv, expected)
+
+        # Non-ascii text
+        self.test_data["classes"][0]["name"] = u"class dieciséis"
+        self.test_data["classes"][0]["description"] = u"descripción"
+        self.test_data["description"] = u"¿Qué pasa?"
+        expected_list = [u"description,¿Qué pasa?",
+                         u"description:class dieciséis,descripción",
+                         u"e8afe383-1478-497e-90b1-7885c7f37f6e,class dieciséis",
+                         u"0dad432b-16cc-4bf0-8961-fd31d124b01b,class dieciséis",
+                         u"e8afe383-1478-497e-90b1-7885c7f37f6e,Class #2",
+                         u"0dad432b-16cc-4bf0-8961-fd31d124b01b,Class #2"]
+        fp = ws_datasets._convert_dataset_to_csv_stringio(self.test_data)
+        dataset_csv = fp.getvalue()
+        expected = terminator.join(expected_list) + terminator
+        # The result of the conversion is a bytes, so convert it back to unicode
+        self.assertEqual(dataset_csv.decode("utf-8"), expected)
 
     @mock.patch("db.dataset.create_from_dict")
     def test_import_csv_invalid_form(self, mock_create_from_dict):

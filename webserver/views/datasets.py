@@ -119,23 +119,28 @@ def _convert_dataset_to_csv_stringio(dataset):
 
     Returns:
         A rewound StringIO containing a CSV representation of the dataset"""
+
+    # We need to encode all text fields, because they may have non-ascii characters
+    #   - dataset description, class names, class descriptions
+    # TODO: On upgrade to python 3, check that stringio accepts the correct data
+    #       (may have to change to bytesio if we encode this data)
     fp = StringIO.StringIO()
     writer = csv.writer(fp)
 
     # write dataset description only if it is set
     if dataset["description"]:
         description = dataset["description"]
-        writer.writerow(["description", description])
+        writer.writerow(["description", description.encode("utf-8")])
 
     for ds_class in dataset["classes"]:
         # write class description only if it is set
         if ds_class["description"]:
             ds_class_description = ds_class["description"]
-            ds_class_desc_head = "description:" + ds_class["name"]
-            writer.writerow([ds_class_desc_head, ds_class_description])
+            ds_class_desc_head = "description:" + ds_class["name"].encode("utf-8")
+            writer.writerow([ds_class_desc_head, ds_class_description.encode("utf-8")])
 
     for ds_class in dataset["classes"]:
-        class_name = ds_class["name"]
+        class_name = ds_class["name"].encode("utf-8")
         for rec in ds_class["recordings"]:
             writer.writerow([rec, class_name])
 

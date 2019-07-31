@@ -142,6 +142,21 @@ def _get_youtube_query(metadata):
         )
 
 
+def _format_length(length_ms):
+    try:
+        length = float(length_ms) / 1000
+    except ValueError:
+        return "?:??"
+    mins, secs = divmod(length, 60)
+    hours, mins = divmod(mins, 60)
+    if hours >= 1:
+        return "%d:%02d:%02d" % (hours, mins, secs)
+    elif mins >= 1:
+        return "%d:%02d" % (mins, secs)
+    else:
+        return "00:%02d" % secs
+
+
 def _get_recording_info(mbid, metadata):
     info = {
         'mbid': mbid,
@@ -166,7 +181,7 @@ def _get_recording_info(mbid, metadata):
                 '%s / %s' % (release['medium-list'][0]['track-list'][0]['number'],
                              release['medium-list'][0]['track-count'])
         if 'length' in good_metadata:
-            info['length'] = time.strftime("%M:%S", time.gmtime(float(good_metadata['length']) / 1000))
+            info['length'] = _format_length(good_metadata['length'])
         return info
 
     elif metadata:

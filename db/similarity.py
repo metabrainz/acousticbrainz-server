@@ -412,22 +412,60 @@ def get_similarity_row_id(id):
         return result.fetchone()
 
 
-def add_evaluation(user_id, query_mbid, result_mbids, metric, rating, suggestion='NULL'):
-    # Adds a row to the evaluation table
+def add_evaluation(user_id, eval_id, result_id, rating, suggestion):
+    # Adds a row to the evaluation table.
     user_id = user_id or None
-    if not result_mbids:
-        result_mbids = None
-    else:
-        result_mbids = tuple(result_mbids)
 
     with db.engine.begin() as connection:
         query = text("""
-            INSERT INTO similarity.similarity_eval (user_id, query_mbid, result_mbids, metric, rating, suggestion)
-                 VALUES (:user, :query_mbid, :result_mbids, :metric, :rating, :suggestion)
+            INSERT INTO similarity.eval_feedback (user_id, query_id, result_id, rating, suggestion)
+                 VALUES (:user_id, :eval_id, :result_id, :rating, :suggestion)
         """)
-        connection.execute(query, {'user': user_id, 
-                                   'query_mbid': query_mbid, 
-                                   'result_mbids': result_mbids, 
-                                   'metric': metric,
+        connection.execute(query, {'user_id': user_id, 
+                                   'eval_id': eval_id, 
+                                   'result_id': result_id, 
                                    'rating': rating, 
                                    'suggestion': suggestion})
+
+
+def submit_eval_results(query_id, result_ids, distances, params):
+    """Submit a recording with its similar recordings and
+    the parameters used to the similarity.eval_results table.
+
+    Args:
+        query_ids: lowlevel.id which is the subject of a
+                   query for similarity.
+        result_ids: A list of lowlevel.ids), referencing the resultant
+                   recordings.
+        distances: A list of integers, the distance between each resultant
+                   recording and the query recording.
+        params: A list of form [<metric_name>, <n_trees>, <distance_type>]
+    """
+    with db.engine.connect() as connection:
+        param_query = text("""
+            SELECT id
+              FROM similarity.eval_params
+             WHERE metric = :metric
+               AND n_trees = :n_trees
+               AND distance_type = :distance_type
+        """)
+        result = connection.execute(param_query, {"metric": params[0],
+                                                  "n_trees": params[1],
+                                                  "distance_type": params[2]})
+        if not result.rowcount:
+            raise db.exceptions.NoDataFoundException('There are no existing eval params for the index specified.')
+        params_id = result.fetchone()["id"]
+
+        insert_query = text("""
+            INSERT INTO similarity.eval_results (query_id, similar_ids, distances, params)
+                 VALUES (:query_id, :similar_ids, :distances, :params)
+            ON CONFLICT
+             DO NOTHING
+              RETURNING id
+        """)
+        result = connection.execute(insert_query, {"query_id": query_id,
+                                          "result_ids": result_ids,
+                                          "distances": distances,
+                                          "params": params})
+        eval_result_id = result.fetchone()[0]
+        return eval_result_id

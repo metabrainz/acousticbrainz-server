@@ -186,12 +186,4 @@ CREATE TABLE similarity.similarity_stats (
   stddevs DOUBLE PRECISION[]
 );
 
-CREATE TABLE similarity_eval (
-  user_id     INTEGER, -- FK to user
-  query_rec   eval_recording,
-  result_recs eval_recording[],
-  metric      TEXT, -- FK to metric
-  suggestion  TEXT
-);
-
 COMMIT;

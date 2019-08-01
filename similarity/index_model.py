@@ -133,7 +133,7 @@ class AnnoyModel(object):
         except IndexError:
             self.index.add_item(id, vector)
 
-    def get_nns_by_id(self, id, num_neighbours, return_ids=False):
+    def get_nns_by_id(self, id, num_neighbours, return_ids=False, return_distances=False):
         """Get the most similar recordings for a recording with the
            specified id.
 
@@ -146,29 +146,48 @@ class AnnoyModel(object):
             return_ids: boolean, determines whether (mbid, offset), or lowlevel.id
             is returned for each similar recording.
 
+            return_distances: boolean, determines where or not distance between the
+            query recording and each similar recording should be included.
+
         Returns:
-            If return_ids = True: A list of lowlevel.ids [id1, ..., idn]
-            If return_ids = False: A list of tuples [(mbid1, offset), ..., (mbidn, offset)]
+            If return_ids = True: A list of lowlevel.ids [id_1, ..., id_n]
+                If return_distances also True: A tuple containing two lists 
+                ([id_1, ..., id_n], [distance_1, ..., distance_n])
+            If return_ids = False: A list of tuples [(mbid_1, offset), ..., (mbid_n, offset)]
+                If return_distances also True: A tuple containing two lists 
+                ([(mbid_1, offset), ..., (mbid_n, offset)], [distance_1, ..., distance_n])
         """
         try:
-            ids = self.index.get_nns_by_item(id, num_neighbours)
+            # Unpack to get ids and distances, depending on whether or not distances should be included.
+            items = self.index.get_nns_by_item(id, num_neighbours, include_distances=return_distances)
         except IndexError:
-            raise similarity.exceptions.ItemNotFoundException
+            raise similarity.exceptions.ItemNotFoundException('The item you are requesting is not indexed.')
+        
         if return_ids:
-            # Return only ids
-            return ids
+            if return_distances:
+                ids = items[0]
+                distances = items[1]
+                recordings = db.data.get_mbids_by_ids(ids)
+                return ids, recordings, distances
+            # Return ids rather than (MBID, offset)
+            return items
         else:
-            # Get corresponding (mbid, offset) for the most similar ids
-            recordings = db.data.get_mbids_by_ids(ids)
+            # Get corresponding (MBID, offset) for the most similar ids
+            if return_distances:
+                ids = items[0]
+                distances = items[1]
+                recordings = db.data.get_mbids_by_ids(ids)
+                return recordings, distances
             return recordings
+            
 
-    def get_nns_by_mbid(self, mbid, offset, num_neighbours, return_ids=False):
+    def get_nns_by_mbid(self, mbid, offset, num_neighbours, return_ids=False, return_distances=False):
         # Find corresponding lowlevel.id to (mbid, offset) combination,
         # then call get_nns_by_id
         id = db.data.get_lowlevel_id(mbid, offset)
-        return self.get_nns_by_id(id, num_neighbours, return_ids)
+        return self.get_nns_by_id(id, num_neighbours, return_ids=return_ids, return_distances=return_distances)
 
-    def get_bulk_nns_by_mbid(self, recordings, num_neighbours, return_ids=False):
+    def get_bulk_nns_by_mbid(self, recordings, num_neighbours, return_ids=False, return_distances=False):
         """Get most similar recordings for each (MBID, offset) tuple provided.
         Similar recordings list returned is ordered with the most similar at
         index 0.
@@ -213,7 +232,7 @@ class AnnoyModel(object):
         recordings_info = defaultdict(dict)
         for mbid, offset in recordings:
             try:
-                similar_recordings = self.get_nns_by_mbid(mbid, offset, num_neighbours, return_ids=return_ids)
+                similar_recordings = self.get_nns_by_mbid(mbid, offset, num_neighbours, return_ids=return_ids, return_distances=return_distances)
                 recordings_info[mbid][str(offset)] = similar_recordings
             except (similarity.exceptions.ItemNotFoundException, db.exceptions.NoDataFoundException):
                 continue

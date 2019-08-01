@@ -163,21 +163,22 @@ def get_similar(mbid, metric):
 
     category, metric, description = db.similarity.get_metric_info(metric)
     n_similar = 10
-    ref_metadata = _get_extended_info(mbid, offset)
+    
+    query_id = db.data.get_lowlevel_id(mbid, offset)
+    ref_metadata = _get_extended_info(mbid, offset, query_id)
 
     try:
         index = AnnoyModel(metric, load_existing=True)
-        similar_recordings = index.get_nns_by_mbid(mbid, offset, n_similar)
+        result_ids, similar_recordings, distances = index.get_nns_by_mbid(mbid, offset, n_similar, return_ids=True, return_distances=True)
     except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException, similarity.exceptions.IndexNotFoundException), e:
         flash("We're sorry, this index is not currently available for this recording: {}".format(repr(e)))
         return redirect(url_for("data.metrics", mbid=mbid, n=offset))
 
-    metadata = [_get_extended_info(mbid, offset) for mbid, offset in similar_recordings]
-
     # If it doesn't exist already, submit to eval_results
-    # query_rec = (mbid, offset)
-    # params = (metric, index.n_trees, index.distance_type)
-    # db.similarity.submit_eval_results(query_rec, similar_recordings, params)
+    params = (metric, index.n_trees, index.distance_type)
+    eval_id = db.similarity.submit_eval_results(query_id, result_ids, distances, params)
+
+    metadata = [_get_extended_info(rec[0], rec[1], id, eval_id=eval_id) for rec, id in zip(similar_recordings, result_ids)]
 
     form = forms.SimilarityEvaluationForm()
     eval_data = zip(form.eval_list, metadata)
@@ -209,11 +210,10 @@ def rate_similar(mbid, metric):
         offset = 0
 
     form = forms.SimilarityEvaluationForm()
-    eval_data = zip(form.eval_list, metadata)
+    # eval_data = zip(form.eval_list, metadata)
 
     if form.validate_on_submit():
         user_id = current_user.id if current_user.is_authenticated else None
-        query_rec = (mbid, offset)
         for eval, rec_metadata in zip(form.eval_list.entries, metadata):
             if eval.data['feedback']:
                 # Eval occurred for this recording, create evaluation
@@ -222,9 +222,10 @@ def rate_similar(mbid, metric):
                 print(suggestion)
                 flash(eval.data['feedback'])
                 flash(suggestion)
-                result_rec = (rec_metadata['mbid'], rec_metadata['submission_offset'])
+                result_id = rec_metadata['id']
+                eval_id = rec_metadata['eval_id']
                 flash(result_rec)
-                # db.similarity.add_evaluation(user_id, query_rec, result_rec, rating, suggestion)
+                db.similarity.add_evaluation(user_id, eval_id, result_id, rating, suggestion)
         return jsonify({'success': True}), 200
     return jsonify(form.errors)
 
@@ -297,13 +298,16 @@ def _get_recording_info(mbid, metadata):
         return {}
 
 
-def _get_extended_info(mbid, offset):
+def _get_extended_info(mbid, offset, id, eval_id=None):
     info = _get_recording_info(mbid, None)
     if not info:
         raise NotFound('No info for the recording {}'.format(mbid))
     info['mbid'] = mbid
     info['submission_offset'] = offset
     info['youtube_query'] = _get_youtube_query(info)
+    info['lowlevel_id'] = id
+    if eval_id:
+        info['eval_id'] = eval_id
     return info
 
 

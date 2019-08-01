@@ -9,6 +9,7 @@ CREATE TABLE similarity.eval_params (
   n_trees       INTEGER
 );
 
+ALTER TABLE similarity.eval_params ADD CONSTRAINT unique_params_constraint UNIQUE(metric, distance_type, n_trees);
 ALTER TABLE similarity.eval_params ADD CONSTRAINT eval_params_pkey PRIMARY KEY (id);
 
 ALTER TABLE similarity.eval_params
@@ -25,6 +26,7 @@ CREATE TABLE similarity.eval_results (
   params      INTEGER -- FK to eval_params
 );
 
+ALTER TABLE similarity.eval_results ADD CONSTRAINT UNIQUE(query_id, params);
 ALTER TABLE similarity.eval_results ADD CONSTRAINT eval_results_pkey PRIMARY KEY (id);
 
 ALTER TABLE similarity.eval_results
@@ -40,7 +42,7 @@ ALTER TABLE similarity.eval_results
 
 CREATE TABLE similarity.eval_feedback (
   user_id    INTEGER, -- FK to user
-  query_id   INTEGER, -- FK to eval_results
+  eval_id   INTEGER, -- FK to eval_results
   result_id  INTEGER,
   rating     similarity.eval_type,
   suggestion TEXT
@@ -53,7 +55,7 @@ ALTER TABLE similarity.eval_feedback
 
 ALTER TABLE similarity.eval_feedback
   ADD CONSTRAINT eval_feedback_fk_query_id
-  FOREIGN KEY (query_id)
+  FOREIGN KEY (eval_id)
   REFERENCES similarity.eval_results (id);
 
 COMMIT;

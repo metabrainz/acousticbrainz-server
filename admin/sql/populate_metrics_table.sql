@@ -14,4 +14,17 @@ INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, categ
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('rosamerica', 'FALSE', 'Genre (rosamerica model)', 'high-level');
 INSERT INTO similarity.similarity_metrics (metric, is_hybrid, description, category) VALUES ('tzanetakis', 'FALSE', 'Genre (tzanetakis model)', 'high-level');
 
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('mfccs', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('mfccsw', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('gfccs', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('gfccsw', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('key', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('bpm', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('onsetrate', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('moods', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('instruments', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('dortmund', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('rosamerica', 'angular', 10);
+INSERT INTO similarity.eval_params (metric, distance_type, n_trees) VALUES ('tzanetakis', 'angular', 10);
+
 COMMIT;

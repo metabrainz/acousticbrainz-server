@@ -57,10 +57,16 @@ def get_similar_recordings(metric, mbid):
     metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
     try:
         index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
+    except IndexNotFoundException:
+        raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
+    
+    try:
         similar_recordings = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
         return jsonify(similar_recordings)
-    except (IndexNotFoundException, NoDataFoundException, ItemNotFoundException) as e:
-        raise webserver.views.api.exceptions.APIBadRequest(e)
+    except NoDataFoundException:
+        raise webserver.views.api.exceptions.APIBadRequest("No submission exists for the given (MBID, offset) combination.")
+    except ItemNotFoundException:
+        raise webserver.views.api.exceptions.APIBadRequest("The submission of interest is not indexed.")
 
 
 def _check_index_params(metric):

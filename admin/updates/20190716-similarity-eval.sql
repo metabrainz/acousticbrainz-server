@@ -26,7 +26,7 @@ CREATE TABLE similarity.eval_results (
   params      INTEGER -- FK to eval_params
 );
 
-ALTER TABLE similarity.eval_results ADD CONSTRAINT UNIQUE(query_id, params);
+ALTER TABLE similarity.eval_results ADD CONSTRAINT unique_eval_query_constraint UNIQUE(query_id, params);
 ALTER TABLE similarity.eval_results ADD CONSTRAINT eval_results_pkey PRIMARY KEY (id);
 
 ALTER TABLE similarity.eval_results

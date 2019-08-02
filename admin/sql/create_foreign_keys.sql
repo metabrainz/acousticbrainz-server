@@ -125,14 +125,29 @@ ALTER TABLE similarity.similarity_stats
   FOREIGN KEY (metric)
   REFERENCES similarity.similarity_metrics (metric);
 
-ALTER TABLE similarity_eval
-  ADD CONSTRAINT similarity_eval_fk_user
+ALTER TABLE similarity.eval_params
+  ADD CONSTRAINT eval_params_fk_metric
+  FOREIGN KEY (metric)
+  REFERENCES similarity.similarity_metrics (metric);
+
+ALTER TABLE similarity.eval_results
+  ADD CONSTRAINT eval_results_fk_lowlevel
+  FOREIGN KEY (query_id)
+  REFERENCES lowlevel (id);
+
+ALTER TABLE similarity.eval_results
+  ADD CONSTRAINT eval_results_fk_eval_params
+  FOREIGN KEY (params)
+  REFERENCES similarity.eval_params (id); 
+
+ALTER TABLE similarity.eval_feedback
+  ADD CONSTRAINT eval_feedback_fk_user
   FOREIGN KEY (user_id)
   REFERENCES "user" (id);
 
-ALTER TABLE similarity_eval
-  ADD CONSTRAINT similarity_eval_fk_metric
-  FOREIGN KEY (metric)
-  REFERENCES similarity_metrics (metric);
+ALTER TABLE similarity.eval_feedback
+  ADD CONSTRAINT eval_feedback_fk_query_id
+  FOREIGN KEY (eval_id)
+  REFERENCES similarity.eval_results (id);
 
 COMMIT;

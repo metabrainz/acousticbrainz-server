@@ -23,5 +23,7 @@ ALTER TABLE feedback ADD CONSTRAINT feedback_pkey PRIMARY KEY (user_id, highleve
 ALTER TABLE similarity.similarity ADD CONSTRAINT similarity_pkey PRIMARY KEY (id);
 ALTER TABLE similarity.similarity_metrics ADD CONSTRAINT similarity_metrics_pkey PRIMARY KEY (metric);
 ALTER TABLE similarity.similarity_stats ADD CONSTRAINT similarity_stats_pkey PRIMARY KEY (metric);
+ALTER TABLE similarity.eval_params ADD CONSTRAINT eval_params_pkey PRIMARY KEY (id);
+ALTER TABLE similarity.eval_results ADD CONSTRAINT eval_results_pkey PRIMARY KEY (id);
 
 COMMIT;

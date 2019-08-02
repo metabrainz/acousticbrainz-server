@@ -3,4 +3,4 @@ CREATE TYPE model_status AS ENUM ('hidden', 'evaluation', 'show');
 CREATE TYPE version_type AS ENUM ('lowlevel', 'highlevel');
 CREATE TYPE eval_location_type AS ENUM ('local', 'remote');
 CREATE TYPE gid_type AS ENUM ('mbid', 'msid');
-CREATE TYPE eval_type AS ENUM ('less similar', 'accurate', 'more similar');
+CREATE TYPE similarity.eval_type AS ENUM ('less similar', 'accurate', 'more similar');

@@ -21,7 +21,5 @@ ALTER TABLE dataset_eval_challenge DROP CONSTRAINT IF EXISTS dataset_eval_challe
 ALTER TABLE api_key DROP CONSTRAINT IF EXISTS api_key_fk_user;
 ALTER TABLE feedback DROP CONSTRAINT IF EXISTS feedback_fk_highlevel_model;
 ALTER TABLE feedback DROP CONSTRAINT IF EXISTS feedback_fk_user;
-ALTER TABLE similarity_eval DROP CONSTRAINT IF EXISTS similarity_eval_fk_user;
-ALTER TABLE similarity_eval DROP CONSTRAINT IF EXISTS similarity_eval_fk_metric;
 
 COMMIT;

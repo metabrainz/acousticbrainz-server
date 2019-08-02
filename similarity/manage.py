@@ -4,7 +4,7 @@ import click
 import time
 
 import webserver
-import similarity.utils
+import similarity.index_utils
 from similarity.index_model import AnnoyModel
 import db
 import db.similarity
@@ -125,7 +125,7 @@ def add_indices(batch_size, n_trees, distance_type):
     """
     s = time.time()
     click.echo("Initializing indices...")
-    indices = similarity.utils.initialize_indices(n_trees=n_trees, distance_type=distance_type)
+    indices = similarity.index_utils.initialize_indices(n_trees=n_trees, distance_type=distance_type)
     click.echo("Inserting items...")
     db.similarity.add_indices(indices, batch_size=batch_size)
     click.echo("Finished.")
@@ -146,7 +146,7 @@ def remove_index(metric, n_trees, distance_type):
         metric, and distance type.
     """
     click.echo("Removing index: {}".format(metric))
-    similarity.utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
+    similarity.index_utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
     click.echo("Finished.")
 
 
@@ -173,5 +173,5 @@ def remove_indices(n_trees, distance_type):
 
     for metric in metrics:
         click.echo("Removing index: {}".format(metric))
-        similarity.utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
+        similarity.index_utils.remove_index(metric, n_trees=n_trees, distance_type=distance_type)
     click.echo("Finished.")

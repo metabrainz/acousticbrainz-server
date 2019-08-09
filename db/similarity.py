@@ -10,6 +10,7 @@ import similarity.utils
 from sqlalchemy import text
 from collections import defaultdict
 
+PROCESS_BATCH_SIZE = 10000
 
 def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
     """Creates an annoy index for the specified metric, adds all items to the index."""
@@ -459,13 +460,14 @@ def submit_eval_results(query_id, result_ids, distances, params):
         insert_query = text("""
             INSERT INTO similarity.eval_results (query_id, similar_ids, distances, params)
                  VALUES (:query_id, :similar_ids, :distances, :params)
-            ON CONFLICT
-             DO NOTHING
+            ON CONFLICT 
+          ON CONSTRAINT unique_eval_query_constraint
+          DO UPDATE SET query_id = similarity.eval_results.query_id
               RETURNING id
         """)
         result = connection.execute(insert_query, {"query_id": query_id,
-                                          "result_ids": result_ids,
+                                          "similar_ids": result_ids,
                                           "distances": distances,
-                                          "params": params})
+                                          "params": params_id})
         eval_result_id = result.fetchone()[0]
         return eval_result_id

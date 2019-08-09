@@ -50,7 +50,7 @@ class APISimilarityViewsTestCase(ServerTestCase):
         n_trees = 10
         n_neighbours = 200
         annoy_mock = mock.Mock()
-        annoy_mock.get_nns_by_mbid.return_value = {}
+        annoy_mock.get_nns_by_mbid.return_value = [[1, 2], [], [0.5, 0.5]]
         annoy_model.return_value = annoy_mock
 
         resp = self.client.get("/api/v1/similarity/{}/{}".format(metric, self.uuid))
@@ -61,15 +61,15 @@ class APISimilarityViewsTestCase(ServerTestCase):
 
     @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
     def test_get_similar_recordings_invalid_params(self, annoy_model):
-        annoy_mock = mock.Mock()
-        annoy_mock.get_nns_by_mbid.return_value = {}
-        annoy_model.return_value = annoy_mock
         # If offset is not integer >= 0, APIBadRequest is raised
         resp = self.client.get("/api/v1/similarity/mfccs/%s?n=x" % self.uuid)
         self.assertEqual(400, resp.status_code)
 
         # If index params are not in index_model.BASE_INDICES, they default.
         # If n_neighbours is larger than 1000, it defualts.
+        annoy_mock = mock.Mock()
+        annoy_mock.get_nns_by_mbid.return_value = [[1, 2], [], [0.5, 0.5]]
+        annoy_model.return_value = annoy_mock
         resp = self.client.get("/api/v1/similarity/mfccs/%s?n_trees=-1&distance_type=7&n_neighbours=2000" % self.uuid)
         self.assertEqual(200, resp.status_code)
 

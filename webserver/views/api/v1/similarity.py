@@ -61,7 +61,7 @@ def get_similar_recordings(metric, mbid):
         raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
     
     try:
-        similar_recordings = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
+        ids, similar_recordings, distances = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
         return jsonify(similar_recordings)
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("No submission exists for the given (MBID, offset) combination.")

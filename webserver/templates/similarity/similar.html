@@ -11,7 +11,7 @@
     <div class="row">
         <div class="col-md-8">
             <div>
-                Back to <a href="{{ url_for('data.metrics', mbid=ref_metadata['mbid']) }}">metrics</a> /
+                Back to <a href="{{ url_for('similarity.metrics', mbid=ref_metadata['mbid']) }}">metrics</a> /
                 <a href="{{ url_for('data.summary', mbid=ref_metadata['mbid']) }}">summary</a>
             </div>
 
@@ -19,7 +19,7 @@
             <h3>Most similar by {{ description }}:</h3>
             <p class="feedback-request">Please give us feedback - in terms of {{ category }}, how similar are the result tracks to original one?</p>
 
-            <form id="feedback-select" method="post" action="{{ url_for('data.get_similar', metric=metric, mbid=ref_metadata['mbid'], submission_offset=ref_metadata['submission_offset']) }}">
+            <form id="feedback-select" method="post" action="{{ url_for('similarity.get_similar', metric=metric, mbid=ref_metadata['mbid'], submission_offset=ref_metadata['submission_offset']) }}">
             {{ form.hidden_tag() }}
             <table class="table table-striped">
                 <thead>

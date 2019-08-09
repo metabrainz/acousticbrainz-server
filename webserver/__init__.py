@@ -155,12 +155,14 @@ def _register_blueprints(app):
         from webserver.views.login import login_bp
         from webserver.views.user import user_bp
         from webserver.views.datasets import datasets_bp
+        from webserver.views.similarity import similarity_bp
         app.register_blueprint(index_bp)
         app.register_blueprint(data_bp)
         app.register_blueprint(stats_bp)
         app.register_blueprint(login_bp, url_prefix='/login')
         app.register_blueprint(user_bp)
         app.register_blueprint(datasets_bp, url_prefix='/datasets')
+        app.register_blueprint(similarity_bp, url_prefix='/similarity')
 
     def register_api(app):
         v1_prefix = os.path.join(API_PREFIX, 'v1')

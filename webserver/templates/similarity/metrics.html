@@ -16,7 +16,7 @@
             <h3>{{ category | capitalize }}</h3>
             <ul>
             {% for name, description in metrics %}
-                <li><a href="{{ url_for('data.get_similar', mbid=ref_metadata['mbid'], n=ref_metadata['submission_offset'], metric=name) }}">
+                <li><a href="{{ url_for('similarity.get_similar', mbid=ref_metadata['mbid'], n=ref_metadata['submission_offset'], metric=name) }}">
                     {{ description }}
                 </a></li>
             {% endfor %}

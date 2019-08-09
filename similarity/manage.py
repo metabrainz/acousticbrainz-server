@@ -1,7 +1,6 @@
 from __future__ import print_function
 from flask.cli import FlaskGroup
 import click
-import time
 
 import webserver
 import similarity.index_utils
@@ -123,14 +122,11 @@ def add_indices(batch_size, n_trees, distance_type):
     *NOTE*: Using this command overwrites any existing index with the
     same parameters.
     """
-    s = time.time()
     click.echo("Initializing indices...")
     indices = similarity.index_utils.initialize_indices(n_trees=n_trees, distance_type=distance_type)
     click.echo("Inserting items...")
     db.similarity.add_indices(indices, batch_size=batch_size)
     click.echo("Finished.")
-    e = time.time()
-    click.echo("Time: {}".format(e-s))
 
 
 @cli.command(name='remove-index')

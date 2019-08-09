@@ -168,23 +168,26 @@ class IndexModelTestCase(DatabaseTestCase):
         with self.assertRaises(similarity.exceptions.ItemNotFoundException):
             self.model.get_nns_by_id(id, n_neighbours)
 
-    @mock.patch("db.data.get_mbids_by_ids")
-    def test_get_nns_by_id_return_ids(self, get_mbids_by_ids):
-        # If return_ids is True, list of lowlevel.ids is returned.
+    def test_get_nns_by_id(self):
+        """Assert values from Annoy call are properly unpacked and correct recordings
+        are gathered"""
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.data.submit_low_level_data(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
+
         id = 1
         n_neighbours = 2
         self.model.index = mock.Mock()
-        expected = [1, 2]
-        self.model.index.get_nns_by_item.return_value = expected
+        expected_items = ([1, 2], [0.4, 0.5])
+        self.model.index.get_nns_by_item.return_value = expected_items
 
-        self.assertEqual(expected, self.model.get_nns_by_id(id, n_neighbours, return_ids=True))
+        expected_result = ([1, 2], 
+                           [('0dad432b-16cc-4bf0-8961-fd31d124b01b', 0), ('e8afe383-1478-497e-90b1-7885c7f37f6e', 0)], 
+                           [0.4, 0.5])
+        # expected_result = [(1, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), 0.4),
+        #                    (2, ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0), 0.5)]
+        self.assertEqual(expected_result, self.model.get_nns_by_id(id, n_neighbours))
 
-        # If return_ids is False, list of (MBID, offset) tuples is returned.
-        expected = [(self.test_mbid, 1), (self.test_mbid, 2)]
-        get_mbids_by_ids.return_value = expected
-        self.assertEqual(expected, self.model.get_nns_by_id(id, n_neighbours, return_ids=False))
-
-    def test_get_bulk_nns_by_mbid(self):
+    def test_get_bulk_nns_by_mbid_none(self):
         """
         If an item is not indexed, ItemNotFoundException caught and item
         is skipped.
@@ -196,13 +199,53 @@ class IndexModelTestCase(DatabaseTestCase):
         recordings = [(self.test_mbid, 0), (self.test_mbid, 1), (self.test_mbid, 2)]
         returns = [similarity.exceptions.ItemNotFoundException,
                    db.exceptions.NoDataFoundException,
-                   [(self.test_mbid, 2), (self.test_mbid, 5)]]
+                   ([1, 2], 
+                    [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0)], 
+                    [0.4, 0.5])]
         self.model.get_nns_by_mbid = mock.Mock()
         self.model.get_nns_by_mbid.side_effect = returns
 
-        expected = {self.test_mbid: {'2': [(self.test_mbid, 2), (self.test_mbid, 5)]}}
+        expected = {self.test_mbid: {'2': [(self.test_mbid, 0), (self.test_mbid_two, 0)]}}
         ret = self.model.get_bulk_nns_by_mbid(recordings, num_neighbours)
         self.assertDictEqual(expected, ret)
+
+    def test_get_bulk_nns_by_mbid(self):
+        """
+        If extended_info is True, lowlevel.id and distance is included
+        in the tuple for each similar recording.
+
+        If extended_info is False, only tuples of (MBID, offset) are
+        included in the tuple for each similar recording.
+        """
+        num_neighbours = 2
+        recordings = [(self.test_mbid, 1), (self.test_mbid_two, 2)]
+
+        returns = [([1, 2], 
+                    [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0)], 
+                    [0.4, 0.5]),
+                   ([3, 4],
+                    [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 1), ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 3)],
+                    [0.1, 0.2])]
+
+        self.model.get_nns_by_mbid = mock.Mock()
+        self.model.get_nns_by_mbid.side_effect = returns
+
+        # extended_info is specified as True
+        expected = {self.test_mbid: {'1': [(1, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), 0.4),
+                                           (2, ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0), 0.5)]},
+                    self.test_mbid_two: {'2': [(3, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 1), 0.1),
+                                               (4, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 3), 0.2)]}}
+        ret = self.model.get_bulk_nns_by_mbid(recordings, num_neighbours, extended_info=True)
+        self.assertEqual(expected, ret)
+
+        # extended_info is not specified, defaults as False
+        self.model.get_nns_by_mbid.side_effect = returns
+        expected = {self.test_mbid: {'1': [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0),
+                                           ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0)]},
+                    self.test_mbid_two: {'2': [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 1),
+                                               ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 3)]}}
+        ret = self.model.get_bulk_nns_by_mbid(recordings, num_neighbours)
+        self.assertEqual(expected, ret)
         
     def test_get_similarity_between_none(self):
         # If one of the (MBID, offset) tuples is not submitted,

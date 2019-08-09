@@ -137,7 +137,16 @@ def summary(mbid):
 @data_bp.route("/<uuid:mbid>/similar")
 def metrics(mbid):
     offset = request.args.get("n")
-    ref_metadata = _get_extended_info(mbid, offset)
+    # Can make this a utility?
+    if offset:
+        try:
+            offset = int(offset)
+        except ValueError:
+            offset = 0
+    else:
+        offset = 0
+    id = db.data.get_lowlevel_id(mbid, offset)
+    ref_metadata = _get_extended_info(mbid, offset, id)
     metrics_map = db.similarity.get_all_metrics()
     row_width = 12 / len(metrics_map)
 
@@ -163,13 +172,13 @@ def get_similar(mbid, metric):
 
     category, metric, description = db.similarity.get_metric_info(metric)
     n_similar = 10
-    
+
     query_id = db.data.get_lowlevel_id(mbid, offset)
     ref_metadata = _get_extended_info(mbid, offset, query_id)
 
     try:
         index = AnnoyModel(metric, load_existing=True)
-        result_ids, similar_recordings, distances = index.get_nns_by_mbid(mbid, offset, n_similar, return_ids=True, return_distances=True)
+        result_ids, similar_recordings, distances = index.get_nns_by_mbid(mbid, offset, n_similar)
     except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException, similarity.exceptions.IndexNotFoundException), e:
         flash("We're sorry, this index is not currently available for this recording: {}".format(repr(e)))
         return redirect(url_for("data.metrics", mbid=mbid, n=offset))
@@ -182,7 +191,7 @@ def get_similar(mbid, metric):
 
     form = forms.SimilarityEvaluationForm()
     eval_data = zip(form.eval_list, metadata)
-    
+
     return render_template(
         "data/similar.html",
         metric=metric,

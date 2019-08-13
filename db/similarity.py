@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import db
 from db.data import count_all_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
+import db.similarity_stats
 import similarity.metrics
 import similarity.utils
 
@@ -12,11 +13,19 @@ from sqlalchemy import text
 def add_metrics(batch_size):
     """Computes each metric from the similarity_metrics table for
     each recording in the lowlevel table, in batches.
+
+    Args:
+        batch_size: the number of recordings to be inserted, per batch.
     """
     lowlevel_count = count_all_lowlevel()
 
     with db.engine.connect() as connection:
         metrics = similarity.utils.init_metrics()
+
+        # Collect and assign stats to metrics that require normalization
+        for metric in metrics:
+            db.similarity_stats.assign_stats(metric)
+
         sim_count = count_similarity()
         print("Processed {} / {} ({:.3f}%)".format(sim_count,
                                                    lowlevel_count,
@@ -119,6 +128,9 @@ def submit_similarity_by_id(id, data=None, metrics=None, connection=None):
 
     if not metrics:
         metrics = similarity.utils.init_metrics()
+        # Collect and assign stats to metrics that require normalization
+        for metric in metrics:
+            db.similarity_stats.assign_stats(metric)
 
     if not data:
         # When a single recording is submitted, not in batch submission,

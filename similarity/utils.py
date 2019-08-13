@@ -9,8 +9,5 @@ def init_metrics():
         metric_cls = similarity.metrics.BASE_METRICS[name]
         metric = metric_cls()
         metrics.append(metric)
-        try:
-            metric.calculate_stats()
-        except AttributeError:
-            pass
+
     return metrics

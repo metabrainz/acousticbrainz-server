@@ -1,11 +1,13 @@
 import os
 import json
+import mock
 
 import db
 from db.testing import DatabaseTestCase, TEST_DATA_PATH
 from db import gid_types
 import db.similarity
 import db.similarity_stats
+import similarity.metrics
 
 from sqlalchemy import text
 
@@ -18,77 +20,54 @@ class SimilarityStatsDatabaseTestCase(DatabaseTestCase):
         self.test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '.json')).read()
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
 
-    def test_calculate_stats_for_feature(self):
-        # If nothing is in the database, avg and stddev should be None
-        path = "data->'lowlevel'->'gfcc'->'mean'->>2"
-        mean, stddev = db.similarity_stats.calculate_stats_for_feature(path)
-        self.assertEqual(mean, None)
-        self.assertEqual(stddev, None)
+    @mock.patch("db.similarity_stats.insert_similarity_stats")
+    @mock.patch("db.similarity_stats.get_random_sample_lowlevel")
+    def test_compute_stats(self, get_random_sample_lowlevel, insert_similarity_stats):
+        # Check that insert_similarity_stats is called correctly
+        sample_size = 2
+        get_random_sample_lowlevel.return_value = [[(1.0, 3.0), (1.0, 3.0), (2.0, 5.0), (2.0, 5.0)],
+                                                   [(2.0, 6.0), (2.0, 6.0), (4.0, 10.0), (4.0, 10.0)]]
+        db.similarity_stats.compute_stats(sample_size)
 
-        # With only one submission in the database, mean should be the
-        # value of the submission, stddev should be 0
+        # Same feature path for weighted and unweighted MFCC/GFCC
+        features = ["data->'lowlevel'->'gfcc'->'mean'",
+                    "data->'lowlevel'->'gfcc'->'mean'",
+                    "data->'lowlevel'->'mfcc'->'mean'",
+                    "data->'lowlevel'->'mfcc'->'mean'"]
+        get_random_sample_lowlevel.assert_called_with(sample_size, features)
+
+        means = [[1.5, 4.5], [1.5, 4.5], [3.0, 7.5], [3.0, 7.5]]
+        stddevs = [[0.5, 1.5], [0.5, 1.5], [1.0, 2.5], [1.0, 2.5]]
+        metric_names = ["gfccsw", "gfccs", "mfccs", "mfccsw"]
+        insert_similarity_stats.assert_called_with(metric_names, means, stddevs)
+
+    def test_get_random_sample_lowlevel(self):
+        # Without any lowlevel submissions, sample cannot be collected
+        sample_size = 10
+        features = ["data->'lowlevel'->'gfcc'->'mean'",
+                    "data->'lowlevel'->'gfcc'->'mean'",
+                    "data->'lowlevel'->'mfcc'->'mean'",
+                    "data->'lowlevel'->'mfcc'->'mean'"]
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.similarity_stats.get_random_sample_lowlevel(sample_size, features)
+
+        # With sample size < 1% of submissions, error is raised
+        sample_size = 0.001
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
-        db.similarity.submit_similarity_by_id(id)
-        mean, stddev = db.similarity_stats.calculate_stats_for_feature(path)
-        self.assertEqual(mean, -89.7964019775)
-        self.assertEqual(stddev, 0)
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.similarity_stats.get_random_sample_lowlevel(sample_size, features)      
 
-    def test_check_global_stats(self):
-        # Submit similarity data, verify global stats
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
-        db.similarity.submit_similarity_by_id(id)
-        means, stddevs = db.similarity_stats.check_global_stats("gfccs")
-        # Only one recording, mean is equal to gfccs of its data
-        self.assertEqual(means, [
-            -169.202331543,
-            164.232177734,
-            -89.7964019775,
-            -10.2318019867,
-            -47.1032066345,
-            -6.18469190598,
-            -33.0790672302,
-            -3.90048241615,
-            -20.4164390564,
-            -8.5227022171,
-            -15.5154972076,
-            -4.24216938019,
-            -5.64954137802
-        ])
-        self.assertEqual(stddevs, [0] * len(stddevs))
+    def test_assign_stats(self):
+        """If means and stddevs are not both attributes,
+        nothing will be assigned."""
+        metric = similarity.metrics.KeyMetric()
+        db.similarity_stats.assign_stats(metric)
+        # No means or stddevs assigned
+        self.assertEqual(hasattr(metric, "means"), False)
+        self.assertEqual(hasattr(metric, "stddevs"), False)
 
-    def test_insert_delete_similarity_stats(self):
-        # Check that similarity stats can be correctly inserted and deleted
-        metric = "gfccs"
-        means = [
-            -169.202331543,
-            164.232177734,
-            -89.7964019775,
-            -10.2318019867,
-            -47.1032066345,
-            -6.18469190598,
-            -33.0790672302,
-            -3.90048241615,
-            -20.4164390564,
-            -8.5227022171,
-            -15.5154972076,
-            -4.24216938019,
-            -5.64954137802
-        ]
-        stddevs = [0] * len(means)
-        db.similarity_stats.insert_similarity_stats(metric, means, stddevs)
-        query = text("""
-            SELECT *
-              FROM similarity.similarity_stats
-             WHERE metric = :metric
-        """)
-        with db.engine.connect() as connection:
-            result = connection.execute(query, {"metric": metric})
-            row = result.fetchone()
-            self.assertEqual(row["means"], means)
-            self.assertEqual(row["stddevs"], stddevs)
-        db.similarity_stats.delete_similarity_stats(metric)
-        with db.engine.connect() as connection:
-            result = connection.execute(query, {"metric": metric})
-            self.assertEqual(result.rowcount, 0)
+    def test_assign_stats_none(self):
+        # With no stats calculated, error is raised.
+        metric = similarity.metrics.MfccsMetric()
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.similarity_stats.assign_stats(metric)

@@ -33,6 +33,7 @@ class SimilarityDBTestCase(DatabaseTestCase):
     def test_count_similarity(self):
         # Write lowlevel then submit similarity
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.similarity_stats.compute_stats(1)
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
         self.assertEqual(1, db.similarity.count_similarity())
         # Submit exact same data, no change
@@ -43,6 +44,7 @@ class SimilarityDBTestCase(DatabaseTestCase):
         second_data = copy.deepcopy(self.test_lowlevel_data)
         second_data["metadata"]["tags"]["album"] = ["Another album"]
         db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
+        db.similarity_stats.compute_stats(2)
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 1)
         self.assertEqual(2, db.similarity.count_similarity())
 
@@ -65,6 +67,7 @@ class SimilarityDBTestCase(DatabaseTestCase):
         """
         # Submitted lowlevel, but not highlevel.
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.similarity_stats.compute_stats(1)
         id = db.data.get_lowlevel_id(self.test_mbid, 0)
         metrics = similarity.utils.init_metrics()
         db.similarity.submit_similarity_by_id(id, metrics=metrics)
@@ -105,6 +108,7 @@ class SimilarityDBTestCase(DatabaseTestCase):
         """
         # Submit low and highlevel data.
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.similarity_stats.compute_stats(1)
         id = db.data.get_lowlevel_id(self.test_mbid, 0)
         build_sha = "test"
         db.data.write_high_level(self.test_mbid, id, self.test_highlevel_data, build_sha)

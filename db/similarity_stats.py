@@ -8,7 +8,22 @@ import numpy as np
 
 NORMALIZATION_SAMPLE_SIZE = 10000
 
-# TODO: Add tests, add force option to delete existing stats, add submission cycle
+"""
+Normalized metrics for determining similarity require 
+vectors to be transformed based on the mean and standard
+deviation of their associated lowlevel feature (currently
+MFCC, GFCC unweighted and weighted).
+
+Similarity stats must be computed before metrics can be
+added and indices can be built.
+
+Stats can be computed using the `similarity/manage.py`
+init command.
+
+We use a random sample, defaulting at 10000 items, to 
+approximate these statistics for the entire lowlevel
+table before inserting them in similarity.similarity_stats.
+"""
 
 def compute_stats(sample_size, force=False):
     """Compute mean and stddev for each of the features

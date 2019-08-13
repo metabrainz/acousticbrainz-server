@@ -1,10 +1,7 @@
 import db
 import db.data
-import db.similarity_stats
 
 import numpy as np
-
-NORMALIZATION_SAMPLE_SIZE = 10000
 
 
 class BaseMetric(object):
@@ -36,36 +33,6 @@ class LowLevelMetric(BaseMetric):
 class NormalizedLowLevelMetric(LowLevelMetric):
     means = None
     stddevs = None
-
-    def calculate_stats(self):
-        # TODO: use same stats for weighted and normal metrics (e.g. mfccs and mfccsw)
-        stats = db.similarity_stats.check_global_stats(self.name)
-        if stats:
-            # Global stats already calculated
-            self.means, self.stddevs = stats
-            return
-
-        # Calculate global stats for metric
-        self.means = []
-        self.stddevs = []
-
-        if self.indices is None:
-            mean, stddev = db.similarity_stats.calculate_stats_for_feature(self.path)
-            self.means.append(mean)
-            self.stddevs.append(stddev)
-        else:
-            for i in self.indices:
-                mean, stddev = db.similarity_stats.calculate_stats_for_feature('{}->>{}'.format(self.path, i))
-                self.means.append(mean)
-                self.stddevs.append(stddev)
-
-        # Check if means and stddevs are None incase there are not yet submissions
-        if not self.means == [None] * len(self.means) or not self.stddevs == [None] * len(self.stddevs):
-            db.similarity_stats.insert_similarity_stats(self.name, self.means, self.stddevs)
-
-    def delete_stats(self):
-        print('Deleting global stats')
-        db.similarity_stats.delete_similarity_stats(self.name)
 
     def transform(self, data):
         if not data:

@@ -157,9 +157,9 @@ class BinaryCollectiveMetric(HighLevelMetric):
 
         vector = []
         try:
-            for model_id in self.models:
-                if str(model_id) in data.keys():
-                    model_data = data[str(model_id)]['all']
+            for model in self.models:
+                if model in data.keys():
+                    model_data = data[model]['all']
                     assert len(model_data) == 2
                     for key, value in model_data.items():
                         if not key.startswith('not'):
@@ -179,11 +179,11 @@ class MoodsMetric(BinaryCollectiveMetric):
     name = 'moods'
     description = 'Moods'
     models = [
-        11,  # mood_happy
-        14,  # mood_sad
-        9,   # mood_aggressive
-        13,  # mood_relaxed
-        12   # mood_party
+        'mood_happy',
+        'mood_sad',
+        'mood_aggressive',
+        'mood_relaxed',
+        'mood_party'
     ]
 
 
@@ -191,9 +191,9 @@ class InstrumentsMetric(BinaryCollectiveMetric):
     name = 'instruments'
     description = 'Instruments'
     models = [
-        8,   # mood_acoustic
-        10,  # mood_electronic
-        18   # voice_instrumental
+        'mood_acoustic',
+        'mood_electronic',
+        'voice_instrumental'
     ]
 
 
@@ -205,8 +205,8 @@ class SingleClassifierMetric(HighLevelMetric):
         if not data:
             raise ValueError('Invalid data value: {}'.format(data))
 
-        if str(self.model) in data.keys():
-            return data[str(self.model)]['all'].values()
+        if self.model in data.keys():
+            return data[self.model]['all'].values()
         else:
             return [0] * self.length()
 
@@ -217,21 +217,21 @@ class SingleClassifierMetric(HighLevelMetric):
 class DortmundGenreMetric(SingleClassifierMetric):
     name = 'dortmund'
     description = 'Genre (dortmund model)'
-    model = 3
+    model = 'genre_dortmund'
     size = 9
 
 
 class RosamericaGenreMetric(SingleClassifierMetric):
     name = 'rosamerica'
     description = 'Genre (rosamerica model)'
-    model = 5
+    model = 'genre_rosamerica'
     size = 8
 
 
 class TzanetakisGenreMetric(SingleClassifierMetric):
     name = 'tzanetakis'
     description = 'Genre (tzanetakis model)'
-    model = 6
+    model = 'genre_tzanetakis'
     size = 10
 
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from flask import current_app
 
 import db
 from db.data import count_all_lowlevel
@@ -27,9 +28,9 @@ def add_metrics(batch_size):
             db.similarity_stats.assign_stats(metric)
 
         sim_count = count_similarity()
-        print("Processed {} / {} ({:.3f}%)".format(sim_count,
-                                                   lowlevel_count,
-                                                   float(sim_count) / lowlevel_count * 100))
+        current_app.logger.info("Processed {} / {} ({:.3f}%)".format(sim_count,
+                                                            lowlevel_count,
+                                                            float(sim_count) / lowlevel_count * 100))
 
         batch_query = text("""
             SELECT ll.id
@@ -42,6 +43,7 @@ def add_metrics(batch_size):
               JOIN model ON model.id = hlm.model
          LEFT JOIN similarity.similarity AS s ON s.id = hlm.highlevel
              WHERE s.id IS NULL
+               AND model.status = 'show'
           GROUP BY highlevel
              LIMIT :batch_size) hlm
          LEFT JOIN lowlevel AS ll ON ll.id = hlm.highlevel
@@ -54,27 +56,27 @@ def add_metrics(batch_size):
                 if not result.rowcount:
                     break
 
-                row = result.fetchone()
-                while row:
+                for row in result:
                     lowlevel = row["ll_data"]
                     models = row["hl_data"]
                     data = (lowlevel, models)
                     submit_similarity_by_id(row["id"], data=data, metrics=metrics, connection=connection)
-                    row = result.fetchone()
 
             sim_count = count_similarity()
-            print("Processed {} / {} ({:.3f}%)".format(sim_count,
-                                                       lowlevel_count,
-                                                       float(sim_count) / lowlevel_count * 100))
+            current_app.logger.info("Processed {} / {} ({:.3f}%)".format(sim_count,
+                                                                lowlevel_count,
+                                                                float(sim_count) / lowlevel_count * 100))
 
 
 def insert_similarity(connection, id, vectors, metric_names):
     """Inserts a row of similarity vectors for a given lowlevel.id into
     the similarity table.
 
-        Args: id: lowlevel.id to be submitted
-              vectors: list of metric vectors for a recording
-              metric_names: corresponding list of metric names
+        Args:
+            connection: a connection to the database.
+            id: lowlevel.id to be submitted.
+            vectors: list of metric vectors for a recording.
+            metric_names: corresponding list of metric names.
     """
     params = {}
     params["id"] = id

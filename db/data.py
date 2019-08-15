@@ -642,8 +642,10 @@ def get_highlevel_models(id):
 
     with db.engine.connect() as connection:
         query = text("""
-            SELECT highlevel, jsonb_object_agg(model, data) AS data
-              FROM highlevel_model
+            SELECT jsonb_object_agg(model.model, hlm.data) AS data
+              FROM highlevel_model AS hlm
+         LEFT JOIN model
+                ON model.id = hlm.model
              WHERE highlevel = :id
           GROUP BY highlevel
         """)

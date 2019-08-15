@@ -30,21 +30,22 @@ def add_metrics(batch_size):
         print("Processed {} / {} ({:.3f}%)".format(sim_count,
                                                    lowlevel_count,
                                                    float(sim_count) / lowlevel_count * 100))
-        
+
         batch_query = text("""
             SELECT ll.id
                  , llj.data AS ll_data
-                 , jsonb_object_agg(hlm.model, hlm.data) as hl_data
+                 , hlm.data AS hl_data
               FROM (
-            SELECT id
-              FROM lowlevel
-         LEFT JOIN similarity.similarity
-             USING (id)
-             WHERE similarity.similarity.id is NULL) ll
-              JOIN lowlevel_json AS llj USING (id)
-              JOIN highlevel_model AS hlm USING (id)
-          GROUP BY (ll.id, llj.data)
-             LIMIT :batch_size
+            SELECT highlevel
+                 , jsonb_object_agg(model.model, hlm.data) AS data
+              FROM highlevel_model AS hlm
+              JOIN model ON model.id = hlm.model
+         LEFT JOIN similarity.similarity AS s ON s.id = hlm.highlevel
+             WHERE s.id IS NULL
+          GROUP BY highlevel
+             LIMIT :batch_size) hlm
+         LEFT JOIN lowlevel AS ll ON ll.id = hlm.highlevel
+         LEFT JOIN lowlevel_json AS llj ON ll.id = llj.id;
         """)
 
         while True:

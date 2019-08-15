@@ -634,7 +634,20 @@ def get_lowlevel_by_id(id):
 
 
 def get_highlevel_models(id):
-    # Get highlevel model data for a specified id.
+    """Get highlevel model data for a specified id.
+
+    Args:
+        id: integer, indicating the highlevel_model.highlevel
+        or the corresponding lowlevel.id for a submission.
+
+    Returns: highlevel models aggregated with their names,
+    a dictionary of the form:
+        {
+            "model_1": {model_document},
+            ...,
+            "model_n": {model_document}
+        }
+    """
     try:
         id = int(id)
     except ValueError:
@@ -647,6 +660,7 @@ def get_highlevel_models(id):
          LEFT JOIN model
                 ON model.id = hlm.model
              WHERE highlevel = :id
+               AND model.status = 'show'
           GROUP BY highlevel
         """)
         result = connection.execute(query, {"id": id})

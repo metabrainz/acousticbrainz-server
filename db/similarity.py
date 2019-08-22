@@ -416,11 +416,12 @@ def get_similarity_row_id(id):
 def add_evaluation(user_id, eval_id, result_id, rating, suggestion):
     # Adds a row to the evaluation table.
     user_id = user_id or None
-
     with db.engine.begin() as connection:
         query = text("""
-            INSERT INTO similarity.eval_feedback (user_id, query_id, result_id, rating, suggestion)
+            INSERT INTO similarity.eval_feedback (user_id, eval_id, result_id, rating, suggestion)
                  VALUES (:user_id, :eval_id, :result_id, :rating, :suggestion)
+            ON CONFLICT (user_id, eval_id, result_id)
+             DO NOTHING
         """)
         connection.execute(query, {'user_id': user_id, 
                                    'eval_id': eval_id, 
@@ -471,3 +472,31 @@ def submit_eval_results(query_id, result_ids, distances, params):
                                           "params": params_id})
         eval_result_id = result.fetchone()[0]
         return eval_result_id
+
+
+def check_for_eval_submission(user_id, eval_id):
+    """Checks similarity.eval_feedback for whether
+    or not a submission already exists with the given
+    user_id and eval_id.
+
+    Args:
+        user_id: user.id associated with user submitting
+        the eval form.
+        eval_id: similarity.eval_results.id, indicating the
+        query and results associated with the eval form.
+
+    Returns:
+        If a submission exists, returns True. Otherwise,
+        returns False.
+    """
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT *
+              FROM similarity.eval_feedback
+             WHERE user_id = :user_id AND eval_id = :eval_id
+        """)
+        result = connection.execute(query, {"user_id": user_id,
+                                            "eval_id": eval_id})
+        if not result.rowcount:
+            return False
+        return True

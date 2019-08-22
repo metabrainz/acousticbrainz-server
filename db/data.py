@@ -595,20 +595,21 @@ def load_many_high_level(recordings, map_classes=False):
 
 def get_mbids_by_ids(ids):
     # Get (MBID, offset) combinations for a list of lowlevel.ids
-    with db.engine.connect() as connection:
+    # Maintains order of the input list
+    with db.engine.begin() as connection:
         query = text("""
             SELECT id
                  , gid
                  , submission_offset
               FROM lowlevel
-             WHERE id IN :ids
+             WHERE id = :id
         """)
-        result = connection.execute(query, {"ids": tuple(ids)})
-
         recordings = []
-        for row in result.fetchall():
-            recordings.append((str(row["gid"]), row["submission_offset"]))
-
+        for id in ids:
+            result = connection.execute(query, {"id": id})
+            row = result.fetchone()
+            if row:
+                recordings.append((str(row["gid"]), row["submission_offset"]))
         return recordings
 
 

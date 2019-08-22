@@ -3,8 +3,9 @@ from __future__ import absolute_import
 from flask import Blueprint, jsonify, request
 
 import webserver.views.api.exceptions
+from webserver.utils import validate_offset
 from webserver.decorators import crossdomain
-from webserver.views.api.v1.core import _validate_offset, _parse_bulk_params, check_bad_request_for_multiple_recordings
+from webserver.views.api.v1.core import _parse_bulk_params, check_bad_request_for_multiple_recordings
 from similarity.index_model import BASE_INDICES, AnnoyModel
 from similarity.exceptions import IndexNotFoundException, ItemNotFoundException
 from db.exceptions import NoDataFoundException
@@ -53,7 +54,7 @@ def get_similar_recordings(metric, mbid):
 
     :resheader Content-Type: *application/json*
     """
-    offset = _validate_offset(request.args.get("n"))
+    offset = validate_offset(request.args.get("n"))
     metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
     try:
         index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)

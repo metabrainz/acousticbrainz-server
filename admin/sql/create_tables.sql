@@ -210,5 +210,6 @@ CREATE TABLE similarity.eval_feedback (
   rating     similarity.eval_type,
   suggestion TEXT
 );
+ALTER TABLE similarity.eval_feedback ADD CONSTRAINT unique_eval_user_constraint UNIQUE(user_id, eval_id, result_id);
 
 COMMIT;

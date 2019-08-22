@@ -42,11 +42,13 @@ ALTER TABLE similarity.eval_results
 
 CREATE TABLE similarity.eval_feedback (
   user_id    INTEGER, -- FK to user
-  eval_id   INTEGER, -- FK to eval_results
+  eval_id    INTEGER, -- FK to eval_results
   result_id  INTEGER,
   rating     similarity.eval_type,
   suggestion TEXT
 );
+
+ALTER TABLE similarity.eval_feedback ADD CONSTRAINT unique_eval_user_constraint UNIQUE(user_id, eval_id, result_id);
 
 ALTER TABLE similarity.eval_feedback
   ADD CONSTRAINT eval_feedback_fk_user

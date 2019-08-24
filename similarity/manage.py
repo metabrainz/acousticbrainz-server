@@ -17,14 +17,14 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 def add_metrics(batch_size):
     """Computes all 12 base metrics for each recording
     in the lowlevel table, inserting these values in
-    the similarity.similarity table. 
-    
-    Requires fetching lowlevel data and the highlevel 
+    the similarity.similarity table.
+
+    Requires fetching lowlevel data and the highlevel
     models for each recording.
-    
-    Args: 
-        batch_size: integer, number of recordings that 
-        should be added on each iteration. 
+
+    Args:
+        batch_size: integer, number of recordings that
+        should be added on each iteration.
         Suggested value between 10 000 and 20 000.
     """
     click.echo("Adding all metrics...")
@@ -38,7 +38,7 @@ def add_metrics(batch_size):
     help="Override normalization lowlevel data sample size. \
          Must be >= 1% of lowlevel_json entries.")
 def compute_stats(sample_size, force):
-    """Computes the mean and standard deviation for 
+    """Computes the mean and standard deviation for
     lowlevel features that are associated with the
     normalized metrics.
 

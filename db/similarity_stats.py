@@ -156,8 +156,7 @@ def assign_stats(metric):
             """)
             result = connection.execute(query, {"metric": metric.name})
             if not result.rowcount:
-                raise db.exceptions.NoDataFoundException("Stats have not been calculated \
-                                                         for metric {}".format(metric.name))
+                raise db.exceptions.NoDataFoundException("Stats have not been calculated for metric {}".format(metric.name))
             row = result.fetchone()
             metric.means = row["means"]
             metric.stddevs = row["stddevs"]

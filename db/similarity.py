@@ -9,6 +9,7 @@ import similarity.metrics
 import similarity.utils
 
 from sqlalchemy import text
+from collections import defaultdict
 
 
 def add_metrics(batch_size):
@@ -32,40 +33,82 @@ def add_metrics(batch_size):
                                                             lowlevel_count,
                                                             float(sim_count) / lowlevel_count * 100))
 
-        batch_query = text("""
-            SELECT ll.id
-                 , llj.data AS ll_data
-                 , hlm.data AS hl_data
-              FROM (
-            SELECT highlevel
-                 , jsonb_object_agg(model.model, hlm.data) AS data
-              FROM highlevel_model AS hlm
-              JOIN model ON model.id = hlm.model
-         LEFT JOIN similarity.similarity AS s ON s.id = hlm.highlevel
-             WHERE s.id IS NULL
-               AND model.status = 'show'
-          GROUP BY highlevel
-             LIMIT :batch_size) hlm
-         LEFT JOIN lowlevel AS ll ON ll.id = hlm.highlevel
-         LEFT JOIN lowlevel_json AS llj ON ll.id = llj.id;
-        """)
-
         while True:
             with connection.begin():
-                result = connection.execute(batch_query, {"batch_size": batch_size})
-                if not result.rowcount:
+                result = get_batch_data(connection, batch_size)
+                if not result:
                     break
-
                 for row in result:
-                    lowlevel = row["ll_data"]
-                    models = row["hl_data"]
-                    data = (lowlevel, models)
+                    data = (row["ll_data"], row["hl_data"])
                     submit_similarity_by_id(row["id"], data=data, metrics=metrics, connection=connection)
 
             sim_count = count_similarity()
             current_app.logger.info("Processed {} / {} ({:.3f}%)".format(sim_count,
                                                                 lowlevel_count,
                                                                 float(sim_count) / lowlevel_count * 100))
+
+
+def get_batch_data(connection, batch_size):
+    """Performs a query to collect highlevel models and lowlevel
+    data for a batch of `batch_size` recordings.
+
+    Args:
+        connection: a connection to the database.
+        batch_size: the number of recordings (rows) that should
+        be collected in the query.
+    
+    Returns:
+        If no rows are returned by the query, i.e. there are no
+        available submissions, then None is returned.
+
+        Otherwise, the result object of the query is returned.
+    """
+    batch_query = text("""
+          WITH ll AS (
+        SELECT id
+          FROM lowlevel ll
+         WHERE NOT EXISTS (
+               SELECT id
+               FROM similarity.similarity AS s
+               WHERE s.id = ll.id)
+         LIMIT :batch_size
+        ),
+               hlm AS (
+        SELECT highlevel
+             , COALESCE(jsonb_object_agg(model.model, hlm.data)
+               FILTER (
+               WHERE model.model IS NOT NULL
+               AND hlm.data IS NOT NULL), NULL)::jsonb AS data
+          FROM highlevel_model AS hlm
+          JOIN model
+            ON model.id = hlm.model
+         WHERE highlevel IN (
+               SELECT id
+               FROM ll)
+      GROUP BY (highlevel)
+        ),
+               llj AS (
+        SELECT id
+             , data
+          FROM lowlevel_json
+         WHERE id IN (
+               SELECT id
+               FROM ll)
+        )
+        SELECT ll.id AS id
+             , llj.data AS ll_data
+             , hlm.data AS hl_data
+          FROM ll
+          JOIN llj
+         USING (id)
+     LEFT JOIN hlm
+            ON hlm.highlevel = ll.id
+    """)
+
+    result = connection.execute(batch_query, {"batch_size": batch_size})
+    if not result.rowcount:
+        return None
+    return result
 
 
 def insert_similarity(connection, id, vectors, metric_names):

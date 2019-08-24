@@ -5,15 +5,6 @@ import EvalRecording from "./eval-recording"
 var CONTAINER_ELEMENT_ID = "similarity-eval";
 var container = document.getElementById(CONTAINER_ELEMENT_ID);
 
-// pass ref_metadata, metric
-// make request to python view function to get similar recordings and metadata on componentDidMount
-// set state with similar recordings 
-// render form with all similar recordings
-// update state whenever form is altered
-// ajax request to submit form
-// hide form when submission is made
-// check if current user has already made a submission, if they do then do not display form
-
 class SimilarityEval extends Component {
     constructor() {
         super()

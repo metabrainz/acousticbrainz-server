@@ -5,9 +5,11 @@ import mock
 import unittest
 
 import db
+import db.data
 import db.similarity
 import db.exceptions
 from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
+import db.test_data.similarity_metrics_data
 import similarity.utils
 
 from sqlalchemy import text
@@ -29,6 +31,66 @@ class SimilarityDBTestCase(DatabaseTestCase):
         self.test_mbid_two = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
         self.test_lowlevel_data_json_two = open(os.path.join(TEST_DATA_PATH, self.test_mbid_two + '.json')).read()
         self.test_lowlevel_data_two = json.loads(self.test_lowlevel_data_json_two)
+    
+    def test_add_metrics(self):
+        # If no submissions or no stats calculated, raise NoDataFoundException
+        batch_size = 2
+        sample_size = 2
+        with self.assertRaises(db.exceptions.NoDataFoundException):
+            db.similarity.add_metrics(batch_size)
+
+        # Check that with submissions, the correct values are inserted
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        id_1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+        build_sha = "test"
+        db.data.write_high_level(self.test_mbid, id_1, self.test_highlevel_data, build_sha)
+        db.data.submit_low_level_data(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
+        id_2 = db.data.get_lowlevel_id(self.test_mbid_two, 0)
+        self.show_highlevel_models()
+
+        db.similarity_stats.compute_stats(sample_size)
+
+        # If there is no highlevel data written, it will be None
+        expected_rows = [(id_1, self.test_lowlevel_data, self.test_highlevel_models),
+                         (id_2, self.test_lowlevel_data_two, None)]
+        db.similarity.add_metrics(batch_size)
+
+        with db.engine.connect() as connection:
+            query = text("""
+                SELECT *
+                  FROM similarity.similarity
+            """)
+            result = connection.execute(query)
+            recs = []
+            for row in result:
+                recs.append(dict(row))
+
+            self.assertEqual(db.test_data.similarity_metrics_data.expected_similarity_rows, recs)
+
+    def test_get_batch_data(self):
+        # With no submissions, None is returned
+        batch_size = 2
+        with db.engine.connect() as connection:
+            result = db.similarity.get_batch_data(connection, batch_size)
+            self.assertEqual(None, result)
+
+            db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+            id_1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+            build_sha = "test"
+            db.data.write_high_level(self.test_mbid, id_1, self.test_highlevel_data, build_sha)
+            db.data.submit_low_level_data(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
+            id_2 = db.data.get_lowlevel_id(self.test_mbid_two, 0)
+            self.show_highlevel_models()
+            
+            # If there is no highlevel data written, it will be None
+            expected_rows = [(id_1, self.test_lowlevel_data, self.test_highlevel_models),
+                             (id_2, self.test_lowlevel_data_two, None)]
+            result = db.similarity.get_batch_data(connection, batch_size)
+            rows = []
+            for row in result:
+                rows.append((row["id"], row["ll_data"], row["hl_data"]))
+
+            self.assertEqual(expected_rows, rows)
 
     def test_count_similarity(self):
         # Write lowlevel then submit similarity
@@ -153,3 +215,13 @@ class SimilarityDBTestCase(DatabaseTestCase):
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
         get_lowlevel_id.assert_called_with(self.test_mbid, 0)
         submit_similarity_by_id.assert_called_with(0)
+    
+    def show_highlevel_models(self):
+        with db.engine.connect() as connection:
+            query = text("""
+                SELECT *
+                  FROM model
+            """)
+            result = connection.execute(query)
+            for row in result:
+                db.data.set_model_status(row["model"], row["model_version"], 'show')

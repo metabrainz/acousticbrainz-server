@@ -303,7 +303,7 @@ def set_model_status(model_name, model_version, model_status):
         query = text(
             """UPDATE model
                   SET status = :model_status
-                WHERE model_name = :model_name
+                WHERE model = :model_name
                   AND model_version = :model_version"""
         )
         connection.execute(query,

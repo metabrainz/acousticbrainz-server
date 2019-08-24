@@ -239,6 +239,7 @@ class SimilarityDBTestCase(DatabaseTestCase):
 
         # If rows and metric column exist, length of the vector is retrieved
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.similarity_stats.compute_stats(1)
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
         expected_result = 13
         self.assertEqual(expected_result, db.similarity.get_metric_dimension(metric))

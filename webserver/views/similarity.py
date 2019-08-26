@@ -50,8 +50,8 @@ def get_similar(mbid, metric):
             description=description,
             ref_metadata=ref_metadata,
         )
-    except db.exceptions.NoDataFoundException:
-        raise NotFound
+    except (db.exceptions.NoDataFoundException, NotFound) as e:
+        raise NotFound(e)
 
 
 @similarity_bp.route("/service/<uuid:mbid>/<string:metric>")

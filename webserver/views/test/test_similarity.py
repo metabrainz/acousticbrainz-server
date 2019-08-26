@@ -6,6 +6,7 @@ from flask import url_for
 
 from db import user
 import db.similarity
+# from webserver.external import musicbrainz
 from webserver.testing import ServerTestCase, TEST_DATA_PATH
 
 class SimilarityViewsTestCase(ServerTestCase):
@@ -17,8 +18,10 @@ class SimilarityViewsTestCase(ServerTestCase):
         self.test_user_id = user.create(self.test_user_mb_name)
         user.agree_to_gdpr(self.test_user_mb_name)
 
-    def test_metrics(self):
+    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    def test_metrics(self, get_recording_by_id):
         # If recording is not submitted, NotFound is raised
+        get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
         resp = self.client.get(url_for('similarity.metrics', mbid=mbid))
         self.assertEqual(404, resp.status_code)
@@ -28,8 +31,10 @@ class SimilarityViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for('similarity.metrics', mbid=mbid))
         self.assertEqual(200, resp.status_code)
 
-    def test_get_similar(self):
+    @mock.patch('webserver.external.musicbrainz.get_recording_by_id')
+    def test_get_similar(self, get_recording_by_id):
         # Not logged in, redirect
+        get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
         metric = 'mfccs'
         resp = self.client.get(url_for('similarity.get_similar', mbid=mbid, metric=metric))
@@ -168,3 +173,74 @@ class SimilarityViewsTestCase(ServerTestCase):
         }
         self.assertEqual(expected_json, resp.json)
         add_evaluation.assert_not_called()
+
+
+class FakeMusicBrainz(object):
+    
+    @staticmethod
+    def get_recording_by_id(mbid):
+        return {
+            'artist-credit':[
+                {
+                    'artist':{
+                        'sort-name':'Wintory, Austin',
+                        'disambiguation':'American video game music composer',
+                        'id':'78f15956-c5e1-46d6-a46b-fa6f46681ec8',
+                        'name':'Austin Wintory'
+                    }
+                }
+            ],
+            'title':'Nascence',
+            'id':'0dad432b-16cc-4bf0-8961-fd31d124b01b',
+            'length':'107000',
+            'release-list':[
+                {
+                    'status':'Official',
+                    'release-event-count':1,
+                    'barcode':'',
+                    'title':'Journey',
+                    'country':'XW',
+                    'medium-count':1,
+                    'release-event-list':[
+                        {
+                            'date':'2012-04-10',
+                            'area':{
+                                'sort-name':'[Worldwide]',
+                                'iso-3166-1-code-list':[
+                                    'XW'
+                                ],
+                                'id':'525d4e18-3d00-31b9-a58b-a146a916de8f',
+                                'name':'[Worldwide]'
+                            }
+                        }
+                    ],
+                    'packaging':'None',
+                    'medium-list':[
+                        {
+                            'position':'1',
+                            'format':'Digital Media',
+                            'track-list':[
+                                {
+                                    'title':'Nascence',
+                                    'number':'1',
+                                    'length':'107000',
+                                    'position':'1',
+                                    'id':'09999a96-3d26-33ff-b0dc-56464be6716e',
+                                    'track_or_recording_length':'107000'
+                                }
+                            ],
+                            'track-count':18
+                        }
+                    ],
+                    'text-representation':{
+                        'language':'eng',
+                        'script':'Latn'
+                    },
+                    'date':'2012-04-10',
+                    'quality':'normal',
+                    'id':'1f3abcda-15a7-4465-92c6-9926cdc4f247'
+                }
+            ],
+            'release-count':3,
+            'artist-credit-phrase':'Austin Wintory'
+        }

@@ -6,7 +6,6 @@ from flask import url_for
 
 from db import user
 import db.similarity
-# from webserver.external import musicbrainz
 from webserver.testing import ServerTestCase, TEST_DATA_PATH
 
 class SimilarityViewsTestCase(ServerTestCase):

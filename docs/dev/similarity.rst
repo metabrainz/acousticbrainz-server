@@ -4,10 +4,34 @@ Developing for Similarity
 Setting up the environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once your database and server are built, compute the static indices
-for all indices at once using the cli command:
+**NOTE:** If there is no submitted data in the lowlevel table, similarity
+cannot be initialized.
 
-`./develop.sh run --rm webserver python2 manage.py similarity add-indices`
+Once your database and server are built, there are a few steps required to
+initialize the similarity engine. These steps can be run completed altogether
+using the following cli command:
+
+``./develop.sh run --rm webserver python2 manage.py similarity init``
+
+As seen below, they may also be applied separately for more control.
+
+Compute all required statistics over the lowlevel table:
+
+``./develop.sh run --rm webserver python2 manage.py similarity compute-stats``
+
+Compute all metrics for all recordings in the lowlevel table:
+
+``./develop.sh run --rm webserver python2 manage.py similarity add-metrics``
+
+This command can be run again at any time to compute the metrics for a number of
+newly submitted recordings. It will not recompute metrics for recordings that
+already exist in the similarity.similarity table.
+
+Finally, compute all static indices at once:
+
+``./develop.sh run --rm webserver python2 manage.py similarity add-indices``
+
+It is possible to alter the index parameters using additional arguments.
 
 Index parameters
 ^^^^^^^^^^^^^^^^

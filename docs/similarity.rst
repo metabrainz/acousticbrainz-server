@@ -53,6 +53,21 @@ Note: Hybrid metrics are combinations of multiple metrics. In the future,
 we hope to integrate more metrics that combine low-level features for a 
 more holistic approach to similarity.
 
+Similarity Statistics
+^^^^^^^^^^^^^^^^^^^^^
+
+Some of our metrics are normalized using the mean and standard deviation
+of their features from the lowlevel table. We must compute the statistics
+for such metrics prior to computing the metrics themselves. To do so, we
+collect a sample of the lowlevel table and use it to approximate the mean
+and standard deviation. Currently, the metrics that require statistics are
+the following:
+
+- MFCCs
+- Weighted MFCCs
+- GFCCs
+- Weighted GFCCs
+
 Indexing
 ^^^^^^^^
 
@@ -66,6 +81,26 @@ on a time interval.
 
 More can be read about indices and contributing to similarity work in the
 `developer reference`_.
+
+Evaluation
+^^^^^^^^^^
+
+The similarity engine is an ongoing project, and its results are still largely
+experimental. While we tune different index parameters (described in the
+`developer reference`_), we'd like to gather feedback from the community.
+
+As such, we've made an evaluation available to the public. When viewing the
+summary data for a recording, you may access similar recordings organized by
+metric. Recordings are organized from most similar to least similar. Alongside
+the list of the most similar recordings, you may provide input:
+
+- Rate whether the recording should be higher or lower on the list of similarity,
+or whether this result seems accurate.
+- Provide additional suggestions related to a specific similar recording, or in
+general.
+
+Feel free to provide as much or as little feedback as you wish when browsing.
+We appreciate your help in improving similarity at AcousticBrainz!
 
 .. _API endpoints: https://acousticbrainz.readthedocs.io/api.html
 .. _Annoy: https://github.com/spotify/annoy

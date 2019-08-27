@@ -15,7 +15,7 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 
 
 @cli.command(name="init")
-@click.option("--distance-type", "-d", default='angular')
+@click.option("--distance-type", "-d", default='angular', help="Method of calculating distance for index.")
 @click.option("--n-trees", "-n", type=int, default=10, help="Number of trees for building index. \
                                                             Tradeoff: more trees gives more precision, \
                                                             but takes longer to build.")
@@ -32,11 +32,9 @@ def init(batch_size, sample_size, force, n_trees, distance_type):
         2. Compute base metrics for all recordings in
            the lowlevel table, inserting these values
            in the similarity.similarity table.
-
-    Options:
-        --sample-size: alters sample size when computing stats.
-        --batch-size: alters batch size when adding metrics 
-        incrementally.
+        3. Initialize, build, and save indices for each
+           of the metrics including every recording in
+           the similarity.similarity table
     """
     click.echo("Computing stats...")
     db.similarity_stats.compute_stats(sample_size, force=force)

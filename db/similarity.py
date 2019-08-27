@@ -14,7 +14,7 @@ PROCESS_BATCH_SIZE = 10000
 
 def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
     """Creates an annoy index for the specified metric, adds all items to the index."""
-    print("Initializing index...")
+    current_app.logger.info("Initializing index...")
     index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)
 
     batch_size = batch_size or PROCESS_BATCH_SIZE
@@ -36,12 +36,12 @@ def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
             OFFSET :offset
         """)
 
-        print("Inserting items...")
+        current_app.logger.info("Inserting items...")
         while True:
             # Get ids and vectors for specific metric in batches
             batch_result = connection.execute(batch_query, { "batch_size": batch_size, "offset": offset })
             if not batch_result.rowcount:
-                print("Finished adding items. Building index...")
+                current_app.logger.info("Finished adding items. Building index...")
                 break
 
             for row in batch_result.fetchall():
@@ -54,10 +54,10 @@ def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
                 count += 1
 
             offset += batch_size
-            print("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
+            current_app.logger.info("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
 
         index.build()
-        print("Saving index...")
+        current_app.logger.info("Saving index...")
         index.save()
 
 
@@ -100,7 +100,7 @@ def add_indices(indices, batch_size=None):
             # Get ids and vectors for all metrics in batches
             batch_result = connection.execute(batch_query, { "batch_size": batch_size, "offset": offset })
             if not batch_result.rowcount:
-                print("Finished adding items. Building and saving indices...")
+                current_app.logger.info("Finished adding items. Building and saving indices...")
                 break
 
             for row in batch_result.fetchall():
@@ -115,7 +115,7 @@ def add_indices(indices, batch_size=None):
                 count += 1
 
             offset += batch_size
-            print("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
+            current_app.logger.info("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
 
         for index in indices:
             index.build()

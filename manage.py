@@ -19,6 +19,7 @@ import db.exceptions
 import db.stats
 import db.user
 import webserver
+import similarity.path_manage
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -313,6 +314,7 @@ def set_rate_limits(per_ip, window_size):
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
+cli.add_command(similarity.path_manage.cli, name="similarity-path")
 
 if __name__ == '__main__':
     cli()

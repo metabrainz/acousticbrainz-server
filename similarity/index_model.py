@@ -233,6 +233,13 @@ class AnnoyModel(object):
         except IndexError:
             return None
 
+    def get_distance_between(self, id_1, id_2):
+        # Get distance between two ids
+        try:
+            return self.index.get_distance(id_1, id_2)
+        except IndexError:
+            return None
+
 
 """
 A dictionary to track the base indices that should be built.

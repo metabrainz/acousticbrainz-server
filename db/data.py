@@ -707,3 +707,105 @@ def get_summary_data(mbid, offset=0):
         pass
 
     return summary
+
+
+def get_mbids_by_ids(ids):
+    # Get (MBID, offset) combinations for a list of lowlevel.ids
+    # Maintains order of the input list
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT id
+                 , gid
+                 , submission_offset
+              FROM lowlevel
+             WHERE id = :id
+        """)
+        recordings = []
+        for id in ids:
+            result = connection.execute(query, {"id": id})
+            row = result.fetchone()
+            if row:
+                recordings.append((str(row["gid"]), row["submission_offset"]))
+        return recordings
+
+
+def get_lowlevel_id(mbid, offset):
+    # Get lowlevel.id for (MBID, offset)
+    mbid = str(mbid).lower()
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id
+            FROM lowlevel
+            WHERE gid = :mbid AND submission_offset = :offset
+        """)
+        result = connection.execute(query, {"mbid": mbid, "offset": offset})
+        if not result.rowcount:
+            raise db.exceptions.NoDataFoundException('No data exists for the (MBID, offset) pair specified')
+        return result.fetchone()["id"]
+
+
+def count_all_lowlevel():
+    """Get total number of low-level submissions"""
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT COUNT(*)
+            FROM lowlevel
+        """)
+        result = connection.execute(query)
+        return result.fetchone()[0]
+
+
+def get_lowlevel_metric_feature(id, path):
+    # Get lowlevel data only for a specified path.
+    try:
+        id = int(id)
+    except ValueError:
+        raise db.exceptions.BadDataException("The parameter `id` must be an integer.")
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id, %(path)s AS data
+              FROM lowlevel_json
+             WHERE id = :id
+        """ % {"path": path})
+        result = connection.execute(query, {'id': id})
+        if not result.rowcount:
+            # No data for specified id
+            return None
+        row = result.fetchone()
+        return row["data"]
+
+
+def get_highlevel_models(id):
+    """Get highlevel model data for a specified id.
+    Args:
+        id: integer, indicating the highlevel_model.highlevel
+        or the corresponding lowlevel.id for a submission.
+    Returns: highlevel models aggregated with their names,
+    a dictionary of the form:
+        {
+            "model_1": {model_document},
+            ...,
+            "model_n": {model_document}
+        }
+    """
+    try:
+        id = int(id)
+    except ValueError:
+        raise db.exceptions.BadDataException("The parameter `id` must be an integer.")
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT jsonb_object_agg(model.model, hlm.data) AS data
+              FROM highlevel_model AS hlm
+         LEFT JOIN model
+                ON model.id = hlm.model
+             WHERE highlevel = :id
+               AND model.status = 'show'
+          GROUP BY highlevel
+        """)
+        result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            return None
+        row = result.fetchone()
+        return row["data"]

@@ -4,7 +4,9 @@ import random
 import math
 
 import db.data
+import db.exceptions
 from similarity.index_model import AnnoyModel
+import similarity.exceptions
 
 ##### Option 1 #####
 # Pick a song to start.
@@ -20,23 +22,38 @@ from similarity.index_model import AnnoyModel
 MAX_NO_GAIN = 3
 INIT_N_NEIGHBOURS = 55
 # Percentage of a set of nearer neighbours that should be used
-RANDOM_SAMPLE_SIZE = 0.5
+RANDOM_SAMPLE_SIZE = 0.6
 
 
 def get_path(rec_1, rec_2, max_tracks, metric):
     # Get path between two recordings
     # Recording args in format (mbid, offset)
-    id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])
-    id_2 = db.data.get_lowlevel_id(rec_2[0], rec_2[1])
-    index = AnnoyModel(metric, load_existing=True)
     n_tracks = 0
     no_gain_cnt = 0
     n_neighbours = INIT_N_NEIGHBOURS
     distances = []
     path = []
+
+    try:
+        id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])
+        id_2 = db.data.get_lowlevel_id(rec_2[0], rec_2[1])
+    except db.exceptions.NoDataFoundException:
+        raise similarity.exceptions.OdysseyException("The start/end MBID/Offset does not exist in the database.")
+
+    try:
+        index = AnnoyModel(metric, load_existing=True)
+    except db.exceptions.NoDataFoundException:
+        raise similarity.exceptions.OdysseyException("There are no recordings with computed similarity metrics.")
+    except similarity.exceptions.ItemNotFoundException:
+        raise similarity.exceptions.OdysseyException("No available index for the given metric and parameters.")
+
     init_distance = index.get_distance_between(id_1, id_2)
-    nearest_rec = find_nearest_rec(id_1, id_2, init_distance, index, n_neighbours)
+    if not init_distance:
+        raise similarity.exceptions.OdysseyException("Annoy index is unable to compute distance between the given recorrdings.")
+
+    # nearest_rec = find_nearest_rec(id_1, id_2, init_distance, index, n_neighbours)
     nearest_id = id_1
+    nearest_rec = (nearest_id, init_distance, rec_1)
     last_distance = init_distance
 
     # Checking to exit on max # tracks, if distance doesn't improve (3 times), 
@@ -72,8 +89,12 @@ def get_path(rec_1, rec_2, max_tracks, metric):
 # If id in list is the target id, return the list up to this point
 # And finish by querying the target id for near recordings with another function
 def find_nearer_recs(id_queried, id_distance_to, last_distance, index, n_neighbours):
-    # Find recordings that will decrease the distance to the targete
-    n_ids, n_recs, n_distances = index.get_nns_by_id(id_queried, int(n_neighbours))
+    # Find recordings that will decrease the distance to the target
+    try:
+        n_ids, n_recs, n_distances = index.get_nns_by_id(id_queried, int(n_neighbours))
+    except similarity.exceptions.ItemNotFoundException:
+        raise similarity.exceptions.OdysseyException("The id being queried was not found in the index.")
+
     nearest_id = id_queried
     nearest_distance = last_distance
     nearer_ids = []
@@ -81,7 +102,11 @@ def find_nearer_recs(id_queried, id_distance_to, last_distance, index, n_neighbo
     for id, rec in zip(n_ids, n_recs):
         if id == id_distance_to:
             break
+
         new_distance = index.get_distance_between(id, id_distance_to)
+        if not new_distance:
+            raise similarity.exceptions.OdysseyException("Annoy index is unable to compute distance between the given recorrdings.")
+
         if new_distance < last_distance:
             if new_distance < nearest_distance:
                 nearest_id = id
@@ -123,13 +148,21 @@ def remove_offsets(recs):
 # nearby recordings to one position
 def find_nearest_rec(id_queried, id_distance_to, last_distance, index, n_neighbours):
     # Find the nearest recording to an id
-    n_ids, n_recs, n_distances = index.get_nns_by_id(id_queried, int(n_neighbours))
+    try:
+        n_ids, n_recs, n_distances = index.get_nns_by_id(id_queried, int(n_neighbours))
+    except similarity.exceptions.ItemNotFoundException:
+        raise similarity.exceptions.OdysseyException("The id being queried was not found in the index.")
+
     nearest_id = id_queried
     nearest_distance = last_distance
     for id, rec in zip(n_ids, n_recs):
         if id == id_distance_to:
             break
+
         new_distance = index.get_distance_between(id, id_distance_to)
+        if not new_distance:
+            raise similarity.exceptions.OdysseyException("Annoy index is unable to compute distance between the given recorrdings.")
+
         if new_distance < nearest_distance:
             nearest_id = id
             nearest_distance = new_distance

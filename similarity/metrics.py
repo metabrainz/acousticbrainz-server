@@ -114,8 +114,7 @@ class KeyMetric(CircularMetric):
             key_value += SCALES_MAP[data['key_scale']]
             return super(KeyMetric, self).transform(key_value)
         except KeyError:
-            raise ValueError('invalid key/scale')
-            # raise ValueError('Invalid key/scale values: {}, {}'.format(data['key_key'], data['key_scale']))
+            raise ValueError('Invalid data value: {}'.format(data))
 
 
 class LogCircularMetric(CircularMetric):

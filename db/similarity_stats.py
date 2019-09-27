@@ -93,7 +93,7 @@ TABLESAMPLE SYSTEM ((:sample_size * 100) / :count)
         """ % {"features": ', '.join(features)})
 
         result = connection.execute(sample_query, {"sample_size": sample_size,
-                                                   "count": count})
+                                                   "count": float(count)})
         if not result.rowcount:
             raise db.exceptions.NoDataFoundException('Statistics cannot be calculated without lowlevel submissions.')
         return result.fetchall()

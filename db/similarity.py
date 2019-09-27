@@ -197,6 +197,7 @@ def submit_similarity_by_id(id, data=None, metrics=None, connection=None):
         try:
             vector = metric.transform(metric_data)
         except ValueError:
+            print("error with row {}".format(id))
             vector = [0] * metric.length()
         vectors.append(vector)
         metric_names.append(metric.name)

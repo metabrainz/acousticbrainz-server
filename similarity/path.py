@@ -79,6 +79,10 @@ def get_path(rec_1, rec_2, max_tracks, metric):
     path = path[:max_tracks - 2]
     distances = [init_distance] + distances
     path = [rec_1[0]] + path + [rec_2[0]]
+    
+    # Remove duplicates in the path
+    seen = set()
+    path = [x for x in path if not (x in seen or seen.add(x))]
     return path, distances
 
 
@@ -122,10 +126,8 @@ def find_nearer_recs(id_queried, id_distance_to, last_distance, index, n_neighbo
     # return (nearer_recs_sub, (nearest_id, nearest_distance, nearest_mbid_offset))
     nearer_recs_sub = random.sample(nearer_recs, int(math.ceil(len(nearer_recs)*RANDOM_SAMPLE_SIZE)))
 
-    # Remove offsets and duplicates
+    # Remove offsets
     mbids = remove_offsets(nearer_recs_sub)
-    seen = set()
-    mbids = [x for x in mbids if not (x in seen or seen.add(x))]
     return (mbids, (nearest_id, nearest_distance, nearest_mbid_offset))
 
 

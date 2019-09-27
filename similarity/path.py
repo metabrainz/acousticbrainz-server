@@ -28,7 +28,7 @@ RANDOM_SAMPLE_SIZE = 0.6
 def get_path(rec_1, rec_2, max_tracks, metric):
     # Get path between two recordings
     # Recording args in format (mbid, offset)
-    n_tracks = 0
+    n_tracks = 2
     no_gain_cnt = 0
     n_neighbours = INIT_N_NEIGHBOURS
     distances = []
@@ -74,7 +74,7 @@ def get_path(rec_1, rec_2, max_tracks, metric):
             nearest_rec = nearer_recs[1]
             path += nearer_recs[0]
             distances.append(last_distance)
-            n_tracks += 1
+            n_tracks += len(nearer_recs[0])
 
     distances = [init_distance] + distances
     path = [rec_1[0]] + path + [rec_2[0]]

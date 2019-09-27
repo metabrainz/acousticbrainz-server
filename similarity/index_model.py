@@ -240,6 +240,11 @@ class AnnoyModel(object):
         except IndexError:
             return None
 
+    def get_recording_vector(self, rec):
+        id = db.data.get_lowlevel_id(rec[0], rec[1])
+        vector = self.index.get_item_vector(id)
+        return vector, id
+
 
 """
 A dictionary to track the base indices that should be built.

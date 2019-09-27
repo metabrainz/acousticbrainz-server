@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+import gzip
+
+import db.data
+from similarity.index_model import AnnoyModel
+
 ##### Option 1 #####
 # Pick a song to start.
 # Pick a song to finish.
@@ -7,15 +13,11 @@
 # Search for similar recording, then query for distance between this recording and the final recording
 # Pick similar recording that reduces distance
 # Repeat with this as the starting song
-import gzip
-import db.data
-from similarity.index_model import AnnoyModel
 
 # Max number of steps without decreasing distance before program exits
-MAX_NO_GAIN = 4
+MAX_NO_GAIN = 3
 INIT_N_NEIGHBOURS = 55
 
-# How can you ensure that we get all the way from one track to another?
 
 def get_path(rec_1, rec_2, max_tracks, metric):
     # Get path between two recordings
@@ -26,6 +28,7 @@ def get_path(rec_1, rec_2, max_tracks, metric):
     n_tracks = 0
     no_gain_cnt = 0
     n_neighbours = INIT_N_NEIGHBOURS
+    distances = []
     path = []
     init_distance = index.get_distance_between(id_1, id_2)
     nearest_rec = find_nearest_rec(id_1, id_2, init_distance, index, n_neighbours)
@@ -48,10 +51,12 @@ def get_path(rec_1, rec_2, max_tracks, metric):
             # Append nearest (MBID, offset) combination
             n_neighbours = INIT_N_NEIGHBOURS
             path.append(nearest_rec[2])
+            distances.append(last_distance)
             n_tracks += 1
 
+    distances = [init_distance] + distances
     path = [rec_1] + path + [rec_2]
-    return path
+    return path, distances
 
 
 def find_nearest_rec(id_queried, id_distance_to, last_distance, index, n_neighbours):
@@ -71,10 +76,3 @@ def find_nearest_rec(id_queried, id_distance_to, last_distance, index, n_neighbo
     if nearest_distance == last_distance:
         return False
     return (nearest_id, nearest_distance, nearest_mbid_offset)
-
-
-# def plot_path_vectors(path, metric):
-#     index = 
-#     vectors = []
-#     for rec in path:
-        

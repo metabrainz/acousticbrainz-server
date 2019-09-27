@@ -27,3 +27,9 @@ class LoadStateException(SimilarityException):
     cycle of an index, i.e. index is saved before it has been built.
     """
     pass
+
+
+class OdysseyException(SimilarityException):
+    """Should be used when an error occurs in building a similarity
+    path"""
+    pass

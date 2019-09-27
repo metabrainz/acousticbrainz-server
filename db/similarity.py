@@ -82,7 +82,7 @@ def add_indices(indices, batch_size):
     count = 0
     with db.engine.connect() as connection:
         result = connection.execute("""
-            SELECT MAX(id)
+            SELECT count(*)
               FROM similarity.similarity
         """)
         total = result.fetchone()[0]
@@ -90,7 +90,7 @@ def add_indices(indices, batch_size):
         batch_query = text("""
             SELECT *
               FROM similarity.similarity
-             ORDER BY id
+          ORDER BY id
              LIMIT :batch_size
             OFFSET :offset
         """)

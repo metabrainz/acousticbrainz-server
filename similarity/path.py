@@ -75,7 +75,8 @@ def get_path(rec_1, rec_2, max_tracks, metric):
             path += nearer_recs[0]
             distances.append(last_distance)
             n_tracks += len(nearer_recs[0])
-
+    
+    path = path[:max_tracks - 2]
     distances = [init_distance] + distances
     path = [rec_1[0]] + path + [rec_2[0]]
     return path, distances

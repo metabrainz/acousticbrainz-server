@@ -23,7 +23,7 @@ def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
 
     with db.engine.connect() as connection:
         result = connection.execute("""
-            SELECT MAX(id)
+            SELECT count(id)
               FROM similarity.similarity
         """)
         total = result.fetchone()[0]
@@ -64,8 +64,10 @@ def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
 def get_all_metrics():
     with db.engine.begin() as connection:
         result = connection.execute("""
-            SELECT category, metric, description
-            FROM similarity.similarity_metrics
+            SELECT category
+                 , metric
+                 , description
+              FROM similarity.similarity_metrics
         """)
 
         metrics = {}

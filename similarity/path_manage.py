@@ -26,10 +26,10 @@ def path(mbid_1, offset_1, mbid_2, offset_2):
 
     path, distances = similarity.path.get_path(rec_1, rec_2, max_tracks, metric)
     print(path)
-    print(distances)
-
-    index = AnnoyModel(metric, load_existing=True)
-    id = db.data.get_lowlevel_id(mbid_2, offset_2)
-    ids, recs, distances = index.get_nns_by_id(id, 100)
-    print("Distance of nearest neighbours")
-    print(distances)
+    # print(distances)
+    print(len(path))
+    # index = AnnoyModel(metric, load_existing=True)
+    # id = db.data.get_lowlevel_id(mbid_2, offset_2)
+    # ids, recs, distances = index.get_nns_by_id(id, 100)
+    # print("Distance of nearest neighbours")
+    # print(distances)

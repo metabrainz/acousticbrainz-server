@@ -10,6 +10,7 @@ import db.similarity
 import db.similarity_stats
 
 NORMALIZATION_SAMPLE_SIZE = 10000
+PROCESS_BATCH_SIZE = 10000
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 
@@ -101,7 +102,7 @@ def add_metrics(batch_size):
 @click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
                                                             Tradeoff: more trees gives more precision, \
                                                             but takes longer to build.")
-@click.option("--batch_size", "-b", type=int, default=10000, help="Size of batches")
+@click.option("--batch_size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Size of batches")
 def add_index(metric, batch_size, n_trees, distance_type):
     """Creates an annoy index for the specified metric using the given params.
     This operates by creating a special case of `db.similarity.add_indices`,
@@ -123,7 +124,7 @@ def add_index(metric, batch_size, n_trees, distance_type):
 @click.option("--n-trees", "-n", type=int, default=10, help="Number of trees for building index. \
                                                             Tradeoff: more trees gives more precision, \
                                                             but takes longer to build.")
-@click.option("--batch_size", "-b", type=int, default=None, help="Size of batches")
+@click.option("--batch_size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Size of batches")
 def add_indices(batch_size, n_trees, distance_type):
     """Creates an annoy index then adds all recordings to the index,
     for each of the base metrics.

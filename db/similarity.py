@@ -77,8 +77,7 @@ def get_all_metrics():
         return metrics
 
 
-def add_indices(indices, batch_size=None):
-    batch_size = batch_size or PROCESS_BATCH_SIZE
+def add_indices(indices, batch_size):
     offset = 0
     count = 0
     with db.engine.connect() as connection:

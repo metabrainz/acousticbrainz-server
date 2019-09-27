@@ -26,7 +26,7 @@ ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s: [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S')
 
 
 @cli.command(name='runserver')

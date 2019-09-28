@@ -22,17 +22,17 @@ import similarity.exceptions
 MAX_NO_GAIN = 3
 INIT_N_NEIGHBOURS = 55
 # Percentage of a set of nearer neighbours that should be used
-RANDOM_SAMPLE_SIZE = 0.6
+RANDOM_SAMPLE_SIZE = 0.7
 
 
 def get_path(rec_1, rec_2, max_tracks, metric):
     # Get path between two recordings
     # Recording args in format (mbid, offset)
-    n_tracks = 2
+    n_tracks = 1
     no_gain_cnt = 0
     n_neighbours = INIT_N_NEIGHBOURS
     distances = []
-    path = []
+    path = [rec_1[0]]
 
     try:
         id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])
@@ -58,13 +58,13 @@ def get_path(rec_1, rec_2, max_tracks, metric):
 
     # Checking to exit on max # tracks, if distance doesn't improve (3 times), 
     # or target is within nearest neighbours
-    while n_tracks < max_tracks and no_gain_cnt < MAX_NO_GAIN:
+    while n_tracks < max_tracks - 1 and no_gain_cnt < MAX_NO_GAIN:
         if nearest_rec:
             last_distance = nearest_rec[1]
             nearest_id = nearest_rec[0]
             nearest_rec = None
 
-        nearer_recs = find_nearer_recs(nearest_id, id_2, last_distance, index, n_neighbours)
+        nearer_recs = find_nearer_recs(nearest_id, id_2, rec_2, last_distance, index, n_neighbours)
         if not nearer_recs:
             n_neighbours = n_neighbours * 1.3
             no_gain_cnt += 1
@@ -73,17 +73,25 @@ def get_path(rec_1, rec_2, max_tracks, metric):
             n_neighbours = INIT_N_NEIGHBOURS
             nearest_rec = nearer_recs[1]
             path += nearer_recs[0]
-            distances.append(last_distance)
-            n_tracks += len(nearer_recs[0])
-    
-    path = path[:max_tracks - 2]
-    distances = [init_distance] + distances
-    path = [rec_1[0]] + path + [rec_2[0]]
-    
-    # Remove duplicates in the path
-    seen = set()
-    path = [x for x in path if not (x in seen or seen.add(x))]
-    return path, distances
+
+            # Remove duplicates in the nearest recordings
+            seen = set()
+            path = [x for x in path if not (x in seen or seen.add(x))]
+            n_tracks = len(path)
+
+    print("LENGTH PATH {}".format(len(path)))
+    print("PATH")
+    print(path)
+    print("------------------------------")
+
+    # Add last recording
+    # if len(path) > max_tracks
+    path += [rec_2[0]]
+    print("MAX {}".format(max_tracks))
+    if len(path) > max_tracks:
+        path = path[:max_tracks - 1] + [path[len(path) - 1]]
+
+    return path
 
 
 # Find batch
@@ -93,7 +101,7 @@ def get_path(rec_1, rec_2, max_tracks, metric):
 # Return nearer recs
 # If id in list is the target id, return the list up to this point
 # And finish by querying the target id for near recordings with another function
-def find_nearer_recs(id_queried, id_distance_to, last_distance, index, n_neighbours):
+def find_nearer_recs(id_queried, id_target, rec_target, last_distance, index, n_neighbours):
     # Find recordings that will decrease the distance to the target
     try:
         n_ids, n_recs, n_distances = index.get_nns_by_id(id_queried, int(n_neighbours))
@@ -105,10 +113,14 @@ def find_nearer_recs(id_queried, id_distance_to, last_distance, index, n_neighbo
     nearer_ids = []
     nearer_recs = []
     for id, rec in zip(n_ids, n_recs):
-        if id == id_distance_to:
+        # If MBID matches target, skip (different submission)
+        # If MBID and offset match target, exit
+        if rec[0] == rec_target[0]:
+            continue
+        elif id == id_target:
             break
 
-        new_distance = index.get_distance_between(id, id_distance_to)
+        new_distance = index.get_distance_between(id, id_target)
         if not new_distance:
             raise similarity.exceptions.OdysseyException("Annoy index is unable to compute distance between the given recorrdings.")
 
@@ -119,15 +131,14 @@ def find_nearer_recs(id_queried, id_distance_to, last_distance, index, n_neighbo
                 nearest_mbid_offset = rec
             nearer_ids.append(id)
             nearer_recs.append(rec)
+    
+    # Remove offsets
+    mbids = remove_offsets(nearer_recs)
+    mbids_sub = random.sample(mbids, int(math.ceil(len(nearer_recs)*RANDOM_SAMPLE_SIZE)))
 
     if nearest_distance == last_distance:
         return False
-    # nearer_ids_sub, nearer_recs_sub = zip(*random.sample(list(zip(nearer_ids, nearer_recs)), int(math.ceil(len(nearer_ids)*RANDOM_SAMPLE_SIZE))))
-    # return (nearer_recs_sub, (nearest_id, nearest_distance, nearest_mbid_offset))
-    nearer_recs_sub = random.sample(nearer_recs, int(math.ceil(len(nearer_recs)*RANDOM_SAMPLE_SIZE)))
 
-    # Remove offsets
-    mbids = remove_offsets(nearer_recs_sub)
     return (mbids, (nearest_id, nearest_distance, nearest_mbid_offset))
 
 

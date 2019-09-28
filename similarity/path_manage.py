@@ -16,7 +16,7 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 @click.option("--offset-2", default=0)
 def path(mbid_1, offset_1, mbid_2, offset_2):
     metric = "mfccs"
-    max_tracks = 100
+    max_tracks = 10
     # mbid_1 = "13ed6782-8ae1-4fcf-b0c9-9da757412d5d"
     # mbid_1 = "4b5273c8-45f2-4bea-b73c-5128cd57faa8"
     rec_1 = (mbid_1, offset_1)
@@ -24,7 +24,7 @@ def path(mbid_1, offset_1, mbid_2, offset_2):
     # mbid_2 = "62c2e20a-559e-422f-a44c-9afa7882f0c4"
     rec_2 = (mbid_2, offset_2)
 
-    path, distances = similarity.path.get_path(rec_1, rec_2, max_tracks, metric)
+    path = similarity.path.get_path(rec_1, rec_2, max_tracks, metric)
     print(path)
     # print(distances)
     print(len(path))

@@ -8,11 +8,14 @@ from webserver.utils import validate_offset
 from webserver.decorators import crossdomain
 from webserver.views.api.v1.core import _parse_bulk_params, check_bad_request_for_multiple_recordings
 from similarity.index_model import BASE_INDICES, AnnoyModel
-from similarity.exceptions import IndexNotFoundException, ItemNotFoundException
+from similarity.exceptions import SimilarityException, IndexNotFoundException, ItemNotFoundException
+import similarity.path
 from db.exceptions import NoDataFoundException
 
+import random
 
 bp_path = Blueprint('api_v1_path', __name__)
+
 
 @bp_path.route("/similarity_path/<uuid:mbid_from>/<uuid:mbid_to>", methods=["GET"])
 def generate_similarity_path(mbid_from, mbid_to):
@@ -21,8 +24,22 @@ def generate_similarity_path(mbid_from, mbid_to):
 
     :resheader Content-Type: *application/json*
     """
-    data = {"mbid_from": mbid_from, "mbid_to": mbid_to}
-    return jsonify(data)
+    steps = request.args.get("steps", "10")
+    metric = "mfccs"
+    try:
+        steps = int(steps)
+    except ValueError:
+        steps = 10
+    try:
+        path, distances = similarity.path.get_path((mbid_from, 0), (mbid_to, 0), steps, metric)
+    except NoDataFoundException:
+        abort(404)
+    except IndexError:
+        abort(404)
+    except SimilarityException:
+        abort(404)
+
+    return jsonify(path)
 
 
 @bp_path.route("/<metric>/<uuid(strict=False):mbid>", methods=["GET"])
@@ -189,7 +206,7 @@ def check_bad_request_between_recordings():
     return recordings
 
 
-@bp_similarity.route("/<metric>/between", methods=["GET"])
+@bp_path.route("/<metric>/between", methods=["GET"])
 @crossdomain()
 def get_similarity_between(metric):
     """Get the distance measure for similarity between two MBIDs.

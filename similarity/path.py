@@ -79,15 +79,15 @@ def get_path(rec_1, rec_2, max_tracks, metric):
             path = [x for x in path if not (x in seen or seen.add(x))]
             n_tracks = len(path)
 
-    print("LENGTH PATH {}".format(len(path)))
-    print("PATH")
-    print(path)
-    print("------------------------------")
+    # print("LENGTH PATH {}".format(len(path)))
+    # print("PATH")
+    # print(path)
+    # print("------------------------------")
 
     # Add last recording
     # if len(path) > max_tracks
     path += [rec_2[0]]
-    print("MAX {}".format(max_tracks))
+    # print("MAX {}".format(max_tracks))
     if len(path) > max_tracks:
         path = path[:max_tracks - 1] + [path[len(path) - 1]]
 

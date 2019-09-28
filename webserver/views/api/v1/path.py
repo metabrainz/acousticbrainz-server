@@ -31,7 +31,7 @@ def generate_similarity_path(mbid_from, mbid_to):
     except ValueError:
         steps = 10
     try:
-        path, distances = similarity.path.get_path((mbid_from, 0), (mbid_to, 0), steps, metric)
+        path = similarity.path.get_path((mbid_from, 0), (mbid_to, 0), steps, metric)
     except NoDataFoundException:
         abort(404)
     except IndexError:

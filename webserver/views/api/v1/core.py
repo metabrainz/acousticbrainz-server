@@ -10,6 +10,7 @@ import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
+from webserver.utils import validate_offset
 from brainzutils.ratelimit import ratelimit
 
 bp_core = Blueprint('api_v1_core', __name__)
@@ -68,7 +69,7 @@ def get_low_level(mbid):
 
     :resheader Content-Type: *application/json*
     """
-    offset = _validate_offset(request.args.get("n"))
+    offset = validate_offset(request.args.get("n"))
     try:
         return jsonify(db.data.load_low_level(str(mbid), offset))
     except NoDataFoundException:
@@ -94,7 +95,7 @@ def get_high_level(mbid):
 
     :resheader Content-Type: *application/json*
     """
-    offset = _validate_offset(request.args.get("n"))
+    offset = validate_offset(request.args.get("n"))
     map_classes = _validate_map_classes(request.args.get("map_classes"))
     try:
         return jsonify(db.data.load_high_level(str(mbid), offset, map_classes))
@@ -134,22 +135,6 @@ def _validate_map_classes(map_classes):
         (bool): True if the map_classes parameter is 'true', False otherwise"""
 
     return map_classes is not None and map_classes.lower() == 'true'
-
-
-def _validate_offset(offset):
-    """Validate the offset.
-
-    If the offset is None, return 0, otherwise interpret it as a number. If it is
-    not a number, raise 400.
-    """
-    if offset:
-        try:
-            offset = int(offset)
-        except ValueError:
-            raise webserver.views.api.exceptions.APIBadRequest("Offset must be an integer value")
-    else:
-        offset = 0
-    return offset
 
 
 def _parse_bulk_params(params):

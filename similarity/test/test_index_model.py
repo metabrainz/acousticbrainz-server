@@ -73,26 +73,26 @@ class IndexModelTestCase(DatabaseTestCase):
         self.model.index.load.assert_called_with(expected_path)
         self.assertEqual(True, self.model.in_loaded_state)
 
-    @mock.patch("db.similarity.get_similarity_row_mbid")
-    def test_add_recording_by_mbid_no_submission(self, get_similarity_row_mbid):
+    @mock.patch("db.similarity.get_similarity_by_mbid")
+    def test_add_recording_by_mbid_no_submission(self, get_similarity_by_mbid):
         # If model is built, (in_loaded_state is True), error is raised.
         self.model.in_loaded_state = True
         with self.assertRaises(similarity.exceptions.CannotAddItemException):
             self.model.add_recording_by_mbid(self.test_mbid, 0)
 
         # If recording and metrics data are not submitted, no addition occurs.
-        get_similarity_row_mbid.return_value = None
+        get_similarity_by_mbid.return_value = None
         self.model.index = mock.Mock()
         self.model.in_loaded_state = False
         self.model.add_recording_by_mbid(self.test_mbid, 0)
         self.model.index.get_item_vector.assert_not_called()
 
-    @mock.patch("db.similarity.get_similarity_row_mbid")
-    def test_add_recordings_by_mbid_exists(self, get_similarity_row_mbid):
+    @mock.patch("db.similarity.get_similarity_by_mbid")
+    def test_add_recordings_by_mbid_exists(self, get_similarity_by_mbid):
         # If item with given lowlevel.id already exists, no addition occurs.
         self.model.index = mock.Mock()
         self.model.index.get_item_vector.return_value = [1, 2, 3]
-        get_similarity_row_mbid.return_value = {"id": 1, "mfccs": "data"}
+        get_similarity_by_mbid.return_value = {"id": 1, "mfccs": "data"}
         
         self.model.add_recording_by_mbid(self.test_mbid, 0)
         self.model.index.add_item.assert_not_called()

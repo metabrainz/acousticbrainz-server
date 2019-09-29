@@ -399,7 +399,7 @@ def get_metric_dimensionality(metric_name):
             raise db.exceptions.NoDataFoundException("No existing similarity data.")
 
 
-def get_similarity_row_mbid(mbid, offset):
+def get_similarity_by_mbid(mbid, offset):
     # Get a single row of the similarity table by (MBID, offset) combination
     with db.engine.connect() as connection:
         query = text("""

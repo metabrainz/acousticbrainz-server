@@ -244,10 +244,10 @@ class SimilarityDBTestCase(DatabaseTestCase):
         expected_result = 13
         self.assertEqual(expected_result, db.similarity.get_metric_dimensionality(metric))
 
-    def test_get_similarity_row_mbid(self):
+    def test_get_similarity_by_mbid(self):
         # If no similarity is submitted, error is raised.
         with self.assertRaises(db.exceptions.NoDataFoundException):
-            db.similarity.get_similarity_row_mbid(self.test_mbid, 0)
+            db.similarity.get_similarity_by_mbid(self.test_mbid, 0)
 
     def test_get_similarity_row_id(self):
         # If no similarity is submitted, error is raised.

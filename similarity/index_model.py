@@ -94,7 +94,7 @@ class AnnoyModel(object):
         """
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
-        item = db.similarity.get_similarity_row_mbid(mbid, offset)
+        item = db.similarity.get_similarity_by_mbid(mbid, offset)
         if item:
             recording_vector = item[self.metric_name]
             id = item['id']

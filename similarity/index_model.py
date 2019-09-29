@@ -136,7 +136,7 @@ class AnnoyModel(object):
         """
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
-        if not len(vector) = index.dimension:
+        if not len(vector) == self.dimension:
             raise similarity.exceptions.CannotAddItemException("Dimension of vector provided does not match index dimension.")
 
         self.index.add_item(id, vector)

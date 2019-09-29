@@ -32,7 +32,6 @@ def get_path(rec_1, rec_2, max_tracks, metric):
     no_gain_cnt = 0
     n_neighbours = INIT_N_NEIGHBOURS
     distances = []
-    path = [rec_1[0]]
 
     try:
         id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])
@@ -50,6 +49,7 @@ def get_path(rec_1, rec_2, max_tracks, metric):
     init_distance = index.get_distance_between(id_1, id_2)
     if not init_distance:
         raise similarity.exceptions.OdysseyException("Annoy index is unable to compute distance between the given recorrdings.")
+    path = [(rec_1[0], init_distance)]
 
     # nearest_rec = find_nearest_rec(id_1, id_2, init_distance, index, n_neighbours)
     nearest_id = id_1
@@ -86,11 +86,12 @@ def get_path(rec_1, rec_2, max_tracks, metric):
 
     # Add last recording
     # if len(path) > max_tracks
-    path += [rec_2[0]]
+    path += [[rec_2[0], 0]]
     # print("MAX {}".format(max_tracks))
     if len(path) > max_tracks:
         path = path[:max_tracks - 1] + [path[len(path) - 1]]
 
+    print(len(path))
     return path
 
 
@@ -112,6 +113,7 @@ def find_nearer_recs(id_queried, id_target, rec_target, last_distance, index, n_
     nearest_distance = last_distance
     nearer_ids = []
     nearer_recs = []
+    nearer_distances = []
     for id, rec in zip(n_ids, n_recs):
         # If MBID matches target, skip (different submission)
         # If MBID and offset match target, exit
@@ -131,15 +133,16 @@ def find_nearer_recs(id_queried, id_target, rec_target, last_distance, index, n_
                 nearest_mbid_offset = rec
             nearer_ids.append(id)
             nearer_recs.append(rec)
+            nearer_distances.append(new_distance)
     
     # Remove offsets
     mbids = remove_offsets(nearer_recs)
-    mbids_sub = random.sample(mbids, int(math.ceil(len(nearer_recs)*RANDOM_SAMPLE_SIZE)))
+    mbids_distances_sub = random.sample(zip(mbids, nearer_distances), int(math.ceil(len(nearer_recs)*RANDOM_SAMPLE_SIZE)))
 
     if nearest_distance == last_distance:
         return False
 
-    return (mbids, (nearest_id, nearest_distance, nearest_mbid_offset))
+    return (mbids_distances_sub, (nearest_id, nearest_distance, nearest_mbid_offset))
 
 
 def remove_offsets(recs):

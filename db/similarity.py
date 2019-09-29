@@ -6,62 +6,23 @@ from db.data import count_all_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 import similarity.metrics
 import similarity.utils
+from utils.list_utils import chunks
 
 from sqlalchemy import text
 from collections import defaultdict
 
 PROCESS_BATCH_SIZE = 10000
 
-def add_index(metric, batch_size=None, n_trees=10, distance_type='angular'):
-    """Creates an annoy index for the specified metric, adds all items to the index."""
-    current_app.logger.info("Initializing index...")
-    index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)
-
-    batch_size = batch_size or PROCESS_BATCH_SIZE
-    offset = 0
-    count = 0
-
-    with db.engine.connect() as connection:
-        result = connection.execute("""
-            SELECT count(id)
-              FROM similarity.similarity
-        """)
-        total = result.fetchone()[0]
-
-        batch_query = text("""
-            SELECT *
-              FROM similarity.similarity
-             ORDER BY id
-             LIMIT :batch_size
-            OFFSET :offset
-        """)
-
-        current_app.logger.info("Inserting items...")
-        while True:
-            # Get ids and vectors for specific metric in batches
-            batch_result = connection.execute(batch_query, { "batch_size": batch_size, "offset": offset })
-            if not batch_result.rowcount:
-                current_app.logger.info("Finished adding items. Building index...")
-                break
-
-            for row in batch_result.fetchall():
-                while not row["id"] == count:
-                    # Rows are empty, add zero vector
-                    placeholder = [0] * index.dimension
-                    index.add_recording_with_vector(count, placeholder)
-                    count += 1
-                index.add_recording_with_vector(row["id"], row[index.metric_name])
-                count += 1
-
-            offset += batch_size
-            current_app.logger.info("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
-
-        index.build()
-        current_app.logger.info("Saving index...")
-        index.save()
-
 
 def get_all_metrics():
+    """Get name, category, and description for each of the metrics
+    in the similarity.similarity_metrics table.
+    
+    Returns:
+        metrics (dict): {category: [metric_name, description],
+                            ...,
+                         category_n: [metric_name, description]}
+    """
     with db.engine.begin() as connection:
         result = connection.execute("""
             SELECT category
@@ -70,83 +31,102 @@ def get_all_metrics():
               FROM similarity.similarity_metrics
         """)
 
-        metrics = {}
+        metrics = defaultdict(list)
         for category, metric, description in result.fetchall():
-            if category not in metrics:
-                metrics[category] = []
             metrics[category].append([metric, description])
 
         return metrics
 
 
-def add_indices(indices, batch_size):
-    offset = 0
-    count = 0
-    with db.engine.connect() as connection:
-        result = connection.execute("""
-            SELECT count(*)
-              FROM similarity.similarity
-        """)
-        total = result.fetchone()[0]
-
-        batch_query = text("""
-            SELECT *
-              FROM similarity.similarity
-          ORDER BY id
-             LIMIT :batch_size
-            OFFSET :offset
-        """)
-
-        while True:
-            # Get ids and vectors for all metrics in batches
-            batch_result = connection.execute(batch_query, { "batch_size": batch_size, "offset": offset })
-            if not batch_result.rowcount:
-                current_app.logger.info("Finished adding items. Building and saving indices...")
-                break
-
-            for row in batch_result.fetchall():
-                while not row["id"] == count:
-                    # Rows are empty, add zero vector
-                    for index in indices:
-                        placeholder = [0] * index.dimension
-                        index.add_recording_with_vector(count, placeholder)
-                    count += 1
-                for index in indices:
-                    index.add_recording_with_vector(row["id"], row[index.metric_name])
-                count += 1
-
-            offset += batch_size
-            current_app.logger.info("Items added: {}/{} ({:.3f}%)".format(offset, total, float(offset) / total * 100))
-
-        for index in indices:
-            index.build()
-            index.save()
-
-
-def get_all_metrics():
-    """Returns: a dictionary of all existing metrics, of the form:
-            {"category": [(metric_name, metric_description)]}
+def get_similarity_count():
+    """Get total number of ids from similarity table.
+    
+    Returns:
+        num_ids (int): number of ids from similarity.similarity
+        table.
     """
     with db.engine.connect() as connection:
         query = text("""
-            SELECT category
-                 , metric
-                 , description
-              FROM similarity.similarity_metrics
+            SELECT count(*)
+              FROM similarity.similarity
         """)
         result = connection.execute(query)
+        num_ids = result.fetchone()[0]
+        if not num_ids:
+            raise db.exceptions.NoDataFoundException("Similarity metrics are not computed for any submissions.")
+        return num_ids
 
-        metrics = {}
-        for category, metric, description in result.fetchall():
-            if category not in metrics:
-                metrics[category] = []
-            metrics[category].append([metric, description])
 
-        return metrics
+def get_similarity_ids():
+    """Gets all ids from similarity table in an ascending list.
+    
+    Returns: list of all ids from similarity table."""
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id
+              FROM similarity.similarity
+          ORDER BY id
+        """)
+        result = connection.execute(query)
+        return [r['id'] for r in result.fetchall()]
+
+
+def add_index(index, num_ids, ids, batch_size=None):
+    """Incrementally adds all items to an index, then builds
+    and saves the index. *Note*: index must already be initialized.
+    
+    Args:
+        indices: an initialized Annoy index.
+
+        num_ids (int): total number of ids in the similarity.similarity
+        table.
+
+        ids (list): list of similarity.similarity.ids which should be
+        added to the index.
+
+        batch_size (int): the size of each batch of recording
+        vectors being added in each increment.
+    """
+    batch_size = batch_size or PROCESS_BATCH_SIZE
+    num_added = 0
+
+    # Fill empty rows in the database with placeholders
+    # of the form [0, ..., 0]
+    index = similarity.index_utils.add_empty_rows(index, ids)
+
+    with db.engine.connect() as connection:
+        batch_query = text("""
+            SELECT id
+                 , {}
+              FROM similarity.similarity
+             WHERE id IN :ids
+          ORDER BY id
+        """.format(index.metric_name))
+
+        current_app.logger.info("Items added: {}/{} ({:.3f}%)".format(num_added, num_ids, float(num_added) / num_ids * 100))
+        for sub_ids in chunks(ids, batch_size):
+            # Get ids and vectors for specific metric in batches
+            batch_result = connection.execute(batch_query, {"ids": tuple(sub_ids)})
+            for row in batch_result:
+                index.add_recording_with_vector(row["id"], row[index.metric_name])
+
+            num_added += len(sub_ids)
+            current_app.logger.info("Items added: {}/{} ({:.3f}%)".format(num_added, num_ids, float(num_added) / num_ids * 100))
+
+        current_app.logger.info("Finished adding items. Building index...")
+        index.build()
+        current_app.logger.info("Saving index {}...".format(index.metric_name))
+        index.save()
 
 
 def get_metric_info(metric):
-    """Returns metric info as a list in the form:
+    """Gets the description and category for a given
+    metric.
+
+    Args:
+        metric (str): The name of a similarity metric.
+    
+    Returns: metric info as a list in the form:
             [category, metric_name, metric_description]
 
     If no metric is available, a NoDataFoundException will

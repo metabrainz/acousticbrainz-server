@@ -24,7 +24,7 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 @click.option("--sample-size", "-s", type=int, default=NORMALIZATION_SAMPLE_SIZE, \
     help="Override normalization lowlevel data sample size. \
          Must be >= 1% of lowlevel_json entries.")
-@click.option("--batch-size", "-b", type=int, default=10000, help="Override processing batch size.")
+@click.option("--batch-size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Override processing batch size.")
 def init(batch_size, sample_size, force, n_trees, distance_type):
     """Initialization command for the similarity engine.
     The following steps will occur:
@@ -107,15 +107,17 @@ def add_index(metric, batch_size, n_trees, distance_type):
     """Creates an annoy index for the specified metric using the given params.
     This operates by creating a special case of `db.similarity.add_indices`,
     where the list of indices only contains one index.
-    
+
     *NOTE*: Using this command overwrites any existing index with the
     same parameters.
     """
-    click.echo("Adding index: {}".format(metric))
+    click.echo("Gathering ids to insert...")
+    num_ids = db.similarity.get_similarity_count()
+    ids = db.similarity.get_similarity_ids()
     click.echo("Initializing index...")
-    index = [AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)]
-    click.echo("Inserting items...")
-    db.similarity.add_indices(index, batch_size=batch_size)
+    index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type)
+    click.echo("Adding index: {}".format(metric))
+    db.similarity.add_index(index, num_ids, ids, batch_size=batch_size)
     click.echo("Done!")
 
 
@@ -128,15 +130,19 @@ def add_index(metric, batch_size, n_trees, distance_type):
 def add_indices(batch_size, n_trees, distance_type):
     """Creates an annoy index then adds all recordings to the index,
     for each of the base metrics.
-    
+
     *NOTE*: Using this command overwrites any existing index with the
     same parameters.
     """
+    click.echo("Gathering ids to insert...")
+    num_ids = db.similarity.get_similarity_count()
+    ids = db.similarity.get_similarity_ids()
     click.echo("Initializing indices...")
     indices = similarity.index_utils.initialize_indices(n_trees=n_trees, distance_type=distance_type)
-    click.echo("Inserting items...")
-    db.similarity.add_indices(indices, batch_size=batch_size)
-    click.echo("Finished.")
+    for index in indices:
+        click.echo("Adding index: {}".format(index.metric_name))
+        db.similarity.add_index(index, num_ids, ids, batch_size=batch_size)
+    click.echo("Finished adding all indices. Exiting...")
 
 
 @cli.command(name='remove-index')

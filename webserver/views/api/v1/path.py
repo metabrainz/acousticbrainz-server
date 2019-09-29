@@ -22,10 +22,19 @@ def generate_similarity_path(mbid_from, mbid_to):
     """Generate a path from one mbid to another taking the next most 
     similar track on the way to the final target
 
+    :query metric: *Required* Name of the metric for which the similarity path should
+    be found. Defines the acoustic properties which are looked at when determining
+    similar recordings.
+
+    The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRICS`.
+
     :resheader Content-Type: *application/json*
     """
     steps = request.args.get("steps", "10")
-    metric = "mfccs"
+    metric = request.args.get("metric")
+    if not metric in similarity.metrics.BASE_METRICS:
+        raise webserver.views.api.exceptions.APIBadRequest("The metric parameter provided is not supported.")
+
     try:
         steps = int(steps)
     except ValueError:

@@ -123,15 +123,23 @@ class AnnoyModel(object):
 
     def add_recording_with_vector(self, id, vector):
         """Add a single recording to the index using its lowlevel.id and
-        a precomputed metric vector."""
+        a precomputed metric vector.
+        
+        Args:
+            id: non-negative integer lowlevel.id for a recording.
+            
+            vector: metric vector (list) corresponding to the lowlevel.id.
+            Dimension of the vector must match the dimension with which the
+            index is initialized
+        
+        *NOTE*: Annoy will allocate memory for max(n) + 1 items.
+        """
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
-        # If an item already exists, this should not error
-        # and we should not add the item.
-        try:
-            self.index.get_item_vector(id)
-        except IndexError:
-            self.index.add_item(id, vector)
+        if not len(vector) = index.dimension:
+            raise similarity.exceptions.CannotAddItemException("Dimension of vector provided does not match index dimension.")
+
+        self.index.add_item(id, vector)
 
     def get_nns_by_id(self, id, num_neighbours):
         """Get the most similar recordings for a recording with the

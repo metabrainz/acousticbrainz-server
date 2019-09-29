@@ -70,6 +70,6 @@ def add_empty_rows(index, ids):
     """
     missing_ids = set(range(ids[len(ids)-1])) - set(ids)
     for id in missing_ids:
-        placeholder = [0] * index.dimension
+        placeholder = [0] * index.dimensionality
         index.add_recording_with_vector(id, placeholder)
     return index

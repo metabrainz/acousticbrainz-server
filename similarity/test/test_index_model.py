@@ -11,14 +11,14 @@ from similarity.index_model import AnnoyModel
 
 class IndexModelTestCase(DatabaseTestCase):
 
-    @mock.patch("db.similarity.get_metric_dimension")
-    def setUp(self, get_metric_dimension):
+    @mock.patch("db.similarity.get_metric_dimensionality")
+    def setUp(self, get_metric_dimensionality):
         super(IndexModelTestCase, self).setUp()
         # Init model with valid params
         metric = "mfccs"
         n_trees = 10
         distance_type = "angular"
-        get_metric_dimension.return_value = 3
+        get_metric_dimensionality.return_value = 3
         self.model = AnnoyModel(metric, n_trees, distance_type)
 
         self.test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
@@ -282,9 +282,9 @@ class IndexModelTestCase(DatabaseTestCase):
 class IndexModelValidationTestCase(unittest.TestCase):
 
     @mock.patch("similarity.index_model.AnnoyModel.load")
-    @mock.patch("db.similarity.get_metric_dimension")
-    def test_parse_params(self, get_metric_dimension, load):
-        get_metric_dimension.return_value = 3
+    @mock.patch("db.similarity.get_metric_dimensionality")
+    def test_parse_params(self, get_metric_dimensionality, load):
+        get_metric_dimensionality.return_value = 3
         # If metric does not exist, IndexNotFoundError on initialization
         metric = "mfc"
         n_trees = 10

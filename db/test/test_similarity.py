@@ -226,23 +226,23 @@ class SimilarityDBTestCase(DatabaseTestCase):
             for row in result:
                 db.data.set_model_status(row["model"], row["model_version"], 'show')
 
-    def test_get_metric_dimension(self):
+    def test_get_metric_dimensionality(self):
         # If no metric exists with the specified name, error is raised.
         metric = "x"
         with self.assertRaises(db.exceptions.NoDataFoundException):
-            db.similarity.get_metric_dimension(metric)
+            db.similarity.get_metric_dimensionality(metric)
 
         # If no rows of data are submitted, error occurs on indexing the row.
         metric = "mfccs"
         with self.assertRaises(db.exceptions.NoDataFoundException):
-            db.similarity.get_metric_dimension(metric)
+            db.similarity.get_metric_dimensionality(metric)
 
         # If rows and metric column exist, length of the vector is retrieved
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         db.similarity_stats.compute_stats(1)
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
         expected_result = 13
-        self.assertEqual(expected_result, db.similarity.get_metric_dimension(metric))
+        self.assertEqual(expected_result, db.similarity.get_metric_dimensionality(metric))
 
     def test_get_similarity_row_mbid(self):
         # If no similarity is submitted, error is raised.

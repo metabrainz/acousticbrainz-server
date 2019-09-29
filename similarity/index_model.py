@@ -24,8 +24,8 @@ class AnnoyModel(object):
         """
         # Check params
         self.parse_initial_params(metric_name, n_trees, distance_type)
-        self.dimension = db.similarity.get_metric_dimension(self.metric_name)
-        self.index = AnnoyIndex(self.dimension, metric=self.distance_type)
+        self.dimensionality = db.similarity.get_metric_dimensionality(self.metric_name)
+        self.index = AnnoyIndex(self.dimensionality, metric=self.distance_type)
 
         # in_loaded_state set to True if the index is built, loaded, or saved.
         # At any of these points, items can no longer be added to the index.
@@ -129,15 +129,15 @@ class AnnoyModel(object):
             id: non-negative integer lowlevel.id for a recording.
             
             vector: metric vector (list) corresponding to the lowlevel.id.
-            Dimension of the vector must match the dimension with which the
+            Dimensionality of the vector must match the dimensionality with which the
             index is initialized
         
         *NOTE*: Annoy will allocate memory for max(n) + 1 items.
         """
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
-        if not len(vector) == self.dimension:
-            raise similarity.exceptions.CannotAddItemException("Dimension of vector provided does not match index dimension.")
+        if not len(vector) == self.dimensionality:
+            raise similarity.exceptions.CannotAddItemException("Dimensionality of vector provided does not match index dimensionality.")
 
         self.index.add_item(id, vector)
 

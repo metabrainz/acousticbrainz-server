@@ -371,8 +371,19 @@ def submit_similarity_by_mbid(mbid, offset):
     submit_similarity_by_id(id)
 
 
-def get_metric_dimension(metric_name):
-    # Get dimension of vectors for a metric in similarity table
+def get_metric_dimensionality(metric_name):
+    """Get dimensionality of vectors for a metric in similarity table.
+
+    Args:
+        metric_name (str): name of metric for which dimensionality must
+        be found.
+
+    Returns:
+        dimensionality (int): number of dimensions for metric vector.
+
+    If no submissions are present in the similarity.similarity table,
+    db.exceptions.NoDataFoundException will be raised.
+    """
     if metric_name not in similarity.metrics.BASE_METRICS:
         raise db.exceptions.NoDataFoundException("No existing metric named \"{}\"".format(metric_name))
     with db.engine.connect() as connection:
@@ -382,8 +393,8 @@ def get_metric_dimension(metric_name):
              LIMIT 1
         """)
         try:
-            dimension = len(result.fetchone()[metric_name])
-            return dimension
+            dimensionality = len(result.fetchone()[metric_name])
+            return dimensionality
         except TypeError:
             raise db.exceptions.NoDataFoundException("No existing similarity data.")
 

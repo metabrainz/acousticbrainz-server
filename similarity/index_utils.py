@@ -54,3 +54,22 @@ def get_similar_recordings(metric, mbid, offset, distance_type="angular", n_tree
     # Initializes index with given params, and calls for similar recordings.
     index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
     similar_recordings = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
+
+
+def add_empty_rows(index, ids):
+    """Annoy index will allocate space for max(id) + 1 items.
+    Since there are some gaps with empty rows in the db, we
+    need to insert placeholder vectors so that Annoy does
+    not initialize unpredictable vectors in their place.
+
+    Args:
+        index: An initialized Annoy index.
+
+        ids (list): A list of ids which should be added to the index.
+        Will be used to find empty rows.
+    """
+    missing_ids = set(range(ids[len(ids)-1])) - set(ids)
+    for id in missing_ids:
+        placeholder = [0] * index.dimension
+        index.add_recording_with_vector(id, placeholder)
+    return index

@@ -18,8 +18,6 @@ CREATE TABLE similarity.similarity (
   tzanetakis  DOUBLE PRECISION[] NOT NULL
 );
 
-ALTER TABLE similarity.similarity ADD CONSTRAINT similarity_pkey PRIMARY KEY (id);
-
 ALTER TABLE similarity.similarity
   ADD CONSTRAINT similarity_fk_lowlevel
   FOREIGN KEY (id)

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import collections
 import json
 import logging
@@ -8,6 +10,7 @@ from sqlalchemy import text
 
 import db
 import db.dataset
+from utils.list_utils import chunks
 
 fmt = '%(asctime)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=fmt)
@@ -18,10 +21,6 @@ if os.path.isfile(fname):
 else:
     rtoajson = {}
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in xrange(0, len(l), n):
-        yield l[i:i+n]
 
 def print_datadict_summary(datadict):
     counter = collections.Counter()
@@ -29,6 +28,7 @@ def print_datadict_summary(datadict):
         counter[cls] += 1
     for cls, count in counter.most_common():
         print "%s\t\t%s" % (cls, count)
+
 
 def normalise_datadict(datadict, cut_to):
     """Take a dictionary of groundtruth and cut all classes to
@@ -51,6 +51,7 @@ def normalise_datadict(datadict, cut_to):
                 remaining[i] = cls
     return newdataset, remaining
 
+
 def recordings_to_artists(recordings):
     recordingtoartist = {}
     numrecordings = len(recordings)
@@ -60,6 +61,7 @@ def recordings_to_artists(recordings):
             if a:
                 recordingtoartist[r] = a
     return recordingtoartist
+
 
 def filter(snapshot_id, options):
     snapshot = db.dataset.get_snapshot(snapshot_id)
@@ -76,6 +78,7 @@ def filter(snapshot_id, options):
         test.update(remaining)
 
     return train, test
+
 
 def split_groundtruth(datadict):
     # the artists of each recording and make a training
@@ -117,6 +120,7 @@ def split_groundtruth(datadict):
     # small, consider removing this class
     return trainset, testset
 
+
 def recording_to_artist(mbid):
     q = text(
        """SELECT data->'metadata'->'tags'->'musicbrainz_artistid'->>0
@@ -130,6 +134,7 @@ def recording_to_artist(mbid):
         return row[0]
     else:
         return None
+
 
 def recordings_to_artists_sub(mbids):
     # First see if any ids are in memcache. If not, save them

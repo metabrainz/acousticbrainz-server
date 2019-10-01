@@ -52,9 +52,9 @@ def generate_similarity_path(mbid_from, mbid_to):
 
 
 @bp_path.route("/similarity_path/debug/<uuid:mbid_from>/<uuid:mbid_to>", methods=["GET"])
-def generate_similarity_path(mbid_from, mbid_to):
+def generate_similarity_path_debug(mbid_from, mbid_to):
     try:
-        path = similarity.path.debug((mbid_from, 0), (mbid_to, 0))
+        path = similarity.path.get_path_debug((mbid_from, 0), (mbid_to, 0))
     except NoDataFoundException:
         abort(404)
     except IndexError:

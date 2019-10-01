@@ -96,7 +96,7 @@ def get_path(rec_1, rec_2, max_tracks, metric):
 
 
 
-def debug_path(rec_1, rec_2, max_tracks, metric):
+def get_path_debug(rec_1, rec_2, max_tracks, metric):
 
     try:
         id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])

@@ -105,14 +105,9 @@ def get_path_debug(rec_1, rec_2):
     except db.exceptions.NoDataFoundException:
         raise similarity.exceptions.OdysseyException("The start/end MBID/Offset does not exist in the database.")
 
-    init_distance = index.get_distance_between(id_1, id_2)
-    if not init_distance:
-        raise similarity.exceptions.OdysseyException("Annoy index is unable to compute distance between the given recorrdings.")
-
     results = {}
-    results['distance'] = init_distance
     for metric in similarity.metrics.BASE_METRICS:
-        results['tracks'][metric] = []
+        results[metric] = []
 
         try:
             indexes[metric] = AnnoyModel(metric, load_existing=True)
@@ -127,7 +122,7 @@ def get_path_debug(rec_1, rec_2):
             raise similarity.exceptions.OdysseyException("The id being queried was not found in the index.")
 
         for id, rec, dist in zip(n_ids, n_recs, n_distances):
-            results['tracks'][metric].append((id, rec, dist))
+            results[metric].append((id, rec, dist))
 
     return jsonify(results)
 

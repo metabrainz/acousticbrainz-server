@@ -95,6 +95,43 @@ def get_path(rec_1, rec_2, max_tracks, metric):
     return path
 
 
+
+def debug_path(rec_1, rec_2, max_tracks, metric):
+
+    try:
+        id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])
+        id_2 = db.data.get_lowlevel_id(rec_2[0], rec_2[1])
+    except db.exceptions.NoDataFoundException:
+        raise similarity.exceptions.OdysseyException("The start/end MBID/Offset does not exist in the database.")
+
+    init_distance = index.get_distance_between(id_1, id_2)
+    if not init_distance:
+        raise similarity.exceptions.OdysseyException("Annoy index is unable to compute distance between the given recorrdings.")
+
+    results = {}
+    results['distance'] = init_distance
+    for metric in similarity.metrics.BASE_METRICS:
+        results['tracks'][metric] = []
+
+        try:
+            indexes[metric] = AnnoyModel(metric, load_existing=True)
+        except db.exceptions.NoDataFoundException:
+            raise similarity.exceptions.OdysseyException("There are no recordings with computed similarity metrics.")
+        except similarity.exceptions.ItemNotFoundException:
+            raise similarity.exceptions.OdysseyException("No available index for the given metric and parameters.")
+
+        try:
+            n_ids, n_recs, n_distances = index.get_nns_by_id(rec_t[0], int(max_tracks))
+        except similarity.exceptions.ItemNotFoundException:
+            raise similarity.exceptions.OdysseyException("The id being queried was not found in the index.")
+
+        for id, rec, dist in zip(n_ids, n_recs, n_distances):
+            results['tracks'][metric].append((id, rec, dist))
+
+    return jsonify(results)
+
+
+
 # Find batch
 # Assign nearest as the nearest distance and id as id_queried for next batch
 # Add the nearest and a random subset of a percentage of the recordings

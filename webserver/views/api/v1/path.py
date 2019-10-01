@@ -51,6 +51,20 @@ def generate_similarity_path(mbid_from, mbid_to):
     return jsonify(path)
 
 
+@bp_path.route("/similarity_path/debug/<uuid:mbid_from>/<uuid:mbid_to>", methods=["GET"])
+def generate_similarity_path(mbid_from, mbid_to):
+    try:
+        path = similarity.path.debug((mbid_from, 0), (mbid_to, 0))
+    except NoDataFoundException:
+        abort(404)
+    except IndexError:
+        abort(500)
+    except SimilarityException:
+        abort(400)
+
+    return jsonify(path)
+
+
 @bp_path.route("/<metric>/<uuid(strict=False):mbid>", methods=["GET"])
 @crossdomain()
 def get_similar_recordings(metric, mbid):

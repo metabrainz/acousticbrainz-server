@@ -96,8 +96,9 @@ def get_path(rec_1, rec_2, max_tracks, metric):
 
 
 
-def get_path_debug(rec_1, rec_2, max_tracks, metric):
+def get_path_debug(rec_1, rec_2):
 
+    max_tracks = 100
     try:
         id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])
         id_2 = db.data.get_lowlevel_id(rec_2[0], rec_2[1])
@@ -121,7 +122,7 @@ def get_path_debug(rec_1, rec_2, max_tracks, metric):
             raise similarity.exceptions.OdysseyException("No available index for the given metric and parameters.")
 
         try:
-            n_ids, n_recs, n_distances = index.get_nns_by_id(rec_t[0], int(max_tracks))
+            n_ids, n_recs, n_distances = index.get_nns_by_id(rec_t[0], max_tracks)
         except similarity.exceptions.ItemNotFoundException:
             raise similarity.exceptions.OdysseyException("The id being queried was not found in the index.")
 

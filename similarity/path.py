@@ -91,8 +91,13 @@ def get_path(rec_1, rec_2, max_tracks, metric):
     if len(path) > max_tracks:
         path = path[:max_tracks - 1] + [path[len(path) - 1]]
 
-    print(len(path))
-    return path
+    # postprocess path to lookup actual metric values
+    final_path = []
+    for id, dist in path:
+        data = get_lowlevel_metric_feature(id, "rhythm")
+        final_path.append((mbid, dist, data['bpm']))
+
+    return final_path
 
 
 
@@ -110,14 +115,14 @@ def get_path_debug(rec_1, rec_2):
         results[metric] = []
 
         try:
-            indexes[metric] = AnnoyModel(metric, load_existing=True)
+            index = AnnoyModel(metric, load_existing=True)
         except db.exceptions.NoDataFoundException:
             raise similarity.exceptions.OdysseyException("There are no recordings with computed similarity metrics.")
         except similarity.exceptions.ItemNotFoundException:
             raise similarity.exceptions.OdysseyException("No available index for the given metric and parameters.")
 
         try:
-            n_ids, n_recs, n_distances = index.get_nns_by_id(rec_t[0], max_tracks)
+            n_ids, n_recs, n_distances = index.get_nns_by_id(rec_1[0], max_tracks)
         except similarity.exceptions.ItemNotFoundException:
             raise similarity.exceptions.OdysseyException("The id being queried was not found in the index.")
 

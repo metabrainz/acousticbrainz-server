@@ -356,7 +356,7 @@ class CoreViewsTestCase(ServerTestCase):
         self.assert400(resp)
         self.assertEqual('More than 25 recordings not allowed per request', resp.json['message'])
 
-    def test_get_bulk_select_features_no_params(self):
+    def test_get_bulk_individual_features_no_params(self):
         # No parameters in bulk lookup results in an error
         resp = self.client.get('/api/v1/low-level/select')
         self.assertEqual(400, resp.status_code)
@@ -383,8 +383,8 @@ class CoreViewsTestCase(ServerTestCase):
 
     # Once PR #349 adds conversion to lowercase in _parse_bulk_params, this skip should be removed
     @unittest.skip('Conversion to lowercase in _parse_bulk_params not yet added via PR #349.')
-    @mock.patch('db.data.load_many_select_features')
-    def test_get_bulk_select_features(self, load_many_select_features):
+    @mock.patch('db.data.load_many_individual_features')
+    def test_get_bulk_individual_features(self, load_many_individual_features):
         """Check that many items are returned, including two offsets of the
         same MBID.
 
@@ -404,7 +404,7 @@ class CoreViewsTestCase(ServerTestCase):
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
             "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3}
         }
-        load_many_select_features.return_value = expected_result
+        load_many_individual_features.return_value = expected_result
 
         resp = self.client.get('/api/v1/low-level/select?recording_ids={}&features={}'.format(recordings, features))
         self.assertEqual(200, resp.status_code)
@@ -417,7 +417,7 @@ class CoreViewsTestCase(ServerTestCase):
                     ("llj.data->'rhythm'->'onset_rate'", "rhythm.onset_rate", None),
                     ("llj.data->'metadata'->'version'", "metadata.version", {}),
                     ("llj.data->'metadata'->'audio_properties'", "metadata.audio_properties", {})]
-        load_many_select_features.assert_called_with(recordings, features)
+        load_many_individual_features.assert_called_with(recordings, features)
 
         # upper-case MBID
         recordings = "c5f4909e-1d7b-4f15-a6f6-1AF376BC01C9"
@@ -425,7 +425,7 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5}
         }
-        load_many_select_features.return_value = expected_result
+        load_many_individual_features.return_value = expected_result
         resp = self.client.get('/api/v1/low-level/select?recording_ids={}&features={}'.format(recordings, features))
         self.assertEqual(resp.status_code, 200)
 
@@ -436,10 +436,10 @@ class CoreViewsTestCase(ServerTestCase):
         features = [("llj.data->'lowlevel'->'average_loudness'", "lowlevel.average_loudness", None),
                     ("llj.data->'metadata'->'version'", "metadata.version", {}),
                     ("llj.data->'metadata'->'audio_properties'", "metadata.audio_properties", {})]
-        load_many_select_features.assert_called_with(recordings, features)
+        load_many_individual_features.assert_called_with(recordings, features)
 
-    @mock.patch('db.data.load_many_select_features')
-    def test_get_bulk_select_features_absent(self, load_many_select_features):
+    @mock.patch('db.data.load_many_individual_features')
+    def test_get_bulk_individual_features_absent(self, load_many_individual_features):
         # Within MBID parameter, ones absent from the database are ignored.
         # Features that aren't in the list of available features are
         # ignored.
@@ -453,7 +453,7 @@ class CoreViewsTestCase(ServerTestCase):
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
             "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2}
         }
-        load_many_select_features.return_value = expected_result
+        load_many_individual_features.return_value = expected_result
 
         resp = self.client.get('/api/v1/low-level/select?recording_ids={}&features={}'.format(recordings, features))
         self.assertEqual(200, resp.status_code)
@@ -465,9 +465,9 @@ class CoreViewsTestCase(ServerTestCase):
         features = [("llj.data->'rhythm'->'onset_rate'", "rhythm.onset_rate", None),
                     ("llj.data->'metadata'->'version'", "metadata.version", {}),
                     ("llj.data->'metadata'->'audio_properties'", "metadata.audio_properties", {})]
-        load_many_select_features.assert_called_with(recordings, features)
+        load_many_individual_features.assert_called_with(recordings, features)
 
-    def test_get_bulk_select_features_more_than_25(self):
+    def test_get_bulk_individual_features_more_than_25(self):
         # Create many random uuids, because of parameter deduplication
         manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)

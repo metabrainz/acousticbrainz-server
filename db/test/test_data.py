@@ -597,7 +597,8 @@ class DataDBTestCase(DatabaseTestCase):
             self.test_mbid: {'0': hl1_expected},
         }
         self.assertEqual(expected, db.data.load_many_high_level(list(recordings), map_classes=True))
-    def test_load_many_select_features(self):
+
+    def test_load_many_individual_features(self):
         """Lowlevel data returned matches (mbid, offset) pairs. Only returns features that
         are specified, with lowlevel structure maintained.
         """
@@ -623,9 +624,9 @@ class DataDBTestCase(DatabaseTestCase):
                     ("llj.data->'tonal'->'key_key'", "tonal.key_key", None)]
 
         expected = json.loads(open(os.path.join(TEST_DATA_PATH, "lowlevel_select_features_response.json")).read())
-        self.assertEqual(expected, db.data.load_many_select_features(list(recordings), features))
+        self.assertEqual(expected, db.data.load_many_individual_features(list(recordings), features))
 
-    def test_load_many_select_features_none(self):
+    def test_load_many_individual_features_none(self):
         """If there is no data found for any of the specified recordings, 
         an empty dictionary is returned. If there is no data for a feature, 
         it is returned with the specified default value."""
@@ -642,7 +643,7 @@ class DataDBTestCase(DatabaseTestCase):
                     ("llj.data->'tonal'->'key_key'", "tonal.key_key", None)]
 
         expected = {}
-        self.assertEqual(expected, db.data.load_many_select_features(list(recordings), features))
+        self.assertEqual(expected, db.data.load_many_individual_features(list(recordings), features))
 
         # No existing data for a feature
         altered_data = copy.deepcopy(self.test_lowlevel_data)
@@ -670,7 +671,7 @@ class DataDBTestCase(DatabaseTestCase):
                         }
                     }
 
-        self.assertEqual(expected, db.data.load_many_select_features(list(recordings), features))
+        self.assertEqual(expected, db.data.load_many_individual_features(list(recordings), features))
 
     def test_count_lowlevel(self):
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)

@@ -25,7 +25,7 @@ bp_core = Blueprint('api_v1_core', __name__)
 #: The maximum number of items that you can pass as a recording_ids parameter to bulk lookup endpoints
 MAX_ITEMS_PER_BULK_REQUEST = 25
 
-# Individual features selectable in get_many_select_features.
+# Individual features selectable in get_many_individual_features.
 # Note: metadata.version and metadata.audio_properties will be included in all responses.
 AVAILABLE_FEATURES = {
     "lowlevel.average_loudness": ["llj.data->'lowlevel'->'average_loudness'", None], 
@@ -326,7 +326,7 @@ def get_many_highlevel():
     return jsonify(recording_details)
 
 
-def parse_select_features():
+def parse_individual_features():
     """Check whether the features are found or not.
     Parse the query string of features to create a list of 
     the json paths to features, excluding those that are 
@@ -375,7 +375,7 @@ def parse_select_features():
 
 @bp_core.route("/low-level/select", methods=["GET"])
 @crossdomain()
-def get_many_select_features():
+def get_many_individual_features():
     """Get a specified subset of low-level data for many recordings at once.
     
     **Example response**:
@@ -411,8 +411,8 @@ def get_many_select_features():
     :resheader Content-Type: *application/json*
     """
     recordings = check_bad_request_for_multiple_recordings()
-    parsed_features = parse_select_features()
-    recording_details = db.data.load_many_select_features(recordings, parsed_features)
+    parsed_features = parse_individual_features()
+    recording_details = db.data.load_many_individual_features(recordings, parsed_features)
 
     return jsonify(recording_details)
 

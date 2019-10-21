@@ -593,13 +593,13 @@ def load_many_high_level(recordings, map_classes=False):
         return dict(recordings_info)
 
 
-def load_many_select_features(recordings, features):
-    """Load select lowlevel features for multiple recordings.
+def load_many_individual_features(recordings, features):
+    """Load individual lowlevel features for multiple recordings.
     
     Args:
         recordings: A list of tuples (mbid, offset).
         features: Contains information about the
-        select features, a list of tuples of the form: 
+        individual features, a list of tuples of the form: 
             [(<feature_path>, <alias>, <default_type>), ...]
 
             <feature_path> is a string holding the path to a feature:
@@ -619,7 +619,7 @@ def load_many_select_features(recordings, features):
          "mbid-n": {"offset-1": {lowlevel document}}
         } 
     """
-    # Build string of select features with aliases
+    # Build string of individual features with aliases
     feature_string = features[0][0] + ' AS "' + features[0][1] + '", '
     for path, alias, _ in features[1:len(features)-1]:
         feature_string += path + ' AS "' +  alias + '", '

@@ -595,11 +595,11 @@ def load_many_high_level(recordings, map_classes=False):
 
 def load_many_individual_features(recordings, features):
     """Load individual lowlevel features for multiple recordings.
-    
+
     Args:
         recordings: A list of tuples (mbid, offset).
         features: Contains information about the
-        individual features, a list of tuples of the form: 
+        individual features, a list of tuples of the form:
             [(<feature_path>, <alias>, <default_type>), ...]
 
             <feature_path> is a string holding the path to a feature:
@@ -607,7 +607,7 @@ def load_many_individual_features(recordings, features):
 
             <alias> is a string alias for a feature:
             "lowlevel.feature_name"
-            
+
             <default_type> is the type to which a feature value will default
             if it is non-existent: None, {}, or [].
 
@@ -617,14 +617,40 @@ def load_many_individual_features(recordings, features):
                     "offset-n": {lowlevel document},
          ...
          "mbid-n": {"offset-1": {lowlevel document}}
-        } 
+        }
     """
-    # Build string of individual features with aliases
-    feature_string = features[0][0] + ' AS "' + features[0][1] + '", '
-    for path, alias, _ in features[1:len(features)-1]:
-        feature_string += path + ' AS "' +  alias + '", '
-    feature_string += features[len(features)-1][0] + ' AS "' + features[len(features)-1][1] + '"'
+    feature_string = build_feature_string(features)
+    recordings = bulk_get_recording_features(recordings, feature_string)
 
+    recordings_info = defaultdict(dict)
+    for row in recordings:
+        # Combine feature columns for each recording into dictionary
+        recordings_info[row['gid']][row['submission_offset']] = parse_features_row(row, features)
+
+    return dict(recordings_info)
+
+
+def build_feature_string(features):
+    # Build string of individual features with aliases
+    feature_string = ', '.join(' AS '.join([x[0], x[1].join(['"', '"'])]) for x in features)
+    return feature_string
+
+
+def bulk_get_recording_features(recordings, feature_string):
+    """Get individual features for many recordings from the
+    lowlevel_json table.
+
+    Args:
+        recordings: a list of tuples of the form (MBID, offset)
+        
+        feature_string: a string of the features that should
+        be collected, with their aliases.
+            e.g. "data->'lowlevel'->'mfccs' AS mfccs,
+                  data->'lowlevel'->'gfccs' AS gfccs"
+
+    Returns: result handle from sqlalchemy query, containing
+    rows of (ll.id, ll.submission_offset, feature_1, ..., feature_n)
+    """
     with db.engine.connect() as connection:
         query = text("""
             SELECT ll.gid::text
@@ -637,25 +663,67 @@ def load_many_individual_features(recordings, features):
                 IN :recordings
         """ % {'features': feature_string})
         result = connection.execute(query, {'recordings': tuple(recordings)})
+        return result.fetchall()
 
-        recordings_info = defaultdict(dict)
-        for row in result.fetchall():
-            # Build dictionary of feature columns
-            data = defaultdict(dict)
-            for _, alias, default_type in features:
-                current = temp = {}
-                alias_keys = alias.split('.')
-                for key in alias_keys[1:-1]:
-                    temp[key] = {}
-                    temp = temp[key]
-                if row[alias]:
-                    temp[alias_keys[-1]] = row[alias]
-                else:
-                    temp[alias_keys[-1]] = default_type
-                data[alias_keys[0]].update(current)
-            recordings_info[row['gid']][row['submission_offset']] = data
 
-        return dict(recordings_info)
+def parse_features_row(row, features):
+    """
+    Parse a row of the joined lowlevel and lowlevel_json tables
+    containing individual features of the lowlevel_json.data for
+    a single recording.
+ 
+    Args:
+        row: a row resulting from the sqlalchemy query, of the form:
+        (<gid>, <offset>, <feature_1>, ..., <feature_n>).
+
+            <gid> is the lowlevel.gid for the recording.
+
+            <offset> is the integer lowlevel.submission_offset.
+
+            <feature_1>, ..., <feature_n> are the individual features,
+            which can be accessed by indexing with their alias name.
+
+        features: a list of tuples of the form:
+        (<feature_path>, <alias>, <default_type>)
+            
+            <feature_path> is a string holding the path to a feature:
+            "llj.data->feature_name"
+
+            <alias> is a string alias for a feature:
+            "lowlevel.feature_name"
+
+            <default_type> is the type to which a feature value will default
+            if it is non-existent, depending on the alias from
+            :py:const:`~webserver.views.api.v1.core.AVAILABLE_FEATURES`
+
+    Returns:
+        data: dictionary of lowlevel data containing only the features
+        included in the parameter `features`. The dictionary follows the
+        structure of lowlevel_json.data, as defined by the aliases.
+
+            {
+                "lowlevel": {"feature_1": x,
+                            ...
+                             "feature_n"},
+            }
+
+        *Note*: If a feature in the parameter `features` does not exist
+        for the recording, the value of the feature will be its default
+        type.
+    """
+    data = defaultdict(dict)
+    for _, alias, default_type in features:
+        current = temp = {}
+        alias_keys = alias.split('.')
+        for key in alias_keys[1:-1]:
+            temp[key] = {}
+            temp = temp[key]
+        if row[alias]:
+            temp[alias_keys[-1]] = row[alias]
+        else:
+            temp[alias_keys[-1]] = default_type
+        data[alias_keys[0]].update(current)
+    return data
 
 
 def count_lowlevel(mbid):

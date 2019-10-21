@@ -345,8 +345,9 @@ def parse_individual_features():
             <alias> is a string alias for a feature:
             "lowlevel.feature_name"
 
-            <default_type> is the type to which a feature value will default,
-            if it is non-existent, depending on the alias from AVAILABLE_FEATURES.
+            <default_type> is the type to which a feature value will default
+            if it is non-existent, depending on the alias from
+            :py:const:`~webserver.views.api.v1.core.AVAILABLE_FEATURES`
     """
     features_param = request.args.get("features")
     if not features_param:
@@ -373,7 +374,7 @@ def parse_individual_features():
     return [x for x in parsed_features if not (x in ret or ret.append(x))]
 
 
-@bp_core.route("/low-level/select", methods=["GET"])
+@bp_core.route("/low-level/individual", methods=["GET"])
 @crossdomain()
 def get_many_individual_features():
     """Get a specified subset of low-level data for many recordings at once.

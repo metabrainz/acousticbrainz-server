@@ -358,7 +358,7 @@ class CoreViewsTestCase(ServerTestCase):
 
     def test_get_bulk_individual_features_no_params(self):
         # No parameters in bulk lookup results in an error
-        resp = self.client.get('/api/v1/low-level/select')
+        resp = self.client.get('/api/v1/low-level/individual')
         self.assertEqual(400, resp.status_code)
 
         # There are two params, but the recordings parameter is checked first
@@ -367,7 +367,7 @@ class CoreViewsTestCase(ServerTestCase):
 
         # Only recordings parameter missing
         features = "lowlevel.average_loudness;rhythm.onset_rate"
-        resp = self.client.get('/api/v1/low-level/select?features=%s' % features)
+        resp = self.client.get('/api/v1/low-level/individual?features=%s' % features)
         self.assertEqual(400, resp.status_code)
 
         expected_result = {"message": "Missing `recording_ids` parameter"}
@@ -375,7 +375,7 @@ class CoreViewsTestCase(ServerTestCase):
 
         # Only features parameter missing
         recordings = self.test_recording1_mbid + ';' + self.test_recording2_mbid
-        resp = self.client.get('/api/v1/low-level/select?recording_ids=%s' % recordings)
+        resp = self.client.get('/api/v1/low-level/individual?recording_ids=%s' % recordings)
         self.assertEqual(400, resp.status_code)
 
         expected_result = {"message": "Missing `features` parameter"}
@@ -406,7 +406,7 @@ class CoreViewsTestCase(ServerTestCase):
         }
         load_many_individual_features.return_value = expected_result
 
-        resp = self.client.get('/api/v1/low-level/select?recording_ids={}&features={}'.format(recordings, features))
+        resp = self.client.get('/api/v1/low-level/individual?recording_ids={}&features={}'.format(recordings, features))
         self.assertEqual(200, resp.status_code)
         self.assertEqual(expected_result, resp.json)
 
@@ -426,7 +426,7 @@ class CoreViewsTestCase(ServerTestCase):
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5}
         }
         load_many_individual_features.return_value = expected_result
-        resp = self.client.get('/api/v1/low-level/select?recording_ids={}&features={}'.format(recordings, features))
+        resp = self.client.get('/api/v1/low-level/individual?recording_ids={}&features={}'.format(recordings, features))
         self.assertEqual(resp.status_code, 200)
 
         # We expect that we get returned whatever we set the mock to, but the argument
@@ -455,7 +455,7 @@ class CoreViewsTestCase(ServerTestCase):
         }
         load_many_individual_features.return_value = expected_result
 
-        resp = self.client.get('/api/v1/low-level/select?recording_ids={}&features={}'.format(recordings, features))
+        resp = self.client.get('/api/v1/low-level/individual?recording_ids={}&features={}'.format(recordings, features))
         self.assertEqual(200, resp.status_code)
         self.assertEqual(expected_result, resp.json)
 
@@ -472,7 +472,7 @@ class CoreViewsTestCase(ServerTestCase):
         manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
         features = "lowlevel.average_loudness"
-        resp = self.client.get('/api/v1/low-level/select?recording_ids={}&features={}'.format(limit_exceed_url, features))
+        resp = self.client.get('/api/v1/low-level/individual?recording_ids={}&features={}'.format(limit_exceed_url, features))
         self.assertEqual(400, resp.status_code)
         self.assertEqual('More than 25 recordings not allowed per request', resp.json['message'])
 

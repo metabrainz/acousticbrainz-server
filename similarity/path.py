@@ -2,6 +2,8 @@ from __future__ import absolute_import
 import gzip
 import random
 import math
+import json
+from operator import itemgetter
 
 import db.data
 import db.exceptions
@@ -100,19 +102,31 @@ def get_path(rec_1, rec_2, max_tracks, metric):
     return final_path
 
 
+def percent_difference(v1, v2):
+    return int(100 * math.fabs(v1 - v2) / ((v2 + v1) / 2.0))
 
-def get_path_debug(rec_1, rec_2):
+def get_similar_tracks(rec_1, metrics):
 
-    max_tracks = 100
+    print metrics
+
+    max_tracks = 500
     try:
         id_1 = db.data.get_lowlevel_id(rec_1[0], rec_1[1])
-        id_2 = db.data.get_lowlevel_id(rec_2[0], rec_2[1])
+        mbid = str(rec_1[0])
+        offset = int(rec_1[1])
+        ll_origin = db.data.load_many_low_level(list([ (mbid, offset) ]))
+#        print(json.dumps(ll_origin, indent=2))
+        ll_origin = ll_origin[mbid]["0"]
+        hl_origin = db.data.load_many_high_level(list([ (mbid, offset) ]))
+        hl_origin = hl_origin[mbid]["0"]
     except db.exceptions.NoDataFoundException:
         raise similarity.exceptions.OdysseyException("The start/end MBID/Offset does not exist in the database.")
 
+    if not metrics:
+        metrics = similarity.metrics.BASE_METRICS
+
     results = {}
-    for metric in similarity.metrics.BASE_METRICS:
-        results[metric] = []
+    for metric in metrics:
 
         try:
             index = AnnoyModel(metric, load_existing=True)
@@ -122,14 +136,87 @@ def get_path_debug(rec_1, rec_2):
             raise similarity.exceptions.OdysseyException("No available index for the given metric and parameters.")
 
         try:
-            n_ids, n_recs, n_distances = index.get_nns_by_id(rec_1[0], max_tracks)
+            n_ids, n_recs, n_distances = index.get_nns_by_id(id_1, max_tracks)
         except similarity.exceptions.ItemNotFoundException:
             raise similarity.exceptions.OdysseyException("The id being queried was not found in the index.")
 
+#        print "Check metric %s -> %s" % (metric, len(n_ids)), n_distances
         for id, rec, dist in zip(n_ids, n_recs, n_distances):
-            results[metric].append((id, rec, dist))
+            try:
+                results[id]['sum'] += dist
+            except KeyError:
+                results[id] = { 'sum' : dist, 'metrics' : {} }
 
-    return jsonify(results)
+            results[id]['metrics'][metric] = dist
+
+    ids = [ id for id in results ]
+    mbids = db.data.get_mbids_by_ids(ids)
+    lowlevel = db.data.load_many_low_level(mbids)
+    hilevel = db.data.load_many_high_level(mbids)
+#    print(json.dumps(lowlevel[mbids[0][0]]["0"]["lowlevel"], indent=2))
+    threshold = 50
+    for id, mbid in zip(results, mbids):
+
+        try:
+            diff = percent_difference(ll_origin["lowlevel"]["spectral_energy"]["mean"], 
+                lowlevel[mbid[0]]["%d" % mbid[1]]["lowlevel"]["spectral_energy"]["mean"])
+            results[id]['metrics']['energy'] = "%.3f %d%%" % (lowlevel[mbid[0]]["%d" % mbid[1]]["lowlevel"]["spectral_energy"]["mean"], diff)
+            total_diff = diff
+
+            diff = percent_difference(ll_origin["rhythm"]["bpm"], 
+                lowlevel[mbid[0]]["%d" % mbid[1]]["rhythm"]["bpm"])
+            results[id]['metrics']['bpm'] = "%.3f %d%%" % (lowlevel[mbid[0]]["%d" % mbid[1]]["rhythm"]["bpm"], diff)
+            total_diff += diff
+
+            diff = percent_difference(hl_origin["highlevel"]["mood_acoustic"]["all"]["acoustic"], 
+                hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_acoustic"]["all"]["acoustic"])
+            results[id]['metrics']['acoustic'] = "%.3f %d%%" % (hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_acoustic"]["all"]["acoustic"], diff)
+            total_diff += diff
+
+            diff = percent_difference(hl_origin["highlevel"]["mood_aggressive"]["all"]["aggressive"], 
+                hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_aggressive"]["all"]["aggressive"])
+            results[id]['metrics']['aggressive'] = "%.3f %d%%" % (hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_aggressive"]["all"]["aggressive"], diff)
+            total_diff += diff
+
+            diff = percent_difference(hl_origin["highlevel"]["mood_electronic"]["all"]["electronic"], 
+                hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_electronic"]["all"]["electronic"])
+            results[id]['metrics']['electronic'] = "%.3f %d%%" % (hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_electronic"]["all"]["electronic"], diff)
+            total_diff += diff
+
+            diff = percent_difference(hl_origin["highlevel"]["mood_happy"]["all"]["happy"], 
+                hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_happy"]["all"]["happy"])
+            results[id]['metrics']['happy'] = "%.3f %d%%" % (hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_happy"]["all"]["happy"], diff)
+            total_diff += diff
+
+            diff = percent_difference(hl_origin["highlevel"]["mood_party"]["all"]["party"], 
+                hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_party"]["all"]["party"])
+            results[id]['metrics']['party'] = "%.3f %d%%" % (hilevel[mbid[0]]["%d" % mbid[1]]["highlevel"]["mood_party"]["all"]["party"], diff)
+            total_diff += diff
+
+        except KeyError:
+            results[id]['skip'] = True
+            continue
+
+        total_diff /= 7.0
+        results[id]['diff'] = total_diff
+        results[id]['metrics']['avg diff'] = "%d%%" % total_diff
+        if total_diff > threshold:
+            results[id]['skip'] = True
+        else:
+            results[id]['skip'] = False
+                
+
+    data = []
+    for id, mbid in zip(results, mbids):
+        if not results[id]['skip']: 
+            data.append({ 
+                'mbid' : mbid[0], 
+                'sum' : results[id]['sum'], 
+                'diff' : results[id]['diff'], 
+                'metrics' : results[id]['metrics'] 
+            })
+
+    return sorted(data, key=itemgetter('diff'))[0:100]
 
 
 

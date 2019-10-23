@@ -51,6 +51,25 @@ def generate_similarity_path(mbid_from, mbid_to):
     return jsonify(path)
 
 
+@bp_path.route("/similarity_path/similarity/<uuid:mbid_from>", methods=["GET"])
+def generate_similarity(mbid_from):
+    metric = request.args.get("metrics")
+    if metric:
+        metrics = metric.split(",")
+    else:
+        metrics = []
+    try:
+        path = similarity.path.get_similar_tracks((mbid_from, 0), metrics)
+    except NoDataFoundException:
+        abort(404)
+    except IndexError:
+        abort(500)
+    except SimilarityException:
+        abort(400)
+
+    return jsonify(path)
+
+
 @bp_path.route("/similarity_path/debug/<uuid:mbid_from>/<uuid:mbid_to>", methods=["GET"])
 def generate_similarity_path_debug(mbid_from, mbid_to):
     try:

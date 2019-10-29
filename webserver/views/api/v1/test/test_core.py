@@ -381,8 +381,6 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {"message": "Missing `features` parameter"}
         self.assertEqual(expected_result, resp.json)
 
-    # Once PR #349 adds conversion to lowercase in _parse_bulk_params, this skip should be removed
-    @unittest.skip('Conversion to lowercase in _parse_bulk_params not yet added via PR #349.')
     @mock.patch('db.data.load_many_individual_features')
     def test_get_bulk_individual_features(self, load_many_individual_features):
         """Check that many items are returned, including two offsets of the

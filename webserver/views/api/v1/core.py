@@ -10,8 +10,8 @@ import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
+from utils.container_utils import remove_duplicates
 from brainzutils.ratelimit import ratelimit
-from utils.remove_duplicates import remove_duplicates
 
 bp_core = Blueprint('api_v1_core', __name__)
 

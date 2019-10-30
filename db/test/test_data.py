@@ -673,6 +673,79 @@ class DataDBTestCase(DatabaseTestCase):
 
         self.assertEqual(expected, db.data.load_many_individual_features(list(recordings), features))
 
+    def test_build_feature_string(self):
+        """Check the string returned follows the pattern:
+           "<feature_path_1> AS <alias>, <feature_path_2> AS <alias>"
+        """
+        # If features is empty, empty string should be returned
+        features =  []
+        self.assertEqual("", db.data.build_feature_string(features))
+
+        features = [("llj.data->'lowlevel'->'average_loudness'", "lowlevel.average_loudness", None),
+                    ("llj.data->'lowlevel'->'dynamic_complexity'", "lowlevel.dynamic_complexity", None)]
+        expected_string = """llj.data->'lowlevel'->'average_loudness' AS \"lowlevel.average_loudness\", llj.data->'lowlevel'->'dynamic_complexity' AS \"lowlevel.dynamic_complexity\""""
+        self.assertEqual(expected_string, db.data.build_feature_string(features))
+
+    def test_bulk_get_feature_recordings(self):
+        # If all (MBID, offsets) are not present, empty array is returned
+        feature_string = """llj.data->'lowlevel'->'average_loudness' AS \"lowlevel.average_loudness\",
+                            llj.data->'metadata'->'tags' AS \"metadata.tags\""""
+        recordings = [(self.test_mbid, 0)]
+        self.assertEqual([], db.data.bulk_get_recording_features(recordings, feature_string))
+
+        # If an (MBID, offset) combination is not present in the database, it is skipped
+        # Only the individual features specified should be returned from query
+        recordings = [(self.test_mbid, 0), (self.test_mbid, 10)]
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+
+        # Whole groups of features (i.e. higher order keys from the lowlevel document)
+        # can be returned as dicts as well
+        expected_rows = [(self.test_mbid,
+                          '0',
+                          0.048737552017,
+                          {"acoustid_id": ["25343079-d20f-4827-9e83-840e278a67ff"],
+                           "album": ["Journey"],
+                           "albumartist": ["Austin Wintory"],
+                           "albumartistsort": ["Wintory, Austin"],
+                           "artist": ["Austin Wintory"],
+                           "artistsort": ["Wintory, Austin"],
+                           "artistwebpage": ["http://austinwintory.com/"],
+                           "date": ["2012"],
+                           "discnumber": ["1/1"],
+                           "file_name": "01 Nascence.mp3",
+                           "media": ["Digital Media"],
+                           "musicbrainz album release country": ["XW"],
+                           "musicbrainz album status": ["official"],
+                           "musicbrainz album type": ["album/soundtrack"],
+                           "musicbrainz_albumartistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                           "musicbrainz_albumid": ["1f3abcda-15a7-4465-92c6-9926cdc4f247"],
+                           "musicbrainz_artistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                           "musicbrainz_recordingid": ["0dad432b-16cc-4bf0-8961-fd31d124b01b"],
+                           "musicbrainz_releasegroupid": ["d1850227-c7c7-42c8-b469-6e99023412de"],
+                           "originaldate": ["2012"],
+                           "script": ["Latn"],
+                           "title": ["Nascence"],
+                           "tracknumber": ["1/18"]}
+        )]
+        self.assertEqual(expected_rows, db.data.bulk_get_recording_features(recordings, feature_string))
+
+    def test_parse_features_row_missing_feature(self):
+        """If a feature is missing from feature list or is not
+        present in lowlevel row, default type will be used."""
+        row = {"gid": self.test_mbid,
+               "submission_offset": 0,
+               "lowlevel.average_loudness": 0.048737552017,
+               "rhythm.bpm": None}
+        features = [("llj.data->'lowlevel'->'average_loudness'", "lowlevel.average_loudness", None),
+                    ("llj.data->'metadata'->'tags'", "metadata.tags", {}),
+                    ("llj.data->'rhythm'->'bpm'", "rhythm.bpm", None)]
+
+        # Row data is reconstructed to mirror lowlevel document structure
+        expected_dict = {"lowlevel": {"average_loudness": 0.048737552017},
+                         "metadata": {"tags": {}},
+                         "rhythm": {"bpm": None}}
+        self.assertEqual(expected_dict, db.data.parse_features_row(row, features))
+
     def test_count_lowlevel(self):
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(1, db.data.count_lowlevel(self.test_mbid))

@@ -407,7 +407,7 @@ def get_many_individual_features():
         
         Takes the form `feature1;feature2`.
 
-        The following features can be specified :py:const:`~webserver.views.api.v1.core.SELECTABLE_FEATURES` in a request.
+        The following features can be specified :py:const:`~webserver.views.api.v1.core.AVAILABLE_FEATURES` in a request.
     
     :resheader Content-Type: *application/json*
     """

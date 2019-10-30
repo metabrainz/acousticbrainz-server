@@ -631,7 +631,25 @@ def load_many_individual_features(recordings, features):
 
 
 def build_feature_string(features):
-    # Build string of individual features with aliases
+    """Build string of individual features with aliases for a PostgreSQL query.
+
+    Args:
+        features: Contains information about the
+        individual features, a list of tuples of the form:
+            [(<feature_path>, <alias>, <default_type>), ...]
+
+            <feature_path> is a string holding the path to a feature:
+            "llj.data->feature_name"
+
+            <alias> is a string alias for a feature:
+            "lowlevel.feature_name"
+
+            <default_type> is the type to which a feature value will default
+            if it is non-existent: None, {}, or [].
+
+    Returns: a string of the form:
+    "data->'lowlevel'->'mfccs' AS mfccs, data->'lowlevel'->'gfccs' AS gfccs"
+    """
     feature_string = ', '.join(' AS '.join([x[0], x[1].join(['"', '"'])]) for x in features)
     return feature_string
 
@@ -702,9 +720,9 @@ def parse_features_row(row, features):
         structure of lowlevel_json.data, as defined by the aliases.
 
             {
-                "lowlevel": {"feature_1": x,
+                "lowlevel": {"feature_name": feature_1,
                             ...
-                             "feature_n"},
+                             "feature_name": feature_n},
             }
 
         *Note*: If a feature in the parameter `features` does not exist
@@ -718,7 +736,7 @@ def parse_features_row(row, features):
         for key in alias_keys[1:-1]:
             temp[key] = {}
             temp = temp[key]
-        if row[alias]:
+        if alias in row.keys() and row[alias]:
             temp[alias_keys[-1]] = row[alias]
         else:
             temp[alias_keys[-1]] = default_type

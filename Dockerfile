@@ -48,6 +48,7 @@ WORKDIR /code
 # See https://github.com/MTG/gaia
 RUN git clone https://github.com/MTG/gaia /tmp/gaia \
     && cd /tmp/gaia \
+    && git checkout v2.4.5 \
     && ./waf configure --with-python-bindings \
     && ./waf \
     && ./waf install \
@@ -57,6 +58,7 @@ RUN git clone https://github.com/MTG/gaia /tmp/gaia \
 # See http://essentia.upf.edu/documentation/installing.html
 RUN git clone https://github.com/MTG/essentia /tmp/essentia \
     && cd /tmp/essentia \
+    && git checkout v2.1_beta4 \
     && ./waf configure --mode=release --with-gaia --with-example=streaming_extractor_music_svm \
     && ./waf \
     && ./waf install \

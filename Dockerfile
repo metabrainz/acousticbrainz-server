@@ -99,7 +99,7 @@ ARG deploy_env
 
 RUN pip install --no-cache-dir uWSGI==2.0.17.1
 RUN groupadd --gid 901 acousticbrainz
-RUN useradd --create-home --shell /bin/bash --uid 901 acousticbrainz
+RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
 
 RUN mkdir /cache_namespaces
 RUN chown -R www-data:www-data /cache_namespaces

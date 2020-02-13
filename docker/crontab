@@ -1,5 +1,5 @@
-# Compute stats
-5 * * * * root /usr/local/bin/python /code/manage.py compute_stats
+# Compute stats, 5 minutes past midnight
+5 0 * * * root /usr/local/bin/python /code/manage.py compute_stats
 
-# Cache stats
+# Cache stats, every 10 minutes
 */10 * * * * root /usr/local/bin/python /code/manage.py cache_stats

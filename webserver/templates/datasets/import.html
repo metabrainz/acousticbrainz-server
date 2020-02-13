@@ -14,8 +14,18 @@
     <div class="alert alert-info" role="alert">
       <strong>You can import datasets in <a href="https://en.wikipedia.org/wiki/Comma-separated_values">CSV</a> format.</strong>
       Each row in the file must contain information about a single recording.
-      First column is a MusicBrainz ID of recording, second is a name of the
-      class this recording needs to be associated with.
+      The first column is a MusicBrainz ID of recording, second is a name of the
+      class that this recording is a part of:
+        <figure class="highlight">
+            <pre>3e48bced-3faa-441a-beaa-1bf24a9201b2,pop<br>3b9b8b69-775a-488f-b9ab-28a6aa5853a7,rock</pre>
+        </figure>
+        You can optionally add a dataset description and class descriptions by using a <code>description</code> key:
+        <figure class="highlight">
+            <pre>description,A dataset of genres<br>description:rock,Songs that fall into the rock genre<br>description:pop,The subset of rock containing 'popular' music</pre>
+        </figure>
+        Description lines can go anywhere in the file, but we recommend that you add them at the top.
+        Any class with a description but with no recordings will not be imported.
+        A description in the CSV file will override the description field in the form.
     </div>
 
     {% for field in form.errors %}

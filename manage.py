@@ -5,13 +5,14 @@ import os
 import sys
 
 import click
-from brainzutils import cache
+from brainzutils import cache, ratelimit
 import flask.cli
 from flask import current_app
 from flask.cli import FlaskGroup
 from shutil import copyfile
 
 import db
+import db.data
 import db.dump
 import db.dump_manage
 import db.exceptions
@@ -172,9 +173,6 @@ def compute_stats():
     import datetime
     import pytz
     db.stats.compute_stats(datetime.datetime.now(pytz.utc))
-    incomplete = db.stats.has_incomplete_stats_rows()
-    if incomplete:
-        click.echo("Incomplete stats row detected", err=True)
 
 
 @cli.command(name='cache_stats')
@@ -239,9 +237,82 @@ def toggle_site_status():
         print('Done!')
 
 
+@cli.group()
+@click.pass_context
+def highlevel(ctx):
+    """Analyse highlevel results"""
+    pass
+
+
+@highlevel.command(name="list_failed_rows")
+@click.option("--verbose", "-v", is_flag=True, help="Lists failed highlevel rows.")
+def list_failed_rows(verbose):
+    """ Displays the number of rows which do not contain highlevel metadata
+
+    When run with -v, also output rowid, mbid, submission offset of each failed submission
+    """
+
+    try:
+        rows = db.data.get_failed_highlevel_submissions()
+        num_failed_rows = len(rows)
+        click.echo("Number of highlevel rows that failed processing: %s" % num_failed_rows)
+        if verbose:
+            click.echo("rowid,mbid,submission_offset")
+            for row in rows:
+                click.echo("%s,%s,%s" % (row["id"], row["gid"], row["submission_offset"]))
+
+    except db.exceptions.DatabaseException as e:
+        click.echo("Error: %s" % e, err=True)
+        sys.exit(1)
+
+
+@highlevel.command(name="remove_failed_rows")
+def remove_failed_rows():
+    """ Deletes highlevel rows which do not have highlevel metadata"""
+    try:
+        click.echo("removing failed highlevel rows...")
+        db.data.remove_failed_highlevel_submissions()
+        click.echo("done")
+    except db.exceptions.DatabaseException as e:
+        click.echo("Error: %s" % e, err=True)
+        sys.exit(1)
+
+
+@cli.command(name='set_rate_limits')
+@click.argument('per_ip', type=click.IntRange(1, None), required=False)
+@click.argument('window_size', type=click.IntRange(1, None), required=False)
+def set_rate_limits(per_ip, window_size):
+    """Set rate limit parameters for the AcousticBrainz webserver. If no arguments
+    are provided, print the current limits. To set limits, specify PER_IP and WINDOW_SIZE
+
+    \b
+    PER_IP: the number of requests allowed per IP address
+    WINDOW_SIZE: the window in number of seconds for how long the limit is applied
+    """
+
+    current_limit_per_ip = cache.get(ratelimit.ratelimit_per_ip_key)
+    current_limit_window = cache.get(ratelimit.ratelimit_window_key)
+
+    click.echo("Current values:")
+    if current_limit_per_ip is None and current_limit_window is None:
+        click.echo("No values set, showing limit defaults")
+        current_limit_per_ip = ratelimit.ratelimit_per_ip_default
+        current_limit_window = ratelimit.ratelimit_window_default
+    click.echo("Requests per IP: %s" % current_limit_per_ip)
+    click.echo("Window size (s): %s" % current_limit_window)
+
+    if per_ip is not None and window_size is not None:
+        if per_ip / float(window_size) < 1:
+            click.echo("Warning: Effective rate limit is less than 1 query per second")
+
+        ratelimit.set_rate_limits(per_ip, per_ip, window_size)
+        print("New ratelimit parameters set:")
+        click.echo("Requests per IP: %s" % per_ip)
+        click.echo("Window size (s): %s" % window_size)
+
+
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
-
 
 if __name__ == '__main__':
     cli()

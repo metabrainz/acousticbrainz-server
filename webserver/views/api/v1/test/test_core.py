@@ -35,6 +35,14 @@ class CoreViewsTestCase(ServerTestCase):
 
         resp = self.client.get("/api/v1/%s/low-level" % mbid)
         self.assertEqual(resp.status_code, 200)
+        self.assertIn('X-RateLimit-Limit', resp.headers)
+        self.assertIn('X-RateLimit-Remaining', resp.headers)
+        self.assertIn('X-RateLimit-Reset-In', resp.headers)
+        self.assertIn('X-RateLimit-Reset', resp.headers)
+
+        # upper-case MBID
+        resp = self.client.get("/api/v1/%s/low-level" % mbid.upper())
+        self.assertEqual(resp.status_code, 200)
 
     def test_submit_low_level(self):
         mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
@@ -116,14 +124,26 @@ class CoreViewsTestCase(ServerTestCase):
         self.assertEqual("Not found", resp.json["message"])
 
     @mock.patch("db.data.load_high_level")
+    def test_get_high_level(self, hl):
+        hl.return_value = {}
+        resp = self.client.get("/api/v1/%s/high-level" % self.uuid)
+        self.assertEqual(200, resp.status_code)
+        hl.assert_called_with(self.uuid, 0, False)
+
+        # upper-case
+        resp = self.client.get("/api/v1/%s/high-level" % self.uuid.upper())
+        self.assertEqual(200, resp.status_code)
+        hl.assert_called_with(self.uuid, 0, False)
+
+    @mock.patch("db.data.load_high_level")
     def test_hl_numerical_offset(self, hl):
         hl.return_value = {}
         resp = self.client.get("/api/v1/%s/high-level?n=3" % self.uuid)
         self.assertEqual(200, resp.status_code)
-        hl.assert_called_with(self.uuid, 3)
+        hl.assert_called_with(self.uuid, 3, False)
 
-    @mock.patch('db.data.load_low_level')
-    def test_get_bulk_ll_no_param(self, load_low_level):
+    @mock.patch('db.data.load_many_low_level')
+    def test_get_bulk_ll_no_param(self, load_many_low_level):
         # No parameter in bulk lookup results in an error
         resp = self.client.get('api/v1/low-level')
         self.assertEqual(resp.status_code, 400)
@@ -131,8 +151,8 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {"message": "Missing `recording_ids` parameter"}
         self.assertEqual(resp.json, expected_result)
 
-    @mock.patch('db.data.load_low_level')
-    def test_get_bulk_ll(self, load_low_level):
+    @mock.patch('db.data.load_many_low_level')
+    def test_get_bulk_ll(self, load_many_low_level):
         # Check that many items are returned, including two offsets of the
         # same mbid
 
@@ -143,7 +163,11 @@ class CoreViewsTestCase(ServerTestCase):
         rec_40_2 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"}
         rec_40_3 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"}
 
-        load_low_level.side_effect = [rec_c5, rec_7f, rec_40_2, rec_40_3]
+        load_many_low_level.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": rec_7f},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3}
+        }
 
         resp = self.client.get('api/v1/low-level?recording_ids=' + params)
         self.assertEqual(resp.status_code, 200)
@@ -155,23 +179,41 @@ class CoreViewsTestCase(ServerTestCase):
         }
         self.assertEqual(resp.json, expected_result)
 
-        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
-                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
-        load_low_level.assert_has_calls(calls)
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                      ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
+        load_many_low_level.assert_called_with(recordings)
 
-    @mock.patch('db.data.load_low_level')
-    def test_get_bulk_ll_absent_mbid(self, load_low_level):
+        # upper-case
+        params = "c5f4909e-1d7b-4f15-a6f6-1AF376BC01C9"
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5}
+        }
+        load_many_low_level.return_value = expected_result
+        resp = self.client.get('api/v1/low-level?recording_ids=' + params)
+        self.assertEqual(resp.status_code, 200)
+
+        # We expect that we get returned whatever we set the mock to, but the argument
+        # to load_many_high_level is always lower-case regardless of what we pass in
+        self.assertEqual(resp.json, expected_result)
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
+        load_many_low_level.assert_called_with(recordings)
+
+    @mock.patch('db.data.load_many_low_level')
+    def test_get_bulk_ll_absent_mbid(self, load_many_low_level):
         # Check that within a set of mbid parameters, the ones absent
         # from the database are ignored.
 
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
-        
+
         rec_c5 = {"recording": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"}
         rec_40_2 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"}
 
-        load_low_level.side_effect = [rec_c5, db.exceptions.NoDataFoundException, rec_40_2]
+        load_many_low_level.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2}
+        }
 
         resp = self.client.get('api/v1/low-level?recording_ids=' + params)
         self.assertEqual(resp.status_code, 200)
@@ -182,18 +224,18 @@ class CoreViewsTestCase(ServerTestCase):
         }
         self.assertEqual(resp.json, expected_result)
 
-        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
-                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
-        load_low_level.assert_has_calls(calls)
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                      ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
+        load_many_low_level.assert_called_with(recordings)
 
     def test_get_bulk_ll_more_than_200(self):
         # Create many random uuids, because of parameter deduplication
-        manyids = [str(uuid.uuid4()) for i in range(205)]
+        manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
         resp = self.client.get('api/v1/low-level?recording_ids=' + limit_exceed_url)
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
+        self.assertEqual('More than 25 recordings not allowed per request', resp.json['message'])
 
     @mock.patch('db.data.load_high_level')
     def test_get_bulk_hl_no_param(self, load_high_level):
@@ -204,8 +246,8 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {"message": "Missing `recording_ids` parameter"}
         self.assertDictEqual(resp.json, expected_result)
 
-    @mock.patch('db.data.load_high_level')
-    def test_get_bulk_ll(self, load_high_level):
+    @mock.patch('db.data.load_many_high_level')
+    def test_get_bulk_hl(self, load_many_high_level):
         # Check that many items are returned, including two offsets of the
         # same mbid
 
@@ -216,7 +258,11 @@ class CoreViewsTestCase(ServerTestCase):
         rec_40_2 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"}
         rec_40_3 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"}
 
-        load_high_level.side_effect = [rec_c5, rec_7f, rec_40_2, rec_40_3]
+        load_many_high_level.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": rec_7f},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3}
+        }
 
         resp = self.client.get('api/v1/high-level?recording_ids=' + params)
         self.assert200(resp)
@@ -228,14 +274,53 @@ class CoreViewsTestCase(ServerTestCase):
         }
         self.assertDictEqual(resp.json, expected_result)
 
-        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
-                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
-        load_high_level.assert_has_calls(calls)
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                      ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
+        load_many_high_level.assert_called_with(recordings, False)
 
-    @mock.patch('db.data.load_high_level')
-    def test_get_bulk_hl_absent_mbid(self, load_high_level):
+    @mock.patch('db.data.load_many_high_level')
+    def test_get_bulk_hl_map_classes(self, load_many_high_level):
+        # Check that many items are returned, including two offsets of the
+        # same mbid
+
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"
+
+        rec_c5 = {"recording": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"}
+
+        load_many_high_level.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+        }
+
+        resp = self.client.get('api/v1/high-level?map_classes=true&recording_ids=' + params)
+        self.assert200(resp)
+
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+        }
+        self.assertDictEqual(resp.json, expected_result)
+
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
+        load_many_high_level.assert_called_with(recordings, True)
+
+        # upper-case
+        params = "c5f4909e-1d7b-4f15-a6f6-1AF376BC01C9"
+        expected_result = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5}
+        }
+        load_many_high_level.return_value = expected_result
+        resp = self.client.get('api/v1/high-level?recording_ids=' + params)
+        self.assert200(resp)
+
+        # We expect that we get returned whatever we set the mock to, but the argument
+        # to load_many_high_level is always lower-case regardless of what we pass in
+        self.assertDictEqual(resp.json, expected_result)
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
+        load_many_high_level.assert_called_with(recordings, False)
+
+    @mock.patch('db.data.load_many_high_level')
+    def test_get_bulk_hl_absent_mbid(self, load_many_high_level):
         # Check that within a set of mbid parameters, the ones absent
         # from the database are ignored.
 
@@ -244,7 +329,10 @@ class CoreViewsTestCase(ServerTestCase):
         rec_c5 = {"recording": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"}
         rec_40_2 = {"recording": "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"}
 
-        load_high_level.side_effect = [rec_c5, db.exceptions.NoDataFoundException, rec_40_2]
+        load_many_high_level.return_value = {
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2}
+        }
 
         resp = self.client.get('api/v1/high-level?recording_ids=' + params)
         self.assert200(resp)
@@ -255,18 +343,18 @@ class CoreViewsTestCase(ServerTestCase):
         }
         self.assertDictEqual(resp.json, expected_result)
 
-        calls = [mock.call("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
-                 mock.call("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
-                 mock.call("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
-        load_high_level.assert_has_calls(calls)
+        recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                      ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                      ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
+        load_many_high_level.assert_called_with(recordings, False)
 
-    def test_get_bulk_hl_more_than_200(self):
+    def test_get_bulk_hl_more_than_25(self):
         # Create many random uuids, because of parameter deduplication
-        manyids = [str(uuid.uuid4()) for i in range(205)]
+        manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
         resp = self.client.get('api/v1/high-level?recording_ids=' + limit_exceed_url)
         self.assert400(resp)
-        self.assertEqual('More than 200 recordings not allowed per request', resp.json['message'])
+        self.assertEqual('More than 25 recordings not allowed per request', resp.json['message'])
 
     def submit_fake_data(self):
         mbids = ["c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
@@ -291,6 +379,14 @@ class CoreViewsTestCase(ServerTestCase):
                                  {"mbid": mbid,
                                   "count": expected_result[mbid]})
 
+        # upper-case
+        mbid = "7f27d7a9-27f0-4663-9d20-2c9c40200e6d"
+        resp = self.client.get('api/v1/%s/count' % mbid.upper())
+        self.assertEqual(resp.status_code, 200)
+        self.assertDictEqual(resp.json,
+                             {"mbid": mbid,
+                              "count": 1})
+
     def test_get_bulk_count_no_param(self):
         # No parameter in bulk lookup results in an error
         resp = self.client.get('api/v1/count')
@@ -298,7 +394,8 @@ class CoreViewsTestCase(ServerTestCase):
 
     def test_get_bulk_count(self):
         mbids = self.submit_fake_data()
-        resp = self.client.get('api/v1/count?recording_ids=' + ';'.join(mbids))
+        param = ';'.join(mbids)
+        resp = self.client.get('api/v1/count?recording_ids=' + param)
         self.assertEqual(resp.status_code, 200)
 
         expected_result = {
@@ -307,13 +404,18 @@ class CoreViewsTestCase(ServerTestCase):
         }
         self.assertDictEqual(resp.json, expected_result)
 
-    def test_get_bulk_count_more_than_200(self):
+        # upper-case
+        resp = self.client.get('api/v1/count?recording_ids=' + param.upper())
+        self.assertEqual(resp.status_code, 200)
+        self.assertDictEqual(resp.json, expected_result)
+
+    def test_get_bulk_count_more_than_25(self):
         # Create many random uuids, because of parameter deduplication
-        manyids = [str(uuid.uuid4()) for i in range(205)]
+        manyids = [str(uuid.uuid4()) for i in range(26)]
         limit_exceed_url = ";".join(manyids)
         resp = self.client.get('api/v1/count?recording_ids=' + limit_exceed_url)
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual('More than 200 recordings not allowed per request',
+        self.assertEqual('More than 25 recordings not allowed per request',
                          resp.json['message'])
 
 

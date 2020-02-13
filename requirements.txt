@@ -1,10 +1,9 @@
-git+https://github.com/metabrainz/brainzutils-python.git@v1.9.0
+git+https://github.com/metabrainz/brainzutils-python.git@v1.11.0
 Flask-Admin == 1.5.3
 Flask-Login == 0.4.1
 Flask-SQLAlchemy == 2.3.2
 Flask-Testing == 0.7.1
 Flask-WTF == 0.14.2
-Jinja2 == 2.10
 mock == 2.0.0
 musicbrainzngs == 0.6
 ndg-httpsclient==0.5.1

@@ -10,15 +10,38 @@ import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
+from brainzutils.ratelimit import ratelimit
 
 bp_core = Blueprint('api_v1_core', __name__)
 
 
-@bp_core.route("/<uuid:mbid>/count", methods=["GET"])
+# If this value is increased, ensure that it still fits within the uwsgi header size:
+# https://uwsgi-docs.readthedocs.io/en/latest/ThingsToKnow.html
+# > By default uWSGI allocates a very small buffer (4096 bytes) for the headers of each request.
+# > If you start receiving "invalid request block size" in your logs, it could mean you need a bigger buffer.
+# > Increase it (up to 65535) with the buffer-size option.
+
+#: The maximum number of items that you can pass as a recording_ids parameter to bulk lookup endpoints
+MAX_ITEMS_PER_BULK_REQUEST = 25
+
+
+@bp_core.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def count(mbid):
     """Get the number of low-level data submissions for a recording with a
     given MBID.
+
+    **Example response**:
+
+    .. sourcecode:: json
+
+        {
+            "mbid": mbid,
+            "count": n
+        }
+
+    MBID values are always lower-case, even if the provided recording MBID is upper-case or mixed case.
 
     :resheader Content-Type: *application/json*
     """
@@ -28,8 +51,9 @@ def count(mbid):
     })
 
 
-@bp_core.route("/<uuid:mbid>/low-level", methods=["GET"])
+@bp_core.route("/<uuid(strict=False):mbid>/low-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_low_level(mbid):
     """Get low-level data for a recording with a given MBID.
 
@@ -51,8 +75,9 @@ def get_low_level(mbid):
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
 
-@bp_core.route("/<uuid:mbid>/high-level", methods=["GET"])
+@bp_core.route("/<uuid(strict=False):mbid>/high-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_high_level(mbid):
     """Get high-level data for recording with a given MBID.
 
@@ -65,17 +90,20 @@ def get_high_level(mbid):
     endpoint.
 
     :query n: *Optional.* Integer specifying an offset for a document.
+    :query map_classes: *Optional.* If set to 'true', map class names to human-readable values
 
     :resheader Content-Type: *application/json*
     """
     offset = _validate_offset(request.args.get("n"))
+    map_classes = _validate_map_classes(request.args.get("map_classes"))
     try:
-        return jsonify(db.data.load_high_level(str(mbid), offset))
+        return jsonify(db.data.load_high_level(str(mbid), offset, map_classes))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
 
 @bp_core.route("/<uuid:mbid>/low-level", methods=["POST"])
+@ratelimit()
 def submit_low_level(mbid):
     """Submit low-level data to AcousticBrainz.
 
@@ -94,6 +122,18 @@ def submit_low_level(mbid):
     except BadDataException as e:
         raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
+
+
+def _validate_map_classes(map_classes):
+    """Validate the map_classes parameter
+
+    Arguments:
+        map_classes (Optional[str]): the value of the query parameter
+
+    Returns:
+        (bool): True if the map_classes parameter is 'true', False otherwise"""
+
+    return map_classes is not None and map_classes.lower() == 'true'
 
 
 def _validate_offset(offset):
@@ -124,7 +164,7 @@ def _parse_bulk_params(params):
     If an mbid is not valid, an APIBadRequest Exception is
     raised listing the bad MBID and no further processing is done.
 
-    Returns a list of tuples (mbid, offset)
+    Returns a list of tuples (mbid, offset). MBIDs are converted to lower-case
     """
 
     ret = []
@@ -148,7 +188,7 @@ def _parse_bulk_params(params):
         else:
             offset = 0
 
-        ret.append((recording_id, offset))
+        ret.append((recording_id.lower(), offset))
 
     # Remove duplicates, preserving order
     seen = set()
@@ -156,13 +196,20 @@ def _parse_bulk_params(params):
 
 
 def check_bad_request_for_multiple_recordings():
-    """Check whether the recording ids are not more than 200 
-    and whether the recording ids are found or not.
+    """
+    Check if a request for multiple recording ids is valid. The ?recording_ids parameter
+    to the current flask request is checked to see if it is present and if it follows
+    the format
+        mbid:n;mbid:n
+    where mbid is a recording MBID and n is an optional integer offset. If the offset is
+    missing or non-integer, it is replaced with 0
 
-    If recording_ids are missing, an APIBadRequest Exception is
-    raised stating the missing MBIDs message.
-    If there are more than 200 recordings, then an APIBadRequest Exception is raised.
-    In both cases, no further processing is done.
+    Returns:
+        a list of (mbid, offset) tuples representing the parsed query string.
+
+    Raises:
+        APIBadRequest if there is no recording_ids parameter, there are more than 25 MBIDs in the parameter,
+        or the format of the mbids or offsets are invalid
     """
     recording_ids = request.args.get("recording_ids")
 
@@ -170,30 +217,15 @@ def check_bad_request_for_multiple_recordings():
         raise webserver.views.api.exceptions.APIBadRequest("Missing `recording_ids` parameter")
 
     recordings = _parse_bulk_params(recording_ids)
-    if len(recordings) > 200:
-        raise webserver.views.api.exceptions.APIBadRequest("More than 200 recordings not allowed per request")
+    if len(recordings) > MAX_ITEMS_PER_BULK_REQUEST:
+        raise webserver.views.api.exceptions.APIBadRequest("More than %s recordings not allowed per request" % MAX_ITEMS_PER_BULK_REQUEST)
 
     return recordings
 
 
-def get_data_for_multiple_recordings(collect_data):
-    """Gets low-level and high-level data using the function collect_data
-    """
-    recordings = check_bad_request_for_multiple_recordings()
-
-    recording_details = {}
-
-    for recording_id, offset in recordings:
-        try:
-            recording_details.setdefault(recording_id, {})[offset] = collect_data(recording_id, offset)
-        except NoDataFoundException:
-            pass
-
-    return jsonify(recording_details)
-
-
 @bp_core.route("/low-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_many_lowlevel():
     """Get low-level data for many recordings at once.
 
@@ -206,9 +238,10 @@ def get_many_lowlevel():
         "mbid2": {"offset1": {document}}
        }
 
-    Offset keys are returned as strings, as per JSON encoding rules.
-    If an offset was not specified in the request for an mbid, the offset
-    will be 0.
+    MBIDs and offset keys are returned as strings (as per JSON encoding rules).
+    If an offset is not specified in the request for an MBID or is not a valid integer >=0,
+    the offset will be 0.
+    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -219,17 +252,22 @@ def get_many_lowlevel():
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
 
+      You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
+
     :resheader Content-Type: *application/json*
     """
-    recording_details = get_data_for_multiple_recordings(db.data.load_low_level)
-    return recording_details
+    recordings = check_bad_request_for_multiple_recordings()
+    recording_details = db.data.load_many_low_level(recordings)
+
+    return jsonify(recording_details)
 
 
 @bp_core.route("/high-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_many_highlevel():
     """Get high-level data for many recordings at once.
-    
+
     **Example response**:
 
     .. sourcecode:: json
@@ -239,9 +277,10 @@ def get_many_highlevel():
         "mbid2": {"offset1": {document}}
        }
 
-    Offset keys are returned as strings, as per JSON encoding rules.
-    If an offset was not specified in the request for an mbid, the offset
-    will be 0.
+    MBIDs and offset keys are returned as strings (as per JSON encoding rules).
+    If an offset is not specified in the request for an mbid or is not a valid integer >=0,
+    the offset will be 0.
+    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -252,14 +291,22 @@ def get_many_highlevel():
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
 
+      You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
+
+    :query map_classes: *Optional.* If set to 'true', map class names to human-readable values
+
     :resheader Content-Type: *application/json*
     """
-    recording_details = get_data_for_multiple_recordings(db.data.load_high_level)
-    return recording_details
+    map_classes = _validate_map_classes(request.args.get("map_classes"))
+    recordings = check_bad_request_for_multiple_recordings()
+    recording_details = db.data.load_many_high_level(recordings, map_classes)
+
+    return jsonify(recording_details)
 
 
 @bp_core.route("/count", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_many_count():
     """Get low-level count for many recordings at once. MBIDs not found in
     the database are omitted in the response.
@@ -272,9 +319,13 @@ def get_many_count():
         "mbid2": {"count": 1}
        }
 
+    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
+
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 
       Takes the form `mbid;mbid`.
+
+    You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
 
     :resheader Content-Type: *application/json*
     """

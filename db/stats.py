@@ -4,16 +4,19 @@ Values are stored in `statistics` table and are referenced by <name, timestamp>
 pair.
 """
 from brainzutils import cache
+from sqlalchemy.dialects.postgresql import JSONB
+
 import db
 import db.exceptions
 import datetime
 import pytz
 import calendar
 import six
+import json
 
-from sqlalchemy import text
+from sqlalchemy import text, bindparam
 
-STATS_CACHE_TIMEOUT = 60 * 10  # 10 minutes
+STATS_CACHE_TIMEOUT = 60 * 60  # 1 hour
 LAST_MBIDS_CACHE_TIMEOUT = 60  # 1 minute (this query is cheap)
 
 STATS_CACHE_KEY = "recent-stats"
@@ -74,12 +77,12 @@ def get_last_submitted_recordings():
 
 
 def compute_stats(to_date):
-    """Compute hourly stats to a given date and write them to
+    """Compute daily stats to a given date and write them to
     the database.
 
     Take the date of most recent statistics, or if no statistics
     are added, the earliest date of a submission, and compute and write
-    for every hour from that date to `to_date` the number of items
+    for every day from that date to `to_date` the number of items
     in the database.
 
     Args:
@@ -96,22 +99,28 @@ def compute_stats(to_date):
                 # If there are no lowlevel submissions, we stop
                 return
 
-        next_date = _get_next_hour(stats_date)
+        next_date = _get_next_day(stats_date)
 
         while next_date < to_date:
             stats = _count_submissions_to_date(connection, next_date)
             _write_stats(connection, next_date, stats)
-            next_date = _get_next_hour(next_date)
+            next_date = _get_next_day(next_date)
 
 
 def _write_stats(connection, date, stats):
     """Records a value with a given name and current timestamp."""
-    with connection.begin():
-        for name, value in six.iteritems(stats):
-            q = text("""
-                INSERT INTO statistics (collected, name, value)
-                     VALUES (:collected, :name, :value)""")
-            connection.execute(q, {"collected": date, "name": name, "value": value})
+
+    if len(stats) != len(stats_key_map):
+        raise ValueError("provided stats map is of unexpected size")
+    for k, v in stats.items():
+        try:
+            int(v)
+        except ValueError:
+            raise ValueError("value %s in map isn't an integer" % v)
+    query = text("""
+        INSERT INTO statistics (collected, stats)
+             VALUES (:collected, :stats)""").bindparams(bindparam('stats', type_=JSONB))
+    connection.execute(query, {"collected": date, "stats": stats})
 
 
 def add_stats_to_cache():
@@ -123,21 +132,6 @@ def add_stats_to_cache():
                   time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
         cache.set(STATS_CACHE_LAST_UPDATE_KEY, now,
                   time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
-
-
-def has_incomplete_stats_rows():
-    """Check if there are any statistics rows that are missing a key.
-    Returns: True if any stats hour has less than 6 stats keys, otherwise False"""
-
-    with db.engine.connect() as connection:
-        query = text("""
-            SELECT collected
-                 , count(name)
-              FROM statistics
-          GROUP BY collected
-            HAVING count(name) < :numitems""")
-        result = connection.execute(query, {"numitems": len(stats_key_map)})
-        return result.rowcount > 0
 
 
 def get_stats_summary():
@@ -161,8 +155,12 @@ def _get_stats_from_cache():
     """Get submission statistics from cache"""
     stats = cache.get(STATS_CACHE_KEY, namespace=STATS_CACHE_NAMESPACE)
     last_collected = cache.get(STATS_CACHE_LAST_UPDATE_KEY,
-                                  namespace=STATS_CACHE_NAMESPACE)
+                               namespace=STATS_CACHE_NAMESPACE)
 
+    # TODO: See BU-28, a datetime from the cache loses its timezone. In this case we
+    #       know that it's at utc, so force it
+    if last_collected:
+        last_collected = pytz.utc.localize(last_collected)
     return last_collected, stats
 
 
@@ -191,23 +189,10 @@ def format_statistics_for_highcharts(data):
 
 
 def load_statistics_data(limit=None):
-    # Postgres doesn't let you create a json dictionary using values
-    # from one column as keys and another column as values. Instead we
-    # create an array of {"name": name, "value": value} objects and change
-    # it in python
     args = {}
-    qtext = """
-            SELECT collected
-                 , json_agg(row_to_json(
-                    (SELECT r FROM (SELECT name, value) r) )) AS stats
-              FROM statistics
-             WHERE date_part('hour', timezone('UTC'::text, collected)) = 0 
-                OR collected = (SELECT collected
-                                  FROM statistics
-                              ORDER BY collected DESC
-                                 LIMIT 1)
-          GROUP BY collected
-          ORDER BY collected DESC
+    qtext = """SELECT collected, stats
+                 FROM statistics
+             ORDER BY collected DESC
           """
     if limit:
         args["limit"] = int(limit)
@@ -215,20 +200,21 @@ def load_statistics_data(limit=None):
     query = text(qtext)
     with db.engine.connect() as connection:
         stats_result = connection.execute(query, args)
-        ret = []
-        for line in stats_result:
-            row = {"collected": line["collected"], "stats": {}}
-            for stat in line["stats"]:
-                row["stats"][stat["name"]] = stat["value"]
-            ret.append(row)
-
-    # We order by DESC in order to use the `limit` parameter, but
-    # we actually need the stats in increasing order.
-    return list(reversed(ret))
+        # We order by DESC in order to use the `limit` parameter, but
+        # we actually need the stats in increasing order.
+        return list(reversed([dict(r) for r in stats_result]))
 
 
 def get_statistics_history():
-    return format_statistics_for_highcharts(load_statistics_data())
+    stats = load_statistics_data()
+    cached_stats_date, cached_stats = _get_stats_from_cache()
+    # If cached stats exist and it's newer than the most recent database stats,
+    # add it to the end. Don't add cached stats if there are no database stats
+    if cached_stats_date and stats:
+        last_stats_collected = stats[-1]["collected"]
+        if cached_stats_date > last_stats_collected:
+            stats.append({"collected": cached_stats_date, "stats": cached_stats})
+    return format_statistics_for_highcharts(stats)
 
 
 def _count_submissions_to_date(connection, to_date):
@@ -318,12 +304,13 @@ def _get_most_recent_stats_date(connection):
         return row[0]
 
 
-def _get_next_hour(date):
-    """Round up a date to the nearest hour:00:00.
+def _get_next_day(date):
+    """Round up a date to the nearest day:00:00:00
+
     Arguments:
-      date: a datetime
+        date: a datetime
     """
-    delta = datetime.timedelta(hours=1)
+    delta = datetime.timedelta(days=1)
     date = date + delta
-    date = date.replace(minute=0, second=0, microsecond=0)
+    date = date.replace(hour=0, minute=0, second=0, microsecond=0)
     return date

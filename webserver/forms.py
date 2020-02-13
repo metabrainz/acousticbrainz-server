@@ -14,12 +14,13 @@ DATASET_RUNNING = "running"
 DATASET_DONE = "done"
 DATASET_ALL = "all"
 
+
 class DatasetCSVImportForm(FlaskForm):
-    name = StringField("Name", validators=[DataRequired("Dataset name is required!")])
+    name = StringField("Name", validators=[DataRequired("Dataset name is required")])
     description = TextAreaField("Description")
     file = FileField("CSV file", validators=[
         FileRequired(),
-        FileAllowed(["csv"], "Dataset needs to be in CSV format!"),
+        FileAllowed(["csv"], "Dataset needs to be in CSV format"),
     ])
 
 

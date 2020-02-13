@@ -119,11 +119,28 @@ def _convert_dataset_to_csv_stringio(dataset):
 
     Returns:
         A rewound StringIO containing a CSV representation of the dataset"""
+
+    # We need to encode all text fields, because they may have non-ascii characters
+    #   - dataset description, class names, class descriptions
+    # TODO: On upgrade to python 3, check that stringio accepts the correct data
+    #       (may have to change to bytesio if we encode this data)
     fp = StringIO.StringIO()
     writer = csv.writer(fp)
 
+    # write dataset description only if it is set
+    if dataset["description"]:
+        description = dataset["description"]
+        writer.writerow(["description", description.encode("utf-8")])
+
     for ds_class in dataset["classes"]:
-        class_name = ds_class["name"]
+        # write class description only if it is set
+        if ds_class["description"]:
+            ds_class_description = ds_class["description"]
+            ds_class_desc_head = "description:" + ds_class["name"].encode("utf-8")
+            writer.writerow([ds_class_desc_head, ds_class_description.encode("utf-8")])
+
+    for ds_class in dataset["classes"]:
+        class_name = ds_class["name"].encode("utf-8")
         for rec in ds_class["recordings"]:
             writer.writerow([rec, class_name])
 
@@ -286,10 +303,11 @@ def create_service():
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
+        description, classes = _parse_dataset_csv(request.files[form.file.name])
         dataset_dict = {
             "name": form.name.data,
-            "description": form.description.data,
-            "classes": _parse_dataset_csv(request.files[form.file.name]),
+            "description": description if description else form.description.data,
+            "classes": classes,
             "public": True,
         }
         try:
@@ -297,25 +315,53 @@ def import_csv():
         except dataset_validator.ValidationException as e:
             raise BadRequest(str(e))
         flash.info("Dataset has been imported successfully.")
-        return redirect(url_for(".view", id=dataset_id))
+        return redirect(url_for(".view", dataset_id=dataset_id))
 
     else:
         return render_template("datasets/import.html", form=form)
 
 
 def _parse_dataset_csv(file):
-    classes_dict = defaultdict(list)
+    """Parse a csv file containing a representation of a dataset.
+    The csv file should have rows with 2 columns in one of the following forms:
+      <recording_id>,<classname>
+      description,<dataset_description>
+      description:<classname>,<class_description>
+
+    Arguments:
+        file: path to the csv file containing the dataset
+    Returns: a tuple of (dataset description, [classes]), where classes is a list of dictionaries
+             {"name": class name, "description": class description, "recordings": []}
+             a class is only returned if there are recordings for it. A class
+        """
+    classes_dict = defaultdict(lambda: {"description": None, "recordings": []})
+    dataset_description = None
     for class_row in csv.reader(file):
         if len(class_row) != 2:
             raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
-        classes_dict[class_row[1]].append(class_row[0])
+
+        if class_row[0] == "description":
+            # row is the dataset description
+            dataset_description = class_row[1]
+        elif (class_row[0])[:12] == "description:":
+            # row is a class description
+            class_name = class_row[0][12:]
+            classes_dict[class_name]["description"] = class_row[1]
+        else:
+            # row is a recording
+            classes_dict[class_row[1]]["recordings"].append(class_row[0])
+    
     classes = []
-    for name, recordings in six.iteritems(classes_dict):
-        classes.append({
-            "name": name,
-            "recordings": recordings,
-        })
-    return classes
+    
+    for name, class_data in six.iteritems(classes_dict):
+        if class_data["recordings"]:
+            classes.append({
+                "recordings": class_data["recordings"] if "recordings" in class_data else [],
+                "name": name,
+                "description": class_data["description"] if "description" in class_data else None,
+            })
+    
+    return dataset_description, classes
 
 
 @datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", ))

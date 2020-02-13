@@ -34,6 +34,11 @@ REDIS_PORT = 6379
 REDIS_NAMESPACE = "AB"
 REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache_namespaces')
 
+# RATE LIMITING
+# set a limit of per_ip requests per window seconds per unique ip address
+RATELIMIT_PER_IP = 100
+RATELIMIT_WINDOW = 10
+
 # LOGGING
 # Uncomment any of the following logging stubs if you want to enable logging
 # during development. In general you shouldn't need to do this.
@@ -68,3 +73,5 @@ FILE_STORAGE_DIR = "/data/files"
 
 #Feature Flags
 FEATURE_EVAL_LOCATION = False
+
+DEBUG_TB_INTERCEPT_REDIRECTS = False

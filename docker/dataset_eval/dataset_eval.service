@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cd /code && exec python worker_manage.py dataset_evaluator
+cd /code && exec chpst -uacousticbrainz:acousticbrainz python worker_manage.py dataset_evaluator

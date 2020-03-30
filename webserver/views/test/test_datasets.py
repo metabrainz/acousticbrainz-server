@@ -403,7 +403,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         with open(test_csv_file) as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
-                                    data={'name': 'dataset', 'file': (csv_data, 'dataset.csv')},
+                                    data={'name': 'dataset','public':True,  'file': (csv_data, 'dataset.csv')},
                                     content_type='multipart/form-data')
             # Validation succeeds, we redirect to the dataset view
             self.assertRedirects(resp, '/datasets/%s' % ds_id)

@@ -102,7 +102,7 @@ RUN groupadd --gid 901 acousticbrainz
 RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
 
 RUN mkdir /cache_namespaces
-RUN chown -R www-data:www-data /cache_namespaces
+RUN chown -R acousticbrainz:acousticbrainz /cache_namespaces
 
 # Consul template service is already set up, just need to copy the configuration
 COPY ./docker/consul-template.conf /etc/consul-template.conf

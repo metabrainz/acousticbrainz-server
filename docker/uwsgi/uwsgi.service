@@ -1,4 +1,4 @@
 #!/bin/bash
 
-exec uwsgi /etc/uwsgi/uwsgi.ini
+exec chpst -uacousticbrainz:acousticbrainz uwsgi /etc/uwsgi/uwsgi.ini
 

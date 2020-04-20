@@ -403,7 +403,7 @@ class DatasetsViewsTestCase(ServerTestCase):
 
         with open(test_csv_file) as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
-                                    data={'name': 'dataset','public':True,  'file': (csv_data, 'dataset.csv')},
+                                    data={'name': 'dataset', 'public': 'y',  'file': (csv_data, 'dataset.csv')},
                                     content_type='multipart/form-data')
             # Validation succeeds, we redirect to the dataset view
             self.assertRedirects(resp, '/datasets/%s' % ds_id)
@@ -412,6 +412,33 @@ class DatasetsViewsTestCase(ServerTestCase):
                 'description': 'a desc',
                 'classes': ['class_data'],
                 'public': True,
+            }
+            mock_create_from_dict.assert_called_with(expected_ds, self.test_user_id)
+
+    @mock.patch("webserver.views.datasets._parse_dataset_csv")
+    @mock.patch("db.dataset.create_from_dict")
+    def test_import_csv_private(self, mock_create_from_dict, mock_parse_dataset_csv):
+        """Upload a dataset with the visibility settings set to private"""
+        ds_id = '417fe34f-c124-47c0-b602-54d7164a8deb'
+        mock_create_from_dict.return_value = ds_id
+        mock_parse_dataset_csv.return_value = 'a desc', ['class_data']
+
+        self.temporary_login(self.test_user_id)
+        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset.csv')
+
+        with open(test_csv_file) as csv_data:
+            # Because the 'public' flag is a checkbox, unticking it has the result of
+            # not sending the field with the request, therefore it's not in data, below
+            resp = self.client.post(url_for('datasets.import_csv'),
+                                    data={'name': 'dataset', 'file': (csv_data, 'dataset.csv')},
+                                    content_type='multipart/form-data')
+            # Validation succeeds, we redirect to the dataset view
+            self.assertRedirects(resp, '/datasets/%s' % ds_id)
+            expected_ds = {
+                'name': 'dataset',
+                'description': 'a desc',
+                'classes': ['class_data'],
+                'public': False,
             }
             mock_create_from_dict.assert_called_with(expected_ds, self.test_user_id)
 

@@ -8,8 +8,10 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
     && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 # Install dependencies
+# Hadolint DL4006
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Node
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
+RUN wget -q -O - https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
     && apt-get install -y --no-install-recommends \
                        build-essential \
                        ca-certificates \
@@ -126,7 +128,7 @@ COPY ./docker/dataset_eval/dataset_eval.service /etc/service/dataset_eval/run
 RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs
-ADD docker/crontab /etc/cron.d/acousticbrainz
+COPY docker/crontab /etc/cron.d/acousticbrainz
 RUN chmod 0644 /etc/cron.d/acousticbrainz
 RUN touch /etc/service/cron/down
 

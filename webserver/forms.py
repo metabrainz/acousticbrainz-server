@@ -1,3 +1,4 @@
+
 from wtforms import BooleanField, SelectField, StringField, TextAreaField
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
@@ -22,6 +23,7 @@ class DatasetCSVImportForm(FlaskForm):
         FileRequired(),
         FileAllowed(["csv"], "Dataset needs to be in CSV format"),
     ])
+    public = BooleanField('Make this dataset public')
 
 
 class DatasetEvaluationForm(FlaskForm):
@@ -35,4 +37,3 @@ class DatasetEvaluationForm(FlaskForm):
         default = DATASET_EVAL_LOCAL
     )
     normalize = BooleanField("Normalize classes")
-

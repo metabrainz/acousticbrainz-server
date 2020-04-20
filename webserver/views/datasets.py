@@ -308,8 +308,9 @@ def import_csv():
             "name": form.name.data,
             "description": description if description else form.description.data,
             "classes": classes,
-            "public": True,
+            "public": form.public.data,
         }
+        
         try:
             dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
         except dataset_validator.ValidationException as e:

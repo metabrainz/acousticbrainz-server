@@ -132,7 +132,7 @@ COPY docker/crontab /etc/cron.d/acousticbrainz
 RUN chmod 0644 /etc/cron.d/acousticbrainz
 RUN touch /etc/service/cron/down
 
-COPY ./docker/$deploy_env/rc.local /etc/rc.local
+COPY ./docker/rc.local /etc/rc.local
 
 COPY . /code
 RUN /code/node_modules/.bin/gulp

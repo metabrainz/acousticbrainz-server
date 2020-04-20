@@ -2,6 +2,7 @@
 
 # ./test.sh                bring up, make database, test, bring down
 # for development:
+# ./test.sh -b             run docker-compose build
 # ./test.sh -u             bring up background and load database if needed
 # ./test.sh [params]       run tests, passing optional params to inner test
 # ./test.sh -s             stop test containers without removing
@@ -40,7 +41,7 @@ function setup {
     echo "Running setup"
     # PostgreSQL Database initialization
     docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME run --rm acousticbrainz dockerize -wait tcp://db:5432 -timeout 60s \
-                bash -c "python manage.py init_db"
+                bash -c "python manage.py init_db --force"
 }
 
 function is_db_running {
@@ -77,11 +78,18 @@ function dcdown {
     docker-compose -f $COMPOSE_FILE_LOC \
                    -p $COMPOSE_PROJECT_NAME \
                down
+    docker volume rm -f acousticbrainztest_postgres
 }
 
 # Exit immediately if a command exits with a non-zero status.
 # set -e
 #trap cleanup EXIT  # Cleanup after tests finish running
+
+if [ "$1" == "-b" ]; then
+    echo "Building containers"
+    build
+    exit 0
+fi
 
 if [ "$1" == "-s" ]; then
     echo "Stopping containers"

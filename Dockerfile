@@ -9,7 +9,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 # Install dependencies
 # Node
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt-get update \
     && apt-get install -y --no-install-recommends \
                        build-essential \
                        ca-certificates \

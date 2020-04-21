@@ -27,43 +27,6 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 logging.basicConfig(level=logging.INFO)
 
 
-@cli.command(name='runserver')
-@click.option('--host', '-h', default='0.0.0.0',
-              help='The interface to bind to.')
-@click.option('--port', '-p', default=8080,
-              help='The port to bind to.')
-@click.option('--debugger/--no-debugger', default=None,
-              help='Enable or disable the debugger. By default the debugger '
-              'is active if debug is enabled.')
-@flask.cli.pass_script_info
-def runserver(info, host, port, debugger):
-    """Run a local development server.
-    This server is for development purposes only. It does not provide
-    the stability, security, or performance of production WSGI servers.
-    The reloader and debugger are enabled by default if
-    FLASK_ENV=development or FLASK_DEBUG=1.
-
-    This is a copy of flask.cli.run_command, which passes the additional
-    argument `extra_files` to `run_simple`. Some defaults are set that are
-    available as options in the original method."""
-
-    debug = flask.helpers.get_debug_flag()
-    reload = debug
-
-    if debugger is None:
-        debugger = debug
-
-    eager_loading = not reload
-
-    flask.cli.show_server_banner(flask.helpers.get_env(), debug, info.app_import_path, eager_loading)
-    app = flask.cli.DispatchingApp(info.load_app, use_eager_loading=eager_loading)
-    reload_on_files = info.load_app().config['RELOAD_ON_FILES']
-
-    from werkzeug.serving import run_simple
-    run_simple(host, port, app, use_reloader=reload, use_debugger=debugger,
-               extra_files=reload_on_files)
-
-
 @cli.command(name='init_db')
 @click.option("--force", "-f", is_flag=True, help="Drop existing database and user.")
 @click.argument("archive", type=click.Path(exists=True), required=False)

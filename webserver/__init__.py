@@ -110,14 +110,19 @@ def create_app(debug=None):
 
     # Static files
     import static_manager
-    static_manager.read_manifest()
 
     # Template utilities
     app.jinja_env.add_extension('jinja2.ext.do')
     from webserver import utils
     app.jinja_env.filters['date'] = utils.reformat_date
     app.jinja_env.filters['datetime'] = utils.reformat_datetime
-    app.context_processor(lambda: dict(get_static_path=static_manager.get_static_path))
+    # During development, built js and css assets don't have a hash, but in production we use
+    # a manifest to map a name to name.hash.extension for caching/cache busting
+    if app.debug:
+        app.context_processor(lambda: dict(get_static_path=static_manager.development_get_static_path))
+    else:
+        static_manager.read_manifest()
+        app.context_processor(lambda: dict(get_static_path=static_manager.manifest_get_static_path))
 
     _register_blueprints(app)
 

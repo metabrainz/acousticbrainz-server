@@ -133,4 +133,4 @@ RUN touch /etc/service/cron/down
 COPY ./docker/$deploy_env/rc.local /etc/rc.local
 
 COPY . /code
-RUN /code/node_modules/.bin/gulp
+RUN npm run build:prod

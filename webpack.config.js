@@ -1,6 +1,7 @@
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 const production = process.env.NODE_ENV === 'production';
 
@@ -16,8 +17,8 @@ let config = {
         main: ['./styles/main.less']
     },
     output: {
-        chunkFilename: production ? 'js/[name].[chunkhash].js' : 'js/[name].js',
-        filename: production ? 'js/[name].[chunkhash].js' : 'js/[name].js',
+        chunkFilename: production ? '[name].[chunkhash].js' : '[name].js',
+        filename: production ? '[name].[chunkhash].js' : '[name].js',
         path: path.resolve(__dirname, 'webserver', 'static', 'build'),
         publicPath: '/static/build/'
     },
@@ -54,7 +55,14 @@ let config = {
             }
         ],
     },
-    plugins: [new ManifestPlugin(), new MiniCssExtractPlugin()]
+    plugins: [
+        new ManifestPlugin(),
+        new MiniCssExtractPlugin({
+            filename: production ? '[name].[chunkhash].css' : '[name].css',
+            chunkFilename: production ? '[name].[chunkhash].css' : '[name].css'
+        }),
+        new CleanWebpackPlugin()
+    ]
 };
 
 module.exports = config;

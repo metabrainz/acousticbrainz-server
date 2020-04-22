@@ -1,3 +1,4 @@
+var PropTypes = require('prop-types');
 /*
  This is a dataset editor. It works in two modes:
  - create (creates new dataset from scratch)
@@ -12,6 +13,7 @@
  mounted, it pull existing dataset for editing from the server.
  */
 var React = require('react');
+var createReactClass = require('create-react-class');
 var ReactDOM = require('react-dom');
 
 var CONTAINER_ELEMENT_ID = "dataset-editor";
@@ -45,16 +47,15 @@ var SECTION_CLASS_DETAILS = "class_details";
    - SECTION_CLASS_DETAILS (editing specific class; this also requires
      active_class_index variable to be set in Dataset state)
  */
-var Dataset = React.createClass({
-    getInitialState: function () {
-        return {
-            autoAddRecording: false,
-            mode: container.dataset.mode,
-            active_section: SECTION_DATASET_DETAILS,
-            data: null
-        };
-    },
-    componentDidMount: function() {
+class Dataset extends React.Component {
+    state = {
+        autoAddRecording: false,
+        mode: container.dataset.mode,
+        active_section: SECTION_DATASET_DETAILS,
+        data: null
+    };
+
+    componentDidMount() {
         // This function is invoked when Dataset component is originally
         // mounted. Here we need to check what mode dataset editor is in, and
         // pull data from the server if mode is MODE_EDIT.
@@ -68,7 +69,7 @@ var Dataset = React.createClass({
                 return;
             }
             $.get("/datasets/service/" + container.dataset.editId + "/json", function(result) {
-                if (this.isMounted()) { this.setState({data: result}); }
+                this.setState({data: result});
             }.bind(this));
         } else {
             if (this.state.mode != MODE_CREATE) {
@@ -84,25 +85,29 @@ var Dataset = React.createClass({
                 }
             });
         }
-    },
-    handleDetailsUpdate: function (name, description) {
+    }
+
+    handleDetailsUpdate = (name, description) => {
         var nextStateData = this.state.data;
         nextStateData.name = name;
         nextStateData.description = description;
         this.setState({data: nextStateData});
-    },
-    handlePrivacyUpdate: function () {
+    };
+
+    handlePrivacyUpdate = () => {
         var nextStateData = this.state.data;
         nextStateData.public = this.refs.public.checked;
         this.setState({data: nextStateData});
-    },
-    handleReturn: function () {
+    };
+
+    handleReturn = () => {
         this.setState({
             active_section: SECTION_DATASET_DETAILS,
             active_class_index: undefined
         });
-    },
-    handleClassCreate: function () {
+    };
+
+    handleClassCreate = () => {
         var nextStateData = this.state.data;
         nextStateData.classes.push({
             name: "",
@@ -110,29 +115,34 @@ var Dataset = React.createClass({
             recordings: []
         });
         this.setState({data: nextStateData});
-    },
-    handleClassEdit: function (index) {
+    };
+
+    handleClassEdit = (index) => {
         this.setState({
             active_section: SECTION_CLASS_DETAILS,
             active_class_index: index
         });
-    },
-    handleClassDelete: function (index) {
+    };
+
+    handleClassDelete = (index) => {
         var data = this.state.data;
         data.classes.splice(index, 1);
         this.setState({data: data});
-    },
-    handleClassUpdate: function (index, name, description, recordings) {
+    };
+
+    handleClassUpdate = (index, name, description, recordings) => {
         var data = this.state.data;
         data.classes[index].name = name;
         data.classes[index].description = description;
         data.classes[index].recordings = recordings;
         this.setState({data: data});
-    },
-    handleAutoAddRecordingUpdate: function (autoAddRecording) {
+    };
+
+    handleAutoAddRecordingUpdate = (autoAddRecording) => {
         this.setState({autoAddRecording: autoAddRecording});
-    },
-    render: function () {
+    };
+
+    render() {
         if (this.state.data) {
             if (this.state.active_section == SECTION_DATASET_DETAILS) {
                 // TODO: Move ClassList into DatasetDetails
@@ -182,24 +192,25 @@ var Dataset = React.createClass({
             return (<strong>Loading...</strong>);
         }
     }
-});
-
+}
 
 // Classes used with SECTION_DATASET_DETAILS:
 
-var DatasetDetails = React.createClass({
-    propTypes: {
-        name: React.PropTypes.string.isRequired,
-        description: React.PropTypes.string.isRequired,
-        onDetailsUpdate: React.PropTypes.func.isRequired
-    },
-    handleDetailsUpdate: function () {
+class DatasetDetails extends React.Component {
+    static propTypes = {
+        name: PropTypes.string.isRequired,
+        description: PropTypes.string.isRequired,
+        onDetailsUpdate: PropTypes.func.isRequired
+    };
+
+    handleDetailsUpdate = () => {
         this.props.onDetailsUpdate(
             this.refs.name.value,
             this.refs.description.value
         );
-    },
-    render: function () {
+    };
+
+    render() {
         return (
             <div className="dataset-details">
                 <h2 className="page-title">
@@ -217,14 +228,20 @@ var DatasetDetails = React.createClass({
             </div>
         );
     }
-});
+}
 
-var DatasetControlButtons = React.createClass({
-    propTypes: {
-        mode: React.PropTypes.string.isRequired,
-        data: React.PropTypes.object.isRequired
-    },
-    handleSubmit: function (e) {
+class DatasetControlButtons extends React.Component {
+    static propTypes = {
+        mode: PropTypes.string.isRequired,
+        data: PropTypes.object.isRequired
+    };
+
+    state = {
+        enabled: true,
+        errorMsg: null
+    };
+
+    handleSubmit = (e) => {
         e.preventDefault();
         this.setState({
             enabled: false,
@@ -259,18 +276,14 @@ var DatasetControlButtons = React.createClass({
                 });
             }
         });
-    },
-    handleCancel: function (e) {
+    };
+
+    handleCancel = (e) => {
         e.preventDefault();
         history.back();
-    },
-    getInitialState: function () {
-        return {
-            enabled: true,
-            errorMsg: null
-        };
-    },
-    render: function () {
+    };
+
+    render() {
         var buttonText = "Submit";
         if (this.props.mode == MODE_EDIT) {
             buttonText = "Update";
@@ -294,16 +307,17 @@ var DatasetControlButtons = React.createClass({
             </div>
         );
     }
-});
+}
 
-var ClassList = React.createClass({
-    propTypes: {
-        classes: React.PropTypes.array.isRequired,
-        onClassCreate: React.PropTypes.func.isRequired,
-        onClassEdit: React.PropTypes.func.isRequired,
-        onClassDelete: React.PropTypes.func.isRequired
-    },
-    render: function () {
+class ClassList extends React.Component {
+    static propTypes = {
+        classes: PropTypes.array.isRequired,
+        onClassCreate: PropTypes.func.isRequired,
+        onClassEdit: PropTypes.func.isRequired,
+        onClassDelete: PropTypes.func.isRequired
+    };
+
+    render() {
         var items = [];
         this.props.classes.forEach(function (cls, index) {
             items.push(<Class id={index}
@@ -328,26 +342,29 @@ var ClassList = React.createClass({
             </div>
         );
     }
-});
+}
 
-var Class = React.createClass({
-    propTypes: {
-        id: React.PropTypes.number.isRequired,
-        name: React.PropTypes.string.isRequired,
-        description: React.PropTypes.string.isRequired,
-        recordingCounter: React.PropTypes.number.isRequired,
-        onClassDelete: React.PropTypes.func.isRequired,
-        onClassEdit: React.PropTypes.func.isRequired
-    },
-    handleDelete: function (event) {
+class Class extends React.Component {
+    static propTypes = {
+        id: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+        description: PropTypes.string.isRequired,
+        recordingCounter: PropTypes.number.isRequired,
+        onClassDelete: PropTypes.func.isRequired,
+        onClassEdit: PropTypes.func.isRequired
+    };
+
+    handleDelete = (event) => {
         event.preventDefault();
         this.props.onClassDelete(this.props.id);
-    },
-    handleEdit: function (event) {
+    };
+
+    handleEdit = (event) => {
         event.preventDefault();
         this.props.onClassEdit(this.props.id);
-    },
-    render: function () {
+    };
+
+    render() {
         var name = this.props.name;
         if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
         var recordingsCounterText = this.props.recordingCounter.toString() + " ";
@@ -366,40 +383,42 @@ var Class = React.createClass({
             </div>
         );
     }
-});
-
+}
 
 // Classes used with SECTION_CLASS_DETAILS:
 
-var ClassDetails = React.createClass({
-    propTypes: {
-        id: React.PropTypes.number.isRequired,
-        name: React.PropTypes.string.isRequired,
-        description: React.PropTypes.string.isRequired,
-        recordings: React.PropTypes.array.isRequired,
-        datasetName: React.PropTypes.string.isRequired,
-        onReturn: React.PropTypes.func.isRequired,
-        onClassUpdate: React.PropTypes.func.isRequired,
-        autoAddRecording: React.PropTypes.bool.isRequired,
-        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
-    },
-    handleClassUpdate: function() {
+class ClassDetails extends React.Component {
+    static propTypes = {
+        id: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+        description: PropTypes.string.isRequired,
+        recordings: PropTypes.array.isRequired,
+        datasetName: PropTypes.string.isRequired,
+        onReturn: PropTypes.func.isRequired,
+        onClassUpdate: PropTypes.func.isRequired,
+        autoAddRecording: PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: PropTypes.func.isRequired
+    };
+
+    handleClassUpdate = () => {
         this.props.onClassUpdate(
             this.props.id,
             this.refs.name.value,
             this.refs.description.value,
             this.props.recordings
         );
-    },
-    handleRecordingsUpdate: function (recordings) {
+    };
+
+    handleRecordingsUpdate = (recordings) => {
         this.props.onClassUpdate(
             this.props.id,
             this.props.name,
             this.props.description,
             recordings
         );
-    },
-    render: function () {
+    };
+
+    render() {
         return (
             <div className="class-details">
                 <h3>
@@ -432,29 +451,32 @@ var ClassDetails = React.createClass({
             </div>
         );
     }
-});
+}
 
-var Recordings = React.createClass({
-    propTypes: {
-        recordings: React.PropTypes.array.isRequired,
-        onRecordingsUpdate: React.PropTypes.func.isRequired,
-        autoAddRecording: React.PropTypes.bool.isRequired,
-        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
-    },
-    handleRecordingSubmit: function (mbid) {
+class Recordings extends React.Component {
+    static propTypes = {
+        recordings: PropTypes.array.isRequired,
+        onRecordingsUpdate: PropTypes.func.isRequired,
+        autoAddRecording: PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: PropTypes.func.isRequired
+    };
+
+    handleRecordingSubmit = (mbid) => {
         var recordings = this.props.recordings;
         recordings.push(mbid);
         this.props.onRecordingsUpdate(recordings);
-    },
-    handleRecordingDelete: function (mbid) {
+    };
+
+    handleRecordingDelete = (mbid) => {
         var recordings = this.props.recordings;
         var index = recordings.indexOf(mbid);
         if (index > -1) {
             recordings.splice(index, 1);
         }
         this.props.onRecordingsUpdate(recordings);
-    },
-    render: function () {
+    };
+
+    render() {
         return (
             <div>
                 <h4>Recordings</h4>
@@ -469,17 +491,20 @@ var Recordings = React.createClass({
             </div>
         );
     }
-});
+}
 
 var RECORDING_MBID_RE = /^(https?:\/\/(?:beta\.)?musicbrainz\.org\/recording\/)?([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i;
 
-var RecordingAddForm = React.createClass({
+var RecordingAddForm = createReactClass({
+    displayName: 'RecordingAddForm',
+
     propTypes: {
-        recordings: React.PropTypes.array.isRequired,
-        onRecordingSubmit: React.PropTypes.func.isRequired,
-        autoAddRecording: React.PropTypes.bool.isRequired,
-        onAutoAddRecordingUpdate: React.PropTypes.func.isRequired
+        recordings: PropTypes.array.isRequired,
+        onRecordingSubmit: PropTypes.func.isRequired,
+        autoAddRecording: PropTypes.bool.isRequired,
+        onAutoAddRecordingUpdate: PropTypes.func.isRequired
     },
+
     addMbid: function() {
         var mbid = this.refs.mbid.value.trim();
         mbid = RECORDING_MBID_RE.exec(mbid)[2];
@@ -491,10 +516,12 @@ var RecordingAddForm = React.createClass({
         this.refs.mbid.value = '';
         this.setState(this.getInitialState());
     },
+
     handleSubmit: function (event) {
         event.preventDefault();
         this.addMbid();
     },
+
     handleChange: function () {
         var mbidField = this.refs.mbid.value;
         var isValidUUID = RECORDING_MBID_RE.test(mbidField);
@@ -514,6 +541,7 @@ var RecordingAddForm = React.createClass({
             this.addMbid();
         }
     },
+
     getInitialState: function () {
         return {
             validUUID: false,
@@ -522,9 +550,11 @@ var RecordingAddForm = React.createClass({
             length: 0
         };
     },
+
     changeAutoAddRecording: function(event) {
         this.props.onAutoAddRecordingUpdate(!this.props.autoAddRecording);
     },
+
     render: function () {
         let error = <div></div>;
         if (this.state.length > 0 && !this.state.validUUID) {
@@ -549,15 +579,16 @@ var RecordingAddForm = React.createClass({
                 {error}
             </form>
         );
-    }
+    },
 });
 
-var RecordingList = React.createClass({
-    propTypes: {
-        recordings: React.PropTypes.array.isRequired,
-        onRecordingDelete: React.PropTypes.func.isRequired
-    },
-    render: function () {
+class RecordingList extends React.Component {
+    static propTypes = {
+        recordings: PropTypes.array.isRequired,
+        onRecordingDelete: PropTypes.func.isRequired
+    };
+
+    render() {
         var items = [];
         this.props.recordings.forEach(function (recording) {
             items.push(<Recording key={recording} mbid={recording}
@@ -580,48 +611,47 @@ var RecordingList = React.createClass({
             return (<p className="text-muted">No recordings.</p>);
         }
     }
-});
+}
 
 var RECORDING_STATUS_LOADING = 'loading'; // loading info from the server
 var RECORDING_STATUS_ERROR = 'error';     // failed to load info about recording
 var RECORDING_STATUS_LOADED = 'loaded';  // info has been loaded
-var Recording = React.createClass({
-    propTypes: {
-        mbid: React.PropTypes.string.isRequired,
-        onRecordingDelete: React.PropTypes.func.isRequired
-    },
-    getInitialState: function () {
-        return {
-            status: RECORDING_STATUS_LOADING
-        };
-    },
-    componentDidMount: function () {
+
+class Recording extends React.Component {
+    static propTypes = {
+        mbid: PropTypes.string.isRequired,
+        onRecordingDelete: PropTypes.func.isRequired
+    };
+
+    state = {
+        status: RECORDING_STATUS_LOADING
+    };
+
+    componentDidMount() {
         $.ajax({
             type: "GET",
             url: "/datasets/metadata/recording/" + this.props.mbid,
             success: function (data) {
-                if (this.isMounted()) {
-                    this.setState({
-                        details: data.recording,
-                        status: RECORDING_STATUS_LOADED
-                    });
-                }
+                this.setState({
+                    details: data.recording,
+                    status: RECORDING_STATUS_LOADED
+                });
             }.bind(this),
             error: function () {
-                if (this.isMounted()) {
-                    this.setState({
-                        error: "Recording not found!",
-                        status: RECORDING_STATUS_ERROR
-                    });
-                }
+                this.setState({
+                    error: "Recording not found!",
+                    status: RECORDING_STATUS_ERROR
+                });
             }.bind(this)
         });
-    },
-    handleDelete: function (event) {
+    }
+
+    handleDelete = (event) => {
         event.preventDefault();
         this.props.onRecordingDelete(this.props.mbid);
-    },
-    render: function () {
+    };
+
+    render() {
         var details = "";
         var rowClassName = "";
         switch (this.state.status) {
@@ -654,7 +684,7 @@ var Recording = React.createClass({
             </tr>
         );
     }
-});
+}
 
 
 if (container) ReactDOM.render(<Dataset />, container);

@@ -64,7 +64,7 @@ def select_best_model(project_dir):
                 set of parameters for the best model.
     """
     with open(os.path.join(project_dir, PROJECT_FILE_NAME)) as project_file:
-        project = yaml.load(project_file)
+        project = yaml.load(project_file, Loader=yaml.BaseLoader)
 
     classifierName = project["className"]
     results = ClassificationResults()

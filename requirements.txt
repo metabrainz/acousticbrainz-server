@@ -1,16 +1,16 @@
-git+https://github.com/metabrainz/brainzutils-python.git@v1.11.0
-Flask-Admin == 1.5.3
-Flask-Login == 0.4.1
-Flask-SQLAlchemy == 2.3.2
-Flask-Testing == 0.7.1
-Flask-WTF == 0.14.2
-mock == 2.0.0
-musicbrainzngs == 0.6
+git+https://github.com/metabrainz/brainzutils-python.git@version-upgrade
+Flask-Admin==1.5.6
+Flask-Login==0.5.0
+Flask-SQLAlchemy==2.4.1
+Flask-Testing==0.8.0
+Flask-WTF == 0.14.3
+mock==3.0.5
+musicbrainzngs==0.7.1
 ndg-httpsclient==0.5.1
-psycopg2 == 2.7.7
-pytz==2018.9
-pyyaml == 3.13
+psycopg2-binary==2.8.5
+pytz==2019.3
+pyyaml==5.3.1
 rauth == 0.7.3
 setproctitle == 1.1.10
-six == 1.11.0
+six==1.14.0
 -r docs/requirements.txt

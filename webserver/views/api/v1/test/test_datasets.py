@@ -33,7 +33,7 @@ class GetCheckDatasetTestCase(ServerTestCase):
     @contextmanager
     def context(self):
         with self.create_app().app_context():
-            flask.session["user_id"] = self.test_user_id
+            flask.session["_user_id"] = self.test_user_id
             flask.session["_fresh"] = True
             yield
 

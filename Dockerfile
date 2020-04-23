@@ -11,7 +11,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 # Hadolint DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Node
-RUN wget -q -O - https://deb.nodesource.com/setup_8.x | bash - && apt-get update \
+RUN wget -q -O - https://deb.nodesource.com/setup_12.x | bash - && apt-get update \
     && apt-get install -y --no-install-recommends \
                        build-essential \
                        ca-certificates \
@@ -135,4 +135,4 @@ RUN touch /etc/service/cron/down
 COPY ./docker/rc.local /etc/rc.local
 
 COPY . /code
-RUN /code/node_modules/.bin/gulp
+RUN npm run build:prod

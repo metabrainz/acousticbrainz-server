@@ -24,8 +24,9 @@ services:
       dockerfile: Dockerfile
       target: acousticbrainz-dev
     environment:
+      FLASK_APP: webserver
       FLASK_ENV: development
-    command: python manage.py runserver
+    command: flask run -h 0.0.0.0 -p 8080
     volumes:
       - ../:/code
       - webhome:/root

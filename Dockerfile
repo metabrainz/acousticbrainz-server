@@ -1,7 +1,5 @@
 FROM metabrainz/python:2.7 AS acousticbrainz-base
 
-ARG deploy_env
-
 # Dockerize
 ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
@@ -41,7 +39,6 @@ RUN wget -q -O - https://deb.nodesource.com/setup_12.x | bash - && apt-get updat
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /code
-RUN mkdir /code/hl_extractor
 RUN mkdir /data
 WORKDIR /code
 
@@ -75,36 +72,39 @@ RUN mkdir /tmp/models \
     && mv /tmp/models/v2.1_beta1/svm_models /data/ \
     && cd / && rm -r /tmp/models
 
+RUN groupadd --gid 901 acousticbrainz
+RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
+
+RUN chown acousticbrainz:acousticbrainz /code
+
 # Python dependencies
-RUN mkdir /code/docs/
-COPY docs/requirements.txt /code/docs/requirements.txt
-COPY requirements.txt /code/requirements.txt
+RUN mkdir /code/docs/ && chown acousticbrainz:acousticbrainz /code/docs/
+COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requirements.txt
+COPY --chown=acousticbrainz:acousticbrainz requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY package.json /code
+COPY --chown=acousticbrainz:acousticbrainz package.json /code
+
+USER acousticbrainz
 RUN npm install
 
 
 FROM acousticbrainz-base AS acousticbrainz-dev
+USER root
 
-ARG deploy_env
-
-COPY requirements_development.txt /code/requirements_development.txt
+COPY --chown=acousticbrainz:acousticbrainz requirements_development.txt /code/requirements_development.txt
 RUN pip install --no-cache-dir -r requirements_development.txt
 
-COPY . /code
+COPY --chown=acousticbrainz:acousticbrainz . /code
+USER acousticbrainz
 
 
 FROM acousticbrainz-base AS acousticbrainz-prod
-
-ARG deploy_env
+USER root
 
 RUN pip install --no-cache-dir uWSGI==2.0.17.1
-RUN groupadd --gid 901 acousticbrainz
-RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
 
-RUN mkdir /cache_namespaces
-RUN chown -R acousticbrainz:acousticbrainz /cache_namespaces
+RUN mkdir /cache_namespaces && chown -R acousticbrainz:acousticbrainz /cache_namespaces
 
 # Consul template service is already set up, just need to copy the configuration
 COPY ./docker/consul-template.conf /etc/consul-template.conf
@@ -134,5 +134,7 @@ RUN touch /etc/service/cron/down
 
 COPY ./docker/rc.local /etc/rc.local
 
-COPY . /code
+COPY --chown=acousticbrainz:acousticbrainz . /code
+
+USER acousticbrainz
 RUN npm run build:prod

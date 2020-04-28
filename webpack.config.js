@@ -2,6 +2,8 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 module.exports = function (env) {
     const production = env === 'production';
@@ -55,6 +57,9 @@ module.exports = function (env) {
                     ]
                 }
             ],
+        },
+        optimization: {
+            minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
         },
         plugins: [
             new ManifestPlugin(),

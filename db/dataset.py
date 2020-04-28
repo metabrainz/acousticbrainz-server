@@ -44,7 +44,9 @@ def create_from_dict(dictionary, author_id):
 
         for cls in dictionary["classes"]:
             if "description" not in cls:
-                cls["description"] = None
+                # cls["description"] = None
+                cls["description"] = ''
+                
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
                                         (cls["name"], cls["description"], dataset_id))
@@ -124,7 +126,9 @@ def update(dataset_id, dictionary, author_id):
 
         for cls in dictionary["classes"]:
             if "description" not in cls:
-                cls["description"] = None
+                # cls["description"] = None
+                cls["description"] = ''
+
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
                                         (cls["name"], cls["description"], dataset_id))
@@ -525,7 +529,7 @@ def check_recording_in_dataset(dataset_id, mbid):
             SELECT dataset_class.id
               FROM dataset_class
               JOIN dataset_class_member
-                ON dataset_class_member.class = dataset_class.id 
+                ON dataset_class_member.class = dataset_class.id
              WHERE dataset_class.dataset = :dataset_id
                AND dataset_class_member.mbid = :mbid
         """), {"dataset_id": dataset_id, "mbid": mbid})

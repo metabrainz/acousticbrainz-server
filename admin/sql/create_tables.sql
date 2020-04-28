@@ -89,7 +89,7 @@ CREATE TABLE dataset (
 CREATE TABLE dataset_class (
   id          SERIAL,
   name        VARCHAR NOT NULL,
-  description TEXT,
+  description TEXT    NOT NULL, -- NULL values are not accepted
   dataset     UUID    NOT NULL -- FK to dataset
 );
 

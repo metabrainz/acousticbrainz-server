@@ -335,7 +335,7 @@ def _parse_dataset_csv(file):
              {"name": class name, "description": class description, "recordings": []}
              a class is only returned if there are recordings for it. A class
         """
-    classes_dict = defaultdict(lambda: {"description": '', "recordings": []})
+    classes_dict = defaultdict(lambda: {"description": "", "recordings": []})
     dataset_description = None
     for class_row in csv.reader(file):
         if len(class_row) != 2:

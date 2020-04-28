@@ -108,6 +108,7 @@ class ClassList extends React.Component {
         var items = [];
         this.props.classes.forEach(function (cls, index) {
             items.push(<Class id={index}
+                              key={index}
                               name={cls.name}
                               description={cls.description}
                               recordingCounter={cls.recordings.length}

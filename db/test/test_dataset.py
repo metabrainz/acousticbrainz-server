@@ -396,7 +396,7 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
             res = connection.execute(query, {"name": name})
             return res.fetchone()[0]
 
-    def _create_dataset(self, author_id, name, desc=None, public=True):
+    def _create_dataset(self, author_id, name, desc="", public=True):
         """Creates a dataset for an author with a name and returns its id"""
 
         dataset_id = str(uuid.uuid4())

@@ -113,8 +113,11 @@ class CoreViewsTestCase(ServerTestCase):
 
     @mock.patch("db.data.load_low_level")
     def test_ll_bad_offset(self, ll):
+        # non-numerical offset is replaced by 0
+        ll.return_value = {}
         resp = self.client.get("/api/v1/%s/low-level?n=x" % self.uuid)
-        self.assertEqual(400, resp.status_code)
+        self.assertEqual(200, resp.status_code)
+        ll.assert_called_with(self.uuid, 0)
 
     @mock.patch("db.data.load_low_level")
     def test_ll_no_item(self, ll):
@@ -175,7 +178,8 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
             "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": rec_7f},
-            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3}
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3},
+            "mbid_mapping": {}
         }
         self.assertEqual(resp.json, expected_result)
 
@@ -191,7 +195,7 @@ class CoreViewsTestCase(ServerTestCase):
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5}
         }
         load_many_low_level.return_value = expected_result
-        resp = self.client.get('api/v1/low-level?recording_ids=' + params)
+        resp = self.client.get('api/v1/low-level?recording_ids=' + params.upper())
         self.assertEqual(resp.status_code, 200)
 
         # We expect that we get returned whatever we set the mock to, but the argument
@@ -221,6 +225,7 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
             "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2},
+            "mbid_mapping": {}
         }
         self.assertEqual(resp.json, expected_result)
 
@@ -270,7 +275,8 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
             "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": rec_7f},
-            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3}
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2, "3": rec_40_3},
+            "mbid_mapping": {}
         }
         self.assertDictEqual(resp.json, expected_result)
 
@@ -279,6 +285,15 @@ class CoreViewsTestCase(ServerTestCase):
                       ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2),
                       ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 3)]
         load_many_high_level.assert_called_with(recordings, False)
+
+        # upper-case
+        resp = self.client.get('api/v1/high-level?recording_ids=' + params.upper())
+        self.assert200(resp)
+
+        expected_result["mbid_mapping"] = {"C5F4909E-1D7B-4F15-A6F6-1AF376BC01C9": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
+                                           "7F27D7A9-27F0-4663-9D20-2C9C40200E6D": "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
+                                           "405A5FF4-7EE2-436B-95C1-90CE8A83B359": "405a5ff4-7ee2-436b-95c1-90ce8a83b359"}
+        self.assertDictEqual(resp.json, expected_result)
 
     @mock.patch('db.data.load_many_high_level')
     def test_get_bulk_hl_map_classes(self, load_many_high_level):
@@ -298,6 +313,7 @@ class CoreViewsTestCase(ServerTestCase):
 
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "mbid_mapping": {}
         }
         self.assertDictEqual(resp.json, expected_result)
 
@@ -307,7 +323,8 @@ class CoreViewsTestCase(ServerTestCase):
         # upper-case
         params = "c5f4909e-1d7b-4f15-a6f6-1AF376BC01C9"
         expected_result = {
-            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5}
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
+            "mbid_mapping": {}
         }
         load_many_high_level.return_value = expected_result
         resp = self.client.get('api/v1/high-level?recording_ids=' + params)
@@ -340,6 +357,7 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": rec_c5},
             "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": rec_40_2},
+            "mbid_mapping": {}
         }
         self.assertDictEqual(resp.json, expected_result)
 
@@ -347,6 +365,15 @@ class CoreViewsTestCase(ServerTestCase):
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
                       ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
         load_many_high_level.assert_called_with(recordings, False)
+
+        # upper-case
+        resp = self.client.get('api/v1/high-level?recording_ids=' + params.upper())
+        self.assert200(resp)
+        # mbid_mapping will include mappings even for items that aren't in the database
+        expected_result["mbid_mapping"] = {"C5F4909E-1D7B-4F15-A6F6-1AF376BC01C9": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9",
+                                           "7F27D7A9-27F0-4663-9D20-2C9C40200E6D": "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
+                                           "405A5FF4-7EE2-436B-95C1-90CE8A83B359": "405a5ff4-7ee2-436b-95c1-90ce8a83b359"}
+        self.assertDictEqual(resp.json, expected_result)
 
     def test_get_bulk_hl_more_than_25(self):
         # Create many random uuids, because of parameter deduplication
@@ -401,12 +428,17 @@ class CoreViewsTestCase(ServerTestCase):
         expected_result = {
             "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"count": 1},
             "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"count": 2},
+            "mbid_mapping": {}
         }
         self.assertDictEqual(resp.json, expected_result)
 
         # upper-case
         resp = self.client.get('api/v1/count?recording_ids=' + param.upper())
         self.assertEqual(resp.status_code, 200)
+        # If the parameters aren't normalised, mbid_mapping will map user's submission -> normalised mbid
+        expected_result["mbid_mapping"] = {"7F27D7A9-27F0-4663-9D20-2C9C40200E6D": "7f27d7a9-27f0-4663-9d20-2c9c40200e6d",
+                                           "405A5FF4-7EE2-436B-95C1-90CE8A83B359": "405a5ff4-7ee2-436b-95c1-90ce8a83b359",
+                                           "C5F4909E-1D7B-4F15-A6F6-1AF376BC01C9": "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9"}
         self.assertDictEqual(resp.json, expected_result)
 
     def test_get_bulk_count_more_than_25(self):
@@ -428,14 +460,17 @@ class GetBulkValidationTest(unittest.TestCase):
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
         validated = core._parse_bulk_params(params)
 
-        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3), ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
+        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                    ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", "7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
+                    ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", "405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
         self.assertEqual(expected, validated)
 
     def test_validate_bulk_params_bad_offset(self):
         # If a parameter is <0 or not an integer, replace it with 0
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:foo"
         validated = core._parse_bulk_params(params)
-        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 0)]
+        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                    ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", "7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 0)]
         self.assertEqual(expected, validated)
 
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another"
@@ -456,5 +491,14 @@ class GetBulkValidationTest(unittest.TestCase):
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:1;c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:0"
         validated = core._parse_bulk_params(params)
 
-        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0), ("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 1)]
+        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                    ("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 1)]
+        self.assertEqual(expected, validated)
+
+    def test_validate_bulk_params_normalise(self):
+        # If an mbid is not lower-case, or is missing hyphens, reformat it
+        params = "C5F4909E-1D7B-4F15-A6F6-1AF376BC01C9;7F27D7A927F046639D202C9C40200E6D"
+        validated = core._parse_bulk_params(params)
+        expected = [("C5F4909E-1D7B-4F15-A6F6-1AF376BC01C9", "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
+                    ("7F27D7A927F046639D202C9C40200E6D", "7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 0)]
         self.assertEqual(expected, validated)

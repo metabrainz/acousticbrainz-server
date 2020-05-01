@@ -35,8 +35,12 @@ class LegacyViewsTestCase(ServerTestCase):
         resp = self.client.get(url_for('api.get_low_level', mbid=mbid))
         self.assertEqual(resp.status_code, 200)
 
-        # works regardless of the case of the uuid
-        resp = self.client.get(url_for('api.get_low_level', mbid=mbid.upper()))
+        # works regardless of the case or format of the uuid
+        mbid = '0DAD432B-16CC-4BF0-8961-FD31D124B01B'
+        resp = self.client.get(url_for('api.get_low_level', mbid=mbid))
+        self.assertEqual(resp.status_code, 200)
+        mbid = '0DAD432B16CC4BF08961FD31D124B01B'
+        resp = self.client.get(url_for('api.get_low_level', mbid=mbid))
         self.assertEqual(resp.status_code, 200)
 
     @mock.patch('db.data.load_high_level')
@@ -53,7 +57,12 @@ class LegacyViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 200)
         load_high_level.assert_called_with(mbid, 0)
 
-        resp = self.client.get(url_for('api.get_high_level', mbid=mbid.upper()))
+        # works regardless of the case or format of the uuid
+        mbid = '0DAD432B-16CC-4BF0-8961-FD31D124B01B'
+        resp = self.client.get(url_for('api.get_high_level', mbid=mbid))
+        self.assertEqual(resp.status_code, 200)
+        mbid = '0DAD432B16CC4BF08961FD31D124B01B'
+        resp = self.client.get(url_for('api.get_high_level', mbid=mbid))
         self.assertEqual(resp.status_code, 200)
 
     def test_count(self):
@@ -69,11 +78,15 @@ class LegacyViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertItemsEqual(resp.json, expected)
 
-        # upper-case
+        # upper-case and format
+        mbid = '0DAD432B-16CC-4BF0-8961-FD31D124B01B'
         resp = self.client.get(url_for('api.count', mbid=mbid.upper()))
         self.assertEqual(resp.status_code, 200)
         # mbid stays lower-case in the response
         self.assertItemsEqual(resp.json, expected)
+        mbid = '0DAD432B16CC4BF08961FD31D124B01B'
+        resp = self.client.get(url_for('api.count', mbid=mbid.upper()))
+        self.assertEqual(resp.status_code, 200)
 
     def test_cors_headers(self):
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'

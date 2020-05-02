@@ -36,6 +36,8 @@ def create_from_dict(dictionary, author_id):
     with db.engine.begin() as connection:
         if "description" not in dictionary:
             dictionary["description"] = ""
+        if dictionary["description"] is None:
+            dictionary["description"] = ""
 
         result = connection.execute("""INSERT INTO dataset (id, name, description, public, author)
                           VALUES (uuid_generate_v4(), %s, %s, %s, %s) RETURNING id""",
@@ -44,6 +46,8 @@ def create_from_dict(dictionary, author_id):
 
         for cls in dictionary["classes"]:
             if "description" not in cls:
+                cls["description"] = ""
+            if cls["description"] is None:
                 cls["description"] = ""
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
@@ -113,6 +117,8 @@ def update(dataset_id, dictionary, author_id):
     with db.engine.begin() as connection:
         if "description" not in dictionary:
             dictionary["description"] = ""
+        if dictionary["description"] is None:
+            dictionary["description"] = ""
 
         connection.execute("""UPDATE dataset
                           SET (name, description, public, author, last_edited) = (%s, %s, %s, %s, now())
@@ -124,6 +130,8 @@ def update(dataset_id, dictionary, author_id):
 
         for cls in dictionary["classes"]:
             if "description" not in cls:
+                cls["description"] = ""
+            if cls["description"] is None:
                 cls["description"] = ""
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",

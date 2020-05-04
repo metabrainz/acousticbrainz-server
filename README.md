@@ -88,7 +88,7 @@ To build stylesheets and javascript bundles, run webpack:
 You will need to rebuild static files after you modify JavaScript or CSS. If you want to rebuild
 these source files as you change them then you can run webpack in watch mode:
 
-    ./develop.sh npm run build:dev -- --watch
+    ./develop.sh npm run build:watch
 
 ### Login
 

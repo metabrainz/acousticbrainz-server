@@ -213,7 +213,7 @@ def _parse_bulk_params(params):
         elif len(parts) == 2:
             offset = parts[1]
         else:
-            raise webserver.views.api.exceptions.APIBadRequest("More than 1 : in '%s'" % recording)
+            raise webserver.views.api.exceptions.APIBadRequest("More than 1 colon (:) in '%s'" % recording)
 
         args = _validate_arguments(mbid, offset)
         ret.append(args)
@@ -262,7 +262,7 @@ def get_many_lowlevel():
 
        {"mbid1": {"offset1": {document},
                   "offset2": {document}},
-        "mbid2": {"offset1": {document}}
+        "mbid2": {"offset1": {document}},
         "mbid_mapping": {"MBID1": "mbid1"}
        }
 
@@ -271,9 +271,9 @@ def get_many_lowlevel():
     the offset will be 0.
 
     MBID keys are always returned in a normalised form (all lower-case, separated in groups of 8-4-4-4-12 characters),
-    even if the provided recording MBIDs are not given in this form. In the case that a MBID is not given in this
-    normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs to
-    this form.
+    even if the provided recording MBIDs are not given in this form. In the case that a requested MBID is not given
+    in this normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs
+    to this form.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -321,9 +321,9 @@ def get_many_highlevel():
     the offset will be 0.
 
     MBID keys are always returned in a normalised form (all lower-case, separated in groups of 8-4-4-4-12 characters),
-    even if the provided recording MBIDs are not given in this form. In the case that a MBID is not given in this
-    normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs to
-    this form.
+    even if the provided recording MBIDs are not given in this form. In the case that a requested MBID is not given
+    in this normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs
+    to this form.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -365,14 +365,14 @@ def get_many_count():
     .. sourcecode:: json
 
        {"mbid1": {"count": 3},
-        "mbid2": {"count": 1}
+        "mbid2": {"count": 1},
         "mbid_mapping": {"MBID1": "mbid1"}
        }
 
     MBID keys are always returned in a normalised form (all lower-case, separated in groups of 8-4-4-4-12 characters),
-    even if the provided recording MBIDs are not given in this form. In the case that a MBID is not given in this
-    normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs to
-    this form.
+    even if the provided recording MBIDs are not given in this form. In the case that a requested MBID is not given
+    in this normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs
+    to this form.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 

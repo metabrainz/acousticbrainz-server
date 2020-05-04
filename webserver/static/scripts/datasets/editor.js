@@ -13,7 +13,6 @@ var PropTypes = require('prop-types');
  mounted, it pull existing dataset for editing from the server.
  */
 var React = require('react');
-var createReactClass = require('create-react-class');
 var ReactDOM = require('react-dom');
 
 var CONTAINER_ELEMENT_ID = "dataset-editor";

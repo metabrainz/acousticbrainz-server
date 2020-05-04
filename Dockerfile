@@ -83,20 +83,18 @@ COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requ
 COPY --chown=acousticbrainz:acousticbrainz requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY --chown=acousticbrainz:acousticbrainz package.json /code
-
-USER acousticbrainz
-RUN npm install
-
 
 FROM acousticbrainz-base AS acousticbrainz-dev
-USER root
 
 COPY --chown=acousticbrainz:acousticbrainz requirements_development.txt /code/requirements_development.txt
 RUN pip install --no-cache-dir -r requirements_development.txt
 
-COPY --chown=acousticbrainz:acousticbrainz . /code
-USER acousticbrainz
+
+# We don't copy code to the dev image because it's added with a volume mount
+# during development, however it's needed for tests. Add it here.
+FROM acousticbrainz-dev AS acousticbrainz-test
+
+COPY . /code
 
 
 FROM acousticbrainz-base AS acousticbrainz-prod
@@ -134,7 +132,14 @@ RUN touch /etc/service/cron/down
 
 COPY ./docker/rc.local /etc/rc.local
 
-COPY --chown=acousticbrainz:acousticbrainz . /code
+COPY --chown=acousticbrainz:acousticbrainz package.json /code
 
 USER acousticbrainz
+RUN npm install
+
+COPY --chown=acousticbrainz:acousticbrainz . /code
+
 RUN npm run build:prod
+
+# Our entrypoint runs as root
+USER root

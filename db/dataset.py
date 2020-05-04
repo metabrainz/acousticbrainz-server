@@ -34,9 +34,7 @@ def create_from_dict(dictionary, author_id):
     dataset_validator.validate(dictionary)
 
     with db.engine.begin() as connection:
-        if "description" not in dictionary:
-            dictionary["description"] = ""
-        if dictionary["description"] is None:
+        if "description" not in dictionary or dictionary["description"] is None:
             dictionary["description"] = ""
 
         result = connection.execute("""INSERT INTO dataset (id, name, description, public, author)
@@ -45,9 +43,7 @@ def create_from_dict(dictionary, author_id):
         dataset_id = result.fetchone()[0]
 
         for cls in dictionary["classes"]:
-            if "description" not in cls:
-                cls["description"] = ""
-            if cls["description"] is None:
+            if "description" not in cls or cls["description"] is None:
                 cls["description"] = ""
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
@@ -115,9 +111,7 @@ def update(dataset_id, dictionary, author_id):
     dataset_validator.validate(dictionary)
 
     with db.engine.begin() as connection:
-        if "description" not in dictionary:
-            dictionary["description"] = ""
-        if dictionary["description"] is None:
+        if "description" not in dictionary or dictionary["description"] is None:
             dictionary["description"] = ""
 
         connection.execute("""UPDATE dataset
@@ -129,9 +123,7 @@ def update(dataset_id, dictionary, author_id):
         connection.execute("""DELETE FROM dataset_class WHERE dataset = %s""", (dataset_id,))
 
         for cls in dictionary["classes"]:
-            if "description" not in cls:
-                cls["description"] = ""
-            if cls["description"] is None:
+            if "description" not in cls or cls["description"] is None:
                 cls["description"] = ""
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",

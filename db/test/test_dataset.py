@@ -56,8 +56,8 @@ class DatasetTestCase(DatabaseTestCase):
         bad_dict["classes"][1]["description"] = None
         id = dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
         ds = dataset.get(id)
-        self.assertIsNotNone(ds["classes"][1]["description"])
-        self.assertIsNotNone(ds["description"])
+        self.assertEqual(ds["classes"][1]["description"], "")
+        self.assertEqual(ds["description"], "")
 
     def test_create_from_dict_absence_description(self):
         bad_dict = copy.deepcopy(self.test_data)
@@ -65,8 +65,8 @@ class DatasetTestCase(DatabaseTestCase):
         bad_dict["classes"][1].pop("description")
         id = dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
         ds = dataset.get(id)
-        self.assertIn("description", ds["classes"][1].keys())
-        self.assertIn("description", ds.keys())
+        self.assertEqual(ds["classes"][1]["description"], "")
+        self.assertEqual(ds["description"], "")
 
     def test_create_from_dict_duplicates(self):
         bad_dict = copy.deepcopy(self.test_data)

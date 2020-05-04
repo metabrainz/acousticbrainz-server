@@ -309,7 +309,7 @@ class DatasetsViewsTestCase(ServerTestCase):
                                             "55339a88-f02b-4c03-9f94-f5ef3b29e1ab"]},
 
                             {"name": "Class #2",
-                             "description": None,
+                             "description": "",
                              "recordings": ["6fff3ebf-4c7f-4aed-b807-112fa4994cca",
                                             "2af64e20-38f9-4dc9-8db6-9d6026257dc2"]}
                             ]

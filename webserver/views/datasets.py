@@ -310,7 +310,7 @@ def import_csv():
             "classes": classes,
             "public": form.public.data,
         }
-        
+
         try:
             dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
         except dataset_validator.ValidationException as e:
@@ -335,7 +335,7 @@ def _parse_dataset_csv(file):
              {"name": class name, "description": class description, "recordings": []}
              a class is only returned if there are recordings for it. A class
         """
-    classes_dict = defaultdict(lambda: {"description": None, "recordings": []})
+    classes_dict = defaultdict(lambda: {"description": "", "recordings": []})
     dataset_description = None
     for class_row in csv.reader(file):
         if len(class_row) != 2:
@@ -351,9 +351,9 @@ def _parse_dataset_csv(file):
         else:
             # row is a recording
             classes_dict[class_row[1]]["recordings"].append(class_row[0])
-    
+
     classes = []
-    
+
     for name, class_data in six.iteritems(classes_dict):
         if class_data["recordings"]:
             classes.append({
@@ -361,7 +361,7 @@ def _parse_dataset_csv(file):
                 "name": name,
                 "description": class_data["description"] if "description" in class_data else None,
             })
-    
+
     return dataset_description, classes
 
 

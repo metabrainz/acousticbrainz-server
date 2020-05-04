@@ -79,7 +79,7 @@ ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id
 CREATE TABLE dataset (
   id          UUID,
   name        VARCHAR NOT NULL,
-  description TEXT,
+  description TEXT NOT NULL,
   author      INT NOT NULL, -- FK to user
   public      BOOLEAN NOT NULL,
   created     TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -89,7 +89,7 @@ CREATE TABLE dataset (
 CREATE TABLE dataset_class (
   id          SERIAL,
   name        VARCHAR NOT NULL,
-  description TEXT,
+  description TEXT    NOT NULL,
   dataset     UUID    NOT NULL -- FK to dataset
 );
 

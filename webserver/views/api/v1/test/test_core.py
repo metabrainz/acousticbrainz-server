@@ -476,7 +476,7 @@ class GetBulkValidationTest(unittest.TestCase):
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another"
         with self.assertRaises(webserver.views.api.exceptions.APIBadRequest) as ex:
             core._parse_bulk_params(params)
-        self.assertEquals(str(ex.exception), "More than 1 : in 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another'")
+        self.assertEquals(str(ex.exception), "More than 1 colon (:) in 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9:-1:another'")
 
     def test_validate_bulk_params_bad_mbid(self):
         # Return an error if an MBID is invalid

@@ -316,6 +316,28 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertEqual(test_dataset_description, expected_dataset_description)
         self.assertEqual(test_classes, expected_classes)
 
+    def test_parse_dataset_csv_utf8(self):
+        """Parse a csv file which has some utf8-ish things:
+            - UTF-8 BOM
+            - non-ascii description
+            - non-ascii in the uuid (this is invalid, but this method just reads, it doesn't validate)
+        """
+
+        utf8_bom = b'\xef\xbb\xbf'
+        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset_utf8.csv')
+
+        # Before starting, check that the bom hasn't been removed from this test file by an errant text editor
+        self.assertEqual(open(test_csv_file).read(3), utf8_bom)
+
+        with open(test_csv_file) as csv_data:
+            test_dataset_description, test_classes = ws_datasets._parse_dataset_csv(csv_data)
+
+            expected_classes = [{"name": u"róck music",
+                                 "description": "",
+                                 "recordings": [u"bé686320-8057-4ca2-b484-e01434a3a2b1"]}]
+            self.assertEqual(test_dataset_description, u"a datasét")
+            self.assertEqual(test_classes, expected_classes)
+
     def test_dataset_to_csv(self):
         """Test that a dataset dictionary is converted to an expected CSV file"""
 

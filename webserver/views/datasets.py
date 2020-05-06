@@ -341,16 +341,23 @@ def _parse_dataset_csv(file):
         if len(class_row) != 2:
             raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
 
-        if class_row[0] == "description":
+        # Decode the rows as UTF-8.
+        # The utf-8-sig codec removes a UTF-8 BOM if it exists at the start of a file.
+        # In that case, col1 in the first row could start with 0xfeff, so remove it.
+        # For all other items it will decode as regular UTF-8
+        col1 = class_row[0].decode("utf-8-sig")
+        col2 = class_row[1].decode("utf-8-sig")
+
+        if col1 == "description":
             # row is the dataset description
-            dataset_description = class_row[1]
-        elif (class_row[0])[:12] == "description:":
+            dataset_description = col2
+        elif col1[:12] == "description:":
             # row is a class description
-            class_name = class_row[0][12:]
-            classes_dict[class_name]["description"] = class_row[1]
+            class_name = col1[12:]
+            classes_dict[class_name]["description"] = col2
         else:
             # row is a recording
-            classes_dict[class_row[1]]["recordings"].append(class_row[0])
+            classes_dict[col2]["recordings"].append(col1)
 
     classes = []
 

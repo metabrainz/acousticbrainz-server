@@ -1,3 +1,4 @@
+import six
 from flask import render_template, jsonify, request, has_request_context, _request_ctx_stack, current_app
 
 import webserver
@@ -60,7 +61,11 @@ def init_error_handlers(app):
 def jsonify_error(error, code=None):
     if hasattr(error, 'description'):
         message = error.description
+    elif hasattr(error, 'error'):
+        message = error.error
+    elif len(error.args):
+        message = six.ensure_text(error.args[0])
     else:
-        message = str(error)
+        message = "unknown error"
     api_error = api_exceptions.APIError(message, getattr(error, 'code', code))
     return jsonify(api_error.to_dict()), api_error.status_code

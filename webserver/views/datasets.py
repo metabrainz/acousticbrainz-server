@@ -289,7 +289,7 @@ def create_service():
         except dataset_validator.ValidationException as e:
             return jsonify(
                 success=False,
-                error=str(e),
+                error=e.error,
             ), 400
 
         return jsonify(
@@ -314,7 +314,7 @@ def import_csv():
         try:
             dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
         except dataset_validator.ValidationException as e:
-            raise BadRequest(str(e))
+            raise BadRequest(e.error)
         flash.info("Dataset has been imported successfully.")
         return redirect(url_for(".view", dataset_id=dataset_id))
 
@@ -407,7 +407,7 @@ def edit_service(dataset_id):
         except dataset_validator.ValidationException as e:
             return jsonify(
                 success=False,
-                error=str(e),
+                error=e.error,
             ), 400
 
         return jsonify(

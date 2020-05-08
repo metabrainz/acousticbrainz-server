@@ -17,6 +17,7 @@ API_PREFIX = '/api/'
 deploy_env = os.environ.get('DEPLOY_ENV', '')
 CONSUL_CONFIG_FILE_RETRY_COUNT = 10
 
+
 def create_app_flaskgroup(script_info):
     """Factory function that accepts script_info and creates a Flask application"""
     return create_app(debug=True)

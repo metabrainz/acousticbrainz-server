@@ -6,10 +6,8 @@ import sys
 
 import click
 from brainzutils import cache, ratelimit
-import flask.cli
 from flask import current_app
 from flask.cli import FlaskGroup
-from shutil import copyfile
 
 import db
 import db.data
@@ -53,40 +51,40 @@ def init_db(archive, force, skip_create_db=False):
             raise Exception('Failed to drop existing database and user! Exit code: %i' % res)
 
     if not skip_create_db:
-        print('Creating user and a database...')
+        current_app.logger.info('Creating user and a database...')
         res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_db.sql'))
         if not res:
             raise Exception('Failed to create new database and user! Exit code: %i' % res)
 
-    print('Creating database extensions...')
+    current_app.logger.info('Creating database extensions...')
     db.init_db_engine(current_app.config['POSTGRES_ADMIN_AB_URI'])
     res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'create_extensions.sql'))
 
     db.init_db_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
 
-    print('Creating types...')
+    current_app.logger.info('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
 
-    print('Creating tables...')
+    current_app.logger.info('Creating tables...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
 
     if archive:
-        print('Importing data...')
+        current_app.logger.info('Importing data...')
         db.dump.import_dump(archive)
     else:
-        print('Skipping data importing.')
-        print('Loading fixtures...')
-        print('Models...')
+        current_app.logger.info('Skipping data importing.')
+        current_app.logger.info('Loading fixtures...')
+        current_app.logger.info('Models...')
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_models.sql'))
 
-    print('Creating primary and foreign keys...')
+    current_app.logger.info('Creating primary and foreign keys...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
 
-    print('Creating indexes...')
+    current_app.logger.info('Creating indexes...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
 
-    print("Done!")
+    current_app.logger.info("Done!")
 
 
 @cli.command(name='import_data')
@@ -95,16 +93,16 @@ def init_db(archive, force, skip_create_db=False):
 def import_data(archive, drop_constraints=False):
     """Imports data dump into the database."""
     if drop_constraints:
-        print('Dropping primary key and foreign key constraints...')
+        current_app.logger.info('Dropping primary key and foreign key constraints...')
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_foreign_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_primary_keys.sql'))
 
-    print('Importing data...')
+    current_app.logger.info('Importing data...')
     db.dump.import_dump(archive)
-    print('Done!')
+    current_app.logger.info('Done!')
 
     if drop_constraints:
-        print('Creating primary key and foreign key constraints...')
+        current_app.logger.info('Creating primary key and foreign key constraints...')
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
 
@@ -116,16 +114,16 @@ def import_dataset_data(archive, drop_constraints=False):
     """Imports dataset dump into the database."""
 
     if drop_constraints:
-        print('Dropping primary key and foreign key constraints...')
+        current_app.logger.info('Dropping primary key and foreign key constraints...')
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_foreign_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_primary_keys.sql'))
 
-    print('Importing dataset data...')
+    current_app.logger.info('Importing dataset data...')
     db.dump.import_datasets_dump(archive)
-    print('Done!')
+    current_app.logger.info('Done!')
 
     if drop_constraints:
-        print('Creating primary key and foreign key constraints...')
+        current_app.logger.info('Creating primary key and foreign key constraints...')
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
 
@@ -177,9 +175,9 @@ def remove_admin(username):
 
 @cli.command(name='update_sequences')
 def update_sequences():
-    print('Updating database sequences...')
+    current_app.logger.info('Updating database sequences...')
     db.dump.update_sequences()
-    print('Done!')
+    current_app.logger.info('Done!')
 
 
 @cli.group()
@@ -238,22 +236,22 @@ def set_rate_limits(per_ip, window_size):
     current_limit_per_ip = cache.get(ratelimit.ratelimit_per_ip_key)
     current_limit_window = cache.get(ratelimit.ratelimit_window_key)
 
-    click.echo("Current values:")
+    current_app.logger.info("Current values:")
     if current_limit_per_ip is None and current_limit_window is None:
-        click.echo("No values set, showing limit defaults")
+        current_app.logger.info("No values set, showing limit defaults")
         current_limit_per_ip = ratelimit.ratelimit_per_ip_default
         current_limit_window = ratelimit.ratelimit_window_default
-    click.echo("Requests per IP: %s" % current_limit_per_ip)
-    click.echo("Window size (s): %s" % current_limit_window)
+    current_app.logger.info("Requests per IP: %s" % current_limit_per_ip)
+    current_app.logger.info("Window size (s): %s" % current_limit_window)
 
     if per_ip is not None and window_size is not None:
         if per_ip / float(window_size) < 1:
-            click.echo("Warning: Effective rate limit is less than 1 query per second")
+            current_app.logger.info("Warning: Effective rate limit is less than 1 query per second")
 
         ratelimit.set_rate_limits(per_ip, per_ip, window_size)
-        print("New ratelimit parameters set:")
-        click.echo("Requests per IP: %s" % per_ip)
-        click.echo("Window size (s): %s" % window_size)
+        current_app.logger.info("New ratelimit parameters set:")
+        current_app.logger.info("Requests per IP: %s" % per_ip)
+        current_app.logger.info("Window size (s): %s" % window_size)
 
 
 # Please keep additional sets of commands down there

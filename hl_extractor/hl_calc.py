@@ -11,6 +11,7 @@ from threading import Thread
 from time import sleep
 
 import yaml
+from flask import current_app
 
 import db
 import db.data
@@ -47,7 +48,7 @@ class HighLevel(Thread):
             f.write(self.ll_data.encode("utf-8"))
             f.close()
         except IOError:
-            print("IO Error while writing temp file")
+            current_app.logger.error("IO Error while writing temp file")
             # If we return early, remove the ll file we created
             os.unlink(name)
             return "{}"
@@ -63,7 +64,7 @@ class HighLevel(Thread):
                                    name, out_file, PROFILE_CONF],
                                   stdout=fnull, stderr=fnull)
         except (subprocess.CalledProcessError, OSError):
-            print("Cannot call high-level extractor")
+            current_app.logger.error("Cannot call high-level extractor")
             # If we return early, make sure we remove the temp
             # output file that we created
             os.unlink(out_file)
@@ -79,7 +80,7 @@ class HighLevel(Thread):
             hl_data = f.read()
             f.close()
         except IOError:
-            print("IO Error while removing temp file")
+            current_app.logger.error("IO Error while removing temp file")
             return "{}"
         finally:
             os.unlink(out_file)
@@ -105,7 +106,7 @@ def create_profile(in_file, out_file, sha1):
         with open(in_file, 'r') as f:
             doc = yaml.load(f, Loader=yaml.BaseLoader)
     except IOError as e:
-        print("Cannot read profile %s: %s" % (in_file, e))
+        current_app.logger.error("Cannot read profile %s: %s" % (in_file, e))
         sys.exit(-1)
 
     try:
@@ -114,17 +115,17 @@ def create_profile(in_file, out_file, sha1):
         models_ver = None
 
     if not models_ver:
-        print("profile.conf.in needs to have 'metadata : version : highlevel :"
-              " models_essentia_git_sha' defined.")
+        current_app.logger.warn("profile.conf.in needs to have 'metadata : version : highlevel :"
+                                " models_essentia_git_sha' defined.")
         sys.exit(-1)
 
     doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
 
     try:
         with open(out_file, 'w') as yaml_file:
-            yaml_file.write( yaml.dump(doc, default_flow_style=False))
+            yaml_file.write(yaml.dump(doc, default_flow_style=False))
     except IOError as e:
-        print("Cannot write profile %s: %s" % (out_file, e))
+        current_app.logger.error("Cannot write profile %s: %s" % (out_file, e))
         sys.exit(-1)
 
 
@@ -135,14 +136,14 @@ def get_build_sha1(binary):
         bin = f.read()
         f.close()
     except IOError as e:
-        print("Cannot calculate the SHA1 of the high-level extractor binary: %s" % e)
+        current_app.logger.error("Cannot calculate the SHA1 of the high-level extractor binary: %s" % e)
         sys.exit(-1)
 
     return sha1(bin).hexdigest()
 
 
 def main(num_threads):
-    print("High-level extractor daemon starting with %d threads" % num_threads)
+    current_app.logger.info("High-level extractor daemon starting with %d threads" % num_threads)
     sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
@@ -170,7 +171,7 @@ def main(num_threads):
             mbid, doc, id = docs.pop()
             th = HighLevel(mbid, doc, id)
             th.start()
-            print("start %s" % mbid)
+            current_app.logger.info("start %s" % mbid)
             sys.stdout.flush()
             pool[mbid] = th
 
@@ -178,7 +179,7 @@ def main(num_threads):
         while True:
             if len(pool) == 0 and len(docs) == 0:
                 if num_processed > 0:
-                    print("processed %s documents, none remain. Sleeping." % num_processed)
+                    current_app.logger.info("processed %s documents, none remain. Sleeping." % num_processed)
                     sys.stdout.flush()
                 num_processed = 0
                 # Let's be nice and not keep any connections to the DB open while we nap
@@ -197,14 +198,14 @@ def main(num_threads):
                     try:
                         jdata = json.loads(hl_data)
                     except ValueError:
-                        print("error %s: Cannot parse result document" % mbid)
-                        print(hl_data)
+                        current_app.logger.error("error %s: Cannot parse result document" % mbid)
+                        current_app.logger.error(hl_data)
                         sys.stdout.flush()
                         jdata = {}
 
                     db.data.write_high_level(mbid, ll_id, jdata, build_sha1)
 
-                    print("done  %s" % mbid)
+                    current_app.logger.info("done  %s" % mbid)
                     sys.stdout.flush()
                     num_processed += 1
 

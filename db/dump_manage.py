@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+from flask import current_app
 from flask.cli import FlaskGroup
 from db import dump
 import shutil
@@ -30,9 +32,9 @@ def full(ctx, location, threads, rotate):
         if start_t:  # not the first incremental dump
             incremental(location, id=None, threads=None)
         else:
-            print("Skipping incremental dump creation since it's the first one.\n")
+            current_app.logger.info("Skipping incremental dump creation since it's the first one.\n")
     except dump.NoNewData:
-        print("Skipping incremental dump creation. No new data.\n")
+        current_app.logger.info("Skipping incremental dump creation. No new data.\n")
 
     ctx.invoke(full_db, location=location, threads=threads, rotate=rotate)
     ctx.invoke(json, location=location, rotate=rotate)
@@ -44,12 +46,12 @@ def full(ctx, location, threads, rotate):
 @click.option("--threads", "-t", type=int)
 @click.option("--rotate", "-r", is_flag=True)
 def full_db(location, threads, rotate):
-    print("Creating full database dump...")
+    current_app.logger.info("Creating full database dump...")
     path = dump.dump_db(location, threads)
-    print("Done! Created:", path)
+    current_app.logger.info("Done! Created:", path)
 
     if rotate:
-        print("Removing old dumps (except two latest)...")
+        current_app.logger.info("Removing old dumps (except two latest)...")
         remove_old_archives(location, "acousticbrainz-dump-[0-9]+-[0-9]+.tar.xz",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
@@ -62,7 +64,7 @@ def full_db(location, threads, rotate):
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
 def json(location, rotate, no_lowlevel, no_highlevel):
     if no_lowlevel and no_highlevel:
-        print("wut? check your options, mate!")
+        current_app.logger.info("wut? check your options, mate!")
 
     if not no_lowlevel:
         _json_lowlevel(location, rotate)
@@ -72,23 +74,23 @@ def json(location, rotate, no_lowlevel, no_highlevel):
 
 
 def _json_lowlevel(location, rotate):
-    print("Creating low-level JSON data dump...")
+    current_app.logger.info("Creating low-level JSON data dump...")
     path = dump.dump_lowlevel_json(location)
-    print("Done! Created: %s" % path)
+    current_app.logger.info("Done! Created: %s" % path)
 
     if rotate:
-        print("Removing old dumps (except two latest)...")
+        current_app.logger.info("Removing old dumps (except two latest)...")
         remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
 def _json_highlevel(location, rotate):
-    print("Creating high-level JSON data dump...")
+    current_app.logger.info("Creating high-level JSON data dump...")
     path = dump.dump_highlevel_json(location)
-    print("Done! Created: %s" % path)
+    current_app.logger.info("Done! Created: %s" % path)
 
     if rotate:
-        print("Removing old dumps (except two latest)...")
+        current_app.logger.info("Removing old dumps (except two latest)...")
         remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
@@ -100,28 +102,28 @@ def _json_highlevel(location, rotate):
 @click.option("--threads", "-t", type=int)
 def incremental(location, id, threads):
     dump_id, start_t, end_t = dump.prepare_incremental_dump(int(id) if id else None)
-    print("Creating incremental dumps with data between %s and %s:\n" % (start_t, end_t))
+    current_app.logger.info("Creating incremental dumps with data between %s and %s:\n" % (start_t, end_t))
     _incremental_db(location, dump_id, threads)
     _incremental_json_lowlevel(location, dump_id)
     _incremental_json_highlevel(location, dump_id)
 
 
 def _incremental_db(location, id, threads):
-    print("Creating incremental database dump...")
+    current_app.logger.info("Creating incremental database dump...")
     path = dump.dump_db(location, threads, incremental=True, dump_id=id)
-    print("Done! Created: %s\n" % path)
+    current_app.logger.info("Done! Created: %s\n" % path)
 
 
 def _incremental_json_lowlevel(location, id):
-    print("Creating incremental low-level JSON data dump...")
+    current_app.logger.info("Creating incremental low-level JSON data dump...")
     path = dump.dump_lowlevel_json(location, incremental=True, dump_id=id)
-    print("Done! Created: %s\n" % path)
+    current_app.logger.info("Done! Created: %s\n" % path)
 
 
 def _incremental_json_highlevel(location, id):
-    print("Creating incremental high-level JSON data dump...")
+    current_app.logger.info("Creating incremental high-level JSON data dump...")
     path = dump.dump_highlevel_json(location, incremental=True, dump_id=id)
-    print("Done! Created: %s\n" % path)
+    current_app.logger.info("Done! Created: %s\n" % path)
 
 
 @cli.command(name='incremental_info')
@@ -134,13 +136,13 @@ def incremental_info(all=False):
     info = dump.list_incremental_dumps()
     if info:
         if all:
-            print('Incremental dumps:')
+            current_app.logger.info('Incremental dumps:')
             for current in info:
-                print(' - %s at %s' % current)
+                current_app.logger.info(' - %s at %s' % current)
         else:
-            print('Last dump ID: %s\nTimestamp: %s' % info[0])
+            current_app.logger.info('Last dump ID: %s\nTimestamp: %s' % info[0])
     else:
-        print('No incremental dumps yet.')
+        current_app.logger.info('No incremental dumps yet.')
 
 
 def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
@@ -170,7 +172,7 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
 
     # Leaving only two last entries
     for entry in entries[:(-2)]:
-        print(' - %s' % entry)
+        current_app.logger.info(' - %s' % entry)
         if is_dir:
             shutil.rmtree(entry)
         else:
@@ -182,6 +184,6 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
               help="Directory where dumps need to be created")
 @click.option("--threads", "-t", type=int)
 def full_dataset_dump(location, threads):
-    print("Creating full datasets dump...")
+    current_app.logger.info("Creating full datasets dump...")
     path = dump.dump_dataset_tables(location, threads)
-    print("Done! Created:", path)
+    current_app.logger.info("Done! Created:", path)

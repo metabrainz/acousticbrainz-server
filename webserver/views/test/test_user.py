@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 from werkzeug.http import http_date
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
 import db.user
 import db.api_key
 
 
-class UserViewsTestCase(ServerTestCase):
+class UserViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(UserViewsTestCase, self).setUp()

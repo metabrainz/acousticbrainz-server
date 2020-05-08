@@ -4,11 +4,11 @@ import mock
 from flask import url_for
 
 from webserver.external import musicbrainz
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
 import webserver.views.data
 
 
-class DataViewsTestCase(ServerTestCase):
+class DataViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DataViewsTestCase, self).setUp()

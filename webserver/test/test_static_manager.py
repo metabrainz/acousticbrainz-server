@@ -1,8 +1,8 @@
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
 from webserver import static_manager
 
 
-class StaticManagerTestCase(ServerTestCase):
+class StaticManagerTestCase(AcousticbrainzTestCase):
 
     def test_get_static_path(self):
         self.assertEqual(static_manager.development_get_static_path("script.js"), "/static/script.js")

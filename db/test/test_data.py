@@ -7,19 +7,19 @@ import sqlalchemy
 
 import db.data
 import db.exceptions
-from db.testing import DatabaseTestCase, TEST_DATA_PATH, gid_types
+from webserver.testing import AcousticbrainzTestCase, DB_TEST_DATA_PATH, gid_types
 
 
-class DataDBTestCase(DatabaseTestCase):
+class DataDBTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DataDBTestCase, self).setUp()
         self.test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
-        self.test_lowlevel_data_json = open(os.path.join(TEST_DATA_PATH, self.test_mbid + '.json')).read()
+        self.test_lowlevel_data_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid + '.json')).read()
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
 
         self.test_mbid_two = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
-        self.test_lowlevel_data_json_two = open(os.path.join(TEST_DATA_PATH, self.test_mbid_two + '.json')).read()
+        self.test_lowlevel_data_json_two = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid_two + '.json')).read()
         self.test_lowlevel_data_two = json.loads(self.test_lowlevel_data_json_two)
 
     @mock.patch("db.data.sanity_check_data")
@@ -649,7 +649,7 @@ class DataDBTestCase(DatabaseTestCase):
         pass
 
 
-class DataUtilTestCase(DatabaseTestCase):
+class DataUtilTestCase(AcousticbrainzTestCase):
     """ Tests for utility methods in db/data. Should be moved out of db at some time. """
 
     def test_has_key(self):

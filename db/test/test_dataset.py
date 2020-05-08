@@ -1,6 +1,6 @@
 import db
 import db.exceptions
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 from db import dataset, user
 from utils import dataset_validator
 from sqlalchemy import text
@@ -9,7 +9,7 @@ import copy
 import mock
 
 
-class DatasetTestCase(DatabaseTestCase):
+class DatasetTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DatasetTestCase, self).setUp()
@@ -401,7 +401,7 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertFalse(resp)
 
 
-class GetPublicDatasetsTestCase(DatabaseTestCase):
+class GetPublicDatasetsTestCase(AcousticbrainzTestCase):
     """A whole testcase because there are lots of cases to test"""
 
     def setUp(self):

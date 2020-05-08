@@ -1,20 +1,17 @@
 from __future__ import absolute_import
 from werkzeug.exceptions import InternalServerError
-from webserver.testing import ServerTestCase
-from db.testing import TEST_DATA_PATH
+from webserver.testing import AcousticbrainzTestCase
 import db.exceptions
 import db.dataset
 import db.dataset_eval
 import db.api_key
 import webserver.views.api.exceptions
-import datetime
-from utils import dataset_validator
 
 import json
 import mock
-import os
 
-class APIDatasetEvaluationViewsTestCase(ServerTestCase):
+
+class APIDatasetEvaluationViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(APIDatasetEvaluationViewsTestCase, self).setUp()

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from werkzeug.exceptions import InternalServerError
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
 import webserver.views.api
 import db.exceptions
 import flask
@@ -15,7 +15,7 @@ import mock
 import uuid
 
 
-class GetCheckDatasetTestCase(ServerTestCase):
+class GetCheckDatasetTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(GetCheckDatasetTestCase, self).setUp()
@@ -114,7 +114,7 @@ class GetCheckDatasetTestCase(ServerTestCase):
             self.assertDictEqual(dataset, {"id": "d0d11ad2-df0d-4689-8b71-b041905d7893", "public": True, "author": 1})
 
 
-class APIDatasetViewsTestCase(ServerTestCase):
+class APIDatasetViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(APIDatasetViewsTestCase, self).setUp()

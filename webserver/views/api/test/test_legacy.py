@@ -3,18 +3,18 @@ from __future__ import absolute_import
 import mock
 
 import db.exceptions
-from webserver.testing import ServerTestCase
-from db.testing import TEST_DATA_PATH
+from webserver.testing import AcousticbrainzTestCase
+from webserver.testing import DB_TEST_DATA_PATH
 from flask import url_for
 import os
 
 
-class LegacyViewsTestCase(ServerTestCase):
+class LegacyViewsTestCase(AcousticbrainzTestCase):
 
     def test_submit_low_level(self):
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
 
-        with open(os.path.join(TEST_DATA_PATH, mbid + '.json')) as json_file:
+        with open(os.path.join(DB_TEST_DATA_PATH, mbid + '.json')) as json_file:
             with self.app.test_client() as client:
                 sub_resp = client.post("/%s/low-level" % mbid,
                                        data=json_file.read(),

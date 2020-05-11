@@ -650,7 +650,7 @@ def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
         return docs
 
 
-def get_unprocessed_highlevel_documents():
+def get_unprocessed_highlevel_documents(limit=100):
     """Fetch up to 100 low-level documents which have no associated high level data."""
     with db.engine.connect() as connection:
         query = text(
@@ -663,8 +663,9 @@ def get_unprocessed_highlevel_documents():
         LEFT JOIN highlevel AS hl
                ON ll.id = hl.id
             WHERE hl.mbid IS NULL
-            LIMIT 100""")
-        result = connection.execute(query)
+         ORDER BY ll.id
+            LIMIT :limit""")
+        result = connection.execute(query, {"limit": limit})
         docs = result.fetchall()
         return docs
 

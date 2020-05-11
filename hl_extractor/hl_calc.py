@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+import hashlib
 import json
 import os
 import subprocess
 import sys
 import tempfile
-from hashlib import sha1
-from threading import Thread
 from time import sleep
 
+import concurrent.futures
 import yaml
 
 import db
@@ -25,75 +25,55 @@ HIGH_LEVEL_EXTRACTOR_BINARY = os.path.join(BIN_PATH, "essentia_streaming_extract
 PROFILE_CONF_TEMPLATE = os.path.join(BASE_DIR, "profile.conf.in")
 PROFILE_CONF = os.path.join(BASE_DIR, "profile.conf")
 
+DOCUMENTS_PER_QUERY = 100
 
-class HighLevel(Thread):
-    """This thread class calculates the high-level data by calling the external
-    high-level calculator.
-    """
 
-    def __init__(self, mbid, ll_data, ll_id):
-        Thread.__init__(self)
-        self.mbid = mbid
-        self.ll_data = ll_data
-        self.hl_data = None
-        self.ll_id = ll_id
+def process_mbid(mbid, ll_data):
+    print("Starting {}".format(mbid))
+    try:
+        f = tempfile.NamedTemporaryFile(delete=False)
+        name = f.name
+        f.write(ll_data.encode("utf-8"))
+        f.close()
+    except IOError:
+        print("IO Error while writing temp file")
+        # If we return early, remove the ll file we created
+        os.unlink(name)
+        return "{}"
 
-    def _calculate(self):
-        """Invoke Essentia high-level extractor and return its JSON output."""
+    # Securely generate a temporary filename
+    tmp_file = tempfile.mkstemp()
+    out_file = tmp_file[1]
+    os.close(tmp_file[0])
 
-        try:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            name = f.name
-            f.write(self.ll_data.encode("utf-8"))
-            f.close()
-        except IOError:
-            print("IO Error while writing temp file")
-            # If we return early, remove the ll file we created
-            os.unlink(name)
-            return "{}"
+    fnull = open(os.devnull, 'w')
+    try:
+        subprocess.check_call([HIGH_LEVEL_EXTRACTOR_BINARY,
+                               name, out_file, PROFILE_CONF],
+                              stdout=fnull, stderr=fnull)
+    except (subprocess.CalledProcessError, OSError):
+        print("Cannot call high-level extractor")
+        # If we return early, make sure we remove the temp
+        # output file that we created
+        os.unlink(out_file)
+        return "{}"
+    finally:
+        # At this point we can remove the source file,
+        # regardless of if we failed or if we succeeded
+        fnull.close()
+        os.unlink(name)
 
-        # Securely generate a temporary filename
-        tmp_file = tempfile.mkstemp()
-        out_file = tmp_file[1]
-        os.close(tmp_file[0])
+    try:
+        with open(out_file) as fp:
+            hl_data = fp.read()
+    except IOError:
+        print("IO Error while reading temp file")
+        return "{}"
+    finally:
+        os.unlink(out_file)
 
-        fnull = open(os.devnull, 'w')
-        try:
-            subprocess.check_call([HIGH_LEVEL_EXTRACTOR_BINARY,
-                                   name, out_file, PROFILE_CONF],
-                                  stdout=fnull, stderr=fnull)
-        except (subprocess.CalledProcessError, OSError):
-            print("Cannot call high-level extractor")
-            # If we return early, make sure we remove the temp
-            # output file that we created
-            os.unlink(out_file)
-            return "{}"
-        finally:
-            # At this point we can remove the source file,
-            # regardless of if we failed or if we succeeded
-            fnull.close()
-            os.unlink(name)
-
-        try:
-            f = open(out_file)
-            hl_data = f.read()
-            f.close()
-        except IOError:
-            print("IO Error while removing temp file")
-            return "{}"
-        finally:
-            os.unlink(out_file)
-
-        return hl_data
-
-    def get_data(self):
-        return self.hl_data
-
-    def get_ll_id(self):
-        return self.ll_id
-
-    def run(self):
-        self.hl_data = self._calculate()
+    print("Finished {}".format(mbid))
+    return hl_data
 
 
 def create_profile(in_file, out_file, sha1):
@@ -103,7 +83,7 @@ def create_profile(in_file, out_file, sha1):
 
     try:
         with open(in_file, 'r') as f:
-            doc = yaml.load(f, Loader=yaml.BaseLoader)
+            doc = yaml.load(f, Loader=yaml.SafeLoader)
     except IOError as e:
         print("Cannot read profile %s: %s" % (in_file, e))
         sys.exit(-1)
@@ -122,7 +102,7 @@ def create_profile(in_file, out_file, sha1):
 
     try:
         with open(out_file, 'w') as yaml_file:
-            yaml_file.write( yaml.dump(doc, default_flow_style=False))
+            yaml.dump(doc, yaml_file, default_flow_style=False)
     except IOError as e:
         print("Cannot write profile %s: %s" % (out_file, e))
         sys.exit(-1)
@@ -131,85 +111,56 @@ def create_profile(in_file, out_file, sha1):
 def get_build_sha1(binary):
     """Calculate the SHA1 of the binary we're using."""
     try:
-        f = open(binary, "r")
-        bin = f.read()
-        f.close()
+        with open(binary, "rb") as fp:
+            contents = fp.read()
     except IOError as e:
         print("Cannot calculate the SHA1 of the high-level extractor binary: %s" % e)
         sys.exit(-1)
 
-    return sha1(bin).hexdigest()
+    return hashlib.sha1(contents).hexdigest()
 
 
-def main(num_threads):
+def save_hl(mbid, rowid, hl_data, build_sha1):
+    try:
+        jdata = json.loads(hl_data)
+    except ValueError:
+        print("error %s: Cannot parse result document" % mbid)
+        print(hl_data)
+        jdata = {}
+
+    db.data.write_high_level(mbid, rowid, jdata, build_sha1)
+
+
+def cf_main(num_threads):
     print("High-level extractor daemon starting with %d threads" % num_threads)
-    sys.stdout.flush()
     build_sha1 = get_build_sha1(HIGH_LEVEL_EXTRACTOR_BINARY)
     create_profile(PROFILE_CONF_TEMPLATE, PROFILE_CONF, build_sha1)
 
     num_processed = 0
 
-    pool = {}
-    docs = []
-    while True:
-        # Check to see if we need more database rows
-        if len(docs) == 0:
-            # Fetch more rows from the DB
-            docs = db.data.get_unprocessed_highlevel_documents()
-
-            # We will fetch some rows that are already in progress. Remove those.
-            in_progress = pool.keys()
-            filtered = []
-            for mbid, doc, id in docs:
-                if mbid not in in_progress:
-                    filtered.append((mbid, doc, id))
-            docs = filtered
-
-        if len(docs):
-            # Start one document
-            mbid, doc, id = docs.pop()
-            th = HighLevel(mbid, doc, id)
-            th.start()
-            print("start %s" % mbid)
-            sys.stdout.flush()
-            pool[mbid] = th
-
-        # If we're at max threads, wait for one to complete
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
         while True:
-            if len(pool) == 0 and len(docs) == 0:
+            docs = db.data.get_unprocessed_highlevel_documents(DOCUMENTS_PER_QUERY)
+            print("Got %s documents" % len(docs))
+
+            future_to_llid = {}
+            for mbid, ll_json, rowid in docs:
+                future_to_llid[executor.submit(process_mbid, mbid, ll_json)] = (rowid, mbid)
+
+            for future in concurrent.futures.as_completed(future_to_llid):
+                rowid, mbid = future_to_llid[future]
+                try:
+                    hl_data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (mbid, exc))
+                else:
+                    num_processed += 1
+                    save_hl(mbid, rowid, hl_data, build_sha1)
+
+            # If we got less than the number of documents we asked for then we should wait
+            # for a while for some more to appear
+            if len(docs) < DOCUMENTS_PER_QUERY:
                 if num_processed > 0:
                     print("processed %s documents, none remain. Sleeping." % num_processed)
-                    sys.stdout.flush()
                 num_processed = 0
-                # Let's be nice and not keep any connections to the DB open while we nap
-                # TODO: Close connections when we're sleeping
                 sleep(SLEEP_DURATION)
-
-            for mbid in pool.keys():
-                if not pool[mbid].is_alive():
-
-                    # Fetch the data and clean up the thread object
-                    hl_data = pool[mbid].get_data()
-                    ll_id = pool[mbid].get_ll_id()
-                    pool[mbid].join()
-                    del pool[mbid]
-
-                    try:
-                        jdata = json.loads(hl_data)
-                    except ValueError:
-                        print("error %s: Cannot parse result document" % mbid)
-                        print(hl_data)
-                        sys.stdout.flush()
-                        jdata = {}
-
-                    db.data.write_high_level(mbid, ll_id, jdata, build_sha1)
-
-                    print("done  %s" % mbid)
-                    sys.stdout.flush()
-                    num_processed += 1
-
-            if len(pool) == num_threads:
-                # tranquilo!
-                sleep(.1)
-            else:
-                break

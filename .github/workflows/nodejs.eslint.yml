@@ -15,4 +15,4 @@ jobs:
         with:
           node-version:  12.x
       - run: npm install
-      - run: npx eslint --ext js,jsx reactjs/
+      - run: npx eslint --ext js,jsx webserver/static/scripts/

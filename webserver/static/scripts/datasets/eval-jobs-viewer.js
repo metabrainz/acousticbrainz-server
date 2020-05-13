@@ -1,3 +1,4 @@
+var PropTypes = require('prop-types');
 /*
  This is a viewer for dataset evaluation jobs.
 
@@ -20,15 +21,14 @@ var JOB_STATUS_FAILED = "failed";
 var JOB_STATUS_DONE = "done";
 
 
-var EvaluationJobsViewer = React.createClass({
-    getInitialState: function () {
-        return {
-            active_section: SECTION_JOB_LIST,
-            isAuthorViewing: false,
-            jobs: null
-        };
-    },
-    componentDidMount: function() {
+class EvaluationJobsViewer extends React.Component {
+    state = {
+        active_section: SECTION_JOB_LIST,
+        isAuthorViewing: false,
+        jobs: null
+    };
+
+    componentDidMount() {
         let user = null;
         $.get("/user-info", function(data) {
             user = data.user;
@@ -44,28 +44,28 @@ var EvaluationJobsViewer = React.createClass({
             return;
         }
         $.get("/datasets/service/" + container.dataset.datasetId + "/evaluation/json", function(data) {
-            if (this.isMounted()) {
-                let isAuthorViewing = false;
-                if (user !== null) {
-                    isAuthorViewing = user.id === data.dataset.author.id;
-                }
-                this.setState({
-                    jobs: data.jobs,
-                    isAuthorViewing: isAuthorViewing
-                });
-                console.debug("Received jobs:", data);
-                console.debug("Is author viewing:", isAuthorViewing);
-                this.handleHashChange();
+            let isAuthorViewing = false;
+            if (user !== null) {
+                isAuthorViewing = user.id === data.dataset.author.id;
             }
+            this.setState({
+                jobs: data.jobs,
+                isAuthorViewing: isAuthorViewing
+            });
+            console.debug("Received jobs:", data);
+            console.debug("Is author viewing:", isAuthorViewing);
+            this.handleHashChange();
         }.bind(this));
 
         // Hash is used to store ID of the job that is currently viewed.
         window.addEventListener('hashchange', this.handleHashChange);
-    },
-    componentWillUnmount: function() {
+    }
+
+    componentWillUnmount() {
         window.removeEventListener('hashchange', this.handleHashChange);
-    },
-    handleHashChange: function(e) {
+    }
+
+    handleHashChange = (e) => {
         // Hash is used to store ID of the currently viewed job.
         if (this.state.jobs) {
             var hash = window.location.hash.substr(1);
@@ -91,22 +91,25 @@ var EvaluationJobsViewer = React.createClass({
                 this.handleReturn();
             }
         }
-    },
-    handleViewDetails: function (index) {
+    };
+
+    handleViewDetails = (index) => {
         this.setState({
             active_section: SECTION_JOB_DETAILS,
             active_job_index: index
         });
         window.location.hash = "#" + this.state.jobs[index].id;
-    },
-    handleReturn: function () {
+    };
+
+    handleReturn = () => {
         this.setState({
             active_section: SECTION_JOB_LIST,
             active_job_index: undefined
         });
         window.location.hash = "";
-    },
-    handleJobDelete: function (jobID, index) {
+    };
+
+    handleJobDelete = (jobID, index) => {
         $.ajax({
             type: "DELETE",
             url: "/datasets/service/" + container.dataset.datasetId + "/" + jobID,
@@ -124,8 +127,9 @@ var EvaluationJobsViewer = React.createClass({
         let jobs = this.state.jobs;
         jobs.splice(index, 1);
         this.setState({jobs: jobs});
-    },
-    render: function () {
+    };
+
+    render() {
         if (this.state.jobs) {
             if (this.state.active_section == SECTION_JOB_LIST) {
                 return (
@@ -154,19 +158,19 @@ var EvaluationJobsViewer = React.createClass({
             return (<strong>Loading job list...</strong>);
         }
     }
-});
-
+}
 
 // Classes used with SECTION_JOB_LIST:
 
-var JobList = React.createClass({
-    propTypes: {
-        jobs: React.PropTypes.array.isRequired,
-        showDelete: React.PropTypes.bool.isRequired,
-        onViewDetails: React.PropTypes.func.isRequired,
-        onDelete: React.PropTypes.func.isRequired
-    },
-    render: function () {
+class JobList extends React.Component {
+    static propTypes = {
+        jobs: PropTypes.array.isRequired,
+        showDelete: PropTypes.bool.isRequired,
+        onViewDetails: PropTypes.func.isRequired,
+        onDelete: PropTypes.func.isRequired
+    };
+
+    render() {
         if (this.props.jobs.length > 0) {
             var items = [];
             this.props.jobs.forEach(function (cls, index) {
@@ -203,27 +207,30 @@ var JobList = React.createClass({
             );
         }
     }
-});
+}
 
-var JobRow = React.createClass({
-    propTypes: {
-        index: React.PropTypes.number.isRequired,
-        id: React.PropTypes.string.isRequired,
-        created: React.PropTypes.string.isRequired,
-        status: React.PropTypes.string.isRequired,
-        outdated: React.PropTypes.string.isRequired,
-        showDelete: React.PropTypes.bool.isRequired,
-        onViewDetails: React.PropTypes.func.isRequired,
-        onDelete: React.PropTypes.func.isRequired
-    },
-    handleViewDetails: function (event) {
+class JobRow extends React.Component {
+    static propTypes = {
+        index: PropTypes.number.isRequired,
+        id: PropTypes.string.isRequired,
+        created: PropTypes.string.isRequired,
+        status: PropTypes.string.isRequired,
+        outdated: PropTypes.string.isRequired,
+        showDelete: PropTypes.bool.isRequired,
+        onViewDetails: PropTypes.func.isRequired,
+        onDelete: PropTypes.func.isRequired
+    };
+
+    handleViewDetails = (event) => {
         event.preventDefault();
         this.props.onViewDetails(this.props.index);
-    },
-    handleDelete: function () {
+    };
+
+    handleDelete = () => {
         this.props.onDelete(this.props.id, this.props.index);
-    },
-    render: function () {
+    };
+
+    render() {
         var status = "";
         switch (this.props.status) {
             case JOB_STATUS_PENDING:
@@ -258,29 +265,31 @@ var JobRow = React.createClass({
             </tr>
         );
     }
-});
+}
 
+class JobDeleteButton extends React.Component {
+    static propTypes = {
+        onDelete: PropTypes.func.isRequired
+    };
 
-let JobDeleteButton = React.createClass({
-    propTypes: {
-        onDelete: React.PropTypes.func.isRequired
-    },
-    getInitialState: function () {
-        return {showConfirmation: false};
-    },
-    delete: function (event) {
+    state = {showConfirmation: false};
+
+    delete = (event) => {
         event.preventDefault();
         this.props.onDelete();
-    },
-    confirm: function (event) {
+    };
+
+    confirm = (event) => {
         event.preventDefault();
         this.setState({showConfirmation: true});
-    },
-    cancel: function (event) {
+    };
+
+    cancel = (event) => {
         event.preventDefault();
         this.setState({showConfirmation: false});
-    },
-    render: function () {
+    };
+
+    render() {
         if (!this.state.showConfirmation) {
             return <a href="#" className="btn btn-danger btn-xs"
                       title="Delete this evaluation job"
@@ -295,23 +304,23 @@ let JobDeleteButton = React.createClass({
             </div>;
         }
     }
-});
-
+}
 
 // Classes used with SECTION_JOB_DETAILS:
 
-var JobDetails = React.createClass({
-    propTypes: {
-        id: React.PropTypes.string.isRequired,
-        created: React.PropTypes.string.isRequired,
-        updated: React.PropTypes.string.isRequired,
-        status: React.PropTypes.string.isRequired,
-        outdated: React.PropTypes.string.isRequired,
-        statusMsg: React.PropTypes.string,
-        result: React.PropTypes.object,
-        onReturn: React.PropTypes.func.isRequired
-    },
-    render: function () {
+class JobDetails extends React.Component {
+    static propTypes = {
+        id: PropTypes.string.isRequired,
+        created: PropTypes.string.isRequired,
+        updated: PropTypes.string.isRequired,
+        status: PropTypes.string.isRequired,
+        outdated: PropTypes.string.isRequired,
+        statusMsg: PropTypes.string,
+        result: PropTypes.object,
+        onReturn: PropTypes.func.isRequired
+    };
+
+    render() {
         var status = "";
         switch (this.props.status) {
             case JOB_STATUS_PENDING:
@@ -372,14 +381,15 @@ var JobDetails = React.createClass({
             return <div>{header}</div>;
         }
     }
-});
+}
 
-var Results = React.createClass({
-    propTypes: {
-        accuracy: React.PropTypes.number.isRequired,
-        table: React.PropTypes.string.isRequired
-    },
-    render: function () {
+class Results extends React.Component {
+    static propTypes = {
+        accuracy: PropTypes.number.isRequired,
+        table: PropTypes.string.isRequired
+    };
+
+    render() {
         var classes = [];
         this.props.table.classes.forEach(function (cls) {
             classes.push(<th className="active">{cls}</th>);
@@ -436,7 +446,7 @@ var Results = React.createClass({
         );
 
     }
-});
+}
 
 
 if (container) ReactDOM.render(<EvaluationJobsViewer />, container);

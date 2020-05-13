@@ -16,8 +16,7 @@ TEST_DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test
 
 class DatabaseTestCase(TestCase):
 
-    @staticmethod
-    def create_app():
+    def create_app(self):
         app = create_app(debug=False)
         app.config['WTF_CSRF_ENABLED'] = False
         app.config['TESTING'] = True

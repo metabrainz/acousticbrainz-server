@@ -16,6 +16,7 @@ api_legacy_bp = Blueprint('api', __name__)
 @crossdomain()
 @ratelimit()
 def count(mbid):
+    mbid, offset = _validate_data_arguments(str(mbid), None)
     return jsonify({
         'mbid': mbid,
         'count': count_lowlevel(mbid),
@@ -75,7 +76,7 @@ def _validate_data_arguments(mbid, offset):
     If the offset is None, return 0, otherwise interpret it as a number. If it is
     not a number, raise 400."""
     try:
-        uuid.UUID(mbid)
+        mbid = str(uuid.UUID(mbid))
     except ValueError:
         # an invalid uuid is 404
         raise exceptions.APINotFound("Not found")

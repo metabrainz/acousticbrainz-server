@@ -103,7 +103,7 @@ def create_profile(in_file, out_file, sha1):
 
     try:
         with open(in_file, 'r') as f:
-            doc = yaml.load(f)
+            doc = yaml.load(f, Loader=yaml.SafeLoader)
     except IOError as e:
         print("Cannot read profile %s: %s" % (in_file, e))
         sys.exit(-1)

@@ -91,9 +91,10 @@ def get_low_level(mbid):
 
     :resheader Content-Type: *application/json*
     """
-    offset = _validate_offset(request.args.get("n"))
+    offset = request.args.get("n")
+    _, mbid, offset = _validate_arguments(str(mbid), offset)
     try:
-        return jsonify(db.data.load_low_level(str(mbid), offset))
+        return jsonify(db.data.load_low_level(mbid, offset))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -114,13 +115,15 @@ def get_high_level(mbid):
 
     :query n: *Optional.* Integer specifying an offset for a document.
     :query map_classes: *Optional.* If set to 'true', map class names to human-readable values
+    TODO: provide a link to what these mappings are
 
     :resheader Content-Type: *application/json*
     """
-    offset = _validate_offset(request.args.get("n"))
+    offset = request.args.get("n")
+    _, mbid, offset = _validate_arguments(str(mbid), offset)
     map_classes = _validate_map_classes(request.args.get("map_classes"))
     try:
-        return jsonify(db.data.load_high_level(str(mbid), offset, map_classes))
+        return jsonify(db.data.load_high_level(mbid, offset, map_classes))
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APINotFound("Not found")
 
@@ -134,6 +137,8 @@ def submit_low_level(mbid):
 
     :resheader Content-Type: *application/json*
     """
+    # The uuid argument matcher in this method is set to strict mode, which means
+    # that we only accept uuids in lower-case
     raw_data = request.get_data()
     try:
         data = json.loads(raw_data.decode("utf-8"))
@@ -159,20 +164,47 @@ def _validate_map_classes(map_classes):
     return map_classes is not None and map_classes.lower() == 'true'
 
 
-def _validate_offset(offset):
-    """Validate the offset.
+def _generate_normalised_mbid_mapping(query_arguments):
+    """
+    :param query_arguments: a list of tuples (mbid, parsed_mbid, offset) as returned by _validate_arguments
+    :return: a dictionary mapping {mbid: parsed_mbid} only if
+    """
+    mapping = {}
+    for mbid, parsed_mbid, _ in query_arguments:
+        if mbid != parsed_mbid:
+            mapping[mbid] = parsed_mbid
+    return mapping
+
+
+def _validate_arguments(mbid, offset):
+    """Validate the mbid and offset.
 
     If the offset is None, return 0, otherwise interpret it as a number. If it is
-    not a number, raise 400.
+    not a number, return 0. Don't allow negative numbers.
+
+    If the mbid is an invalid UUID, raise an APIBadRequest
+    If the mbid isn't normalised (all lower-case, with hyphens), normalise it.
+
+    Returns:
+        a tuple (original_mbid, normalised_mbid, offset)
     """
+    try:
+        normalised_mbid = str(uuid.UUID(mbid))
+    except ValueError:
+        # an invalid uuid is 404
+        raise webserver.views.api.exceptions.APIBadRequest("'%s' is not a valid UUID" % mbid)
+
     if offset:
         try:
             offset = int(offset)
+            # Don't allow negative offsets
+            offset = max(offset, 0)
         except ValueError:
-            raise webserver.views.api.exceptions.APIBadRequest("Offset must be an integer value")
+            offset = 0
     else:
         offset = 0
-    return offset
+
+    return mbid, normalised_mbid, offset
 
 
 def _parse_bulk_params(params):
@@ -183,45 +215,40 @@ def _parse_bulk_params(params):
     Where offset is a number >=0. Offsets are optional.
     mbid must be a UUID.
 
-    If an offset is not specified or is invalid, 0 is used as a default.
+    If an offset is not specified non-numeric, or negativeit is replaced with 0.
     If an mbid is not valid, an APIBadRequest Exception is
     raised listing the bad MBID and no further processing is done.
 
-    Returns a list of tuples (mbid, offset). MBIDs are converted to lower-case
+    The mbid is normalised to all lower-case, with hyphens between sections.
+
+    Returns a list of tuples (mbid, parsed_mbid, offset).
+    mbid is the mbid as passed by the client. parsed_mbid is a normalised version of this mbid
+    (all lower-case with ).
     """
 
     ret = []
 
     for recording in params.split(";"):
         parts = str(recording).split(":")
-        recording_id = parts[0]
-        try:
-            uuid.UUID(recording_id)
-        except ValueError:
-            raise webserver.views.api.exceptions.APIBadRequest("'%s' is not a valid UUID" % recording_id)
-        if len(parts) > 2:
-            raise webserver.views.api.exceptions.APIBadRequest("More than 1 : in '%s'" % recording)
+        mbid = parts[0]
+        if len(parts) == 1:
+            offset = None
         elif len(parts) == 2:
-            try:
-                offset = int(parts[1])
-                # Don't allow negative offsets
-                offset = max(offset, 0)
-            except ValueError:
-                offset = 0
+            offset = parts[1]
         else:
-            offset = 0
+            raise webserver.views.api.exceptions.APIBadRequest("More than 1 colon (:) in '%s'" % recording)
 
-        ret.append((recording_id.lower(), offset))
+        args = _validate_arguments(mbid, offset)
+        ret.append(args)
 
     # Remove duplicates, preserving order
     return remove_duplicates(ret)
 
 
-def check_bad_request_for_multiple_recordings():
+def _get_recording_ids_from_request():
     """
-    Check if a request for multiple recording ids is valid. The ?recording_ids parameter
-    to the current flask request is checked to see if it is present and if it follows
-    the format
+    Read the ?recording_ids query parameter from the flask request and validate it.
+    The parameter should be in the format
         mbid:n;mbid:n
     where mbid is a recording MBID and n is an optional integer offset. If the offset is
     missing or non-integer, it is replaced with 0
@@ -257,13 +284,18 @@ def get_many_lowlevel():
 
        {"mbid1": {"offset1": {document},
                   "offset2": {document}},
-        "mbid2": {"offset1": {document}}
+        "mbid2": {"offset1": {document}},
+        "mbid_mapping": {"MBID1": "mbid1"}
        }
 
     MBIDs and offset keys are returned as strings (as per JSON encoding rules).
     If an offset is not specified in the request for an MBID or is not a valid integer >=0,
     the offset will be 0.
-    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
+
+    MBID keys are always returned in a normalised form (all lower-case, separated in groups of 8-4-4-4-12 characters),
+    even if the provided recording MBIDs are not given in this form. In the case that a requested MBID is not given
+    in this normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs
+    to this form.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -278,8 +310,14 @@ def get_many_lowlevel():
 
     :resheader Content-Type: *application/json*
     """
-    recordings = check_bad_request_for_multiple_recordings()
+    recordings = _get_recording_ids_from_request()
+    mbid_mapping = _generate_normalised_mbid_mapping(recordings)
+    # The result from check_bad_request is (mbid, good_mbid, offset)
+    recordings = [(mbid, offset) for _, mbid, offset in recordings]
     recording_details = db.data.load_many_low_level(recordings)
+    recording_details['mbid_mapping'] = {}
+    if mbid_mapping:
+        recording_details['mbid_mapping'] = mbid_mapping
 
     return jsonify(recording_details)
 
@@ -296,13 +334,18 @@ def get_many_highlevel():
 
        {"mbid1": {"offset1": {document},
                   "offset2": {document}},
-        "mbid2": {"offset1": {document}}
+        "mbid2": {"offset1": {document}},
+        "mbid_mapping": {"MBID1": "mbid1"}
        }
 
     MBIDs and offset keys are returned as strings (as per JSON encoding rules).
     If an offset is not specified in the request for an mbid or is not a valid integer >=0,
     the offset will be 0.
-    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
+
+    MBID keys are always returned in a normalised form (all lower-case, separated in groups of 8-4-4-4-12 characters),
+    even if the provided recording MBIDs are not given in this form. In the case that a requested MBID is not given
+    in this normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs
+    to this form.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
@@ -320,8 +363,14 @@ def get_many_highlevel():
     :resheader Content-Type: *application/json*
     """
     map_classes = _validate_map_classes(request.args.get("map_classes"))
-    recordings = check_bad_request_for_multiple_recordings()
+    recordings = _get_recording_ids_from_request()
+    mbid_mapping = _generate_normalised_mbid_mapping(recordings)
+    # The result from check_bad_request is (mbid, good_mbid, offset)
+    recordings = [(mbid, offset) for _, mbid, offset in recordings]
     recording_details = db.data.load_many_high_level(recordings, map_classes)
+    recording_details['mbid_mapping'] = {}
+    if mbid_mapping:
+        recording_details['mbid_mapping'] = mbid_mapping
 
     return jsonify(recording_details)
 
@@ -430,10 +479,14 @@ def get_many_count():
     .. sourcecode:: json
 
        {"mbid1": {"count": 3},
-        "mbid2": {"count": 1}
+        "mbid2": {"count": 1},
+        "mbid_mapping": {"MBID1": "mbid1"}
        }
 
-    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
+    MBID keys are always returned in a normalised form (all lower-case, separated in groups of 8-4-4-4-12 characters),
+    even if the provided recording MBIDs are not given in this form. In the case that a requested MBID is not given
+    in this normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs
+    to this form.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 
@@ -443,7 +496,13 @@ def get_many_count():
 
     :resheader Content-Type: *application/json*
     """
-    recordings = check_bad_request_for_multiple_recordings()
+    recordings = _get_recording_ids_from_request()
+    mbid_mapping = _generate_normalised_mbid_mapping(recordings)
+    # The result from check_bad_request is (mbid, good_mbid, offset)
+    mbids = [mbid for (_, mbid, offset) in recordings]
+    recording_counts = db.data.count_many_lowlevel(mbids)
+    recording_counts['mbid_mapping'] = {}
+    if mbid_mapping:
+        recording_counts['mbid_mapping'] = mbid_mapping
 
-    mbids = [mbid for (mbid, offset) in recordings]
-    return jsonify(db.data.count_many_lowlevel(mbids))
+    return jsonify(recording_counts)

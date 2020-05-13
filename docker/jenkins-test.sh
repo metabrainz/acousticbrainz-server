@@ -49,7 +49,7 @@ function run_tests {
     docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME run --rm $TEST_SERVICE_NAME \
         dockerize \
         -wait tcp://db:5432 -timeout 60s bash -c \
-        "cd /code && cp config.py.example config.py && ls -lR && python manage.py init_db"
+        "cd /code && cp config.py.example config.py && python manage.py init_db"
 
     # run tests
     echo "running tests"

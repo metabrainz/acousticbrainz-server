@@ -1,6 +1,5 @@
-/* eslint-disable */
-if (typeof global === 'undefined') {
-  module.exports = window;
+if (typeof global === "undefined") {
+    module.exports = window;
 } else {
-  module.exports = global;
+    module.exports = global;
 }

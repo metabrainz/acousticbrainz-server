@@ -1,5 +1,4 @@
-/* eslint-disable */
-import global from './global';
+import global from "./global";
 
 global.$ = global.jQuery = require("jquery");
 

@@ -650,7 +650,7 @@ def build_feature_string(features):
     Returns: a string of the form:
     "data->'lowlevel'->'mfccs' AS mfccs, data->'lowlevel'->'gfccs' AS gfccs"
     """
-    feature_string = ', '.join(' AS '.join([x[0], x[1].join(['"', '"'])]) for x in features)
+    feature_string = ', '.join(['%s AS "%s"' % (x[0], x[1]) for x in features])
     return feature_string
 
 
@@ -660,7 +660,7 @@ def bulk_get_recording_features(recordings, feature_string):
 
     Args:
         recordings: a list of tuples of the form (MBID, offset)
-        
+
         feature_string: a string of the features that should
         be collected, with their aliases.
             e.g. "data->'lowlevel'->'mfccs' AS mfccs,
@@ -689,7 +689,7 @@ def parse_features_row(row, features):
     Parse a row of the joined lowlevel and lowlevel_json tables
     containing individual features of the lowlevel_json.data for
     a single recording.
- 
+
     Args:
         row: a row resulting from the sqlalchemy query, of the form:
         (<gid>, <offset>, <feature_1>, ..., <feature_n>).
@@ -703,7 +703,7 @@ def parse_features_row(row, features):
 
         features: a list of tuples of the form:
         (<feature_path>, <alias>, <default_type>)
-            
+
             <feature_path> is a string holding the path to a feature:
             "llj.data->feature_name"
 

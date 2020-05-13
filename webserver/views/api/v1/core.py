@@ -28,24 +28,27 @@ MAX_ITEMS_PER_BULK_REQUEST = 25
 # Individual features selectable in get_many_individual_features.
 # Note: metadata.version and metadata.audio_properties will be included in all responses.
 AVAILABLE_FEATURES = {
-    "lowlevel.average_loudness": ["llj.data->'lowlevel'->'average_loudness'", None], 
-    "lowlevel.dynamic_complexity": ["llj.data->'lowlevel'->'dynamic_complexity'", None], 
+    "lowlevel.average_loudness": ["llj.data->'lowlevel'->'average_loudness'", None],
+    "lowlevel.dynamic_complexity": ["llj.data->'lowlevel'->'dynamic_complexity'", None],
     "metadata.audio_properties.replay_gain": ["llj.data->'metadata'->'audio_properties'->'replay_gain'", None],
-    "metadata.tags": ["llj.data->'metadata'->'tags'", {}], 
-    "rhythm.beats_count": ["llj.data->'rhythm'->'beats_count'", None], 
-    "rhythm.beats_loudness.mean": ["llj.data->'rhythm'->'beats_loudness'->'mean'", None], 
-    "rhythm.bpm": ["llj.data->'rhythm'->'bpm'", None], 
-    "rhythm.bpm_histogram_first_peak_bpm.mean": ["llj.data->'rhythm'->bpm_histogram_first_peak_bpm'->'mean'", None], 
-    "rhythm.bpm_histogram_second_peak_bpm.mean": ["llj.data->'rhythm'->bpm_histogram_second_peak_bpm'->'mean'", None], 
-    "rhythm.danceability": ["llj.data->'rhythm'->'danceability'", None], 
-    "rhythm.onset_rate": ["llj.data->'rhythm'->'onset_rate'", None], 
-    "tonal.chords_key": ["llj.data->'tonal'->'chords_key'", None], 
-    "tonal.chords_scale": ["llj.data->'tonal'->'chords_scale'", None], 
-    "tonal.key_key": ["llj.data->'tonal'->'key_key'", None], 
-    "tonal.key_scale": ["llj.data->'tonal'->'key_scale'", None], 
-    "tonal.tuning_frequency": ["llj.data->'tonal'->'tuning_frequency'", None], 
+    "metadata.tags": ["llj.data->'metadata'->'tags'", {}],
+    "rhythm.beats_count": ["llj.data->'rhythm'->'beats_count'", None],
+    "rhythm.beats_loudness.mean": ["llj.data->'rhythm'->'beats_loudness'->'mean'", None],
+    "rhythm.bpm": ["llj.data->'rhythm'->'bpm'", None],
+    "rhythm.bpm_histogram_first_peak_bpm.mean": ["llj.data->'rhythm'->bpm_histogram_first_peak_bpm'->'mean'", None],
+    "rhythm.bpm_histogram_second_peak_bpm.mean": ["llj.data->'rhythm'->bpm_histogram_second_peak_bpm'->'mean'", None],
+    "rhythm.danceability": ["llj.data->'rhythm'->'danceability'", None],
+    "rhythm.onset_rate": ["llj.data->'rhythm'->'onset_rate'", None],
+    "tonal.chords_key": ["llj.data->'tonal'->'chords_key'", None],
+    "tonal.chords_scale": ["llj.data->'tonal'->'chords_scale'", None],
+    "tonal.key_key": ["llj.data->'tonal'->'key_key'", None],
+    "tonal.key_scale": ["llj.data->'tonal'->'key_scale'", None],
+    "tonal.tuning_frequency": ["llj.data->'tonal'->'tuning_frequency'", None],
     "tonal.tuning_equal_tempered_deviation": ["llj.data->'tonal'->'tuning_equal_tempered_deviation'", None]
 }
+
+#: Features that can be selected individually from the bulk low-level endpoint
+LOWLEVEL_INDIVIDUAL_FEATURES = sorted(list(AVAILABLE_FEATURES.keys()))
 
 
 @bp_core.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
@@ -223,7 +226,7 @@ def _parse_bulk_params(params):
 
     Returns a list of tuples (mbid, parsed_mbid, offset).
     mbid is the mbid as passed by the client. parsed_mbid is a normalised version of this mbid
-    (all lower-case with ).
+    (all lower-case with hyphens in the correct places).
     """
 
     ret = []
@@ -292,14 +295,20 @@ def get_many_lowlevel():
     If an offset is not specified in the request for an MBID or is not a valid integer >=0,
     the offset will be 0.
 
-    MBID keys are always returned in a normalised form (all lower-case, separated in groups of 8-4-4-4-12 characters),
+    MBID keys are always returned in a
+    `normalised form <https://en.wikipedia.org/wiki/Universally_unique_identifier#Format>`_,
     even if the provided recording MBIDs are not given in this form. In the case that a requested MBID is not given
-    in this normalised form, the value `mbid_mapping` in the response will be a dictionary mapping user-provided MBIDs
+    in this normalised form, the value `mbid_mapping` in the response will be a dictionary that maps user-provided MBIDs
     to this form.
 
     If the list of MBIDs in the query string has a recording which is not
     present in the database, then it is silently ignored and will not appear
     in the returned data.
+
+    If you only need a specific feature and don't want to download the whole low-level document, you can request
+    specific features using the ``features`` parameter. The shape of the returned document will be the same as
+    a full low-level document, and will contain only the specified features as well as the ``metadata.audio_properties``
+    and ``metadata.version`` objects.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
 
@@ -308,13 +317,25 @@ def get_many_lowlevel():
 
       You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
 
+    :query features: *Optional.* A list of features to be returned for each mbid.
+
+      Takes the form `feature1;feature2`.
+
+      You can specify the following features in a request: :py:const:`~webserver.views.api.v1.core.LOWLEVEL_INDIVIDUAL_FEATURES`.
+
     :resheader Content-Type: *application/json*
     """
     recordings = _get_recording_ids_from_request()
     mbid_mapping = _generate_normalised_mbid_mapping(recordings)
     # The result from check_bad_request is (mbid, good_mbid, offset)
     recordings = [(mbid, offset) for _, mbid, offset in recordings]
-    recording_details = db.data.load_many_low_level(recordings)
+
+    parsed_features = _parse_individual_features()
+    if parsed_features:
+        recording_details = db.data.load_many_individual_features(recordings, parsed_features)
+    else:
+        recording_details = db.data.load_many_low_level(recordings)
+
     recording_details['mbid_mapping'] = {}
     if mbid_mapping:
         recording_details['mbid_mapping'] = mbid_mapping
@@ -375,19 +396,19 @@ def get_many_highlevel():
     return jsonify(recording_details)
 
 
-def parse_individual_features():
+def _parse_individual_features():
     """Check whether the features are found or not.
-    Parse the query string of features to create a list of 
-    the json paths to features, excluding those that are 
+    Parse the query string of features to create a list of
+    the json paths to features, excluding those that are
     not offered.
 
     If features are missing, an APIBadRequest Exception is
     raised stating the missing features message.
-    
+
     Returns:
         parsed_features, a list of tuples of the form:
             (<feature_path>, <alias>, <default_type>)
-            
+
             <feature_path> is a string holding the path to a feature:
             "llj.data->feature_name"
 
@@ -400,7 +421,7 @@ def parse_individual_features():
     """
     features_param = request.args.get("features")
     if not features_param:
-        raise webserver.views.api.exceptions.APIBadRequest("Missing `features` parameter")
+        return None
 
     parsed_features = []
     for alias in features_param.split(';'):
@@ -414,57 +435,13 @@ def parse_individual_features():
     metadata_version_alias = "metadata.version"
     metadata_audio_properties = "llj.data->'metadata'->'audio_properties'"
     metadata_audio_properties_alias = "metadata.audio_properties"
-    
+
     parsed_features.append((metadata_version, metadata_version_alias, {}))
     parsed_features.append((metadata_audio_properties, metadata_audio_properties_alias, {}))
 
     # Remove duplicates, preserving order
     ret = []
     return [x for x in parsed_features if not (x in ret or ret.append(x))]
-
-
-@bp_core.route("/low-level/individual", methods=["GET"])
-@crossdomain()
-def get_many_individual_features():
-    """Get a specified subset of low-level data for many recordings at once.
-    
-    **Example response**:
-
-    .. sourcecode:: json
-       {"mbid1": {"offset1": {document},
-                  "offset2": {document}},
-        "mbid2": {"offset1": {document}}
-       }
-
-    MBIDs and offset keys are returned as strings (as per JSON encoding rules).
-    If an offset is not specified in the request for an MBID or is not a valid integer >=0,
-    the offset will be 0.
-    MBID keys are always lower-case, even if the provided recording MBIDs are upper-case or mixed case.
-
-    If the list of MBIDs in the query string has a recording which is not
-    present in the database, then it is silently ignored and will not appear
-    in the returned data.
-    
-    :query recording_ids: *Required.* A list of recording MBIDs to retrieve.
-        
-        Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
-        be >= 0.
-
-        You can specify up to :py:const:`~webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST` MBIDs in a request.
-    
-    :query features: *Required.* A list of features to be returned for each mbid.
-        
-        Takes the form `feature1;feature2`.
-
-        The following features can be specified :py:const:`~webserver.views.api.v1.core.AVAILABLE_FEATURES` in a request.
-    
-    :resheader Content-Type: *application/json*
-    """
-    recordings = check_bad_request_for_multiple_recordings()
-    parsed_features = parse_individual_features()
-    recording_details = db.data.load_many_individual_features(recordings, parsed_features)
-
-    return jsonify(recording_details)
 
 
 @bp_core.route("/count", methods=["GET"])

@@ -605,7 +605,7 @@ class DataDBTestCase(DatabaseTestCase):
         second_data = copy.deepcopy(self.test_lowlevel_data)
         second_data["metadata"]["tags"]["album"] = ["Another album"]
 
-        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)        
+        db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         db.data.write_low_level(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)        
         db.data.write_low_level(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
 
@@ -627,8 +627,8 @@ class DataDBTestCase(DatabaseTestCase):
         self.assertEqual(expected, db.data.load_many_individual_features(list(recordings), features))
 
     def test_load_many_individual_features_none(self):
-        """If there is no data found for any of the specified recordings, 
-        an empty dictionary is returned. If there is no data for a feature, 
+        """If there is no data found for any of the specified recordings,
+        an empty dictionary is returned. If there is no data for a feature,
         it is returned with the specified default value."""
         # No data written for the recordings specified
         recordings = [(self.test_mbid, 0),
@@ -649,27 +649,18 @@ class DataDBTestCase(DatabaseTestCase):
         altered_data = copy.deepcopy(self.test_lowlevel_data)
         del altered_data["lowlevel"]["average_loudness"]
         del altered_data["metadata"]["tags"]
-        db.data.write_low_level(self.test_mbid, altered_data, gid_types.GID_TYPE_MBID) 
+        db.data.write_low_level(self.test_mbid, altered_data, gid_types.GID_TYPE_MBID)
 
-        recordings = [(self.test_mbid, 0)]       
+        recordings = [(self.test_mbid, 0)]
 
         features = [("llj.data->'lowlevel'->'average_loudness'", "lowlevel.average_loudness", None),
                     ("llj.data->'metadata'->'audio_properties'->'replay_gain'", "metadata.audio_properties.replay_gain", None),
                     ("llj.data->'metadata'->'tags'", "metadata.tags", {})]
 
-        expected = {"0dad432b-16cc-4bf0-8961-fd31d124b01b": 
-                        {"0": {'lowlevel': {
-                                    'average_loudness': None
-                                },
-                                "metadata": {
-                                    "audio_properties": {
-                                        "replay_gain": -9.43081283569
-                                    },
-                                    "tags": {}
-                                }
-                            }
-                        }
-                    }
+        expected = {"0dad432b-16cc-4bf0-8961-fd31d124b01b": {"0": {"lowlevel": {"average_loudness": None},
+                                                                   "metadata": {"audio_properties": {
+                                                                       "replay_gain": -9.43081283569},
+                                                                       "tags": {}}}}}
 
         self.assertEqual(expected, db.data.load_many_individual_features(list(recordings), features))
 
@@ -678,7 +669,7 @@ class DataDBTestCase(DatabaseTestCase):
            "<feature_path_1> AS <alias>, <feature_path_2> AS <alias>"
         """
         # If features is empty, empty string should be returned
-        features =  []
+        features = []
         self.assertEqual("", db.data.build_feature_string(features))
 
         features = [("llj.data->'lowlevel'->'average_loudness'", "lowlevel.average_loudness", None),
@@ -726,7 +717,7 @@ class DataDBTestCase(DatabaseTestCase):
                            "script": ["Latn"],
                            "title": ["Nascence"],
                            "tracknumber": ["1/18"]}
-        )]
+                          )]
         self.assertEqual(expected_rows, db.data.bulk_get_recording_features(recordings, feature_string))
 
     def test_parse_features_row_missing_feature(self):

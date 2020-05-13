@@ -62,4 +62,5 @@ Constants
 Constants that are relevant to using the API:
 
 .. autodata:: webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST
+.. autodata:: webserver.views.api.v1.core.LOWLEVEL_INDIVIDUAL_FEATURES
 

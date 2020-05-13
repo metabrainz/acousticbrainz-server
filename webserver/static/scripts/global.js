@@ -1,5 +1,5 @@
 if (typeof global === "undefined") {
-    module.exports = window;
+  module.exports = window;
 } else {
-    module.exports = global;
+  module.exports = global;
 }

@@ -1,3 +1,4 @@
+/* eslint-disable */
 $(function() {
     var last_collected = $("#last_collected");
     var lc_time = last_collected.data("timestamp");

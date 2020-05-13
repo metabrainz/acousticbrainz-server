@@ -1,3 +1,4 @@
+/* eslint-disable */
 if (typeof global === 'undefined') {
   module.exports = window;
 } else {

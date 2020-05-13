@@ -1,3 +1,4 @@
+/* eslint-disable */
 var PropTypes = require('prop-types');
 /*
  This is a viewer for classes in existing datasets.

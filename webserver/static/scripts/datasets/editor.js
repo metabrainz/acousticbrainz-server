@@ -1,3 +1,4 @@
+/* eslint-disable */
 var PropTypes = require('prop-types');
 /*
  This is a dataset editor. It works in two modes:

@@ -324,7 +324,7 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         """
 
         utf8_bom = b'\xef\xbb\xbf'
-        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset_utf8.csv')
+        test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset_utf8.csv')
 
         # Before starting, check that the bom hasn't been removed from this test file by an errant text editor
         self.assertEqual(open(test_csv_file).read(3), utf8_bom)

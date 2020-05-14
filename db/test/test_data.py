@@ -623,7 +623,7 @@ class DataDBTestCase(AcousticbrainzTestCase):
                     ("llj.data->'rhythm'->'bpm_histogram_second_peak_bpm'->'mean'", "rhythm.bpm_histogram_second_peak_bpm.mean", None),
                     ("llj.data->'tonal'->'key_key'", "tonal.key_key", None)]
 
-        expected = json.loads(open(os.path.join(TEST_DATA_PATH, "lowlevel_select_features_response.json")).read())
+        expected = json.loads(open(os.path.join(DB_TEST_DATA_PATH, "lowlevel_select_features_response.json")).read())
         self.assertEqual(expected, db.data.load_many_individual_features(list(recordings), features))
 
     def test_load_many_individual_features_none(self):

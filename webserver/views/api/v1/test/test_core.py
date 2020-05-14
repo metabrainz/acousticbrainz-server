@@ -1,29 +1,32 @@
 from __future__ import absolute_import
-import unittest
-from webserver.testing import ServerTestCase
-from webserver.views.api.v1 import core
-import webserver.views.api.exceptions
-from db.testing import TEST_DATA_PATH
-import db.exceptions
-import mock
-import uuid
-import os
-import json
+
 import collections
+import json
+import os
+import unittest
+import uuid
+
+import mock
+
+import db.exceptions
+import webserver.views.api.exceptions
+from webserver.testing import AcousticbrainzTestCase
+from webserver.testing import DB_TEST_DATA_PATH
+from webserver.views.api.v1 import core
 
 
-class CoreViewsTestCase(ServerTestCase):
+class CoreViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(CoreViewsTestCase, self).setUp()
         self.uuid = str(uuid.uuid4())
 
         self.test_recording1_mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
-        self.test_recording1_data_json = open(os.path.join(TEST_DATA_PATH, self.test_recording1_mbid + '.json')).read()
+        self.test_recording1_data_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_recording1_mbid + '.json')).read()
         self.test_recording1_data = json.loads(self.test_recording1_data_json)
 
         self.test_recording2_mbid = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
-        self.test_recording2_data_json = open(os.path.join(TEST_DATA_PATH, self.test_recording2_mbid + '.json')).read()
+        self.test_recording2_data_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_recording2_mbid + '.json')).read()
         self.test_recording2_data = json.loads(self.test_recording2_data_json)
 
     def test_get_low_level(self):
@@ -47,7 +50,7 @@ class CoreViewsTestCase(ServerTestCase):
     def test_submit_low_level(self):
         mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
 
-        with open(os.path.join(TEST_DATA_PATH, mbid + ".json")) as json_file:
+        with open(os.path.join(DB_TEST_DATA_PATH, mbid + ".json")) as json_file:
             with self.app.test_client() as client:
                 sub_resp = client.post("/api/v1/%s/low-level" % mbid,
                                        data=json_file.read(),

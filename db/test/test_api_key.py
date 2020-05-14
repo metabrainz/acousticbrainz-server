@@ -1,11 +1,11 @@
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 import db.exceptions
 import db.api_key
 import db.user
 import six
 
 
-class APIKeyTestCase(DatabaseTestCase):
+class APIKeyTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(APIKeyTestCase, self).setUp()

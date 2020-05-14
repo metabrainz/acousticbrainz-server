@@ -13,11 +13,11 @@ import webserver.forms as forms
 from db import dataset, dataset_eval, user
 from utils import dataset_validator
 from webserver.views import datasets as ws_datasets
-from webserver.testing import ServerTestCase, TEST_DATA_PATH
+from webserver.testing import AcousticbrainzTestCase, WEB_TEST_DATA_PATH
 from webserver.views.test.test_data import FakeMusicBrainz
 
 
-class DatasetsViewsTestCase(ServerTestCase):
+class DatasetsViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DatasetsViewsTestCase, self).setUp()
@@ -297,7 +297,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         self.assertStatus(resp, 200)
 
     def test_parse_dataset_csv(self):
-        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset.csv')
+        test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
         with open(test_csv_file) as csv_data:
             [test_dataset_description, test_classes] = ws_datasets._parse_dataset_csv(csv_data)
         expected_dataset_description = "This is a test dataset."
@@ -384,7 +384,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         """Errors when the import form is invalid.
         We only test one invalid field to ensure that the form correctly validates input"""
         self.temporary_login(self.test_user_id)
-        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset.csv')
+        test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
         # Missing name field
         with open(test_csv_file) as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
@@ -401,7 +401,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         mock_create_from_dict.side_effect = dataset_validator.ValidationException('invalid dataset')
 
         self.temporary_login(self.test_user_id)
-        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset.csv')
+        test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
 
         with open(test_csv_file) as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
@@ -421,7 +421,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         mock_parse_dataset_csv.return_value = 'a desc', ['class_data']
 
         self.temporary_login(self.test_user_id)
-        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset.csv')
+        test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
 
         with open(test_csv_file) as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
@@ -446,7 +446,7 @@ class DatasetsViewsTestCase(ServerTestCase):
         mock_parse_dataset_csv.return_value = 'a desc', ['class_data']
 
         self.temporary_login(self.test_user_id)
-        test_csv_file = os.path.join(TEST_DATA_PATH, 'test_dataset.csv')
+        test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
 
         with open(test_csv_file) as csv_data:
             # Because the 'public' flag is a checkbox, unticking it has the result of
@@ -465,7 +465,7 @@ class DatasetsViewsTestCase(ServerTestCase):
             mock_create_from_dict.assert_called_with(expected_ds, self.test_user_id)
 
 
-class DatasetsListTestCase(ServerTestCase):
+class DatasetsListTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         self.ds = {"id": "id", "author_name": "author", "name": "name",

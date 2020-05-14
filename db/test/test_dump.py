@@ -1,4 +1,4 @@
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 from db import dump
 from db.dump import _TABLES
 
@@ -9,7 +9,7 @@ import shutil
 import unittest
 
 
-class DatabaseDumpTestCase(DatabaseTestCase):
+class DatabaseDumpTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DatabaseDumpTestCase, self).setUp()

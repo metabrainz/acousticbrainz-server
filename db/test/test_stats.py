@@ -1,4 +1,4 @@
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 import unittest
 import db
 import db.stats
@@ -124,11 +124,11 @@ class StatsTestCase(unittest.TestCase):
         cacheset.assert_has_calls(setcalls)
 
 
-class StatsDatabaseTestCase(DatabaseTestCase):
+class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
     """Statistics methods which read and write from/to the database"""
 
     def setUp(self):
-        super(StatsDatabaseTestCase, self).setUp()
+        super(StatsAcousticbrainzTestCase, self).setUp()
 
     def test_count_submissions_to_date(self):
         """If we add some items, we can count them"""
@@ -336,7 +336,7 @@ def add_empty_lowlevel(mbid, lossless, date):
                             "data_sha256": data_sha256, "version": version_id})
 
 
-class StatsHighchartsTestCase(DatabaseTestCase):
+class StatsHighchartsTestCase(AcousticbrainzTestCase):
     """Statistics methods which test the graphs on the website"""
 
     def setUp(self):

@@ -1,12 +1,12 @@
 import mock
 
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 from db import dataset, user, dataset_eval
 import db
 import json
 
 
-class DatasetEvalTestCase(DatabaseTestCase):
+class DatasetEvalTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DatasetEvalTestCase, self).setUp()

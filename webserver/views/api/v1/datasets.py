@@ -77,7 +77,7 @@ def create_dataset():
     try:
         dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     return jsonify(
         success=True,
@@ -129,7 +129,7 @@ def update_dataset_details(dataset_id):
     try:
         dataset_validator.validate_dataset_update(dataset_data)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     db.dataset.update_dataset_meta(ds["id"], dataset_data)
     return jsonify(
@@ -175,7 +175,7 @@ def add_class(dataset_id):
     try:
         dataset_validator.validate_class(class_dict, recordings_required=False)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     if "recordings" in class_dict:
         unique_mbids = list(set(class_dict["recordings"]))
@@ -218,7 +218,7 @@ def update_class(dataset_id):
     try:
         dataset_validator.validate_class_update(class_data)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     try:
         db.dataset.update_class(ds["id"], class_data["name"], class_data)
@@ -259,7 +259,7 @@ def delete_class(dataset_id):
     try:
         dataset_validator.validate_class(class_dict, recordings_required=False)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     db.dataset.delete_class(ds["id"], class_dict)
     return jsonify(
@@ -294,7 +294,7 @@ def add_recordings(dataset_id):
     try:
         dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids
@@ -339,7 +339,7 @@ def delete_recordings(dataset_id):
     try:
         dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids

@@ -6,7 +6,6 @@ from six.moves.urllib.parse import quote_plus
 import db.data
 import db.exceptions
 import json
-import time
 
 data_bp = Blueprint("data", __name__)
 

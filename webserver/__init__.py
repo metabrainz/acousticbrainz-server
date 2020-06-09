@@ -182,21 +182,25 @@ def _register_blueprints(app):
         from webserver.views.login import login_bp
         from webserver.views.user import user_bp
         from webserver.views.datasets import datasets_bp
+        from webserver.views.similarity import similarity_bp
         app.register_blueprint(index_bp)
         app.register_blueprint(data_bp)
         app.register_blueprint(stats_bp)
         app.register_blueprint(login_bp, url_prefix='/login')
         app.register_blueprint(user_bp)
         app.register_blueprint(datasets_bp, url_prefix='/datasets')
+        app.register_blueprint(similarity_bp, url_prefix='/similarity')
 
     def register_api(app):
         v1_prefix = os.path.join(API_PREFIX, 'v1')
         from webserver.views.api.v1.core import bp_core
         from webserver.views.api.v1.datasets import bp_datasets
         from webserver.views.api.v1.dataset_eval import bp_dataset_eval
+        from webserver.views.api.v1.similarity import bp_similarity
         app.register_blueprint(bp_core, url_prefix=v1_prefix)
         app.register_blueprint(bp_datasets, url_prefix=v1_prefix + '/datasets')
         app.register_blueprint(bp_dataset_eval, url_prefix=v1_prefix + '/datasets/evaluation')
+        app.register_blueprint(bp_similarity, url_prefix=v1_prefix + '/similarity')
 
         from webserver.views.api.legacy import api_legacy_bp
         app.register_blueprint(api_legacy_bp)

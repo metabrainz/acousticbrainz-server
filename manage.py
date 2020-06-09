@@ -16,15 +16,18 @@ import db.data
 import db.dump
 import db.dump_manage
 import db.exceptions
-import db.stats
+import db.submission_stats
 import db.user
 import webserver
+import similarity.manage
+import similarity.script
+
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s: [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S')
 
 
 @cli.command(name='init_db')
@@ -39,6 +42,7 @@ def init_db(archive, force, skip_create_db=False):
     2. Data is imported from the archive if it is specified.
     3. Primary keys and foreign keys are created.
     4. Indexes are created.
+    5. Similarity metrics metadata is populated.
 
     Data dump needs to be a .tar.xz archive produced by export command.
 
@@ -64,6 +68,9 @@ def init_db(archive, force, skip_create_db=False):
 
     db.init_db_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
 
+    print('Creating schema...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_schema.sql'))
+
     print('Creating types...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
 
@@ -85,6 +92,9 @@ def init_db(archive, force, skip_create_db=False):
 
     print('Creating indexes...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+
+    print('Populating similarity_metrics table...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'populate_metrics_table.sql'))
 
     print("Done!")
 
@@ -135,13 +145,13 @@ def compute_stats():
     """Compute outstanding hourly statistics."""
     import datetime
     import pytz
-    db.stats.compute_stats(datetime.datetime.now(pytz.utc))
+    db.submission_stats.compute_stats(datetime.datetime.now(pytz.utc))
 
 
 @cli.command(name='cache_stats')
 def cache_stats():
     """Compute recent stats and add to cache."""
-    db.stats.add_stats_to_cache()
+    db.submission_stats.add_stats_to_cache()
 
 
 @cli.command(name='clear_cache')
@@ -258,6 +268,8 @@ def set_rate_limits(per_ip, window_size):
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
+cli.add_command(similarity.manage.cli, name="similarity")
+cli.add_command(similarity.script.cli, name="similarity-script")
 
 if __name__ == '__main__':
     cli()

@@ -156,4 +156,60 @@ CREATE TABLE feedback (
   suggestion         TEXT
 );
 
+CREATE TABLE similarity.similarity (
+  id          INTEGER, -- PK, FK to lowlevel
+  mfccs       DOUBLE PRECISION[] NOT NULL,
+  mfccsw      DOUBLE PRECISION[] NOT NULL,
+  gfccs       DOUBLE PRECISION[] NOT NULL,
+  gfccsw      DOUBLE PRECISION[] NOT NULL,
+  key         DOUBLE PRECISION[] NOT NULL,
+  bpm         DOUBLE PRECISION[] NOT NULL,
+  onsetrate   DOUBLE PRECISION[] NOT NULL,
+  moods       DOUBLE PRECISION[] NOT NULL,
+  instruments DOUBLE PRECISION[] NOT NULL,
+  dortmund    DOUBLE PRECISION[] NOT NULL,
+  rosamerica  DOUBLE PRECISION[] NOT NULL,
+  tzanetakis  DOUBLE PRECISION[] NOT NULL
+);
+
+CREATE TABLE similarity.similarity_metrics (
+  metric TEXT, -- PK
+  is_hybrid BOOLEAN,
+  description TEXT,
+  category TEXT,
+  visible BOOLEAN
+);
+
+CREATE TABLE similarity.similarity_stats (
+  metric TEXT,
+  means DOUBLE PRECISION[],
+  stddevs DOUBLE PRECISION[]
+);
+
+CREATE TABLE similarity.eval_params (
+  id            SERIAL, -- PK
+  metric        TEXT, -- FK to similarity_metrics
+  distance_type TEXT,
+  n_trees       INTEGER
+);
+ALTER TABLE similarity.eval_params ADD CONSTRAINT unique_params_constraint UNIQUE(metric, distance_type, n_trees);
+
+CREATE TABLE similarity.eval_results (
+  id          SERIAL, -- PK
+  query_id    INTEGER, -- FK to lowlevel
+  similar_ids INTEGER[],
+  distances   DOUBLE PRECISION[],
+  params      INTEGER -- FK to eval_params
+);
+ALTER TABLE similarity.eval_results ADD CONSTRAINT unique_eval_query_constraint UNIQUE(query_id, params);
+
+CREATE TABLE similarity.eval_feedback (
+  user_id    INTEGER, -- FK to user
+  eval_id   INTEGER, -- FK to eval_results
+  result_id  INTEGER,
+  rating     similarity.eval_type,
+  suggestion TEXT
+);
+ALTER TABLE similarity.eval_feedback ADD CONSTRAINT unique_eval_user_constraint UNIQUE(user_id, eval_id, result_id);
+
 COMMIT;

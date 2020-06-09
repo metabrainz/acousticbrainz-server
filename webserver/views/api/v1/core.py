@@ -6,6 +6,7 @@ import uuid
 from flask import Blueprint, request, jsonify
 
 import db.data
+from webserver.utils import validate_offset
 import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException

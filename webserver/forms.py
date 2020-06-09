@@ -1,5 +1,4 @@
-
-from wtforms import BooleanField, SelectField, StringField, TextAreaField
+from wtforms import BooleanField, SelectField, StringField, TextAreaField, FieldList, FormField
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -37,3 +36,13 @@ class DatasetEvaluationForm(FlaskForm):
         default = DATASET_EVAL_LOCAL
     )
     normalize = BooleanField("Normalize classes")
+
+
+class SimilarRecordingEvalForm(FlaskForm):
+    choices = [("", "Select"), ("more similar", "More Similar"), ("accurate", "Accurate"), ("less similar", "Less Similar")]
+    feedback = SelectField("Feedback", choices=choices)
+    suggestion = TextAreaField("Suggestion")
+
+
+class SimilarityEvaluationForm(FlaskForm):
+    eval_list = FieldList(FormField(SimilarRecordingEvalForm), min_entries=10, max_entries=10)

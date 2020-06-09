@@ -1,0 +1,224 @@
+{"highlevel":  {"danceability": 
+                    {"all": {
+                        "danceable": 0.035318903625, 
+                        "not_danceable": 0.964681088924
+                        }, 
+                    "value": "not_danceable", 
+                    "probability": 0.964681088924
+                    }, 
+                "gender": 
+                    {"all": {
+                        "male": 0.384309887886, 
+                        "female": 0.615690112114
+                        }, 
+                    "value": "female", 
+                    "probability": 0.615690112114
+                    },
+                "genre_dortmund": 
+                    {"all": {
+                        "pop": 0.0338333025575, 
+                        "jazz": 0.114020898938, 
+                        "rock": 0.0465195141733, 
+                        "blues": 0.0925819277763, 
+                        "raphiphop": 0.00316655938514, 
+                        "electronic": 0.0783302634954, 
+                        "alternative": 0.116745553911, 
+                        "folkcountry": 0.509120285511, 
+                        "funksoulrnb": 0.00568170007318
+                        }, 
+                    "value": "folkcountry", 
+                    "probability": 0.509120285511
+                    }, 
+                "genre_electronic": 
+                    {"all": {
+                        "dnb": 0.00291458307765, 
+                        "house": 0.0274962969124, 
+                        "techno": 0.00343587319367, 
+                        "trance": 0.00381842232309, 
+                        "ambient": 0.962334811687
+                        }, 
+                    "value": "ambient", 
+                    "probability": 0.962334811687
+                    }, 
+                "genre_rosamerica": 
+                    {"all": {
+                        "cla": 0.663908660412, 
+                        "dan": 0.0032169369515, 
+                        "hip": 0.00617602840066, 
+                        "jaz": 0.0784998983145, 
+                        "pop": 0.0344416685402, 
+                        "rhy": 0.195983037353, 
+                        "roc": 0.00680347532034, 
+                        "spe": 0.010970310308
+                        }, 
+                    "value": "cla", 
+                    "probability": 0.663908660412
+                    }, 
+                "genre_tzanetakis": 
+                    {"all": {
+                        "blu": 0.0707420706749, 
+                        "cla": 0.0344257615507, 
+                        "cou": 0.0775808021426, 
+                        "dis": 0.10557962954, 
+                        "hip": 0.154698759317, 
+                        "jaz": 0.311486542225, 
+                        "met": 0.0442127361894, 
+                        "pop": 0.0618693865836, 
+                        "reg": 0.0620644688606, 
+                        "roc": 0.0773398503661
+                        }, 
+                    "value": "jaz", 
+                    "probability": 0.311486542225
+                    }, 
+                "ismir04_rhythm": 
+                    {"all": {
+                        "Jive": 0.000734346860554, 
+                        "Samba": 0.00237271748483, 
+                        "Tango": 0.0340880677104, 
+                        "Waltz": 0.864271581173, 
+                        "ChaChaCha": 0.00334779801778, 
+                        "Quickstep": 0.00102146936115, 
+                        "Rumba-Misc": 0.0283662583679, 
+                        "VienneseWaltz": 0.0337005592883, 
+                        "Rumba-American": 0.00280563230626, 
+                        "Rumba-International": 0.0292915608734
+                        }, 
+                    "value": "Waltz", 
+                    "probability": 0.864271581173
+                    }, 
+                "mood_acoustic": 
+                    {"all": {
+                        "acoustic": 0.988367855549, 
+                        "not_acoustic": 0.011632123962
+                        }, 
+                    "value": "acoustic", 
+                    "probability": 0.988367855549}, 
+                "mood_aggressive": 
+                    {"all": {
+                        "aggressive": 0.0500397793949, 
+                        "not_aggressive": 0.949960231781
+                        }, 
+                    "value": "not_aggressive", 
+                    "probability": 0.949960231781
+                    }, 
+                "mood_electronic": 
+                    {"all": {
+                        "electronic": 0.0248921476305, 
+                        "not_electronic": 0.975107848644
+                        }, 
+                    "value": "not_electronic", 
+                    "probability": 0.975107848644
+                    }, 
+                "mood_happy": 
+                    {"all": {
+                        "happy": 0.0581060945988, 
+                        "not_happy": 0.941893875599}, 
+                    "value": "not_happy", 
+                    "probability": 0.941893875599
+                    }, 
+                "mood_party": 
+                    {"all": {
+                        "party": 0.0156338009983, 
+                        "not_party": 0.984366178513
+                        }, 
+                    "value": "not_party", 
+                    "probability": 0.984366178513
+                    }, 
+                "mood_relaxed": 
+                    {"all": {
+                        "relaxed": 0.995198726654, 
+                        "not_relaxed": 0.00480129010975
+                        }, 
+                    "value": "relaxed", 
+                    "probability": 0.995198726654
+                    }, 
+                "mood_sad": 
+                    {"all": {
+                        "sad": 0.953247070312, 
+                        "not_sad": 0.0467529147863
+                        }, 
+                    "value": "sad", 
+                    "probability": 0.953247070312
+                    }, 
+                "moods_mirex": 
+                    {"all": {
+                        "Cluster1": 0.0608982145786, 
+                        "Cluster2": 0.491705387831, 
+                        "Cluster3": 0.280543744564, 
+                        "Cluster4": 0.14995187521, 
+                        "Cluster5": 0.0169007573277
+                        }, 
+                    "value": "Cluster2", 
+                    "probability": 0.491705387831
+                    }, 
+                "timbre": 
+                    {"all": {
+                        "dark": 0.560428082943, 
+                        "bright": 0.439571917057
+                        }, 
+                    "value": "dark", 
+                    "probability": 0.560428082943
+                    }, 
+                "tonal_atonal": 
+                    {"all": {
+                        "tonal": 0.894253909588, 
+                        "atonal": 0.105746097863
+                        }, 
+                    "value": "tonal", 
+                    "probability": 0.894253909588
+                    }, 
+                "voice_instrumental": 
+                    {"all": {
+                        "voice": 0.034499887377, 
+                        "instrumental": 0.965500116348
+                        }, 
+                    "value": "instrumental", 
+                    "probability": 0.965500116348
+                    }
+                },
+ "metadata": {"audio_properties": {"analysis_sample_rate": 44100,
+                                   "bit_rate": 237799,
+                                   "codec": "mp3",
+                                   "downmix": "mix",
+                                   "equal_loudness": 0,
+                                   "length": 106.579589844,
+                                   "lossless": 0,
+                                   "md5_encoded": "a83f44a925e18b581780fa95e4f432ac",
+                                   "replay_gain": -9.44788742065,
+                                   "sample_rate": 44100},
+              "tags": {"acoustid_id": ["25343079-d20f-4827-9e83-840e278a67ff"],
+                       "album": ["Journey"],
+                       "albumartist": ["Austin Wintory"],
+                       "albumartistsort": ["Wintory, Austin"],
+                       "artist": ["Austin Wintory"],
+                       "artists": ["Austin Wintory"],
+                       "artistsort": ["Wintory, Austin"],
+                       "date": ["2012"],
+                       "discnumber": ["1/1"],
+                       "file_name": "Austin Wintory - Nascence.mp3",
+                       "media": ["Digital Media"],
+                       "musicbrainz album release country": ["XW"],
+                       "musicbrainz album status": ["official"],
+                       "musicbrainz album type": ["album/soundtrack"],
+                       "musicbrainz release track id": ["09999a96-3d26-33ff-b0dc-56464be6716e"],
+                       "musicbrainz_albumartistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                       "musicbrainz_albumid": ["1f3abcda-15a7-4465-92c6-9926cdc4f247"],
+                       "musicbrainz_artistid": ["78f15956-c5e1-46d6-a46b-fa6f46681ec8"],
+                       "musicbrainz_recordingid": ["0dad432b-16cc-4bf0-8961-fd31d124b01b"],
+                       "musicbrainz_releasegroupid": ["d1850227-c7c7-42c8-b469-6e99023412de"],
+                       "originaldate": ["2012"],
+                       "script": ["Latn"],
+                       "title": ["Nascence"],
+                       "tracknumber": ["1/18"]},
+              "version": {"highlevel": {"essentia": "2.1-beta1",
+                                        "essentia_build_sha": "8e24b98b71ad84f3024c7541412f02124a26d327",
+                                        "essentia_git_sha": "v2.1_beta1-228-g260734a",
+                                        "extractor": "music 1.0",
+                                        "gaia": "2.4-dev",
+                                        "gaia_git_sha": "857329b",
+                                        "models_essentia_git_sha": "v2.1_beta1"},
+                          "lowlevel": {"essentia": "2.1-beta1",
+                                       "essentia_build_sha": "e0bea5bc2f4b5ceab99b9e1f53b0a14d4090e4fb",
+                                       "essentia_git_sha": "v2.1_beta1-217-g9cf4dbf-dirty",
+                                       "extractor": "music 1.0"}}}
+}

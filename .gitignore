@@ -38,3 +38,7 @@ node_modules
 
 # Other stuff
 *.swp
+
+cache_namespaces
+package-lock.json
+

@@ -115,14 +115,14 @@ def create_profile(in_file, out_file, sha1):
 
     if not models_ver:
         print("profile.conf.in needs to have 'metadata : version : highlevel :"
-              " models_essentia_git_sha' defined.")
+                                " models_essentia_git_sha' defined.")
         sys.exit(-1)
 
     doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
 
     try:
         with open(out_file, 'w') as yaml_file:
-            yaml_file.write( yaml.dump(doc, default_flow_style=False))
+            yaml_file.write(yaml.dump(doc, default_flow_style=False))
     except IOError as e:
         print("Cannot write profile %s: %s" % (out_file, e))
         sys.exit(-1)

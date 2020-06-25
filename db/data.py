@@ -651,12 +651,20 @@ def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
 
 
 def get_unprocessed_highlevel_documents(limit=100):
-    """Fetch up to 100 low-level documents which have no associated high level data."""
+    """Fetch up to 100 low-level documents which have no associated high level data.
+
+    Arguments:
+        limit: Retrieve up to this many low-level documents
+
+    Returns:
+        a list of tuples (rowid, mbid, lowlevel-json as text)
+
+    """
     with db.engine.connect() as connection:
         query = text(
-            """SELECT ll.gid::text
+            """SELECT ll.id
+                , ll.gid::text
                 , llj.data::text
-                , ll.id
              FROM lowlevel AS ll
              JOIN lowlevel_json AS llj
                ON llj.id = ll.id

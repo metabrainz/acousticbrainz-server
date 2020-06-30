@@ -44,6 +44,7 @@ preprocessing = ['basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized']
 C = [-5, -3, -1, 1, 3, 5, 7, 9, 11]
 gamma = [3, 1, -1, -3, -5, -7, -9, -11]
 
+
 def evaluate_dataset(dataset_id, normalize, eval_location, c_value, gamma_value,
                      preprocessing_values, filter_type=None):
     """Add dataset into evaluation queue.
@@ -62,8 +63,8 @@ def evaluate_dataset(dataset_id, normalize, eval_location, c_value, gamma_value,
             filters.
 
     Raises:
-        JobExistsException if the dataset has already been submitted for evaluation
-        IncompleteDatasetException if the dataset is incomplete (it has recordings that aren't in AB)
+        JobExistsException: if the dataset has already been submitted for evaluation
+        IncompleteDatasetException: if the dataset is incomplete (it has recordings that aren't in AB)
 
     Returns:
         ID of the newly created evaluation job.
@@ -75,7 +76,7 @@ def evaluate_dataset(dataset_id, normalize, eval_location, c_value, gamma_value,
         # Validate dataset contents
         validate_dataset_contents(db.dataset.get(dataset_id))
         return _create_job(connection, dataset_id, normalize, eval_location, filter_type,
-            c_value, gamma_value, preprocessing_values)
+                           c_value, gamma_value, preprocessing_values)
 
 
 def job_exists(dataset_id):
@@ -323,6 +324,15 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
             raise ValueError("Incorrect 'filter_type'. See module documentation.")
     if eval_location not in VALID_EVAL_LOCATION:
         raise ValueError("Incorrect 'eval_location'. Must be one of %s" % VALID_EVAL_LOCATION)
+
+    options = {
+            "normalize": normalize,
+            "filter_type": filter_type,
+            "c_value": c_value or C,
+            "gamma_value": gamma_value or gamma,
+            "preprocessing_values": preprocessing_values or preprocessing,
+        }
+
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
                 INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location)
@@ -332,13 +342,7 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
     result = connection.execute(query, {
         "snapshot_id": snapshot_id,
         "status": STATUS_PENDING,
-        "options": json.dumps({
-            "normalize": normalize,
-            "filter_type": filter_type,
-            "c_value": c_value,
-            "gamma_value": gamma_value,
-            "preprocessing_values": preprocessing_values,
-        }),
+        "options": json.dumps(options),
         "eval_location": eval_location
     })
     job_id = result.fetchone()[0]

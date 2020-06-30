@@ -220,7 +220,7 @@ def evaluate(dataset_id):
         flash.warn("Can't add private datasets into evaluation queue.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
     if db.dataset_eval.job_exists(dataset_id):
-        flash.warn("Evaluation job for this dataset has been already created.")
+        flash.warn("An evaluation job for this dataset has been already created.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
 
     # Validate dataset structure before choosing evaluation preferences
@@ -236,22 +236,21 @@ def evaluate(dataset_id):
         try:
             if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
                 form.filter_type.data = None
-            # take default value
-            # if invalid non-numerical c and gamma
-            try:
-                c_value = [int(value) for value in form.c_value.data.split(',')]
-            except:
-                c_value = C
-            try:
-                gamma_value = [int(value) for value in form.gamma_value.data.split(',')]
-            except:
-                gamma_value = gamma
+
+            c_value = None
+            preprocessing_values = None
+            gamma_value = None
+            if form.svm_filtering.data:
+                c_value = form.c_value.data
+                gamma_value = form.gamma_value.data
+                preprocessing_values = form.preprocessing_values.data
+
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
-                c_value=c_value,
-                gamma_value=gamma_value,
+                c_value=form.c_value.data,
+                gamma_value=form.gamma_value.data,
                 preprocessing_values=form.preprocessing_values.data,
                 filter_type=form.filter_type.data,
             )

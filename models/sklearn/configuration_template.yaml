@@ -1,0 +1,111 @@
+# READ GROUND TRUTH
+# the ground truth data directory
+ground_truth_directory:
+exports_path:
+# classes with features locally: c, gender, genre_rosamerica, moods_claurier, moods_mirex, timbre_bright_dark
+# classes with features locally: tonal_atonal, voice_instrumental
+# classes with features online: genre_dortmund, genre_electronic, genre_tzanetakis, ismir04_rhythm,
+class_dir:
+class_name:
+exports_directory:
+logging_level:  # logging level
+seed:  # set null to get the seed from the clock value, otherwise specify a number
+
+# PRE-PROCESSING
+# List of parameters that have to be excluded before applying the transformation steps
+excludedDescriptors: [ 'metadata.tags*' ]
+# List of preprocessed datasets to build
+processing:
+    # it is possible to not apply any processing, although this is of
+    # of little value in real-life tests and evaluations
+    raw: []
+
+    basic:
+      - transfo: remove
+        params: { descriptorNames: &unusedDescs [ 'metadata.*', '*dmean*', '*dvar*',
+                                                  '*.min', '*.max', '*cov',
+                                                  'tonal.thpcp', # because of division by zero
+                                                  'lowlevel.spectral_energyband_high.*', # 0 for low samplerate
+                                                  'lowlevel.silence_rate*' # funky behavior in general
+                                                  ] }
+      - transfo: enumerate
+        params: { descriptorNames: &stringDescs [ # 'rhythm.perceptual_tempo', # removed from new extractor
+                                                  'tonal.chords_key', 'tonal.chords_scale',
+                                                  'tonal.key_key', 'tonal.key_scale' ] }
+
+    lowlevel:
+      # note that the order of the transformations is important!
+      - transfo: remove
+        params: { descriptorNames: *unusedDescs }
+      - transfo: enumerate
+        params: { descriptorNames: *stringDescs }
+      - transfo: select
+        params: { descriptorNames: ['lowlevel*'] }
+
+    nobands:
+      - transfo: remove
+        params: { descriptorNames: *unusedDescs }
+      - transfo: enumerate
+        params: { descriptorNames: *stringDescs }
+      - transfo: remove
+        params: { descriptorNames: [ 'barkbands*', '*energyband*', 'melbands*', 'erbbands*' ] }
+
+    normalized:
+        - transfo: remove
+          params: { descriptorNames: *unusedDescs }
+        - transfo: enumerate
+          params: { descriptorNames: *stringDescs }
+        - transfo: normalize  # MixMax Scale
+
+    gaussianized:
+      - transfo: remove
+        params: { descriptorNames: *unusedDescs }
+      - transfo: enumerate
+        params: { descriptorNames: *stringDescs }
+      - transfo: normalize  # MixMax Scale
+      - transfo: gaussianize  # QuantileTransformer
+        params: { descriptorNames: ['lowlevel.*'] }
+
+    mfcc:
+      # an MFCC only baseline
+      - transfo: remove
+        params: { descriptorNames: *unusedDescs }
+      - transfo: enumerate
+        params: { descriptorNames: *stringDescs }
+      - transfo: select
+        params: { descriptorNames: ['lowlevel.mfcc*'] }
+
+## ML SETTINGS
+# train kind: grid, svm, deep_learning, supervised_lb
+train_kind: grid
+k_fold_shuffle: False
+
+# GRID ML SETTINGS
+# PCA number of best components
+pca_n_components: .95
+parallel_jobs:   # set to -1 if to exploit all processors. Set to null to exploit only 1 processor
+verbose:   # 0: no verbose, 1: simple information about the tasks completed, 2: full information of all the tasks
+
+# NEURAL NETWORK SETTINGS
+#
+
+# List of classifiers to be trained
+classifiers:
+    svm:
+        # first svm test combinations
+        - preprocessing: [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized', 'mfcc' ]
+#        - preprocessing: [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized']
+          type: [ 'C-SVC' ]
+          kernel: [ 'poly', 'RBF' ]
+          C:     [ -5, -3, -1, 1, 3, 5, 7, 9, 11 ] # will actually be 2**x
+          gamma: [ 3, 1, -1, -3, -5, -7, -9, -11 ] # will actually be 2**x
+          # if True, weight classes based on the number of elements
+          balanceClasses: [False, True]
+        #  descriptorNames: [ ['*.mean', '*.var'] ]
+        # more svm params combinations
+        # ...
+
+# List of evaluations to be performed
+evaluations:
+    nfoldcrossvalidation:
+        - nfold: [ 5 ]

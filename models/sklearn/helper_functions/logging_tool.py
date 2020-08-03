@@ -10,7 +10,7 @@ Here, the LoggerSetup and its embedded setup_logger() method set up a new logger
 """
 import logging
 import os
-from utils import load_yaml, FindCreateDirectory
+from ..helper_functions.utils import FindCreateDirectory
 
 # # load yaml configuration file to a dict
 # config_data = load_yaml()
@@ -37,9 +37,12 @@ class LoggerSetup:
         Inits the logger object with the corresponding parameters.
 
         Args:
-            name (str): The name of the logger.
-            log_file (str): The path the logging exports will be exported.
-            level (int): The level of the logging. Defaults to 1.
+            config: The configuration data (dict).
+            exports_path: The path (str) the logging exports will be exported.
+            name: The name (str) of the logger.
+            train_class: The name of the target class (str)
+            level: The level (int) of the logging. Defaults to 1.
+            mode: The mode (str) translated in write, append. Valid values ("w", "a")
         """
         self.config = config
         self.exports_path = exports_path
@@ -56,9 +59,10 @@ class LoggerSetup:
         Function to set up as many loggers as you want. It exports the logging results to a file
         in the relevant path that is determined by the configuration file.
 
-        :return:
+        Returns:
+            The logger object.
         """
-        self.exports_dir = "{}_{}".format(self.config.get("exports_directory"), self.train_class)
+        self.exports_dir = self.config.get("exports_directory")
         self.logs_path = FindCreateDirectory(self.exports_path,
                                              os.path.join(self.exports_dir, "logs")).inspect_directory()
 
@@ -86,22 +90,22 @@ class LoggerSetup:
 
         if self.level is None:
             logger_object.setLevel(logging.INFO)
-        elif self.level is 0:
+        elif self.level == "logging.DEBUG":
             logger_object.setLevel(logging.DEBUG)
-        elif self.level is 1:
+        elif self.level == "logging.INFO":
             logger_object.setLevel(logging.INFO)
-        elif self.level is 2:
+        elif self.level == "logging.WARNING":
             logger_object.setLevel(logging.WARNING)
-        elif self.level is 3:
+        elif self.level == "logging.ERROR":
             logger_object.setLevel(logging.ERROR)
-        elif self.level is 4:
+        elif self.level == "logging.CRITICAL":
             logger_object.setLevel(logging.CRITICAL)
         else:
-            print('Please define correct one of the Debug Levels:\n'
-                  '0: DEBUG\n'
-                  '1: INFO\n'
-                  '2: WARNING\n'
-                  '3: ERROR\n'
-                  '4: CRITICAL')
+            print("Please define correct one of the Debug Levels:\n"
+                  "logging.DEBUG: DEBUG\n"
+                  "logging.INFO: INFO\n"
+                  "logging.WARNING: WARNING\n"
+                  "logging.ERROR: ERROR\n"
+                  "logging.CRITICAL: CRITICAL")
 
         return logger_object

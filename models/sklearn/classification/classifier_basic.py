@@ -2,14 +2,28 @@ from sklearn.svm import SVC
 
 
 class TrainClassifier:
+    """
+    This class initiates a simple classifier. It is used for initiating a simple model from
+    sklearn or other APIs in the future, like TensorFlow.
+    TODO: Initiating other models from sklearn (e.g. Random Forests, Decision Tree, etc.)
+    """
     def __init__(self, classifier, params):
+        """
+        Args:
+            classifier: the classifier name (str) to be set. A string that is among the valid
+                classifiers list.
+            params: The parameters of the classifier (dictionary).
+
+        Returns:
+            The model object that is initiated (including its set of parameters)
+        """
         self.classifier = classifier
         self.params = params
 
     def model(self):
-        validClassifiers = ['NN', 'svm']
+        validClassifiers = ["NN", "svm", "rf"]
         if self.classifier not in validClassifiers:
-            raise ValueError('The classifier name must be valid.')
+            raise ValueError("The classifier name must be valid.")
 
         if self.classifier == "svm":
             param_C = self.params["C"]

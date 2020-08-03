@@ -1,13 +1,14 @@
 import os
 from termcolor import colored
-from transformation.load_groung_truth import GroundTruthLoad
-from classification.classification_task_manager import ClassificationTaskManager
-from transformation.load_groung_truth import DatasetExporter
 import yaml
-from logging_tool import LoggerSetup
+
+from ..transformation.load_ground_truth import GroundTruthLoad
+from ..classification.classification_task_manager import ClassificationTaskManager
+from ..transformation.load_ground_truth import DatasetExporter
+from ..helper_functions.logging_tool import LoggerSetup
 
 
-def train_class(config, gt_file, log_level):
+def train_class(config, gt_file, exports_directory, log_level):
     exports_path = config["exports_path"]
     gt_data = GroundTruthLoad(config, gt_file, exports_path, log_level)
     # tracks shuffled and exported
@@ -17,9 +18,16 @@ def train_class(config, gt_file, log_level):
     class_name = gt_data.export_train_class()
     config["class_name"] = class_name
 
+    # project directory where the models and outputs will be saved
+    if exports_directory is None:
+        prefix_exports_dir = "exports"
+        config["exports_directory"] = "{}_{}".format(prefix_exports_dir, class_name)
+    else:
+        config["exports_directory"] = exports_directory
+
     logger = LoggerSetup(config=config,
                          exports_path=exports_path,
-                         name="train_class_{}".format(class_name),
+                         name="train_model_{}".format(class_name),
                          train_class=class_name,
                          mode="w",
                          level=log_level).setup_logger()
@@ -28,8 +36,14 @@ def train_class(config, gt_file, log_level):
 
     logger.debug("Type of exported GT data exported: {}".format(type(tracks_listed_shuffled)))
 
-    # save project file
-    project_file_name_save = "{}_{}.yaml".format(config["project_file"], class_name)
+    # name the project file
+    if config["project_file"] is None:
+        prefix_project_file = "project"
+        project_file_name_save = "{}_{}.yaml".format(prefix_project_file, class_name)
+    else:
+        project_file_name_save = "{}.yaml".format(config["project_file"])
+    logger.info("Project yaml file name: {}".format(project_file_name_save))
+    # save the project file
     project_file_save_path = os.path.join(exports_path, project_file_name_save)
     with open(os.path.join(project_file_save_path), "w") as template_file:
         template_data_write = yaml.dump(config, template_file)
@@ -48,14 +62,6 @@ def train_class(config, gt_file, log_level):
     logger.debug("Type of labels: {}".format(type(labels)))
     logger.debug("Type of Tracks: {}".format(type(tracks)))
 
-    print(colored("Small previews:", "cyan"))
-    print(colored("FEATURES", "magenta"))
-    print(features.head(3))
-    print(colored("LABELS", "magenta"))
-    print(labels[:10])
-    print(colored("TRACKS:", "magenta"))
-    print(tracks[:10])
-
     model_manage = ClassificationTaskManager(config=config,
                                              train_class=class_name,
                                              X=features,
@@ -64,5 +70,5 @@ def train_class(config, gt_file, log_level):
                                              exports_path=exports_path,
                                              log_level=log_level)
     classification_time = model_manage.apply_processing()
-    print(colored("Classification ended in {} minutes.".format(classification_time), "green"))
-    logger.info("Classification ended in {} minutes.".format(classification_time))
+    print(colored("Classification ended successfully in {} minutes.".format(classification_time), "green"))
+    logger.info("Classification ended successfully in {} minutes.".format(classification_time))

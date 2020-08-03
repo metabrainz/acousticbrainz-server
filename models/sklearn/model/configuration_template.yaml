@@ -2,10 +2,9 @@
 # the ground truth data directory
 ground_truth_directory:
 exports_path:
-# classes with features locally: c, gender, genre_rosamerica, moods_claurier, moods_mirex, timbre_bright_dark
+# classes with features locally: danceability, gender, genre_rosamerica, moods_claurier, moods_mirex, timbre_bright_dark
 # classes with features locally: tonal_atonal, voice_instrumental
 # classes with features online: genre_dortmund, genre_electronic, genre_tzanetakis, ismir04_rhythm,
-class_dir:
 class_name:
 exports_directory:
 logging_level:  # logging level
@@ -66,14 +65,14 @@ processing:
       - transfo: gaussianize  # QuantileTransformer
         params: { descriptorNames: ['lowlevel.*'] }
 
-    mfcc:
-      # an MFCC only baseline
-      - transfo: remove
-        params: { descriptorNames: *unusedDescs }
-      - transfo: enumerate
-        params: { descriptorNames: *stringDescs }
-      - transfo: select
-        params: { descriptorNames: ['lowlevel.mfcc*'] }
+#    mfcc:
+#      # an MFCC only baseline
+#      - transfo: remove
+#        params: { descriptorNames: *unusedDescs }
+#      - transfo: enumerate
+#        params: { descriptorNames: *stringDescs }
+#      - transfo: select
+#        params: { descriptorNames: ['lowlevel.mfcc*'] }
 
 ## ML SETTINGS
 # train kind: grid, svm, deep_learning, supervised_lb
@@ -93,14 +92,14 @@ verbose:   # 0: no verbose, 1: simple information about the tasks completed, 2: 
 classifiers:
     svm:
         # first svm test combinations
-        - preprocessing: [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized', 'mfcc' ]
-#        - preprocessing: [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized']
+#        - preprocessing: [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized', 'mfcc' ]
+        - preprocessing: [ 'basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized']
           type: [ 'C-SVC' ]
           kernel: [ 'poly', 'RBF' ]
           C:     [ -5, -3, -1, 1, 3, 5, 7, 9, 11 ] # will actually be 2**x
           gamma: [ 3, 1, -1, -3, -5, -7, -9, -11 ] # will actually be 2**x
           # if True, weight classes based on the number of elements
-          balanceClasses: [False, True]
+          balance_classes: [False, True]
         #  descriptorNames: [ ['*.mean', '*.var'] ]
         # more svm params combinations
         # ...

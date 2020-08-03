@@ -3,16 +3,17 @@ from termcolor import colored
 import collections
 import joblib
 import os
+import six
 
-from utils import FindCreateDirectory
-from transformation.utils_preprocessing import list_descr_handler
-from transformation.utils_preprocessing import feats_selector_list
 from sklearn.base import BaseEstimator, TransformerMixin
-from logging_tool import LoggerSetup
+from ..helper_functions.utils import FindCreateDirectory
+from ..transformation.utils_preprocessing import list_descr_handler
+from ..transformation.utils_preprocessing import feats_selector_list
+from ..helper_functions.logging_tool import LoggerSetup
 
 # avoid the module's method call deprecation
 try:
-    collectionsAbc = collections.abc
+    collectionsAbc = six.moves.collections_abc
 except AttributeError:
     collectionsAbc = collections
 
@@ -36,7 +37,6 @@ class TransformPredictions:
         self.setting_logger()
 
     def setting_logger(self):
-        # set up logger
         self.logger = LoggerSetup(config=self.config,
                                   exports_path=self.exports_path,
                                   name="predict_{}".format(self.train_class),
@@ -53,7 +53,7 @@ class TransformPredictions:
 
         self.list_features = list(self.df_feats.columns)
 
-        exports_dir = "{}_{}".format(self.config.get("exports_directory"), self.train_class)
+        exports_dir = self.config.get("exports_directory")
         models_path = FindCreateDirectory(self.exports_path,
                                           os.path.join(exports_dir, "models")).inspect_directory()
 

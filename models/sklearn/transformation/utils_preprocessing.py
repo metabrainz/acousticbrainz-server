@@ -1,18 +1,15 @@
-import os
 import re
-import pandas as pd
 import collections
-from sklearn.preprocessing import OneHotEncoder
-import joblib
-from utils import load_yaml, FindCreateDirectory, TrainingProcesses
 
 
 def flatten_dict_full(dictionary, sep="_"):
     """
+    Args:
+        dictionary:
+        sep:
 
-    :param dictionary:
-    :param sep:
-    :return:
+    Returns:
+
     """
     obj = collections.OrderedDict()
 
@@ -33,9 +30,11 @@ def flatten_dict_full(dictionary, sep="_"):
 
 def list_descr_handler(descr_list):
     """
+    Args:
+        descr_list:
 
-    :param descr_list:
-    :return:
+    Returns:
+
     """
     keys_list_handle = []
     for item in descr_list:
@@ -52,10 +51,12 @@ def list_descr_handler(descr_list):
 
 def feats_selector_list(df_feats_columns, feats_select_list):
     """
+    Args:
+        df_feats_columns:
+        feats_select_list:
 
-    :param df_feats_columns:
-    :param feats_select_list:
-    :return:
+    Returns:
+
     """
     columns_list = list(df_feats_columns)
     columns_select_list = []

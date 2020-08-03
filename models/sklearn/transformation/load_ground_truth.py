@@ -4,50 +4,51 @@ import pandas as pd
 from pprint import pprint
 from termcolor import colored
 import random
-from utils import load_yaml, FindCreateDirectory
-from transformation.load_low_level import FeaturesDf
-from logging_tool import LoggerSetup
+from ..helper_functions.utils import load_yaml, FindCreateDirectory
+from ..transformation.load_low_level import FeaturesDf
+from ..helper_functions.logging_tool import LoggerSetup
 
 
 class ListGroundTruthFiles:
     """
-
+    Lists the groundtruth yaml files that are detected in a folder specified in
+    the configuration file. The yaml files contain the target class and the tracks
+    to be analyzed.
     """
     def __init__(self, config):
         """
-
-        :param config:
+        Args:
+            config: The configuration data
         """
         self.config = config
         self.dataset_dir = ""
-        self.class_dir = ""
 
     def list_gt_filenames(self):
         """
-
-        :return:
+        Returns:
+            A list of the groundtruth detected yaml files.
         """
         self.dataset_dir = self.config.get("ground_truth_directory")
-        self.class_dir = self.config.get("class_dir")
-        path = os.path.join(os.getcwd(), self.dataset_dir, self.class_dir, "metadata")
-        ground_truth_list = [filename for filename in os.listdir(os.path.join(path))
-                             if filename.startswith("groundtruth")]
+        ground_truth_list = list()
+        dirpath = os.path.join(os.getcwd(), self.dataset_dir)
+        for (dirpath, dirnames, filenames) in os.walk(dirpath):
+            ground_truth_list += [os.path.join(dirpath, file) for file in filenames if file.startswith("groundtruth")]
         return ground_truth_list
 
 
 class GroundTruthLoad:
     """
-        The Ground Truth data object which contains features to:
-         * counter the JSON low-level data
-         * Todo: create logger object
-
-         Attributes:
+        The Ground Truth data which contains the tracks and the corresponding
+        labels they belong to. The path to the related tracks' low-level data
+        (features in JSON format) can be extracted from this file too.
         """
     def __init__(self, config, gt_filename, exports_path, log_level):
         """
-
-        :param config:
-        :param gt_filename:
+        Args:
+            config:
+            gt_filename:
+            exports_path:
+            log_level:
         """
         self.config = config
         self.gt_filename = gt_filename
@@ -66,15 +67,11 @@ class GroundTruthLoad:
 
     def load_local_ground_truth(self):
         """
-        Loads the the ground truth file.
-        * The directory with the dataset should be located inside the app folder location.
-        :return:
+        Loads the the ground truth file. The dataset directory is specified through
+        the parsing arguments of the create_classification_project method.
         """
-
-        self.dataset_dir = self.config.get("ground_truth_directory")
-        self.class_dir = self.config.get("class_dir")
-        with open(os.path.join(os.getcwd(), "{}/{}/metadata/{}".format(
-                self.dataset_dir, self.class_dir, self.gt_filename)), "r") as stream:
+        self.dataset_dir = self.config.get("dataset_dir")
+        with open(self.gt_filename, "r") as stream:
             try:
                 self.ground_truth_data = yaml.safe_load(stream)
                 print("Ground truth file loaded.")
@@ -84,14 +81,21 @@ class GroundTruthLoad:
 
     def export_train_class(self):
         """
-
-        :return:
+        Returns:
+            The target class to be modeled.
         """
         self.train_class = self.ground_truth_data["className"]
         print("EXPORT CLASS NAME: {}".format(self.train_class))
         return self.train_class
 
     def export_gt_tracks(self):
+        """
+        It takes a dictionary of the tracks from the groundtruth and it transforms it
+        to a list of tuples (track, label). Then it shuffles the list based on the seed
+        specified in the configuration file, and returns that shuffled list.
+        Returns:
+            A list of tuples with the tracks and their corresponding labels.
+        """
         self.labeled_tracks = self.ground_truth_data["groundTruth"]
         tracks_list = []
         for track, label in self.labeled_tracks.items():
@@ -99,19 +103,22 @@ class GroundTruthLoad:
         print(colored("SEED is set to: {}".format(self.config.get("seed"), "cyan")))
         random.seed(a=self.config.get("seed"))
         random.shuffle(tracks_list)
+        print("Listed tracks in GT file: {}".format(len(tracks_list)))
         return tracks_list
 
     def check_ground_truth_data(self):
         """
-        Todo: description
-        :return:
+        Prints a dictionary of the groundtruth data in the corresponding yaml file.
+        It contains the target class and the tracks.
         """
         pprint(self.ground_truth_data)
 
     def check_ground_truth_info(self):
         """
-        Todo: description
-        :return:
+        Prints information about the groundtruth data that is loaded in a dictionary:
+            * The target class
+            * The tracks with their labels
+            * The tracks themselves
         """
         len(self.ground_truth_data["groundTruth"].keys())
         print("Ground truth data class/target: {}".format(self.ground_truth_data["className"]))
@@ -120,8 +127,7 @@ class GroundTruthLoad:
 
     def check_tracks_folders(self):
         """
-        Todo: function explanation docstring
-        :return:
+        Prints the directories that contain the low-level data.
         """
         if len(self.labeled_tracks.keys()) is not 0:
             folders = []
@@ -139,7 +145,6 @@ class GroundTruthLoad:
         """
         Prints the JSON low-level data that is contained inside the dataset directory (the dataset
         directory is declared in configuration file).
-        :return:
         """
         counter = 0
         for root, dirs, files in os.walk(os.path.join(os.getcwd(), self.dataset_dir)):
@@ -151,6 +156,9 @@ class GroundTruthLoad:
 
 
 class DatasetExporter:
+    """
+    TODO: Description
+    """
     def __init__(self, config, tracks_list, train_class, exports_path, log_level):
         self.config = config
         self.tracks_list = tracks_list
@@ -168,55 +176,51 @@ class DatasetExporter:
         self.setting_logger()
 
     def setting_logger(self):
-        # set up logger
         self.logger = LoggerSetup(config=self.config,
                                   exports_path=self.exports_path,
-                                  name="dataset_exports_transformations_{}".format(self.train_class),
+                                  name="train_model_{}".format(self.train_class),
                                   train_class=self.train_class,
-                                  mode="w",
+                                  mode="a",
                                   level=self.log_level).setup_logger()
 
     def create_df_tracks(self):
         """
-        Creates the pandas DataFrame with the tracks.
-        Todo: more comments
-        :return:
-        DataFrame or None: a DataFrame with the tracks included in the ground truth yaml file containing the track name,
-        the path to load the JSON low-level data, the label, etc. Else, it returns None.
+        TODO: Description
+        Returns:
+            TODO: Description
         """
 
         self.logger.info("---- EXPORTING FEATURES - LABELS - TRACKS ----")
         # the class name from the ground truth data that is the target
         self.dataset_dir = self.config.get("ground_truth_directory")
-        self.class_dir = self.config.get("class_dir")
+        # self.class_dir = self.config.get("class_dir")
         print('DATASET-DIR', self.dataset_dir)
-        print('CLASS NAME PATH', self.class_dir)
-        # the path to the "features" directory that contains the rest of the low-level data sub-directories
-        path_features = os.path.join(os.getcwd(), self.dataset_dir, self.class_dir, "features")
-        # check if the "features" directory is empty or contains the "mp3" or the "orig" sub-directory
-        low_level_dir = ""
-        if len(os.listdir(path_features)) == 0:
-            print("Directory is empty")
-            self.logger.warning("Directory is empty.")
-        else:
-            print("Directory is not empty")
-            self.logger.info("Directory is not empty")
-            directory_contents = os.listdir(path_features)
-            if "mp3" in directory_contents:
-                low_level_dir = "mp3"
-            elif "orig" in directory_contents:
-                low_level_dir = "orig"
-            else:
-                low_level_dir = ""
-                print("There is no valid low-level data inside the features directory")
-                self.logger.warning("There is no valid low-level data inside the features directory")
-        # print which directory contains the low-level sub-directories (if exist)
-        self.logger.info("Low-level directory name that contains the data: {}".format(low_level_dir))
-        # path to the low-level data sub-directories
-        path_low_level = os.path.join(os.getcwd(), self.dataset_dir, self.class_dir, "features", low_level_dir)
-        self.logger.info("Path of low level data: {}".format(path_low_level))
-        # create a list with dictionaries that contain the information from each track in
-        if low_level_dir != "":
+        # print('CLASS NAME PATH', self.class_dir)
+        dirpath = os.path.join(os.getcwd(), self.dataset_dir)
+        low_level_list = list()
+        for (dirpath, dirnames, filenames) in os.walk(dirpath):
+            low_level_list += [os.path.join(dirpath, file) for file in filenames if file.endswith(".json")]
+        if len(low_level_list) != 0:
+            self.logger.info("Low-level features for the tracks found.")
+            # processing the names of the tracks that are inside both the GT file and the low-level json files
+            # list with the tracks that are included in the low-level json files
+            tracks_existing_list = [e for e in self.tracks_list for i in low_level_list if e[0] in i]
+            # list with the low-level json tracks' paths that are included in tracks list
+            tracks_existing_path_list = [i for e in self.tracks_list for i in low_level_list if e[0] in i]
+            self.logger.debug("tracks existed found: {}".format(len(tracks_existing_list)))
+            self.logger.debug("tracks_path existed found: {}".format(len(tracks_existing_path_list)))
+            self.logger.debug("{}".format(tracks_existing_list[:4]))
+            self.logger.debug("{}".format(tracks_existing_path_list[:4]))
+            self.logger.debug("The founded tracks tracks listed successfully.")
+            self.logger.debug("Generate random number within a given range of listed tracks:")
+            # Random number between 0 and length of listed tracks
+            random_num = random.randrange(len(tracks_existing_list))
+            self.logger.debug("Check if the tracks are the same in the same random index in both lists")
+            self.logger.debug("{}".format(tracks_existing_list[random_num]))
+            self.logger.debug("{}".format(tracks_existing_path_list[random_num]))
+
+            self.tracks_list = tracks_existing_list
+            # create the dataframe with tracks that are bothe in low-level files and the GT file
             self.df_tracks = pd.DataFrame(data=self.tracks_list, columns=["track", self.train_class])
             self.logger.debug("Shape of tracks DF created before cleaning: {}".format(self.df_tracks.shape))
             self.logger.debug("Check the shape of a temporary DF that includes if there are any NULL values:")
@@ -233,7 +237,7 @@ class DatasetExporter:
                 self.logger.info("There are no NULL values found.")
 
             # export shuffled tracks to CSV format
-            exports_dir = "{}_{}".format(self.config.get("exports_directory"), self.train_class)
+            exports_dir = self.config.get("exports_directory")
             tracks_path = FindCreateDirectory(self.exports_path,
                                               os.path.join(exports_dir, "tracks_csv_format")).inspect_directory()
             self.df_tracks.to_csv(os.path.join(tracks_path, "tracks_{}_shuffled.csv".format(self.train_class)))
@@ -244,7 +248,7 @@ class DatasetExporter:
 
             self.df_feats = FeaturesDf(df_tracks=self.df_tracks,
                                        train_class=self.train_class,
-                                       path_low_level=path_low_level,
+                                       list_path_tracks=tracks_existing_path_list,
                                        config=self.config,
                                        exports_path=self.exports_path,
                                        log_level=self.log_level,
@@ -254,4 +258,5 @@ class DatasetExporter:
             self.logger.info("Features, Labels, and Tracks are exported successfully..")
             return self.df_feats, self.y, self.df_tracks["track"].values
         else:
+            self.logger.error("No low-level data found.")
             return None, None, None

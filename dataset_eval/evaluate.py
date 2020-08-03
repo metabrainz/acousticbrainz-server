@@ -18,7 +18,7 @@ import db.exceptions
 import utils.path
 from dataset_eval import artistfilter
 from dataset_eval import gaia_wrapper
-
+from models.sklearn.model.classification_project import create_classification_project
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
 
@@ -60,21 +60,9 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
-        logging.info("Training model...")
-        results = gaia_wrapper.train_model(
-            project_dir=eval_location,
-            groundtruth_file=groundtruth_path,
-            filelist_file=filelist_path,
-        )
-        logging.info("Saving results...")
-        save_history_file(storage_dir, results["history_path"], eval_job["id"])
-        db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
-            "project_path": eval_location,
-            "parameters": results["parameters"],
-            "accuracy": results["accuracy"],
-            "confusion_matrix": results["confusion_matrix"],
-            "history_path": results["history_path"],
-        }))
+        logging.info("Training GAIA model...")
+        evaluate_gaia(eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
+
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
         logging.info("Evaluation job %s has been completed." % eval_job["id"])
 
@@ -93,6 +81,28 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         # We can recreate them from the database if we need them
         # at a later stage.
         shutil.rmtree(temp_dir)
+
+
+def evaluate_gaia(eval_location, groundtruth_path, filelist_path, storage_dir, eval_job):
+    results = gaia_wrapper.train_model(
+        project_dir=eval_location,
+        groundtruth_file=groundtruth_path,
+        filelist_file=filelist_path,
+    )
+    logging.info("Saving results...")
+    save_history_file(storage_dir, results["history_path"], eval_job["id"])
+    db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
+        "project_path": eval_location,
+        "parameters": results["parameters"],
+        "accuracy": results["accuracy"],
+        "confusion_matrix": results["confusion_matrix"],
+        "history_path": results["history_path"],
+    }))
+
+
+def evaluate_sklearn(eval_location, groundtruth_path, filelist_path, storage_dir, eval_job):
+    # create_classification_project(ground_truth_directory=groundtruth_path)
+    pass
 
 
 def create_groundtruth_dict(name, datadict):

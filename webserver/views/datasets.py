@@ -237,21 +237,21 @@ def evaluate(dataset_id):
             if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
                 form.filter_type.data = None
 
-            c_value = None
+            c_values = None
+            gamma_values = None
             preprocessing_values = None
-            gamma_value = None
             if form.svm_filtering.data:
-                c_value = form.c_value.data
-                gamma_value = form.gamma_value.data
+                c_values = form.c_value.data
+                gamma_values = form.gamma_value.data
                 preprocessing_values = form.preprocessing_values.data
 
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
-                c_value=form.c_value.data,
-                gamma_value=form.gamma_value.data,
-                preprocessing_values=form.preprocessing_values.data,
+                c_values=c_values,
+                gamma_values=gamma_values,
+                preprocessing_values=preprocessing_values,
                 filter_type=form.filter_type.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])

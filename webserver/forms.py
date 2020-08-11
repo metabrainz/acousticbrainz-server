@@ -1,5 +1,5 @@
 from wtforms import BooleanField, SelectField, StringField, TextAreaField, \
-    validators, SelectMultipleField, widgets, ValidationError, IntegerField
+    SelectMultipleField, widgets, ValidationError
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -73,6 +73,9 @@ class DatasetEvaluationForm(FlaskForm):
                                               render_kw={"class": "list-unstyled"})
 
     def validate_preprocessing_values(self, field):
+        # If we don't have SVM options enabled, don't validate the field
+        if not self.svm_filtering.data:
+            return
         if not field.data:
             raise ValidationError("Must select at least one preprocessing value")
 
@@ -82,10 +85,10 @@ class DatasetEvaluationForm(FlaskForm):
             return
         try:
             data = [int(value) for value in field.data.split(',')]
-            if len(data) > MAX_NUMBER_PARAMETERS:
-                raise ValidationError("Cannot have more than {} elements".format(MAX_NUMBER_PARAMETERS))
         except ValueError:
             raise ValidationError("All values must be numerical")
+        if len(data) > MAX_NUMBER_PARAMETERS:
+            raise ValidationError("Cannot have more than {} elements".format(MAX_NUMBER_PARAMETERS))
 
     def validate_c_value(self, field):
         # If we don't have SVM options enabled, don't validate the field
@@ -93,7 +96,7 @@ class DatasetEvaluationForm(FlaskForm):
             return
         try:
             data = [int(value) for value in field.data.split(',')]
-            if len(data) > MAX_NUMBER_PARAMETERS:
-                raise ValidationError("Cannot have more than {} elements".format(MAX_NUMBER_PARAMETERS))
         except ValueError:
             raise ValidationError("All values must be numerical")
+        if len(data) > MAX_NUMBER_PARAMETERS:
+            raise ValidationError("Cannot have more than {} elements".format(MAX_NUMBER_PARAMETERS))

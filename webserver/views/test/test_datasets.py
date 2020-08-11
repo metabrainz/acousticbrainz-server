@@ -62,11 +62,11 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self._test_view_with_get_dataset("datasets.view")
 
     def test_view_json(self):
-        resp = self.client.get(url_for("datasets.view_json", id=self.test_uuid))
+        resp = self.client.get(url_for("datasets.view_json", dataset_id=self.test_uuid))
         self.assert404(resp)
 
         dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
-        resp = self.client.get(url_for("datasets.view_json", id=dataset_id))
+        resp = self.client.get(url_for("datasets.view_json", dataset_id=dataset_id))
         self.assert200(resp)
 
         dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL, dataset_eval.DEFAULT_PARAMETER_C,

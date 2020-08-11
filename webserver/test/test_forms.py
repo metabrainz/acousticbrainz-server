@@ -93,7 +93,7 @@ class DatasetEvaluationFormTestCase(AcousticbrainzTestCase):
                                      option_filtering=False, svm_filtering=True, filter_type="no_filtering",
                                      c_value="1,2,3", gamma_value="1,2,3", preprocessing_values=["lowlevel", "basic"])
         self.assertTrue(form.validate())
-        self.assertFalse(form.option_filtering)
+        self.assertFalse(form.option_filtering.data)
 
         form = DatasetEvaluationForm(meta={'csrf': False},
                                      option_filtering=True, svm_filtering=True, filter_type="no_filtering",

@@ -14,11 +14,10 @@ DATASET_RUNNING = "running"
 DATASET_DONE = "done"
 DATASET_ALL = "all"
 
-DATASET_C_VALUE = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
-DATASET_GAMMA_VALUE = '3, 1, -1, -3, -5, -7, -9, -11'
+DATASET_C_VALUE = ", ".join([str(i) for i in dataset_eval.DEFAULT_PARAMETER_C])
+DATASET_GAMMA_VALUE = ", ".join([str(i) for i in dataset_eval.DEFAULT_PARAMETER_GAMMA])
 # MultiCheckboxField take multiple field values
-PREPROCESSING_VALUES = [('basic', 'basic'), ('lowlevel', 'lowlevel'), ('nobands', 'nobands'),
-                        ('normalized', 'normalized'), ('gaussianized', 'gaussianized')]
+PREPROCESSING_VALUES = [(val, val) for val in dataset_eval.DEFAULT_PARAMETER_PREPROCESSING]
 
 # Maximum number of C and gamma values
 MAX_NUMBER_PARAMETERS = 10

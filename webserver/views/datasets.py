@@ -241,8 +241,8 @@ def evaluate(dataset_id):
             gamma_values = None
             preprocessing_values = None
             if form.svm_filtering.data:
-                c_values = form.c_value.data
-                gamma_values = form.gamma_value.data
+                c_values = [int(i) for i in form.c_value.data.split(",")]
+                gamma_values = [int(i) for i in form.gamma_value.data.split(",")]
                 preprocessing_values = form.preprocessing_values.data
 
             db.dataset_eval.evaluate_dataset(

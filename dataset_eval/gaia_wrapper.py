@@ -16,11 +16,11 @@ from gaia2 import DataSet, transform
 import os
 import os.path
 
-
 PROJECT_FILE_NAME = "project.yaml"
 
 
-def train_model(project_dir, groundtruth_file, filelist_file):
+def train_model(project_dir, groundtruth_file, filelist_file, c_values, gamma_values,
+                preprocessing_values):
     """Trains best model for classification based on provided dataset.
 
     Args:
@@ -31,6 +31,9 @@ def train_model(project_dir, groundtruth_file, filelist_file):
         filelist_file: Path to the filelist in YAML format that contains
             mappings between all items (recordings) in the dataset and files
             that contain low-level info about these items.
+        c_values (optional): If set, a list of values to set C to during model training
+        gamma_values (optional): If set, a list of values to set gamma to during model training
+        preprocessing_values (optional): If set, a list of preprocessing types for model training
 
     Returns:
         Dictionary that contains information about best model for the dataset.
@@ -44,15 +47,41 @@ def train_model(project_dir, groundtruth_file, filelist_file):
         datasets_dir=os.path.join(project_dir, "datasets"),
         results_dir=os.path.join(project_dir, "results"),
     )
+    # Values to be defined in `string` type in project file
+    preprocessing_values = [str(value) for value in preprocessing_values]
+    # Update the project file with user-provided C, gamma, and preprocessing values
+    update_parameters(project_file, c_values, gamma_values, preprocessing_values)
     run_tests(project_file)
     return select_best_model(project_dir)
+
+
+def update_parameters(project_file, c_values, gamma_values, preprocessing_values):
+    """Update the project file with user-provided preferences
+
+    Args:
+        project_file: The file to be updated.
+        c_values: C value to be updated.
+        gamma_values: gamma value to be updated.
+        preprocessing_values: preprocessing values to be updated.
+    """
+    with open(project_file, "r") as pfile:
+        project = yaml.load(pfile)
+    for pref in project['classifiers']['svm']:
+        if c_values:
+            pref['C'] = c_values
+        if gamma_values:
+            pref['gamma'] = gamma_values
+        if preprocessing_values:
+            pref['preprocessing'] = preprocessing_values
+    with open(project_file, "w") as pfile:
+        yaml.dump(project, pfile)
 
 
 def select_best_model(project_dir):
     """Selects most accurate classifier parameters for the specified project.
 
     Args:
-        project_file_path: Path to the project file in YAML format.
+        project_dir: Path to an existing project directory.
 
     Returns:
         Dictionary that contains information about best model for the dataset:
@@ -96,13 +125,14 @@ def train_svm_history(project, params, output_file_path):
         raise GaiaWrapperException("Can only use this script on SVM config parameters.")
 
     ds = DataSet()
-    ds.load(os.path.join(
+    fname = os.path.join(
         project["datasetsDirectory"],
         "%s-%s.db" % (project["className"], params_model["preprocessing"])
-    ))
+    )
+    ds.load(str(fname))
 
     gt = GroundTruth.fromFile(project["groundtruth"])
-    gt.className = "highlevel." + project["className"]
+    gt.className = str("highlevel." + project["className"])
 
     history = train_svm(ds, gt, type=params_model["type"], kernel=params_model["kernel"],
                         C=params_model["C"], gamma=params_model["gamma"])  # doing the whole training

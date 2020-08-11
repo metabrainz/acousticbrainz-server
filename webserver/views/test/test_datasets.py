@@ -62,7 +62,18 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self._test_view_with_get_dataset("datasets.view")
 
     def test_view_json(self):
-        self._test_view_with_get_dataset("datasets.view_json")
+        resp = self.client.get(url_for("datasets.view_json", dataset_id=self.test_uuid))
+        self.assert404(resp)
+
+        dataset_id = dataset.create_from_dict(self.test_data, author_id=self.test_user_id)
+        resp = self.client.get(url_for("datasets.view_json", dataset_id=dataset_id))
+        self.assert200(resp)
+
+        dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL, dataset_eval.DEFAULT_PARAMETER_C,
+                                      dataset_eval.DEFAULT_PARAMETER_GAMMA, dataset_eval.DEFAULT_PARAMETER_PREPROCESSING
+                                      )
+
+        self.temporary_login(self.test_user_id)
 
     def test_eval_job_delete(self):
         resp = self.client.delete(url_for("datasets.eval_job", dataset_id=self.test_uuid, job_id=self.test_uuid))
@@ -73,7 +84,9 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         resp = self.client.delete(url_for("datasets.eval_job", dataset_id=dataset_id, job_id=self.test_uuid))
         self.assert404(resp)
 
-        job_id = dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL)
+        job_id = dataset_eval.evaluate_dataset(dataset_id, False, dataset_eval.EVAL_LOCAL, dataset_eval.DEFAULT_PARAMETER_C,
+                                               dataset_eval.DEFAULT_PARAMETER_GAMMA, dataset_eval.DEFAULT_PARAMETER_PREPROCESSING
+                                               )
 
         resp = self.client.delete(url_for("datasets.eval_job", dataset_id=dataset_id, job_id=job_id))
         self.assert401(resp)

@@ -197,10 +197,11 @@ def main(num_threads=DEFAULT_NUM_THREADS):
         sys.exit(-1)
 
     num_processed = 0
+    max_ll_id = 0
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
         while True:
-            docs = db.data.get_unprocessed_highlevel_documents(DOCUMENTS_PER_QUERY)
+            docs = db.data.get_unprocessed_highlevel_documents(DOCUMENTS_PER_QUERY, max_ll_id)
             current_app.logger.info("Got {} documents".format(len(docs)))
 
             futures = []
@@ -217,6 +218,8 @@ def main(num_threads=DEFAULT_NUM_THREADS):
                     current_app.logger.error(u"Unknown error when calling extractor: {}".format(e))
                 else:
                     num_processed += len(hl_data_list)
+                    this_max_ll_id = max([rowid for rowid, _, _ in hl_data_list])
+                    max_ll_id = max(max_ll_id, this_max_ll_id)
                     save_hl_documents(hl_data_list, build_sha1)
 
             # If we got less than the number of documents we asked for then we should wait

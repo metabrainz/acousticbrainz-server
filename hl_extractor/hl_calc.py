@@ -11,7 +11,6 @@ import time
 import traceback
 
 import concurrent.futures
-import six
 import yaml
 from flask import current_app
 
@@ -52,7 +51,7 @@ def process_lowlevel_data(data, logger_name=None):
     """Process a set of lowlevel submissions with the highlevel binary.
 
     Arguments:
-        data: list of up to ``MAX_ITEMS_PER_PROCeSS` (rowid, mbid, ll_data) tuples containing
+        data: list of up to ``MAX_ITEMS_PER_PROCESS`` (rowid, mbid, ll_data) tuples containing
          the lowlevel id of a submission, its MBID, and the actual data of the submission
 
     Returns:
@@ -75,9 +74,9 @@ def process_lowlevel_data(data, logger_name=None):
     if logger_name:
         logger = logging.getLogger(logger_name)
 
-    mbids = ", ".join([mbid for _, mbid, _ in data])
+    llids = ", ".join([str(llid) for llid, _, _ in data])
     if logger:
-        logger.info("Starting {}".format(mbids))
+        logger.info("Starting {}".format(llids))
 
     try:
         working_dir = tempfile.mkdtemp(prefix="hlcalc")
@@ -126,7 +125,7 @@ def process_lowlevel_data(data, logger_name=None):
         shutil.rmtree(working_dir, ignore_errors=True)
 
     if logger:
-        logger.info("Finished {}".format(mbids))
+        logger.info("Finished {}".format(llids))
     return results
 
 

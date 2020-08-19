@@ -13,7 +13,7 @@ from db import exceptions
 from utils import dataset_validator
 
 
-def _slugify(string):
+def slugify(string):
     """Converts unicode string to lowercase, removes alphanumerics and
     underscores, and converts spaces to hyphens. Also strips leading and
     trailing whitespace.

@@ -112,7 +112,7 @@ def download_annotation_csv(dataset_id):
     ds = get_dataset(dataset_id)
     fp = _convert_dataset_to_csv_stringio(ds)
 
-    file_name = "dataset_annotations_%s.csv" % db.dataset._slugify(ds["name"])
+    file_name = "dataset_annotations_%s.csv" % db.dataset.slugify(ds["name"])
 
     return send_file(fp,
                      mimetype='text/csv',

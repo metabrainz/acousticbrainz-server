@@ -7,11 +7,17 @@
         <h2 class="page-title">Dataset "{{ dataset['name'] }}"</h2>
       </div>
       <div id="control-buttons" class="col-md-7 col-lg-6">
-          <a class="btn btn-info" title="Download the groundtruth annotations for this dataset"
-            href="{{ url_for('datasets.download_annotation_csv', dataset_id=dataset['id']) }}">
+      <div class="dropdown" style="display: inline-block">
+  <button class="btn btn-info dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
             <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-            Download annotations
-          </a>
+            Download
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+    <li><a href="{{ url_for('datasets.download_annotation_csv', dataset_id=dataset['id']) }}">Download metadata</a></li>
+    <li><a href="{{ url_for('datasets.download_dataset', dataset_id=dataset['id']) }}">Download complete dataset</a></li>
+  </ul>
+</div>
       {% if is_author %}
           <a class="btn btn-success" title="Evaluate this dataset"
             href="{{ url_for('datasets.evaluate', dataset_id=dataset['id']) }}">

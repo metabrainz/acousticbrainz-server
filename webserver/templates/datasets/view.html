@@ -8,12 +8,6 @@
     {{ print_header(dataset, author, current_user, 'view') }}
     <div id="dataset-class-viewer" data-dataset-id="{{ dataset['id'] }}"></div>
   </div>
-  <div>
-    <a id="download_dataset" title="Download this dataset" class="btn btn-info">
-       <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-       Download zip
-    </a>
-   </div>
 {% endblock %}
 
 {% block scripts %}

@@ -6,7 +6,7 @@ import csv
 import json
 import math
 import os
-import shutil
+import zipfile
 from collections import defaultdict
 
 import six
@@ -17,8 +17,9 @@ from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
 import db.dataset
 import db.dataset_eval
 import db.exceptions
+import db.data
 import db.user
-import utils
+from db.dataset import slugify
 from utils import dataset_validator
 from webserver import flash, forms
 from webserver.decorators import auth_required
@@ -31,7 +32,6 @@ gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
 
-zipped_dataset_dir = 'zipped_datasets'
 
 def _pagenum_to_offset(pagenum, limit):
     # Page number and limit to list elements
@@ -163,32 +163,42 @@ def _convert_dataset_to_csv_stringio(dataset):
 @datasets_bp.route("/<uuid:dataset_id>/download_dataset")
 def download_dataset(dataset_id):
     ds = get_dataset(dataset_id)
-    zip_file = create_low_level_files(ds)
-    # Download the zip file
-    return send_file(zip_file, as_attachment=True)
+    dataset_name = slugify(ds["name"])
+    zip_file = generate_zip_from_dataset(ds)
+    return send_file(zip_file,
+                     as_attachment=True,
+                     attachment_filename="acousticbrainz-dataset-{}-{}.zip".format(dataset_id, dataset_name))
 
 
-def create_low_level_files(ds):
-    """Create a zip archive of all items in the dataset
-    with folders for each class and files in each folder
-    containing low-level json data
+def generate_zip_from_dataset(ds):
+    """Build a zip archive of all low-level documents that make up this dataset.
+    A folder is made for each class.
+
+    Arguments:
+        ds: the dataset to generate data for
+
+    Returns:
+        A rewound StringIO containing a zip file with the dataset contents
     """
-    utils.path.create_path(zipped_dataset_dir)
-    dataset_dir = os.path.join(os.path.abspath(zipped_dataset_dir), ds["name"])
-    utils.path.create_path(dataset_dir)
-    for data in ds["classes"]:
-        class_name = data["name"]
-        class_directory = os.path.join(dataset_dir, class_name)
-        utils.path.create_path(class_directory)
-        for recording in data["recordings"]:
-            file_name = recording + '.json'
-            low_level_data = json.dumps(db.data.load_low_level(recording), indent=4, sort_keys=True)
-            with open(class_directory +'/' + file_name, "w+") as file:
-                file.write(low_level_data)
 
-    shutil.make_archive(dataset_dir, 'zip', dataset_dir)
-    utils.path.remove_path(dataset_dir)
-    return dataset_dir + '.zip'
+    dataset_name = slugify(ds["name"])
+    sio = StringIO.StringIO()
+    zipfp = zipfile.ZipFile(sio, "w")
+    for data in ds["classes"]:
+        class_name = slugify(data["name"])
+        # TODO: Chunk this into blocks of ~100 in order to not request too much
+        #  data from the database at once
+        recordings = [(mbid, 0) for mbid in data.get("recordings", [])]
+        recordings_json = db.data.load_many_low_level(recordings)
+        for mbid, offset in recordings:
+            data = recordings_json.get(mbid, {}).get(str(offset))
+            if data:
+                zipfp.writestr(os.path.join(dataset_name, class_name, "{}.json".format(mbid)),
+                               json.dumps(data))
+
+    zipfp.close()
+    sio.seek(0)
+    return sio
 
 
 @datasets_bp.route("/accuracy")

@@ -48,21 +48,8 @@ RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
 RUN chown acousticbrainz:acousticbrainz /code
 
 # Python dependencies
-RUN mkdir /code/docs/ && chown acousticbrainz:acousticbrainz /code/docs/
-COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requirements.txt
-COPY --chown=acousticbrainz:acousticbrainz requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-
-FROM acousticbrainz-base AS acousticbrainz-dev
-
-COPY --chown=acousticbrainz:acousticbrainz requirements_development.txt /code/requirements_development.txt
-RUN pip install --no-cache-dir -r requirements_development.txt
-
-# install sklearn ML tool requirements
-RUN mkdir /code/models/sklearn/ && chown acousticbrainz:acousticbrainz /code/models/sklearn/
 COPY --chown=acousticbrainz:acousticbrainz models/sklearn/requirements.txt /code/models/sklearn/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r /code/models/sklearn/requirements.txt
 
 
 # We don't copy code to the dev image because it's added with a volume mount
@@ -72,7 +59,7 @@ FROM acousticbrainz-dev AS acousticbrainz-test
 COPY . /code
 
 
-FROM acousticbrainz-base AS acousticbrainz-prod
+FROM acousticbrainz-sklearn AS acousticbrainz-prod
 USER root
 
 RUN pip install --no-cache-dir uWSGI==2.0.17.1

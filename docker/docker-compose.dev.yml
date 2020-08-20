@@ -62,3 +62,16 @@ services:
       - ../data/files:/data/files
     depends_on:
       - db
+
+  dataset_evaluator_sklearn:
+    build:
+      context: ..
+      dockerfile: Dockerfile.py3
+      target: acousticbrainz-sklearn
+    command: python2 worker_manage.py dataset_evaluator
+    volumes:
+      - ../:/code
+      - ../data/datasets:/data/datasets
+      - ../data/files:/data/files
+    depends_on:
+      - db

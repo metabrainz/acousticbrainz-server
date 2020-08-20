@@ -1,6 +1,6 @@
 # Machine Learning Infrastructure with scikit-learn (GSoC 2020)
 
-This repository contains the tool that is built for training SVM models of 
+This folder contains the tool that is built for training SVM models of 
 AcousticBrainz's datasets, as well as predicting where a single AcousticBrainz 
 track instance can be classified based on the trained models. It is part of the 
 *Google Summer of Code 2020* in collaboration with the **MetaBrainz** Open-Source 
@@ -62,7 +62,7 @@ verbose                 Controls the verbosity (int) of the Grid Search print me
                         on the console: the higher, the more messages.
 ```
 
-For example, a path directory structure could be like this one:
+For example, a dataset path directory structure could be like this one:
 
     dataset (e.g. danceability)
     |- features
@@ -227,6 +227,3 @@ that are followed in this mode are:
    * the predicted class
    * the score of the predicted class
    * the probabilities for each class the model took to decide to which one the track will be classified.
-   
-
-

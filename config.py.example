@@ -70,6 +70,11 @@ DATASET_DIR = "/data/datasets"
 FILE_STORAGE_DIR = "/data/files"
 
 #Feature Flags
+# Choose a server to perform the evaluation on
 FEATURE_EVAL_LOCATION = False
+# Choose dataset preprocessing processes
+FEATURE_EVAL_FILTERING = True
+# Choose settings used for model training
+FEATURE_EVAL_MODEL_SELECTION = False
 
 DEBUG_TB_INTERCEPT_REDIRECTS = False

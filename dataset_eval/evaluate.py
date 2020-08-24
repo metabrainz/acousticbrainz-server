@@ -60,9 +60,9 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
-        logging.info("Training GAIA model...")
-        evaluate_gaia(eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
 
+        logging.info("Training GAIA model...")
+        evaluate_gaia(eval_job["options"], eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
         logging.info("Evaluation job %s has been completed." % eval_job["id"])
 
@@ -83,11 +83,14 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         shutil.rmtree(temp_dir)
 
 
-def evaluate_gaia(eval_location, groundtruth_path, filelist_path, storage_dir, eval_job):
+def evaluate_gaia(options, eval_location, groundtruth_path, filelist_path, storage_dir, eval_job):
     results = gaia_wrapper.train_model(
         project_dir=eval_location,
         groundtruth_file=groundtruth_path,
         filelist_file=filelist_path,
+        c_values=options.get("c_values", []),
+        gamma_values=options.get("gamma_values", []),
+        preprocessing_values=options.get("preprocessing_values", []),
     )
     logging.info("Saving results...")
     save_history_file(storage_dir, results["history_path"], eval_job["id"])

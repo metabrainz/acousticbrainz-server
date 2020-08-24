@@ -39,8 +39,14 @@ VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
 # Filter types are defined in `eval_filter_type` type. See schema definition.
 FILTER_ARTIST = "artist"
 
+# Default values for parameters
+DEFAULT_PARAMETER_PREPROCESSING = ['basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized']
+DEFAULT_PARAMETER_C = [-5, -3, -1, 1, 3, 5, 7, 9, 11]
+DEFAULT_PARAMETER_GAMMA = [3, 1, -1, -3, -5, -7, -9, -11]
 
-def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
+
+def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_values=None,
+                     preprocessing_values=None, filter_type=None):
     """Add dataset into evaluation queue.
 
     Args:
@@ -52,24 +58,39 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None):
         eval_location: The user should choose to evaluate on his own machine
             or on the AB server. 'local' is for AB server and 'remote' is for
             user's machine.
+        c_values (optional): A list of numerical values to use as the C parameter to the SVM model.
+            If not set, use DEFAULT_PARAMETER_C
+        gamma_values (optional): A list of numerical values to be used as the gamma parameter
+            to the SVM model. If not set, use DEFAULT_PARAMETER_GAMMA
+        preprocessing_values (optional): A list of preprocessing steps to be performed in the
+            model grid search. If not set, use DEFAULT_PARAMETER_PREPROCESSING
         filter_type: Optional filtering that will be applied to the dataset.
             See FILTER_* variables in this module for a list of existing
             filters.
 
     Raises:
-        JobExistsException if the dataset has already been submitted for evaluation
-        IncompleteDatasetException if the dataset is incomplete (it has recordings that aren't in AB)
+        JobExistsException: if the dataset has already been submitted for evaluation
+        IncompleteDatasetException: if the dataset is incomplete (it has recordings that aren't in AB)
 
     Returns:
         ID of the newly created evaluation job.
     """
+
+    if c_values is None:
+        c_values = DEFAULT_PARAMETER_C
+    if gamma_values is None:
+        gamma_values = DEFAULT_PARAMETER_GAMMA
+    if preprocessing_values is None:
+        preprocessing_values = DEFAULT_PARAMETER_PREPROCESSING
+
     with db.engine.begin() as connection:
         if _job_exists(connection, dataset_id):
             raise JobExistsException
 
         # Validate dataset contents
         validate_dataset_contents(db.dataset.get(dataset_id))
-        return _create_job(connection, dataset_id, normalize, eval_location, filter_type)
+        return _create_job(connection, dataset_id, normalize, eval_location,
+                           c_values, gamma_values, preprocessing_values, filter_type)
 
 
 def job_exists(dataset_id):
@@ -308,7 +329,8 @@ def add_dataset_eval_set(connection, data):
     return snapshot_id
 
 
-def _create_job(connection, dataset_id, normalize, eval_location, filter_type=None):
+def _create_job(connection, dataset_id, normalize, eval_location, c_value,
+                gamma_value, preprocessing_values, filter_type):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -316,6 +338,15 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
             raise ValueError("Incorrect 'filter_type'. See module documentation.")
     if eval_location not in VALID_EVAL_LOCATION:
         raise ValueError("Incorrect 'eval_location'. Must be one of %s" % VALID_EVAL_LOCATION)
+
+    options = {
+            "normalize": normalize,
+            "filter_type": filter_type,
+            "c_values": c_value,
+            "gamma_values": gamma_value,
+            "preprocessing_values": preprocessing_values,
+        }
+
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
                 INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location)
@@ -325,10 +356,7 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
     result = connection.execute(query, {
         "snapshot_id": snapshot_id,
         "status": STATUS_PENDING,
-        "options": json.dumps({
-            "normalize": normalize,
-            "filter_type": filter_type,
-        }),
+        "options": json.dumps(options),
         "eval_location": eval_location
     })
     job_id = result.fetchone()[0]

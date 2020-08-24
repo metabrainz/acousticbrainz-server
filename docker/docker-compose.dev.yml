@@ -68,6 +68,8 @@ services:
       context: ..
       dockerfile: Dockerfile.py3
       target: acousticbrainz-sklearn
+    environment:
+      MODEL_TRAINING_SKLEARN: 1
     command: python2 worker_manage.py dataset_evaluator
     volumes:
       - ../:/code

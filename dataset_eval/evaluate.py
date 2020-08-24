@@ -18,7 +18,9 @@ import db.exceptions
 import utils.path
 from dataset_eval import artistfilter
 from dataset_eval import gaia_wrapper
-from models.sklearn.model.classification_project import create_classification_project
+is_sklearn = os.getenv("MODEL_TRAINING_SKLEARN")
+if is_sklearn == "1":
+    from models.sklearn.model.classification_project import create_classification_project
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
 
@@ -103,9 +105,12 @@ def evaluate_gaia(options, eval_location, groundtruth_path, filelist_path, stora
     }))
 
 
-def evaluate_sklearn(eval_location, groundtruth_path, filelist_path, storage_dir, eval_job):
-    # create_classification_project(ground_truth_directory=groundtruth_path)
-    pass
+def evaluate_sklearn(eval_location, dataset_dir, storage_dir, eval_job):
+    create_classification_project(ground_truth_directory=dataset_dir,
+                                  project_file=eval_job["id"],
+                                  exports_directory=eval_job["id"],
+                                  exports_path=eval_location
+                                  )
 
 
 def create_groundtruth_dict(name, datadict):

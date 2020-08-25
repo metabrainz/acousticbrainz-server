@@ -92,7 +92,7 @@ def evaluate_gaia(options, eval_location, groundtruth_path, filelist_path, stora
         filelist_file=filelist_path,
         c_values=options.get("c_values", []),
         gamma_values=options.get("gamma_values", []),
-        preprocessing_values=options.get("preprocessing_values", []),
+        preprocessing_values=options.get("preprocessing_values", [])
     )
     logging.info("Saving results...")
     save_history_file(storage_dir, results["history_path"], eval_job["id"])
@@ -105,11 +105,14 @@ def evaluate_gaia(options, eval_location, groundtruth_path, filelist_path, stora
     }))
 
 
-def evaluate_sklearn(eval_location, dataset_dir, storage_dir, eval_job):
+def evaluate_sklearn(options, eval_location, dataset_dir, storage_dir, eval_job):
     create_classification_project(ground_truth_directory=dataset_dir,
                                   project_file=eval_job["id"],
                                   exports_directory=eval_job["id"],
-                                  exports_path=eval_location
+                                  exports_path=eval_location,
+                                  c_values=options.get("c_values", []),
+                                  gamma_values=options.get("gamma_values", []),
+                                  preprocessing_values=options.get("preprocessing_values", [])
                                   )
 
 

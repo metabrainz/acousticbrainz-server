@@ -46,6 +46,20 @@ path                    Path where the project results will be stored. If empty,
 
 optional parameters:
 
+c_values                The C values parameter (list) for the SVM Grid Search 
+                        (e.g. [-2, 3, 5, 10]). In case of None, the values will be set up
+                        by the specified in the configuration template.
+
+gamma_values            The gamma values parameter (list) for the SVM Grid Search 
+                        (e.g. [ 3, 1, -1, -3]). In case of None, the values will be set up
+                        by the specified in the configuration template.
+
+preprocessing_values:   The preprocessing values parameter (list) for the 
+                        SVM Grid Search. They must be one or more of the following list: 
+                        ["basic", "lowlevel", "nobands", "normalized", "gaussianized"]
+                        In case of None, the values will be set up
+                        by the specified in the configuration template.
+
 logging                 The logging level (int) that will be printed (0: DEBUG, 1: INFO, 
                         2: WARNING, 3: ERROR, 4: CRITICAL). Can be set only in the
                         prescribed integer values (0, 1, 2, 3, 4)

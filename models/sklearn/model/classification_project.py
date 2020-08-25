@@ -7,6 +7,7 @@ from ..classification.train_class import train_class
 
 
 def create_classification_project(ground_truth_directory, project_file=None, exports_directory=None, exports_path=None,
+                                  c_values=None, gamma_values=None, preprocessing_values=None,
                                   seed=None, jobs=-1, verbose=1, logging="logging.INFO"):
     """
     Args:
@@ -74,7 +75,7 @@ def create_classification_project(ground_truth_directory, project_file=None, exp
     print(gt_files_list)
     print("LOAD GROUND TRUTH")
     for gt_file in gt_files_list:
-        train_class(project_template, gt_file, exports_directory, logging)
+        train_class(project_template, gt_file, exports_directory, c_values, gamma_values, preprocessing_values, logging)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ from ..transformation.load_ground_truth import DatasetExporter
 from ..helper_functions.logging_tool import LoggerSetup
 
 
-def train_class(config, gt_file, exports_directory, log_level):
+def train_class(config, gt_file, exports_directory, c_values, gamma_values, preprocessing_values, log_level):
     exports_path = config["exports_path"]
     gt_data = GroundTruthLoad(config, gt_file, exports_path, log_level)
     # tracks shuffled and exported
@@ -24,6 +24,11 @@ def train_class(config, gt_file, exports_directory, log_level):
         config["exports_directory"] = "{}_{}".format(prefix_exports_dir, class_name)
     else:
         config["exports_directory"] = exports_directory
+
+    config = update_parameters(config=config,
+                               c_values=c_values,
+                               gamma_values=gamma_values,
+                               preprocessing_values=preprocessing_values)
 
     logger = LoggerSetup(config=config,
                          exports_path=exports_path,
@@ -72,3 +77,24 @@ def train_class(config, gt_file, exports_directory, log_level):
     classification_time = model_manage.apply_processing()
     print(colored("Classification ended successfully in {} minutes.".format(classification_time), "green"))
     logger.info("Classification ended successfully in {} minutes.".format(classification_time))
+
+
+def update_parameters(config, c_values, gamma_values, preprocessing_values):
+    """Update the project file with user-provided preferences
+
+    Args:
+        config: The config data to be updated.
+        c_values: C value to be updated.
+        gamma_values: gamma value to be updated.
+        preprocessing_values: preprocessing values to be updated.
+    """
+    for pref in config['classifiers']['svm']:
+        if c_values:
+            pref['C'] = c_values
+        if gamma_values:
+            pref['gamma'] = gamma_values
+        if preprocessing_values:
+            pref['preprocessing'] = preprocessing_values
+
+    return config
+

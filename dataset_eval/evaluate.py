@@ -62,9 +62,15 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
+        evaluation_tool_selection = eval_job["options"].get("evaluation_tool_value", "gaia")
+        logging.info("TOOL: {}".format(evaluation_tool_selection))
+        if evaluation_tool_selection == "gaia":
+            logging.info("Training GAIA model...")
+            evaluate_gaia(eval_job["options"], eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
+        elif evaluation_tool_selection == "sklearn":
+            logging.info("Training SKLEARN model...")
+            evaluate_sklearn(eval_job["options"], eval_location, dataset_dir, storage_dir, eval_job)
 
-        logging.info("Training GAIA model...")
-        evaluate_gaia(eval_job["options"], eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
         logging.info("Evaluation job %s has been completed." % eval_job["id"])
 

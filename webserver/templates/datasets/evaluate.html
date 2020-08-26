@@ -86,6 +86,14 @@
                 </div>
             </div>
         {% endif %}
+        {% if config.get('FEATURE_EVAL_TOOL_SELECTION') %}
+                <fieldset>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">{{ form.evaluation_tool_value.label.text }}</label>
+                        <div class="col-sm-4">{{ form.evaluation_tool_value(class="form-control", required="required") }}</div>
+                    </div>
+                </fieldset>
+            {% endif %}
         </fieldset>
         <div class="form-group">
             <div class="col-sm-offset-2 col-sm-4">

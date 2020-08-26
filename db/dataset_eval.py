@@ -46,7 +46,7 @@ DEFAULT_PARAMETER_GAMMA = [3, 1, -1, -3, -5, -7, -9, -11]
 
 
 def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_values=None,
-                     preprocessing_values=None, filter_type=None):
+                     preprocessing_values=None, filter_type=None, evaluation_tool_value="gaia"):
     """Add dataset into evaluation queue.
 
     Args:
@@ -67,6 +67,7 @@ def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_
         filter_type: Optional filtering that will be applied to the dataset.
             See FILTER_* variables in this module for a list of existing
             filters.
+        evaluation_tool_value (optional): A string choice between two strings, gaia or sklearn.
 
     Raises:
         JobExistsException: if the dataset has already been submitted for evaluation
@@ -90,7 +91,8 @@ def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_
         # Validate dataset contents
         validate_dataset_contents(db.dataset.get(dataset_id))
         return _create_job(connection, dataset_id, normalize, eval_location,
-                           c_values, gamma_values, preprocessing_values, filter_type)
+                           c_values, gamma_values, preprocessing_values, filter_type,
+                           evaluation_tool_value)
 
 
 def job_exists(dataset_id):
@@ -330,7 +332,7 @@ def add_dataset_eval_set(connection, data):
 
 
 def _create_job(connection, dataset_id, normalize, eval_location, c_value,
-                gamma_value, preprocessing_values, filter_type):
+                gamma_value, preprocessing_values, filter_type, evaluation_tool_value):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -345,6 +347,7 @@ def _create_job(connection, dataset_id, normalize, eval_location, c_value,
             "c_values": c_value,
             "gamma_values": gamma_value,
             "preprocessing_values": preprocessing_values,
+            "evaluation_tool_value": evaluation_tool_value
         }
 
     snapshot_id = db.dataset.create_snapshot(dataset_id)

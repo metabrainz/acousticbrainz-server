@@ -85,7 +85,7 @@ class ClassificationTaskManager:
                                                os.path.join(self.exports_dir, "images")).inspect_directory()
         # reports
         self.reports_path = FindCreateDirectory(self.exports_path,
-                                               os.path.join(self.exports_dir, "reports")).inspect_directory()
+                                                os.path.join(self.exports_dir, "reports")).inspect_directory()
 
     def config_file_analysis(self):
         """

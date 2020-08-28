@@ -36,9 +36,7 @@ def train_class(config, gt_file, exports_directory, c_values, gamma_values, prep
                          train_class=class_name,
                          mode="w",
                          level=log_level).setup_logger()
-    
     logger.info("---- TRAINING FOR THE {} MODEL HAS JUST STARTED ----".format(class_name))
-
     logger.debug("Type of exported GT data exported: {}".format(type(tracks_listed_shuffled)))
 
     # name the project file
@@ -97,4 +95,3 @@ def update_parameters(config, c_values, gamma_values, preprocessing_values):
             pref['preprocessing'] = preprocessing_values
 
     return config
-

@@ -55,6 +55,8 @@ services:
       context: ..
       dockerfile: Dockerfile
       target: acousticbrainz-dev
+    environment:
+      MODEL_TRAINING_GAIA: 1
     command: python2 worker_manage.py dataset_evaluator
     volumes:
       - ../:/code
@@ -70,7 +72,7 @@ services:
       target: acousticbrainz-sklearn
     environment:
       MODEL_TRAINING_SKLEARN: 1
-    command: python2 worker_manage.py dataset_evaluator
+    command: python3 worker_manage.py dataset_evaluator
     volumes:
       - ../:/code
       - ../data/datasets:/data/datasets

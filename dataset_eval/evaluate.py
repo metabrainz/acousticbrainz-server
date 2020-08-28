@@ -7,7 +7,6 @@ import shutil
 import tempfile
 import time
 
-import gaia2.fastyaml as yaml
 from flask import current_app
 
 import db
@@ -16,11 +15,18 @@ import db.dataset
 import db.dataset_eval
 import db.exceptions
 import utils.path
+import yaml
 from dataset_eval import artistfilter
-from dataset_eval import gaia_wrapper
+
 is_sklearn = os.getenv("MODEL_TRAINING_SKLEARN")
 if is_sklearn == "1":
     from models.sklearn.model.classification_project import create_classification_project
+
+is_gaia = os.getenv("MODEL_TRAINING_GAIA")
+if is_gaia == "1":
+    # import gaia2.fastyaml as yaml
+    from dataset_eval import gaia_wrapper
+
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
 

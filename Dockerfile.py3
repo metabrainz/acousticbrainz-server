@@ -53,16 +53,15 @@ COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requ
 COPY --chown=acousticbrainz:acousticbrainz requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Python dependencies for sklearn
+COPY --chown=acousticbrainz:acousticbrainz models/sklearn/requirements.txt /code/models/sklearn/requirements.txt
+RUN pip install --no-cache-dir -r /code/models/sklearn/requirements.txt
+
 
 FROM acousticbrainz-sklearn AS acousticbrainz-dev
 
 COPY --chown=acousticbrainz:acousticbrainz requirements_development.txt /code/requirements_development.txt
 RUN pip install --no-cache-dir -r requirements_development.txt
-
-# Python dependencies for sklearn
-COPY --chown=acousticbrainz:acousticbrainz models/sklearn/requirements.txt /code/models/sklearn/requirements.txt
-RUN pip install --no-cache-dir -r /code/models/sklearn/requirements.txt
-
 
 
 # We don't copy code to the dev image because it's added with a volume mount

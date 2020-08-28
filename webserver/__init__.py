@@ -8,7 +8,7 @@ from pprint import pprint
 
 import os
 import time
-import urlparse
+from six.moves import urllib
 
 API_PREFIX = '/api/'
 
@@ -137,7 +137,7 @@ def create_app(debug=None):
     def prod_https_login_redirect():
         """ Redirect to HTTPS in production except for the API endpoints
         """
-        if urlparse.urlsplit(request.url).scheme == 'http' \
+        if urllib.parse.urlsplit(request.url).scheme == 'http' \
                 and app.config['DEBUG'] == False \
                 and app.config['TESTING'] == False \
                 and request.blueprint not in ('api', 'api_v1_core', 'api_v1_datasets', 'api_v1_dataset_eval'):

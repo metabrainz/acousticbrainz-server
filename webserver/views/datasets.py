@@ -15,7 +15,7 @@ import db.user
 import csv
 import math
 import six
-import StringIO
+from six import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
 # Below values are defined in 'classification_project_template.yaml' file.

@@ -110,7 +110,7 @@ def create_app(debug=None):
     init_error_handlers(app)
 
     # Static files
-    import static_manager
+    from webserver import static_manager
 
     # Template utilities
     app.jinja_env.add_extension('jinja2.ext.do')

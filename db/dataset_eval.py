@@ -166,7 +166,7 @@ def validate_dataset_contents(dataset):
                 )
 
 
-def get_next_pending_job():
+def get_next_pending_job(evaluation_tool_value="gaia"):
     """
     Get the earliest submitted job which is still in the pending state.
 
@@ -181,9 +181,10 @@ def get_next_pending_job():
                    ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE status = :status
                   AND eval_location = 'local'
+                  AND options->>'evaluation_tool_value' = %s
              ORDER BY created ASC
                 LIMIT 1
-            """ % EVAL_COLUMNS_COMMA_SEPARATED)
+            """ % (EVAL_COLUMNS_COMMA_SEPARATED, evaluation_tool_value))
         result = connection.execute(query, {"status": STATUS_PENDING})
         row = result.fetchone()
         return dict(row) if row else None

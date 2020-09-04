@@ -18,14 +18,17 @@ import utils.path
 import yaml
 from dataset_eval import artistfilter
 
+eval_tool_use = "gaia"
 is_sklearn = os.getenv("MODEL_TRAINING_SKLEARN")
 if is_sklearn == "1":
     from models.sklearn.model.classification_project import create_classification_project
+    eval_tool_use = "sklearn"
 
 is_gaia = os.getenv("MODEL_TRAINING_GAIA")
 if is_gaia == "1":
     # import gaia2.fastyaml as yaml
     from dataset_eval import gaia_wrapper
+    eval_tool_use = "gaia"
 
 SLEEP_DURATION = 30  # number of seconds to wait between runs
 
@@ -35,7 +38,7 @@ def main():
     dataset_dir = current_app.config["DATASET_DIR"]
     storage_dir = os.path.join(current_app.config["FILE_STORAGE_DIR"], "history")
     while True:
-        pending_job = db.dataset_eval.get_next_pending_job()
+        pending_job = db.dataset_eval.get_next_pending_job(eval_tool_use)
         if pending_job:
             logging.info("Processing job %s..." % pending_job["id"])
             evaluate_dataset(pending_job, dataset_dir, storage_dir)

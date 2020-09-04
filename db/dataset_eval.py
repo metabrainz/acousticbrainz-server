@@ -181,7 +181,7 @@ def get_next_pending_job(evaluation_tool_value="gaia"):
                    ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE status = :status
                   AND eval_location = 'local'
-                  AND options->>AND options->>'evaluation_tool_value' = :evaluation_tool_value
+                  AND options->>'evaluation_tool_value' = :evaluation_tool_value
              ORDER BY created ASC
                 LIMIT 1
             """ % EVAL_COLUMNS_COMMA_SEPARATED)

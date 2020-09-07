@@ -69,7 +69,8 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         logging.info("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(eval_location, "groundtruth.yaml")
         with open(groundtruth_path, "w") as f:
-            yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
+            # yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
+            yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f, Dumper=yaml.SafeDumper)
 
         evaluation_tool_selection = eval_job["options"].get("evaluation_tool_value", "gaia")
         logging.info("TOOL: {}".format(evaluation_tool_selection))
@@ -135,13 +136,13 @@ def create_groundtruth_dict(name, datadict):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": db.dataset._slugify(unicode(name)),
+        "className": db.dataset._slugify(name),
         "groundTruth": {},
     }
     for r, cls in datadict.items():
-        if isinstance(r, unicode):
-            r = r.encode("UTF-8")
-        groundtruth["groundTruth"][r] = cls.encode("UTF-8")
+        # if isinstance(r, unicode):
+        #     r = r.encode("UTF-8")
+        groundtruth["groundTruth"][r] = cls
 
     return groundtruth
 
@@ -150,12 +151,12 @@ def create_groundtruth(dataset):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": db.dataset._slugify(unicode(dataset["name"])),
+        "className": db.dataset._slugify(dataset["name"]),
         "groundTruth": {},
     }
     for cls in dataset["classes"]:
         for recording_mbid in cls["recordings"]:
-            groundtruth["groundTruth"][recording_mbid] = cls["name"].encode("UTF-8")
+            groundtruth["groundTruth"][recording_mbid] = cls["name"]
     return groundtruth
 
 

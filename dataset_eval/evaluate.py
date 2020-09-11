@@ -54,17 +54,23 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
     utils.path.create_path(eval_location)
     temp_dir = tempfile.mkdtemp()
 
+    evaluation_tool_selection = eval_job["options"].get("evaluation_tool_value", "gaia")
+    logging.info("TOOL: {}".format(evaluation_tool_selection))
+
     try:
         snapshot = db.dataset.get_snapshot(eval_job["snapshot_id"])
 
         train, test = artistfilter.filter(eval_job["snapshot_id"], eval_job["options"])
         db.dataset_eval.add_sets_to_job(eval_job["id"], train, test)
 
-        logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
-        filelist_path = os.path.join(eval_location, "filelist.yaml")
-        filelist = dump_lowlevel_data(train.keys(), temp_dir)
-        with open(filelist_path, "w") as f:
-            yaml.dump(filelist, f)
+        if evaluation_tool_selection == "gaia":
+            logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
+            filelist_path = os.path.join(eval_location, "filelist.yaml")
+            filelist = dump_lowlevel_data(train.keys(), temp_dir)
+            with open(filelist_path, "w") as f:
+                yaml.dump(filelist, f)
+        elif evaluation_tool_selection == "sklearn":
+            dump_lowlevel_data_sklearn(train.keys(), temp_dir)
 
         logging.info("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(eval_location, "groundtruth.yaml")
@@ -72,8 +78,6 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             # yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f, Dumper=yaml.SafeDumper)
 
-        evaluation_tool_selection = eval_job["options"].get("evaluation_tool_value", "gaia")
-        logging.info("TOOL: {}".format(evaluation_tool_selection))
         if evaluation_tool_selection == "gaia":
             logging.info("Training GAIA model...")
             evaluate_gaia(eval_job["options"], eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
@@ -193,6 +197,22 @@ def lowlevel_data_to_yaml(data):
         del data['metadata']['audio_properties']['lossless']
 
     return yaml.dump(data)
+
+
+def dump_lowlevel_data_sklearn(recordings, location):
+    """Dumps low-level data to JSON for all recordings into specified location.
+
+        Args:
+            recordings: List of MBIDs of recordings.
+            location: Path to directory where low-level data will be saved.
+
+    """
+    utils.path.create_path(location)
+    filelist = {}
+    for recording in recordings:
+        filelist[recording] = os.path.join(location, "%s.json" % recording)
+        with open(filelist[recording], 'w') as outfile:
+            json.dump(lowlevel_data_to_yaml(db.data.load_low_level(recording)), outfile)
 
 
 def extract_recordings(dataset):

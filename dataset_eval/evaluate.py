@@ -87,7 +87,7 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             logging.info("Training SKLEARN model...")
             evaluate_sklearn(options=eval_job["options"],
                              eval_location=eval_location,
-                             dataset_dir=temp_dir,
+                             dataset_dir=dataset_dir,
                              storage_dir=storage_dir,
                              eval_job=eval_job)
 

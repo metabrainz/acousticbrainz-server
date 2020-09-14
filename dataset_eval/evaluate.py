@@ -36,7 +36,9 @@ SLEEP_DURATION = 30  # number of seconds to wait between runs
 def main():
     logging.info("Starting dataset evaluator...")
     dataset_dir = current_app.config["DATASET_DIR"]
+    logging.info("Dataset dir path: {}".format(dataset_dir))
     storage_dir = os.path.join(current_app.config["FILE_STORAGE_DIR"], "history")
+    logging.info("Storage dir path: {}".format(storage_dir))
     while True:
         pending_job = db.dataset_eval.get_next_pending_job(eval_tool_use)
         if pending_job:
@@ -83,7 +85,11 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             evaluate_gaia(eval_job["options"], eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
         elif evaluation_tool_selection == "sklearn":
             logging.info("Training SKLEARN model...")
-            evaluate_sklearn(eval_job["options"], eval_location, dataset_dir, storage_dir, eval_job)
+            evaluate_sklearn(options=eval_job["options"],
+                             eval_location=eval_location,
+                             dataset_dir=temp_dir,
+                             storage_dir=storage_dir,
+                             eval_job=eval_job)
 
         db.dataset_eval.set_job_status(eval_job["id"], db.dataset_eval.STATUS_DONE)
         logging.info("Evaluation job %s has been completed." % eval_job["id"])
@@ -178,7 +184,6 @@ def dump_lowlevel_data(recordings, location):
     filelist = {}
     for recording in recordings:
         filelist[recording] = os.path.join(location, "%s.yaml" % recording)
-        logging.INFO("RECORDING PATH: {}".format(filelist[recording]))
         with open(filelist[recording], "w") as f:
             f.write(lowlevel_data_to_yaml(db.data.load_low_level(recording)))
     return filelist
@@ -211,7 +216,9 @@ def dump_lowlevel_data_sklearn(recordings, location):
     utils.path.create_path(location)
     filelist = {}
     for recording in recordings:
+        logging.info("Recording: {}".format(recording))
         filelist[recording] = os.path.join(location, "%s.json" % recording)
+        logging.info("Recoding path: {}".format(filelist[recording]))
         with open(filelist[recording], 'w') as outfile:
             json.dump(lowlevel_data_cleaning(db.data.load_low_level(recording)), outfile)
     logging.info("JSON data stored successfully.")
@@ -227,7 +234,7 @@ def lowlevel_data_cleaning(data):
         del data["metadata"]["audio_properties"]["sample_rate"]
     if 'lossless' in data['metadata']['audio_properties']:
         del data['metadata']['audio_properties']['lossless']
-
+    # logging.info("Data: {}".format(data))
     return data
 
 

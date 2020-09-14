@@ -178,6 +178,7 @@ def dump_lowlevel_data(recordings, location):
     filelist = {}
     for recording in recordings:
         filelist[recording] = os.path.join(location, "%s.yaml" % recording)
+        logging.INFO("RECORDING PATH: {}".format(filelist[recording]))
         with open(filelist[recording], "w") as f:
             f.write(lowlevel_data_to_yaml(db.data.load_low_level(recording)))
     return filelist
@@ -212,7 +213,22 @@ def dump_lowlevel_data_sklearn(recordings, location):
     for recording in recordings:
         filelist[recording] = os.path.join(location, "%s.json" % recording)
         with open(filelist[recording], 'w') as outfile:
-            json.dump(lowlevel_data_to_yaml(db.data.load_low_level(recording)), outfile)
+            json.dump(lowlevel_data_cleaning(db.data.load_low_level(recording)), outfile)
+    logging.info("JSON data stored successfully.")
+
+def lowlevel_data_cleaning(data):
+    """Prepares dictionary with low-level data about recording for processing.
+    """
+    # Removing descriptors, that will otherwise break gaia_fusion due to
+    # incompatibility of layouts (see Gaia implementation for more details).
+    if "tags" in data["metadata"]:
+        del data["metadata"]["tags"]
+    if "sample_rate" in data["metadata"]["audio_properties"]:
+        del data["metadata"]["audio_properties"]["sample_rate"]
+    if 'lossless' in data['metadata']['audio_properties']:
+        del data['metadata']['audio_properties']['lossless']
+
+    return data
 
 
 def extract_recordings(dataset):

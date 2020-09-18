@@ -25,27 +25,16 @@ Thus far, the following metrics can be used to assess similarity:
 **Metric**           **Hybrid**   **Category**
 ==================== ============ ====================
 MFCCs                False        Timbre
-==================== ============ ====================
 MFCCs (Weighted)     False        Timbre
-==================== ============ ====================
 GFCCs                False        Timbre
-==================== ============ ====================
 GFCCs (Weighted)     False        Timbre
-==================== ============ ====================
 Key                  False        Rhythm (Key/Scale)
-==================== ============ ====================
 BPM                  False        Rhythm
-==================== ============ ====================
 OnsetRate            False        Rhythm
-==================== ============ ====================
 Moods                False        High-Level
-==================== ============ ====================
 Instruments          False        High-Level
-==================== ============ ====================
 Dortmund             False        High-Level (Genre)
-==================== ============ ====================
 Rosamerica           False        High-Level (Genre)
-==================== ============ ====================
 Tzanetakis           False        High-Level (Genre)
 ==================== ============ ====================
 

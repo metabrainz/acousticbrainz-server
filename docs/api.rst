@@ -24,6 +24,14 @@ Datasets
    :include-empty-docstring:
    :undoc-static:
 
+Similarity
+^^^^^^^^^^
+
+.. autoflask:: webserver:create_app_sphinx()
+   :blueprints: api_v1_similarity
+   :include-empty-docstring:
+   :undoc-static:
+
 Rate limiting
 ^^^^^^^^^^^^^
 

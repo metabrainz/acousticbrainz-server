@@ -7,7 +7,9 @@ Contents:
    :maxdepth: 2
 
    api
+   similarity
    dev/deployment
+   dev/similarity
 
 Indices and tables
 ==================

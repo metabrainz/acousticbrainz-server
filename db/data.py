@@ -743,6 +743,7 @@ def parse_features_row(row, features):
         data[alias_keys[0]].update(current)
     return data
 
+
 def get_mbids_by_ids(ids):
     # Get (MBID, offset) combinations for a list of lowlevel.ids
     # Maintains order of the input list
@@ -791,7 +792,7 @@ def get_lowlevel_by_id(id):
         id = int(id)
     except ValueError:
         raise db.exceptions.BadDataException('Parameter `id` must be an integer.')
-    
+
     with db.engine.connect() as connection:
         query = text("""
             SELECT id, data

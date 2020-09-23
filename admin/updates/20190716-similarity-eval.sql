@@ -60,4 +60,7 @@ ALTER TABLE similarity.eval_feedback
   FOREIGN KEY (eval_id)
   REFERENCES similarity.eval_results (id);
 
+ALTER TABLE similarity.eval_params ADD CONSTRAINT eval_params_pkey PRIMARY KEY (id);
+ALTER TABLE similarity.eval_results ADD CONSTRAINT eval_results_pkey PRIMARY KEY (id);
+
 COMMIT;

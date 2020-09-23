@@ -180,67 +180,67 @@ class FakeMusicBrainz(object):
     @staticmethod
     def get_recording_by_id(mbid):
         return {
-            'artist-credit':[
+            'artist-credit': [
                 {
-                    'artist':{
-                        'sort-name':'Wintory, Austin',
-                        'disambiguation':'American video game music composer',
-                        'id':'78f15956-c5e1-46d6-a46b-fa6f46681ec8',
-                        'name':'Austin Wintory'
+                    'artist': {
+                        'sort-name': 'Wintory, Austin',
+                        'disambiguation': 'American video game music composer',
+                        'id': '78f15956-c5e1-46d6-a46b-fa6f46681ec8',
+                        'name': 'Austin Wintory'
                     }
                 }
             ],
             'title':'Nascence',
-            'id':'0dad432b-16cc-4bf0-8961-fd31d124b01b',
-            'length':'107000',
-            'release-list':[
+            'id':  '0dad432b-16cc-4bf0-8961-fd31d124b01b',
+            'length': '107000',
+            'release-list': [
                 {
-                    'status':'Official',
-                    'release-event-count':1,
-                    'barcode':'',
-                    'title':'Journey',
-                    'country':'XW',
-                    'medium-count':1,
-                    'release-event-list':[
+                    'status': 'Official',
+                    'release-event-count': 1,
+                    'barcode': '',
+                    'title': 'Journey',
+                    'country': 'XW',
+                    'medium-count': 1,
+                    'release-event-list': [
                         {
-                            'date':'2012-04-10',
-                            'area':{
-                                'sort-name':'[Worldwide]',
-                                'iso-3166-1-code-list':[
+                            'date': '2012-04-10',
+                            'area': {
+                                'sort-name': '[Worldwide]',
+                                'iso-3166-1-code-list': [
                                     'XW'
                                 ],
-                                'id':'525d4e18-3d00-31b9-a58b-a146a916de8f',
-                                'name':'[Worldwide]'
+                                'id': '525d4e18-3d00-31b9-a58b-a146a916de8f',
+                                'name': '[Worldwide]'
                             }
                         }
                     ],
-                    'packaging':'None',
-                    'medium-list':[
+                    'packaging': 'None',
+                    'medium-list': [
                         {
-                            'position':'1',
-                            'format':'Digital Media',
-                            'track-list':[
+                            'position': '1',
+                            'format': 'Digital Media',
+                            'track-list': [
                                 {
-                                    'title':'Nascence',
-                                    'number':'1',
-                                    'length':'107000',
-                                    'position':'1',
-                                    'id':'09999a96-3d26-33ff-b0dc-56464be6716e',
-                                    'track_or_recording_length':'107000'
+                                    'title': 'Nascence',
+                                    'number': '1',
+                                    'length': '107000',
+                                    'position': '1',
+                                    'id': '09999a96-3d26-33ff-b0dc-56464be6716e',
+                                    'track_or_recording_length': '107000'
                                 }
                             ],
-                            'track-count':18
+                            'track-count': 18
                         }
                     ],
-                    'text-representation':{
-                        'language':'eng',
-                        'script':'Latn'
+                    'text-representation': {
+                        'language': 'eng',
+                        'script': 'Latn'
                     },
-                    'date':'2012-04-10',
-                    'quality':'normal',
-                    'id':'1f3abcda-15a7-4465-92c6-9926cdc4f247'
+                    'date': '2012-04-10',
+                    'quality': 'normal',
+                    'id': '1f3abcda-15a7-4465-92c6-9926cdc4f247'
                 }
             ],
-            'release-count':3,
-            'artist-credit-phrase':'Austin Wintory'
+            'release-count': 3,
+            'artist-credit-phrase': 'Austin Wintory'
         }

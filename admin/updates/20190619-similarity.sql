@@ -59,4 +59,8 @@ ALTER TABLE similarity.similarity_stats
   FOREIGN KEY (metric)
   REFERENCES similarity.similarity_metrics (metric);
 
+ALTER TABLE similarity.similarity_metrics ADD CONSTRAINT similarity_metrics_pkey PRIMARY KEY (metric);
+ALTER TABLE similarity.similarity_stats ADD CONSTRAINT similarity_stats_pkey PRIMARY KEY (metric);
+ALTER TABLE similarity.similarity add CONSTRAINT similarity_pkey PRIMARY KEY (id);
+
 COMMIT;

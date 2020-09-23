@@ -6,6 +6,7 @@ import mock
 import db
 import db.data
 import db.similarity
+import db.similarity_stats
 import db.exceptions
 from webserver.testing import AcousticbrainzTestCase, DB_TEST_DATA_PATH, gid_types
 import db.test_data.similarity_metrics_data
@@ -19,16 +20,16 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
     def setUp(self):
         super(SimilarityDBTestCase, self).setUp()
         self.test_mbid = "0dad432b-16cc-4bf0-8961-fd31d124b01b"
-        self.test_lowlevel_data_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid + '.json')).read()
+        self.test_lowlevel_data_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid + ".json")).read()
         self.test_lowlevel_data = json.loads(self.test_lowlevel_data_json)
 
-        self.test_highlevel_data_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid + '_highlevel.json')).read()
+        self.test_highlevel_data_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid + "_highlevel.json")).read()
         self.test_highlevel_data = json.loads(self.test_highlevel_data_json)
-        self.test_highlevel_models_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid + '_highlevel_models.json')).read()
+        self.test_highlevel_models_json = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid + "_highlevel_models.json")).read()
         self.test_highlevel_models = json.loads(self.test_highlevel_models_json)
 
-        self.test_mbid_two = 'e8afe383-1478-497e-90b1-7885c7f37f6e'
-        self.test_lowlevel_data_json_two = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid_two + '.json')).read()
+        self.test_mbid_two = "e8afe383-1478-497e-90b1-7885c7f37f6e"
+        self.test_lowlevel_data_json_two = open(os.path.join(DB_TEST_DATA_PATH, self.test_mbid_two + ".json")).read()
         self.test_lowlevel_data_two = json.loads(self.test_lowlevel_data_json_two)
     
     def test_add_metrics(self):
@@ -66,11 +67,18 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
 
             self.assertEqual(db.test_data.similarity_metrics_data.expected_similarity_rows, recs)
 
+    def _convert_ll_to_bulk_format(self, lowlevel_data):
+        return {"gfcc": lowlevel_data["lowlevel"]["gfcc"]["mean"],
+                "onset_rate": lowlevel_data["rhythm"]["onset_rate"],
+                "bpm": lowlevel_data["rhythm"]["bpm"],
+                "key": {"key_key": lowlevel_data["tonal"]["key_key"], "key_scale": lowlevel_data["tonal"]["key_scale"]},
+                "mfcc": lowlevel_data["lowlevel"]["mfcc"]["mean"]}
+
     def test_get_batch_data(self):
         # With no submissions, None is returned
         batch_size = 2
         with db.engine.connect() as connection:
-            result = db.similarity.get_batch_data(connection, batch_size)
+            result = db.similarity.get_batch_data(connection, 0, batch_size)
             self.assertEqual(None, result)
 
             db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
@@ -81,10 +89,11 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
             id_2 = db.data.get_lowlevel_id(self.test_mbid_two, 0)
             self.show_highlevel_models()
             
-            # If there is no highlevel data written, it will be None
-            expected_rows = [(id_1, self.test_lowlevel_data, self.test_highlevel_models),
-                             (id_2, self.test_lowlevel_data_two, None)]
-            result = db.similarity.get_batch_data(connection, batch_size)
+            # If there is no highlevel data written, it will be missing from the returned data
+            expected_rows = [(id_1, self._convert_ll_to_bulk_format(self.test_lowlevel_data),
+                              self.test_highlevel_models),
+                             (id_2, self._convert_ll_to_bulk_format(self.test_lowlevel_data_two), None)]
+            result = db.similarity.get_batch_data(connection, id_1 - 1, batch_size)
             rows = []
             for row in result:
                 rows.append((row["id"], row["ll_data"], row["hl_data"]))
@@ -109,11 +118,6 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 1)
         self.assertEqual(2, db.similarity.count_similarity())
 
-    def test_submit_similarity_by_id_none(self):
-        """If id cannot be cast as an integer, a ValueError should be raised."""
-        id = 'test'
-        with self.assertRaises(db.exceptions.BadDataException):
-            db.similarity.submit_similarity_by_id(id)
 
     def test_submit_similarity_by_id_no_hl(self):
         """When called with a list of metrics, similarity vectors are submitted 
@@ -130,8 +134,7 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         db.similarity_stats.compute_stats(1)
         id = db.data.get_lowlevel_id(self.test_mbid, 0)
-        metrics = similarity.utils.init_metrics()
-        db.similarity.submit_similarity_by_id(id, metrics=metrics)
+        db.similarity.submit_similarity_by_id(id)
 
         # High level metrics have empty vectors.
         expected_vectors = ([-809.079956055, 196.693603516, 14.5762844086, 6.08403015137, 0.968960940838, -4.33947467804, -6.33537626266, -1.52541470528, -1.90009725094, -4.04138422012, -9.53146743774, -6.10197162628, -1.44469249249],
@@ -174,8 +177,7 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
         build_sha = "test"
         db.data.write_high_level(self.test_mbid, id, self.test_highlevel_data, build_sha)
 
-        data = (self.test_lowlevel_data, self.test_highlevel_models)
-        db.similarity.submit_similarity_by_id(id, data=data)
+        db.similarity.submit_similarity_by_id(id)
         expected_vectors = [[-809.079956055, 196.693603516, 14.5762844086, 6.08403015137, 0.968960940838, -4.33947467804, -6.33537626266, -1.52541470528, -1.90009725094, -4.04138422012, -9.53146743774, -6.10197162628, -1.44469249249],
                             [-809.079956055, 186.8589233402, 13.1550966787615, 5.21629535103085, 0.789224742318431, -3.3578027846313, -4.65708371473948, -1.06525398070688, -1.26056333770978, -2.54708001920098, -5.70684164012272, -3.4708020240964, -0.780654161887449],
                             [-169.202331543, 164.232177734, -89.7964019775, -10.2318019867, -47.1032066345, -6.18469190598, -33.0790672302, -3.90048241615, -20.4164390564, -8.5227022171, -15.5154972076, -4.24216938019, -5.64954137802],
@@ -223,7 +225,7 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
             """)
             result = connection.execute(query)
             for row in result:
-                db.data.set_model_status(row["model"], row["model_version"], 'show')
+                db.data.set_model_status(row["model"], row["model_version"], "show")
 
     def test_get_metric_dimensionality(self):
         # If no metric exists with the specified name, error is raised.

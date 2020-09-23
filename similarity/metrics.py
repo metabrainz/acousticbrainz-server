@@ -40,9 +40,9 @@ class NormalizedLowLevelMetric(LowLevelMetric):
         # Normalize
         data = np.array(data)[self.indices]
         if np.count_nonzero(np.array(self.stddevs)):
-            return (data - np.array(self.means)) / np.array(self.stddevs)
+            return list((data - np.array(self.means)) / np.array(self.stddevs))
         else:
-            return data
+            return list(data)
 
 
 class WeightedNormalizedLowLevelMetric(NormalizedLowLevelMetric):
@@ -55,7 +55,7 @@ class WeightedNormalizedLowLevelMetric(NormalizedLowLevelMetric):
 
     def transform(self, data):  # add weights
         data = super(WeightedNormalizedLowLevelMetric, self).transform(data)
-        return data * self.weight_vector
+        return list(data * self.weight_vector)
 
 
 class MfccsMetric(NormalizedLowLevelMetric):
@@ -63,7 +63,7 @@ class MfccsMetric(NormalizedLowLevelMetric):
     description = 'MFCCs'
     category = 'timbre'
     path = "data->'lowlevel'->'mfcc'->'mean'"
-    keys = ['lowlevel', 'mfcc', 'mean']
+    keys = ['mfcc']
     indices = range(0, 13)
 
 
@@ -77,7 +77,7 @@ class GfccsMetric(NormalizedLowLevelMetric):
     description = 'GFCCs'
     category = 'timbre'
     path = "data->'lowlevel'->'gfcc'->'mean'"
-    keys = ['lowlevel', 'gfcc', 'mean']
+    keys = ['gfcc']
     indices = range(0, 13)
 
 
@@ -93,7 +93,7 @@ class CircularMetric(LowLevelMetric):
     def transform(self, data):
         """Wrap the value that around circle with overlaps on integers"""
         value = data * 2 * np.pi
-        return np.array([np.cos(value), np.sin(value)])
+        return list(np.array([np.cos(value), np.sin(value)]))
 
 
 KEYS_CIRCLE = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F']
@@ -104,7 +104,7 @@ SCALES_MAP = {'major': 0.0, 'minor': -3.0 / 12}
 class KeyMetric(CircularMetric):
     name = 'key'
     path = "data->'tonal'"
-    keys = ['tonal']
+    keys = ['key']
     category = 'rhythm'
     description = 'Key/Scale'
 
@@ -129,7 +129,7 @@ class BpmMetric(LogCircularMetric):
     description = 'BPM'
     category = 'rhythm'
     path = "data->'rhythm'->'bpm'"
-    keys = ['rhythm', 'bpm']
+    keys = ['bpm']
 
 
 class OnsetRateMetric(LogCircularMetric):
@@ -137,7 +137,7 @@ class OnsetRateMetric(LogCircularMetric):
     description = 'OnsetRate'
     category = 'rhythm'
     path = "data->'rhythm'->'onset_rate'"
-    keys = ['rhythm', 'onset_rate']
+    keys = ['onset_rate']
 
 
 class HighLevelMetric(BaseMetric):

@@ -1,13 +1,13 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 from flask import current_app
 
 import db
-import db.similarity_stats
 from db.data import count_all_lowlevel
-from db.exceptions import NoDataFoundException, BadDataException
+import db.exceptions
 import similarity.metrics
 import similarity.utils
 from utils.list_utils import chunks
+import json
 
 from sqlalchemy import text
 from collections import defaultdict
@@ -18,7 +18,7 @@ PROCESS_BATCH_SIZE = 10000
 def get_all_metrics():
     """Get name, category, and description for each of the metrics
     in the similarity.similarity_metrics table.
-    
+
     Returns:
         metrics (dict): {category: [metric_name, description],
                             ...,
@@ -41,7 +41,7 @@ def get_all_metrics():
 
 def get_similarity_count():
     """Get total number of ids from similarity table.
-    
+
     Returns:
         num_ids (int): number of ids from similarity.similarity
         table.
@@ -60,7 +60,7 @@ def get_similarity_count():
 
 def get_similarity_ids():
     """Gets all ids from similarity table in an ascending list.
-    
+
     Returns: list of all ids from similarity table."""
     with db.engine.connect() as connection:
         query = text("""
@@ -75,7 +75,7 @@ def get_similarity_ids():
 def add_index(index, num_ids, ids, batch_size=None):
     """Incrementally adds all items to an index, then builds
     and saves the index. *Note*: index must already be initialized.
-    
+
     Args:
         indices: an initialized Annoy index.
 
@@ -126,7 +126,7 @@ def get_metric_info(metric):
 
     Args:
         metric (str): The name of a similarity metric.
-    
+
     Returns: metric info as a list in the form:
             [category, metric_name, metric_description]
 
@@ -160,33 +160,41 @@ def add_metrics(batch_size=None):
 
         sim_count = count_similarity()
         current_app.logger.info("Processed {} / {} ({:.3f}%)".format(sim_count,
-                                                            lowlevel_count,
-                                                            float(sim_count) / lowlevel_count * 100))
+                                                                     lowlevel_count,
+                                                                     float(sim_count) / lowlevel_count * 100))
 
+        max_id = get_max_similarity_id()
         while True:
             with connection.begin():
-                result = get_batch_data(connection, batch_size)
+                result = get_batch_data(connection, max_id, batch_size)
                 if not result:
                     break
+                added_rows = 0
+                all_rows = []
                 for row in result:
-                    data = (row["ll_data"], row["hl_data"])
-                    submit_similarity_by_id(row["id"], data=data, metrics=metrics, connection=connection)
+                    data = bulk_transform_data_to_similarity(row, metrics=metrics)
+                    all_rows.append(data)
+                    added_rows += 1
+                    max_id = max(max_id, row["id"])
 
-            sim_count = count_similarity()
+                insert_similarity_bulk(connection, all_rows)
+
+            sim_count += added_rows
             current_app.logger.info("Processed {} / {} ({:.3f}%)".format(sim_count,
-                                                                lowlevel_count,
-                                                                float(sim_count) / lowlevel_count * 100))
+                                                                         lowlevel_count,
+                                                                         float(sim_count) / lowlevel_count * 100))
 
 
-def get_batch_data(connection, batch_size):
+def get_batch_data(connection, max_id, batch_size):
     """Performs a query to collect highlevel models and lowlevel
     data for a batch of `batch_size` recordings.
 
     Args:
         connection: a connection to the database.
+        max_id: get only items with an id greater than this
         batch_size: the number of recordings (rows) that should
         be collected in the query.
-    
+
     Returns:
         If no rows are returned by the query, i.e. there are no
         available submissions, then None is returned.
@@ -194,48 +202,28 @@ def get_batch_data(connection, batch_size):
         Otherwise, the result object of the query is returned.
     """
     batch_query = text("""
-          WITH ll AS (
-        SELECT id
-          FROM lowlevel ll
-         WHERE NOT EXISTS (
-               SELECT id
-               FROM similarity.similarity AS s
-               WHERE s.id = ll.id)
-         LIMIT :batch_size
-        ),
-               hlm AS (
-        SELECT highlevel
-             , COALESCE(jsonb_object_agg(model.model, hlm.data)
-               FILTER (
+    SELECT llj.id
+     , jsonb_build_object('mfcc', llj.data->'lowlevel'->'mfcc'->'mean',
+                          'gfcc', llj.data->'lowlevel'->'gfcc'->'mean',
+                          'bpm', llj.data->'rhythm'->'bpm',
+                          'onset_rate', llj.data->'rhythm'->'onset_rate',
+                          'key', jsonb_build_object('key_key', llj.data#>'{tonal,key_key}', 'key_scale', llj.data#>'{tonal,key_scale}')
+                ) as ll_data
+      , COALESCE(jsonb_object_agg(model.model, hlm.data)
+         FILTER (
                WHERE model.model IS NOT NULL
-               AND hlm.data IS NOT NULL), NULL)::jsonb AS data
-          FROM highlevel_model AS hlm
-          JOIN model
+               AND hlm.data IS NOT NULL), NULL)::jsonb AS hl_data
+          FROM lowlevel_json llj
+          LEFT JOIN highlevel_model AS hlm on hlm.highlevel = llj.id
+          LEFT JOIN model
             ON model.id = hlm.model
-         WHERE highlevel IN (
+         WHERE llj.id IN (
                SELECT id
-               FROM ll)
-      GROUP BY (highlevel)
-        ),
-               llj AS (
-        SELECT id
-             , data
-          FROM lowlevel_json
-         WHERE id IN (
-               SELECT id
-               FROM ll)
-        )
-        SELECT ll.id AS id
-             , llj.data AS ll_data
-             , hlm.data AS hl_data
-          FROM ll
-          JOIN llj
-         USING (id)
-     LEFT JOIN hlm
-            ON hlm.highlevel = ll.id
-    """)
+               FROM lowlevel where id > :max_id order by id limit :batch_size)
+      GROUP BY (llj.id)
+      """)
 
-    result = connection.execute(batch_query, {"batch_size": batch_size})
+    result = connection.execute(batch_query, {"max_id": max_id, "batch_size": batch_size})
     if not result.rowcount:
         return None
     return result
@@ -259,13 +247,36 @@ def insert_similarity(connection, id, vectors, metric_names):
     query = text("""
         INSERT INTO similarity.similarity (
                     id, %(names)s)
-             VALUES ( 
+             VALUES (
                     :id, %(values)s)
         ON CONFLICT (id)
          DO NOTHING
     """ % {"names": ', '.join(metric_names),
            "values": ':' + ', :'.join(metric_names)})
     connection.execute(query, params)
+
+
+def insert_similarity_bulk(connection, data):
+    """Inserts a row of similarity vectors for a given lowlevel.id into
+    the similarity table.
+
+        Args:
+            connection: a connection to the database.
+            data (list): a list of items to add, each item a mapping of
+            {metric names: vectors} for each metric to add
+    """
+    if not data:
+        return
+
+    metric_names = list(data[0].keys())
+    query = text("""
+        INSERT INTO similarity.similarity (
+                    %(names)s)
+             VALUES (
+                    %(values)s)
+    """ % {"names": ', '.join(metric_names),
+           "values": ', '.join([':{}'.format(n) for n in metric_names])})
+    connection.execute(query, data)
 
 
 def count_similarity():
@@ -279,12 +290,23 @@ def count_similarity():
         return result.fetchone()[0]
 
 
+def get_max_similarity_id():
+    # Get the highest id currently in the similarity table
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT coalesce(max(id), 0)
+              FROM similarity.similarity
+        """)
+        result = connection.execute(query)
+        return result.fetchone()[0]
+
+
 def submit_similarity_by_id(id):
     """Computes similarity metrics for a single recording specified
     by lowlevel.id, then inserts the metrics as a new row in the
     similarity table. Data will be collected before submission and
     metrics will be initialized.
-    
+
     Args:
         id (int): lowlevel.id for desired submission.
     """
@@ -294,9 +316,14 @@ def submit_similarity_by_id(id):
         db.similarity_stats.assign_stats(metric)
 
     # Collect high and lowlevel data
-    ll_data = db.data.get_lowlevel_by_id(id)
-    models = db.data.get_highlevel_models(id)
-    data = (ll_data, models)
+    previous_id = id - 1
+    with db.engine.connect() as connection:
+        result = get_batch_data(connection, previous_id, 1)
+        row = result.fetchone()
+    if row:
+        data = (row["ll_data"], row["hl_data"])
+    else:
+        raise db.exceptions.NoDataFoundException("No data found for the given id")
 
     vectors = []
     metric_names = []
@@ -318,34 +345,28 @@ def submit_similarity_by_id(id):
         insert_similarity(connection, id, vectors, metric_names)
 
 
-def bulk_submit_similarity_by_id(id, data, metrics, connection):
-    """Computes similarity metrics for a single recording specified
-    by lowlevel.id, then inserts the metrics as a new row in the
-    similarity table. The bulk case of similarity submission is meant
-    to be used in combination with add_metrics, in which data and metrics
-    are already collected and initialized in bulk.
-    
+def bulk_transform_data_to_similarity(row, metrics):
+    """Converts lowlevel and highlevel data for a batch of recordings
+     and transforms it according to each metric, returning data to be
+     inserted into the similarity table.
+
     Args:
-        id (int): lowlevel.id for desired submission.
-        
-        data (list): Of the form (lowlevel_data, highlevel_models). Defaults
-        to None, in which case the data will be collected before submission.
-        
+        row: a row generated from get_batch_data, including id, ll_data, and hl_data
+
         metrics (list): a list of initialized metric classes, for which similarity
         vectors should be computed and submitted. Default is None, in which
         case base metrics will be initialized.
-
-        connection: a connection to the database can be specified if this
-        submission should be part of an ongoing transaction.
     """
+
     vectors = []
     metric_names = []
+    results = {}
     for metric in metrics:
         try:
-            metric_data = metric.get_feature_data(data[0])
+            metric_data = metric.get_feature_data(row['ll_data'])
         except AttributeError:
             # High level metrics use models for transformation.
-            metric_data = data[1]
+            metric_data = row['hl_data']
 
         try:
             vector = metric.transform(metric_data)
@@ -353,15 +374,17 @@ def bulk_submit_similarity_by_id(id, data, metrics, connection):
             vector = [0] * metric.length()
         vectors.append(vector)
         metric_names.append(metric.name)
+        results[metric.name] = vector
 
-        insert_similarity(connection, id, vectors, metric_names)
+    results['id'] = row['id']
+    return results
 
 
 def submit_similarity_by_mbid(mbid, offset):
     """Computes similarity metrics for a single recording specified
     by (mbid, offset) combination, then inserts the metrics as a new
     row in the similarity table.
-    
+
     Args:
         mbid (str): MBID for which similarity metrics should be computed.
 
@@ -442,10 +465,10 @@ def add_evaluation(user_id, eval_id, result_id, rating, suggestion):
             ON CONFLICT (user_id, eval_id, result_id)
              DO NOTHING
         """)
-        connection.execute(query, {'user_id': user_id, 
-                                   'eval_id': eval_id, 
-                                   'result_id': result_id, 
-                                   'rating': rating, 
+        connection.execute(query, {'user_id': user_id,
+                                   'eval_id': eval_id,
+                                   'result_id': result_id,
+                                   'rating': rating,
                                    'suggestion': suggestion})
 
 
@@ -480,15 +503,15 @@ def submit_eval_results(query_id, result_ids, distances, params):
         insert_query = text("""
             INSERT INTO similarity.eval_results (query_id, similar_ids, distances, params)
                  VALUES (:query_id, :similar_ids, :distances, :params)
-            ON CONFLICT 
+            ON CONFLICT
           ON CONSTRAINT unique_eval_query_constraint
           DO UPDATE SET query_id = similarity.eval_results.query_id
               RETURNING id
         """)
         result = connection.execute(insert_query, {"query_id": query_id,
-                                          "similar_ids": result_ids,
-                                          "distances": distances,
-                                          "params": params_id})
+                                                   "similar_ids": result_ids,
+                                                   "distances": distances,
+                                                   "params": params_id})
         eval_result_id = result.fetchone()[0]
         return eval_result_id
 

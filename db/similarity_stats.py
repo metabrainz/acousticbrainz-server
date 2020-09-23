@@ -9,7 +9,7 @@ import numpy as np
 NORMALIZATION_SAMPLE_SIZE = 10000
 
 """
-Normalized metrics for determining similarity require 
+Normalized metrics for determining similarity require
 vectors to be transformed based on the mean and standard
 deviation of their associated lowlevel feature (currently
 MFCC, GFCC unweighted and weighted).
@@ -20,7 +20,7 @@ added and indices can be built.
 Stats can be computed using the `similarity/manage.py`
 init command.
 
-We use a random sample, defaulting at 10000 items, to 
+We use a random sample, defaulting at 10000 items, to
 approximate these statistics for the entire lowlevel
 table before inserting them in similarity.similarity_stats.
 """

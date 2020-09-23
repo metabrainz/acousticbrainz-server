@@ -17,6 +17,7 @@ def reformat_date(value, fmt="%b %d, %Y"):
 def reformat_datetime(value, fmt="%b %d, %Y, %H:%M %Z"):
     return value.strftime(fmt)
 
+
 def validate_offset(offset):
     """Validate the offset.
 

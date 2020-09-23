@@ -25,6 +25,7 @@ approximate these statistics for the entire lowlevel
 table before inserting them in similarity.similarity_stats.
 """
 
+
 def compute_stats(sample_size, force=False):
     """Compute mean and stddev for each of the features
     required by similarity metrics. These stats are then

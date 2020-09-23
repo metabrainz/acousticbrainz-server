@@ -34,7 +34,8 @@ def get_similar_recordings(metric, mbid):
     :query n: *Optional.* Integer specifying an offset for a document.
         The first submission has offset n=0. If not specified, this
         submission will be used as the default value.
-    **NOTE** This parameter will currently default to angular. We need to decide with evaluation which distance measure is most appropriate.
+    **NOTE** This parameter will currently default to angular.
+    We need to decide with evaluation which distance measure is most appropriate.
     :query distance_type: *Optional.* String determining the distance
         formula that an index will use when computing similarity.
         Default is angular.
@@ -60,7 +61,7 @@ def get_similar_recordings(metric, mbid):
         index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
     except IndexNotFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
-    
+
     try:
         ids, similar_recordings, distances = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
         return jsonify(similar_recordings)
@@ -77,7 +78,8 @@ def _check_index_params(metric):
     distance_type = request.args.get("distance_type")
     if not distance_type or distance_type not in BASE_INDICES[metric]:
         distance_type = "angular"
-        # can we raise an error here that isn't fatal to let the user know that the value is being defaulted when index doesn't exist?
+        # TODO: can we raise an error here that isn't fatal to let the user know that the value is being
+        #  defaulted when index doesn't exist?
 
     n_trees = request.args.get("n_trees")
     if not n_trees or n_trees not in BASE_INDICES[metric][distance_type]:
@@ -125,7 +127,8 @@ def get_many_similar_recordings(metric):
     in the returned data.
 
 
-    **NOTE** This parameter will currently default to angular. We need to decide with evaluation which distance measure is most appropriate.
+    **NOTE** This parameter will currently default to angular.
+    We need to decide with evaluation which distance measure is most appropriate.
     :query distance_type: *Optional.* String determining the distance
         formula that an index will use when computing similarity.
         Default is angular.
@@ -216,7 +219,8 @@ def get_similarity_between(metric):
         Takes the form `mbid[:offset]:mbid[:offset]`. Offsets are optional, and should
         be integers >= 0
 
-    **NOTE** This parameter will currently default to angular. We need to decide with evaluation which distance measure is most appropriate.
+    **NOTE** This parameter will currently default to angular.
+    We need to decide with evaluation which distance measure is most appropriate.
     :query distance_type: *Optional.* String determining the distance
         formula that an index will use when computing similarity.
         Default is angular.

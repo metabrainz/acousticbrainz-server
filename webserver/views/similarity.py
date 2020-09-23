@@ -1,9 +1,8 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import current_user, login_required
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import NotFound
 
-from webserver import forms
 from webserver.utils import validate_offset
 from webserver.decorators import auth_required
 from webserver.views.data import _get_recording_info, _get_youtube_query
@@ -69,7 +68,8 @@ def get_similar_service(mbid, metric):
         # Annoy model currently uses default parameters
         index = AnnoyModel(metric, load_existing=True)
         result_ids, similar_recordings, distances = index.get_nns_by_mbid(mbid, offset, n_similar)
-    except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException, similarity.exceptions.IndexNotFoundException), e:
+    except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException,
+            similarity.exceptions.IndexNotFoundException) as e:
         flash("We're sorry, this index is not currently available for this recording: {}".format(repr(e)))
         return redirect(url_for("similarity.metrics", mbid=mbid, n=offset))
 
@@ -85,7 +85,7 @@ def get_similar_service(mbid, metric):
 
     ret = {"metadata": metadata, "metric": metric, "submitted": submitted}
     return jsonify(ret)
-    
+
 
 @similarity_bp.route("/service/<uuid:mbid>/<string:metric>/evaluate", methods=['POST'])
 @auth_required

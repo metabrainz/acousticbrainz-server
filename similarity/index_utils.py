@@ -32,7 +32,7 @@ def get_all_indices(n_trees=10):
 
 
 def initialize_indices(n_trees="10", distance_type="angular", load_existing=False):
-    """Initializes indices for all base metrics, appending them 
+    """Initializes indices for all base metrics, appending them
     to a list which is returned."""
     indices = []
     for name in similarity.metrics.BASE_METRICS:

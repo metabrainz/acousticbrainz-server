@@ -54,7 +54,7 @@ class SimilarityStatsDatabaseTestCase(AcousticbrainzTestCase):
         sample_size = 0.001
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         with self.assertRaises(db.exceptions.NoDataFoundException):
-            db.similarity_stats.get_random_sample_lowlevel(sample_size, features)      
+            db.similarity_stats.get_random_sample_lowlevel(sample_size, features)
 
     def test_assign_stats(self):
         """If means and stddevs are not both attributes,

@@ -8,7 +8,6 @@ from webserver.testing import AcousticbrainzTestCase
 from webserver.views.api.v1 import similarity
 from webserver.views.api.exceptions import APIBadRequest
 from similarity.exceptions import IndexNotFoundException, ItemNotFoundException
-from similarity.index_model import AnnoyModel
 from webserver.testing import DB_TEST_DATA_PATH
 from db.exceptions import NoDataFoundException
 
@@ -36,7 +35,8 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         self.assertEqual(404, resp.status_code)
 
         annoy_model.assert_not_called()
-        expected_result = {"message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."}
+        expected_result = {"message": "The requested URL was not found on the server. "
+                                      "If you entered the URL manually please check your spelling and try again."}
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
@@ -133,7 +133,8 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
     def test_get_many_similar_recordings(self, annoy_model):
         # Check that similar recordings are returned for many recordings,
         # including two offsets of the same MBID.
-        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;" \
+                 "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
             "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": ["similar_rec1", "similar_rec2"]},
@@ -177,7 +178,8 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
     def test_get_many_similar_recordings_missing_mbid(self, annoy_model):
         # Check that within a set of mbid parameters, the ones absent
         # from the database are ignored.
-        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
+        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;" \
+                     "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
         end = "&n_trees=-1&distance_type=x&n_neighbours=2000"
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
@@ -270,7 +272,8 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         expected_result = {"message": "Does not contain 2 recordings in the request"}
         self.assertEqual(expected_result, resp.json)
 
-        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d;405a5ff4-7ee2-436b-95c1-90ce8a83b359"
+        recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d;" \
+                     "405a5ff4-7ee2-436b-95c1-90ce8a83b359"
         resp = self.client.get("/api/v1/similarity/mfccs/between?recording_ids=" + recordings)
         self.assertEqual(400, resp.status_code)
         expected_result = {"message": "Does not contain 2 recordings in the request"}

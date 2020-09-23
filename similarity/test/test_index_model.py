@@ -93,7 +93,7 @@ class IndexModelTestCase(DatabaseTestCase):
         self.model.index = mock.Mock()
         self.model.index.get_item_vector.return_value = [1, 2, 3]
         get_similarity_by_mbid.return_value = {"id": 1, "mfccs": "data"}
-        
+
         self.model.add_recording_by_mbid(self.test_mbid, 0)
         self.model.index.add_item.assert_not_called()
 
@@ -140,7 +140,7 @@ class IndexModelTestCase(DatabaseTestCase):
         vector = [1, 2, 3]
         with self.assertRaises(similarity.exceptions.CannotAddItemException):
             self.model.add_recording_with_vector(id, vector)
-        
+
         # If item is already submitted, no addition occurs.
         self.model.in_loaded_state = False
         self.model.index = mock.Mock()
@@ -180,8 +180,8 @@ class IndexModelTestCase(DatabaseTestCase):
         expected_items = ([1, 2], [0.4, 0.5])
         self.model.index.get_nns_by_item.return_value = expected_items
 
-        expected_result = ([1, 2], 
-                           [('0dad432b-16cc-4bf0-8961-fd31d124b01b', 0), ('e8afe383-1478-497e-90b1-7885c7f37f6e', 0)], 
+        expected_result = ([1, 2],
+                           [('0dad432b-16cc-4bf0-8961-fd31d124b01b', 0), ('e8afe383-1478-497e-90b1-7885c7f37f6e', 0)],
                            [0.4, 0.5])
         # expected_result = [(1, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), 0.4),
         #                    (2, ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0), 0.5)]
@@ -199,8 +199,8 @@ class IndexModelTestCase(DatabaseTestCase):
         recordings = [(self.test_mbid, 0), (self.test_mbid, 1), (self.test_mbid, 2)]
         returns = [similarity.exceptions.ItemNotFoundException,
                    db.exceptions.NoDataFoundException,
-                   ([1, 2], 
-                    [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0)], 
+                   ([1, 2],
+                    [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0)],
                     [0.4, 0.5])]
         self.model.get_nns_by_mbid = mock.Mock()
         self.model.get_nns_by_mbid.side_effect = returns
@@ -220,8 +220,8 @@ class IndexModelTestCase(DatabaseTestCase):
         num_neighbours = 2
         recordings = [(self.test_mbid, 1), (self.test_mbid_two, 2)]
 
-        returns = [([1, 2], 
-                    [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0)], 
+        returns = [([1, 2],
+                    [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0)],
                     [0.4, 0.5]),
                    ([3, 4],
                     [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 1), ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 3)],
@@ -246,7 +246,7 @@ class IndexModelTestCase(DatabaseTestCase):
                                                ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 3)]}}
         ret = self.model.get_bulk_nns_by_mbid(recordings, num_neighbours)
         self.assertEqual(expected, ret)
-        
+
     def test_get_similarity_between_none(self):
         # If one of the (MBID, offset) tuples is not submitted,
         # error is raised.
@@ -254,7 +254,7 @@ class IndexModelTestCase(DatabaseTestCase):
         rec2 = (self.test_mbid_two, 0)
         with self.assertRaises(db.exceptions.NoDataFoundException):
             self.model.get_similarity_between(rec1, rec2)
-        
+
         # If one of the (MBID, offset) tuples is not indexed,
         # None is returned.
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
@@ -275,7 +275,7 @@ class IndexModelTestCase(DatabaseTestCase):
 
         self.model.index = mock.Mock()
         self.model.index.get_distance.return_value = 2.0
-        
+
         self.assertEqual(2.0, self.model.get_similarity_between(rec1, rec2))
 
 

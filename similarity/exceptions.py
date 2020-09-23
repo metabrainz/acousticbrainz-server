@@ -4,7 +4,7 @@ class SimilarityException(Exception):
 
 
 class IndexNotFoundException(SimilarityException):
-    """Should be used when no index of given parameters 
+    """Should be used when no index of given parameters
     has been created."""
     pass
 

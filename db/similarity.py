@@ -207,7 +207,8 @@ def get_batch_data(connection, max_id, batch_size):
                           'gfcc', llj.data->'lowlevel'->'gfcc'->'mean',
                           'bpm', llj.data->'rhythm'->'bpm',
                           'onset_rate', llj.data->'rhythm'->'onset_rate',
-                          'key', jsonb_build_object('key_key', llj.data#>'{tonal,key_key}', 'key_scale', llj.data#>'{tonal,key_scale}')
+                          'key', jsonb_build_object('key_key', llj.data#>'{tonal,key_key}',
+                                                    'key_scale', llj.data#>'{tonal,key_scale}')
                 ) as ll_data
       , COALESCE(jsonb_object_agg(model.model, hlm.data)
          FILTER (
@@ -437,7 +438,8 @@ def get_similarity_by_mbid(mbid, offset):
         """)
         result = connection.execute(query, {"mbid": mbid, "offset": offset})
         if not result.rowcount:
-            raise db.exceptions.NoDataFoundException("No similarity metrics are computed for the given (MBID, offset) combination.")
+            raise db.exceptions.NoDataFoundException(
+                "No similarity metrics are computed for the given (MBID, offset) combination.")
         return result.fetchone()
 
 
@@ -451,7 +453,7 @@ def get_similarity_row_id(id):
         """)
         result = connection.execute(query, {"id": id})
         if not result.rowcount:
-            raise db.exceptions.NoDataFoundException("No similarity metrics are computed for the given (MBID, offset) combination.")
+            raise db.exceptions.NoDataFoundException("No similarity metrics are computed for the given id.")
         return result.fetchone()
 
 

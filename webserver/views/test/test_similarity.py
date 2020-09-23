@@ -10,7 +10,7 @@ from webserver.testing import AcousticbrainzTestCase
 
 
 class SimilarityViewsTestCase(AcousticbrainzTestCase):
-    
+
     def setUp(self):
         super(SimilarityViewsTestCase, self).setUp()
 
@@ -66,7 +66,7 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
         self.temporary_login(self.test_user_id)
         resp = self.client.get(url_for('similarity.get_similar_service', mbid=mbid, metric=metric))
         self.assertEqual(302, resp.status_code)
-        
+
         # Submitted recording, no Annoy index causes redirects
         self.load_low_level_data(mbid)
         resp = self.client.get(url_for('similarity.get_similar_service', mbid=mbid, metric=metric))
@@ -99,7 +99,7 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
 
         resp = self.client.get(url_for('similarity.get_similar_service', mbid=mbid, metric=metric))
         self.assertEqual(200, resp.status_code)
-    
+
     @mock.patch("db.similarity.add_evaluation")
     def test_add_evaluations(self, add_evaluation):
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
@@ -107,11 +107,11 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
 
         form_data = {"feedback": "accurate", "suggestion": "test"}
         form_data_two = {"feedback": None, "suggestion": "test"}
-        test_data = {"form": {"0": form_data, 
+        test_data = {"form": {"0": form_data,
                               "1": form_data_two},
-                    "metadata": [{"eval_id": 1, "lowlevel_id": 0},
-                                 {"eval_id": 1, "lowlevel_id": 1}]
-        }
+                     "metadata": [{"eval_id": 1, "lowlevel_id": 0},
+                                  {"eval_id": 1, "lowlevel_id": 1}]
+                     }
 
         # No login, 401
         resp = self.client.post(url_for('similarity.add_evaluations', mbid=mbid, metric=metric),
@@ -133,7 +133,7 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
         expected_json = {"success": True}
         self.assertEqual(expected_json, resp.json)
         add_evaluation.assert_has_calls(eval_calls)
-    
+
     @mock.patch("db.similarity.add_evaluation")
     def test_add_evaluations_missing_data(self, add_evaluation):
         # Form data missing, 400 error returned
@@ -143,8 +143,8 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
 
         test_data = {"form": None,
                     "metadata": [{"eval_id": 1, "lowlevel_id": 0},
-                                 {"eval_id": 1, "lowlevel_id": 1}]
-        }
+                                   {"eval_id": 1, "lowlevel_id": 1}]
+                     }
         resp = self.client.post(url_for('similarity.add_evaluations', mbid=mbid, metric=metric),
                                 headers={"Content-Type": "application/json"},
                                 data=json.dumps(test_data))
@@ -159,10 +159,9 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
         # Metadata missing, 400 error returned
         form_data = {"feedback": "accurate", "suggestion": "test"}
         form_data_two = {"feedback": None, "suggestion": "test"}
-        test_data = {"form": {"0": form_data, 
+        test_data = {"form": {"0": form_data,
                               "1": form_data_two},
-                    "metadata": None
-        }
+                     "metadata": None}
         resp = self.client.post(url_for('similarity.add_evaluations', mbid=mbid, metric=metric),
                                 headers={"Content-Type": "application/json"},
                                 data=json.dumps(test_data))
@@ -176,7 +175,7 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
 
 
 class FakeMusicBrainz(object):
-    
+
     @staticmethod
     def get_recording_by_id(mbid):
         return {
@@ -190,8 +189,8 @@ class FakeMusicBrainz(object):
                     }
                 }
             ],
-            'title':'Nascence',
-            'id':  '0dad432b-16cc-4bf0-8961-fd31d124b01b',
+            'title': 'Nascence',
+            'id': '0dad432b-16cc-4bf0-8961-fd31d124b01b',
             'length': '107000',
             'release-list': [
                 {

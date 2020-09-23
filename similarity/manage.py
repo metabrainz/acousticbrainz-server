@@ -21,9 +21,8 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
                                                             Tradeoff: more trees gives more precision, \
                                                             but takes longer to build.")
 @click.option("--force", "-f", default=False, help="Remove existing stats before computing.")
-@click.option("--sample-size", "-s", type=int, default=NORMALIZATION_SAMPLE_SIZE, \
-    help="Override normalization lowlevel data sample size. \
-         Must be >= 1% of lowlevel_json entries.")
+@click.option("--sample-size", "-s", type=int, default=NORMALIZATION_SAMPLE_SIZE,
+              help="Override normalization lowlevel data sample size. Must be >= 1% of lowlevel_json entries.")
 @click.option("--batch-size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Override processing batch size.")
 def init(batch_size, sample_size, force, n_trees, distance_type):
     """Initialization command for the similarity engine.
@@ -51,9 +50,8 @@ def init(batch_size, sample_size, force, n_trees, distance_type):
 
 @cli.command(name="compute-stats")
 @click.option("--force", "-f", default=False, help="Remove existing stats before computing.")
-@click.option("--sample-size", "-s", type=int, default=NORMALIZATION_SAMPLE_SIZE, \
-    help="Override normalization lowlevel data sample size. \
-         Must be >= 1% of lowlevel_json entries.")
+@click.option("--sample-size", "-s", type=int, default=NORMALIZATION_SAMPLE_SIZE,
+              help="Override normalization lowlevel data sample size. Must be >= 1% of lowlevel_json entries.")
 def compute_stats(sample_size, force):
     """Computes the mean and standard deviation for
     lowlevel features that are associated with the
@@ -62,7 +60,7 @@ def compute_stats(sample_size, force):
     Stats are computed using a sample of items from the
     lowlevel_json table, configured using `--sample-size`.
 
-    Adds these statistics to the similarity.similarity_stats 
+    Adds these statistics to the similarity.similarity_stats
     table with the corresponding metric.
 
     A list of normalized metrics:

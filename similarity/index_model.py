@@ -124,20 +124,21 @@ class AnnoyModel(object):
     def add_recording_with_vector(self, id, vector):
         """Add a single recording to the index using its lowlevel.id and
         a precomputed metric vector.
-        
+
         Args:
             id: non-negative integer lowlevel.id for a recording.
-            
+
             vector: metric vector (list) corresponding to the lowlevel.id.
             Dimensionality of the vector must match the dimensionality with which the
             index is initialized
-        
+
         *NOTE*: Annoy will allocate memory for max(n) + 1 items.
         """
         if self.in_loaded_state:
             raise similarity.exceptions.CannotAddItemException("Item cannot be added once index is in load state.")
         if not len(vector) == self.dimensionality:
-            raise similarity.exceptions.CannotAddItemException("Dimensionality of vector provided does not match index dimensionality.")
+            raise similarity.exceptions.CannotAddItemException(
+                "Dimensionality of vector provided does not match index dimensionality.")
 
         self.index.add_item(id, vector)
 
@@ -196,7 +197,7 @@ class AnnoyModel(object):
             should be returned alongside (MBID, offset) of a similar recording.
 
         Returns:
-            if extended_info = True, list of similar recordings 
+            if extended_info = True, list of similar recordings
             contains tuples of the form (lowlevel.id, (MBID, offset), distance)
 
                 {"mbid1": {"offset1": [similar_rec_1, ..., similar_rec_n],

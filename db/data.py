@@ -938,21 +938,36 @@ def get_unprocessed_highlevel_documents_for_model(highlevel_model, within=None):
         return docs
 
 
-def get_unprocessed_highlevel_documents():
-    """Fetch up to 100 low-level documents which have no associated high level data."""
+def get_unprocessed_highlevel_documents(limit=100, id_from=0):
+    """Fetch up to 100 low-level documents which have no associated high level data.
+
+    Arguments:
+        limit: Retrieve up to this many low-level documents
+        id_from: Select only low-level documents whose id is greater than this value
+
+    Returns:
+        a list of tuples (rowid, mbid, lowlevel-json as text)
+
+    """
     with db.engine.connect() as connection:
         query = text(
-            """SELECT ll.gid::text
-                , llj.data::text
-                , ll.id
-             FROM lowlevel AS ll
-             JOIN lowlevel_json AS llj
-               ON llj.id = ll.id
-        LEFT JOIN highlevel AS hl
-               ON ll.id = hl.id
-            WHERE hl.mbid IS NULL
-            LIMIT 100""")
-        result = connection.execute(query)
+            """SELECT ll.id
+                    , ll.gid::text
+                    , llj.data::text
+                 FROM lowlevel AS ll
+                 JOIN lowlevel_json AS llj
+                   ON llj.id = ll.id
+                WHERE ll.id IN (
+                        SELECT ll.id
+                          FROM lowlevel AS ll
+                     LEFT JOIN highlevel AS hl
+                            ON ll.id = hl.id
+                         WHERE hl.mbid IS NULL
+                           AND ll.id > :id_from
+                      ORDER BY ll.id
+                         LIMIT :limit
+                )""")
+        result = connection.execute(query, {"id_from": id_from, "limit": limit})
         docs = result.fetchall()
         return docs
 

@@ -67,13 +67,11 @@ def filter(snapshot_id, options):
     snapshot = db.dataset.get_snapshot(snapshot_id)
     datadict = dataset_to_dict(snapshot["data"])
     if options.get("filter_type") == "artist":
-        print ("Filtering by artist")
         train, test = split_groundtruth(datadict)
     else:
         train = datadict
         test = {}
     if options.get("normalize"):
-        print("Normalising")
         train, remaining = normalise_datadict(train, 450)
         test.update(remaining)
 

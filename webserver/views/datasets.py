@@ -18,6 +18,9 @@ import six
 import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
+# Below values are defined in 'classification_project_template.yaml' file.
+C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
+gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
 
@@ -217,7 +220,7 @@ def evaluate(dataset_id):
         flash.warn("Can't add private datasets into evaluation queue.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
     if db.dataset_eval.job_exists(dataset_id):
-        flash.warn("Evaluation job for this dataset has been already created.")
+        flash.warn("An evaluation job for this dataset has been already created.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
 
     # Validate dataset structure before choosing evaluation preferences
@@ -233,10 +236,22 @@ def evaluate(dataset_id):
         try:
             if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
                 form.filter_type.data = None
+
+            c_values = None
+            gamma_values = None
+            preprocessing_values = None
+            if form.svm_filtering.data:
+                c_values = [int(i) for i in form.c_value.data.split(",")]
+                gamma_values = [int(i) for i in form.gamma_value.data.split(",")]
+                preprocessing_values = form.preprocessing_values.data
+
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
+                c_values=c_values,
+                gamma_values=gamma_values,
+                preprocessing_values=preprocessing_values,
                 filter_type=form.filter_type.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])

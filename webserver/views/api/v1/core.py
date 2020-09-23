@@ -44,6 +44,7 @@ AVAILABLE_FEATURES = {
     "tonal.chords_scale": ["llj.data->'tonal'->'chords_scale'", None],
     "tonal.key_key": ["llj.data->'tonal'->'key_key'", None],
     "tonal.key_scale": ["llj.data->'tonal'->'key_scale'", None],
+    "tonal.key_strength": ["llj.data->'tonal'->'key_strength'", None],
     "tonal.tuning_frequency": ["llj.data->'tonal'->'tuning_frequency'", None],
     "tonal.tuning_equal_tempered_deviation": ["llj.data->'tonal'->'tuning_equal_tempered_deviation'", None]
 }

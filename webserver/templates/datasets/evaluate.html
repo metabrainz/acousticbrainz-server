@@ -56,6 +56,12 @@
                 </div>
             </div>
             <div class="collapse {% if form.svm_filtering.data %}in{% endif %}" id="collapseSvmOptions">
+                {% if config.get('FEATURE_EVAL_TOOL_SELECTION') %}
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">{{ form.training_tool.label.text }}</label>
+                        <div class="col-sm-4">{{ form.training_tool(class="form-control", required="required") }}</div>
+                    </div>
+                {% endif %}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">{{ form.c_value.label.text }}</label>
                     <div class="col-sm-4">
@@ -85,16 +91,8 @@
                     <div class="col-sm-4">{{ form.preprocessing_values(required="required") }}</div>
                 </div>
             </div>
+            </fieldset>
         {% endif %}
-        {% if config.get('FEATURE_EVAL_TOOL_SELECTION') %}
-                <fieldset>
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">{{ form.evaluation_tool_value.label.text }}</label>
-                        <div class="col-sm-4">{{ form.evaluation_tool_value(class="form-control", required="required") }}</div>
-                    </div>
-                </fieldset>
-            {% endif %}
-        </fieldset>
         <div class="form-group">
             <div class="col-sm-offset-2 col-sm-4">
                 <button type="submit" class="btn btn-primary">Evaluate</button>

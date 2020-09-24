@@ -62,7 +62,7 @@ class DatasetEvaluationForm(FlaskForm):
                                  render_kw={"data-toggle": "collapse",
                                             "data-target": "#collapseSvmOptions"})
 
-    evaluation_tool_value = SelectField("What tool do you want to use (sklearn/gaia)", choices=[
+    training_tool = SelectField("Model training tool", choices=[
         (DATASET_TOOL_EVALUATION_GAIA, "gaia"),
         (DATASET_TOOL_EVALUATION_SKLEARN, "sklearn")],
                                   default=DATASET_TOOL_EVALUATION_GAIA)

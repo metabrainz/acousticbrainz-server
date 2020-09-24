@@ -26,4 +26,6 @@ CREATE UNIQUE INDEX lower_musicbrainz_id_ndx_user ON "user" (lower(musicbrainz_i
 
 CREATE INDEX collected_ndx_statistics ON statistics (collected);
 
+CREATE INDEX training_tool_dataset_eval_jobs ON dataset_eval_jobs((options->>'training_tool'));
+
 COMMIT;

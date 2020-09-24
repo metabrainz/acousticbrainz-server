@@ -56,8 +56,7 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
     utils.path.create_path(eval_location)
     temp_dir = tempfile.mkdtemp()
 
-    evaluation_tool_selection = eval_job["options"].get("evaluation_tool_value", "gaia")
-    logging.info("TOOL: {}".format(evaluation_tool_selection))
+    training_tool = eval_job["options"].get("training_tool", "gaia")
 
     try:
         snapshot = db.dataset.get_snapshot(eval_job["snapshot_id"])
@@ -65,13 +64,13 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         train, test = artistfilter.filter(eval_job["snapshot_id"], eval_job["options"])
         db.dataset_eval.add_sets_to_job(eval_job["id"], train, test)
 
-        if evaluation_tool_selection == "gaia":
+        if training_tool == "gaia":
             logging.info("Generating filelist.yaml and copying low-level data for evaluation...")
             filelist_path = os.path.join(eval_location, "filelist.yaml")
             filelist = dump_lowlevel_data(train.keys(), temp_dir)
             with open(filelist_path, "w") as f:
                 yaml.dump(filelist, f)
-        elif evaluation_tool_selection == "sklearn":
+        elif training_tool == "sklearn":
             dump_lowlevel_data_sklearn(train.keys(), temp_dir)
 
         logging.info("Generating groundtruth.yaml...")
@@ -80,10 +79,10 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             # yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f, Dumper=yaml.SafeDumper)
 
-        if evaluation_tool_selection == "gaia":
+        if training_tool == "gaia":
             logging.info("Training GAIA model...")
             evaluate_gaia(eval_job["options"], eval_location, groundtruth_path, filelist_path, storage_dir, eval_job)
-        elif evaluation_tool_selection == "sklearn":
+        elif training_tool == "sklearn":
             logging.info("Training SKLEARN model...")
             evaluate_sklearn(options=eval_job["options"],
                              eval_location=eval_location,

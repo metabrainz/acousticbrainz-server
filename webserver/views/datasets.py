@@ -253,7 +253,7 @@ def evaluate(dataset_id):
                 gamma_values=gamma_values,
                 preprocessing_values=preprocessing_values,
                 filter_type=form.filter_type.data,
-                evaluation_tool_value=form.evaluation_tool_value.data
+                training_tool=form.training_tool.data
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException as e:

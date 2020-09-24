@@ -12,6 +12,7 @@ module.exports = function (env) {
         entry: {
             common: ['./scripts/common.js'],
             datasets: ['./scripts/datasets.js'],
+            similarity: ['./scripts/similarity.js'],
             global: ['./scripts/global.js'],
             homepage: ['./scripts/homepage.js'],
             profile: ['./scripts/profile.js'],

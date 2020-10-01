@@ -71,7 +71,7 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             with open(filelist_path, "w") as f:
                 yaml.dump(filelist, f)
         elif training_tool == "sklearn":
-            dump_lowlevel_data_sklearn(train.keys(), temp_dir)
+            dump_lowlevel_data_sklearn(train.keys(), dataset_dir)
 
         logging.info("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(eval_location, "groundtruth.yaml")
@@ -221,6 +221,7 @@ def dump_lowlevel_data_sklearn(recordings, location):
         with open(filelist[recording], 'w') as outfile:
             json.dump(lowlevel_data_cleaning(db.data.load_low_level(recording)), outfile)
     logging.info("JSON data stored successfully.")
+
 
 def lowlevel_data_cleaning(data):
     """Prepares dictionary with low-level data about recording for processing.

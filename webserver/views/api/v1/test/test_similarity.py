@@ -282,6 +282,59 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         expected_result = {"message": "Does not contain 2 recordings in the request"}
         self.assertEqual(expected_result, resp.json)
 
+    def test_limit_recordings_by_threshold(self):
+        recordings = [
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.0},
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 1, 'distance': 0.5},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.6},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 1.0}
+        ]
+
+        self.assertEqual(len(similarity._limit_recordings_by_threshold(recordings, None)), 4)
+        self.assertEqual(len(similarity._limit_recordings_by_threshold(recordings, 1)), 4)
+        self.assertEqual(len(similarity._limit_recordings_by_threshold(recordings, 0.5)), 2)
+        self.assertEqual(len(similarity._limit_recordings_by_threshold(recordings, 0)), 1)
+
+    def test_sort_and_remove_duplicate_submissions(self):
+        recordings = [
+            # Same mbid, same distance. First offset will be returned
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.1},
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 1, 'distance': 0.1},
+            # Same mbid, but the distances are different, both will be kept
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.6},
+            # A set of mbids with the same distance interspersed with another mbid.
+            # This will sort by mbid, then dedup so it will add 20f6... first and then
+            # leave one of 405a...
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 0.7},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 1, 'distance': 0.7},
+            {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 2, 'distance': 0.7},
+        ]
+
+        filtered = similarity._sort_and_remove_duplicate_submissions(recordings, True)
+        expected = [
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.1},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.6},
+            {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 0.7},
+        ]
+        self.assertEqual(filtered, expected)
+
+        only_sorted = similarity._sort_and_remove_duplicate_submissions(recordings, False)
+        expected = [
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.1},
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 1, 'distance': 0.1},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.6},
+            {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 0.7},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 1, 'distance': 0.7},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 2, 'distance': 0.7},
+        ]
+        self.assertEqual(only_sorted, expected)
+
 
 class SimilarityValidationTest(AcousticbrainzTestCase):
 
@@ -294,35 +347,49 @@ class SimilarityValidationTest(AcousticbrainzTestCase):
 
     def test_check_index_params_neighbours(self):
         with self.app.test_request_context(query_string={'n_neighbours': '-4'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(n_neighbours, 1)
         with self.app.test_request_context(query_string={'n_neighbours': 'x'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(n_neighbours, 200)
         with self.app.test_request_context(query_string={'n_neighbours': '1400'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(n_neighbours, 1000)
         with self.app.test_request_context(query_string={'n_neighbours': '0'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(n_neighbours, 1)
 
     def test_check_index_params_threshold(self):
         with self.app.test_request_context(query_string={'threshold': '-4'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(threshold, 0)
 
         with self.app.test_request_context(query_string={'threshold': '-4'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(threshold, 0)
 
         with self.app.test_request_context(query_string={'threshold': '0.3'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(threshold, 0.3)
 
         with self.app.test_request_context(query_string={'threshold': '2'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertEqual(threshold, 1)
 
         with self.app.test_request_context(query_string={'threshold': 'x'}):
-            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
             self.assertIsNone(threshold)
+
+    def test_check_index_params_remove_dups(self):
+        with self.app.test_request_context(query_string={'remove_dups': 'true'}):
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
+            self.assertTrue(remove_dups)
+        with self.app.test_request_context(query_string={}):
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
+            self.assertFalse(remove_dups)
+        with self.app.test_request_context(query_string={'remove_dups': 'x'}):
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
+            self.assertFalse(remove_dups)
+        with self.app.test_request_context(query_string={'remove_dups': ''}):
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
+            self.assertFalse(remove_dups)

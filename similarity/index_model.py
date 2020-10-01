@@ -193,16 +193,17 @@ class AnnoyModel(object):
             for each recording specified.
 
         Returns:
-            a list of (MBID, offset) tuples:
+            a dictionary of the mbids and offsets given in the recordings parameter.
+            Each item is a list of dictionaries, containing the keys recording_mbid, offset, and distance:
 
-                {"mbid1": {"offset1": [(MBID, offset), ..., (MBID, offset)],
+                {"mbid1": {"offset1": [{"recording_mbid": MBID, "offset": offset, "distance": distance}, ...],
                            ...,
-                           "offsetn": [(MBID, offset), ..., (MBID, offset)]
+                           "offsetn": [{"recording_mbid": MBID, "offset": offset, "distance": distance}, ...]
                           },
                  ...,
-                 "mbidn": {"offset1": [(MBID, offset), ..., (MBID, offset)],
+                 "mbidn": {"offset1": [{"recording_mbid": MBID, "offset": offset, "distance": distance}, ...],
                            ...,
-                           "offsetn": [(MBID, offset), ..., (MBID, offset)]
+                           "offsetn": [{"recording_mbid": MBID, "offset": offset, "distance": distance}, ...]
                           }
                 }
         """

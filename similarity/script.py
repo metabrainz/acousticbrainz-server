@@ -30,8 +30,8 @@ def probe_annoy():
         recordings = index.get_nns_by_mbid(mbids[0], 0, 1000)
 
         ret = []
-        for mbid, offset in recordings:
-            ret.append(mbid)
+        for recording in recordings:
+            ret.append(recording['recording_mbid'])
 
         click.echo(ret)
         return ret

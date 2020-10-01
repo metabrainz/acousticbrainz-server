@@ -558,7 +558,7 @@ class DataDBTestCase(AcousticbrainzTestCase):
     def test_get_lowlevel_metric_feature(self):
         # If path and id exist, returns value of path in lowlevel_json.data
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
+        id = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
         path = "data->'lowlevel'->'mfcc'->'mean'"
 
         expected_data = [
@@ -593,14 +593,14 @@ class DataDBTestCase(AcousticbrainzTestCase):
 
         # If data path provided does not exist, return is None
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
+        id = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
         path = "data->'lowlevel'->'mfcc'->'meen'"
         self.assertEqual(expected_data, db.data.get_lowlevel_metric_feature(id, path))
 
     def test_get_highlevel_models(self):
         # Check that if highlevel data exists for id, highlevel models are returned.
         db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        ll_id1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+        ll_id1 = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
 
         # Add all models required for similarity
         for name, version, status in similarity.metrics.BASE_MODELS:
@@ -634,36 +634,42 @@ class DataDBTestCase(AcousticbrainzTestCase):
         id = 1
         self.assertEqual(expected, db.data.get_lowlevel_by_id(id))
 
-    def test_get_lowlevel_id(self):
-        # Check that if an (MBID, offset) combination doesn't exist,
-        # NoDataFoundException is raised
-        with self.assertRaises(db.exceptions.NoDataFoundException):
-            db.data.get_lowlevel_id(self.test_mbid, 0)
+    def test_get_ids_by_mbids(self):
+        # if an (MBID, offset) combination doesn't exist, return None
+
+        ids = db.data.get_ids_by_mbids([(self.test_mbid, 0)])
+        self.assertEqual(len(ids), 1)
+        self.assertIsNone(ids[0])
 
         # Result is the same with uppercase and lowercase MBID.
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        self.assertEqual(db.data.get_lowlevel_id(self.test_mbid, 0), db.data.get_lowlevel_id(self.test_mbid.upper(), 0))
+        self.assertEqual(db.data.get_ids_by_mbids([(self.test_mbid, 0)]),
+                         db.data.get_ids_by_mbids([(self.test_mbid.upper(), 0)]))
 
     def test_get_mbids_by_ids(self):
         # Check that (MBID, offset) combinations returned match ids
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id_1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+        id_1 = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
         db.data.submit_low_level_data(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
-        id_2 = db.data.get_lowlevel_id(self.test_mbid_two, 0)
+        id_2 = db.data.get_ids_by_mbids([(self.test_mbid_two, 0)])[0]
 
         second_data = copy.deepcopy(self.test_lowlevel_data)
         second_data["metadata"]["tags"]["album"] = ["Another album"]
         db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
-        id_3 = db.data.get_lowlevel_id(self.test_mbid, 1)
+        id_3 = db.data.get_ids_by_mbids([(self.test_mbid, 1)])[0]
 
-        ids = [id_1, id_2, id_3]
-        expected_result = [(self.test_mbid, 0), (self.test_mbid_two, 0), (self.test_mbid, 1)]
+        ids = [id_1, id_3, id_2]
+        expected_result = [(self.test_mbid, 0), (self.test_mbid, 1), (self.test_mbid_two, 0)]
         self.assertEqual(expected_result, db.data.get_mbids_by_ids(ids))
 
     def test_get_mbids_by_ids_none(self):
-        # If none of the ids exist, empty list is returned
-        ids = [7, 8, 9]
-        expected_result = []
+        # If some ids don't exist, return placeholders
+
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        id_1 = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
+
+        ids = [7, id_1, 9]
+        expected_result = [(None, None), (self.test_mbid, 0), (None, None)]
         self.assertEqual(expected_result, db.data.get_mbids_by_ids(ids))
 
     def test_count_all_lowlevel(self):
@@ -875,14 +881,6 @@ class DataDBTestCase(AcousticbrainzTestCase):
         second_data["metadata"]["tags"]["album"] = ["Another album"]
         db.data.submit_low_level_data(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         self.assertEqual(2, db.data.count_lowlevel(self.test_mbid))
-
-    def test_check_for_submission(self):
-        # If submission does not exist, returns False
-        self.assertEqual(db.data.check_for_submission(10), False)
-        # If submission does exist, returns True
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
-        self.assertEqual(db.data.check_for_submission(id), True)
 
     def test_add_get_model(self):
         self.assertIsNone(db.data._get_model_id("modelname", "v1"))

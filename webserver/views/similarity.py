@@ -21,17 +21,17 @@ def metrics(mbid):
     metrics_map = db.similarity.get_all_metrics()
     row_width = 12 / len(metrics_map)
 
-    try:
-        id = db.data.get_lowlevel_id(mbid, offset)
-        ref_metadata = _get_extended_info(mbid, offset, id)
-        return render_template(
-            'similarity/metrics.html',
-            ref_metadata=ref_metadata,
-            metrics=metrics_map,
-            col_width=row_width
-        )
-    except db.exceptions.NoDataFoundException:
+    id = db.data.get_ids_by_mbids([(mbid, offset)])[0]
+    if id is None:
         raise NotFound
+
+    ref_metadata = _get_extended_info(mbid, offset, id)
+    return render_template(
+        'similarity/metrics.html',
+        ref_metadata=ref_metadata,
+        metrics=metrics_map,
+        col_width=row_width
+    )
 
 
 @similarity_bp.route("/<uuid:mbid>/<string:metric>")
@@ -41,7 +41,9 @@ def get_similar(mbid, metric):
 
     try:
         category, metric, description = db.similarity.get_metric_info(metric)
-        query_id = db.data.get_lowlevel_id(mbid, offset)
+        query_id = db.data.get_ids_by_mbids([(mbid, offset)])[0]
+        if query_id is None:
+            raise db.exceptions.NoDataFoundException()
         ref_metadata = _get_extended_info(mbid, offset, query_id)
         return render_template(
             "similarity/eval.html",
@@ -63,10 +65,13 @@ def get_similar_service(mbid, metric):
     offset = validate_offset(request.args.get("n"))
     n_similar = 10
     try:
-        query_id = db.data.get_lowlevel_id(mbid, offset)
+        query_id = db.data.get_ids_by_mbids([(mbid, offset)])[0]
+        if query_id is None:
+            raise db.exceptions.NoDataFoundException()
         category, metric, description = db.similarity.get_metric_info(metric)
         # Annoy model currently uses default parameters
         index = AnnoyModel(metric, load_existing=True)
+        # TODO: We no longer return ids in this endpoint
         result_ids, similar_recordings, distances = index.get_nns_by_mbid(mbid, offset, n_similar)
     except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException,
             similarity.exceptions.IndexNotFoundException) as e:

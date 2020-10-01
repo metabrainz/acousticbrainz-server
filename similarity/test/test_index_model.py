@@ -230,14 +230,6 @@ class IndexModelTestCase(DatabaseTestCase):
         self.model.get_nns_by_mbid = mock.Mock()
         self.model.get_nns_by_mbid.side_effect = returns
 
-        # extended_info is specified as True
-        expected = {self.test_mbid: {'1': [(1, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0), 0.4),
-                                           (2, ("e8afe383-1478-497e-90b1-7885c7f37f6e", 0), 0.5)]},
-                    self.test_mbid_two: {'2': [(3, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 1), 0.1),
-                                               (4, ("0dad432b-16cc-4bf0-8961-fd31d124b01b", 3), 0.2)]}}
-        ret = self.model.get_bulk_nns_by_mbid(recordings, num_neighbours, extended_info=True)
-        self.assertEqual(expected, ret)
-
         # extended_info is not specified, defaults as False
         self.model.get_nns_by_mbid.side_effect = returns
         expected = {self.test_mbid: {'1': [("0dad432b-16cc-4bf0-8961-fd31d124b01b", 0),

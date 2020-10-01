@@ -50,12 +50,6 @@ def remove_index(metric, n_trees=10, distance_type="angular"):
         os.remove(full_path)
 
 
-def get_similar_recordings(metric, mbid, offset, distance_type="angular", n_trees=10, n_neighbours=200):
-    # Initializes index with given params, and calls for similar recordings.
-    index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
-    similar_recordings = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
-
-
 def add_empty_rows(index, ids):
     """Annoy index will allocate space for max(id) + 1 items.
     Since there are some gaps with empty rows in the db, we

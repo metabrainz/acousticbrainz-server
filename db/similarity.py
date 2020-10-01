@@ -392,7 +392,7 @@ def submit_similarity_by_mbid(mbid, offset):
         offset (int, non-negative): submission offset indicating the
         submission for the MBID whose metrics are being submitted.
     """
-    id = db.data.get_lowlevel_id(mbid, offset)
+    id = db.data.get_ids_by_mbids([(mbid, offset)])[0]
     submit_similarity_by_id(id)
 
 

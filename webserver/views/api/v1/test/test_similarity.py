@@ -1,6 +1,5 @@
 import os
 import json
-import unittest
 import mock
 import uuid
 
@@ -76,7 +75,7 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         offset = 0
         distance_type = "angular"
         n_trees = 10
-        n_neighbours = 200
+        n_neighbours = 1000
         metric = "mfccs"
         annoy_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
         annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
@@ -86,6 +85,7 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         self.assertEqual(200, resp.status_code)
 
         annoy_model.assert_called_with(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
+        n_neighbours = 200
         annoy_mock.get_nns_by_mbid.assert_called_with(self.uuid, offset, n_neighbours)
 
     @mock.patch("webserver.views.api.v1.similarity.AnnoyModel")
@@ -180,7 +180,6 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         # from the database are ignored.
         recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;" \
                      "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
-        end = "&n_trees=-1&distance_type=x&n_neighbours=2000"
         expected_result = {
             "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
             "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": ["similar_rec1", "similar_rec2"]}
@@ -189,7 +188,11 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         annoy_mock.get_bulk_nns_by_mbid.return_value = expected_result
         annoy_model.return_value = annoy_mock
 
-        resp = self.client.get("/api/v1/similarity/mfccs?recording_ids=" + recordings + end)
+        query_string = {"recording_ids": recordings,
+                        "n_trees": "-1",
+                        "distance_type": "x",
+                        "n_neighbours": "2000"}
+        resp = self.client.get("/api/v1/similarity/mfccs", query_string=query_string)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(expected_result, resp.json)
 
@@ -199,7 +202,7 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         recordings = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
                       ("7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 3),
                       ("405a5ff4-7ee2-436b-95c1-90ce8a83b359", 2)]
-        annoy_mock.get_bulk_nns_by_mbid.assert_called_with(recordings, 200)
+        annoy_mock.get_bulk_nns_by_mbid.assert_called_with(recordings, 1000)
 
     def test_get_many_similar_recordings_more_than_200(self):
         # Check that a request for over 200 recordings raises an error.
@@ -280,7 +283,7 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         self.assertEqual(expected_result, resp.json)
 
 
-class SimilarityValidationTest(unittest.TestCase):
+class SimilarityValidationTest(AcousticbrainzTestCase):
 
     def test_check_index_params(self):
         # If metric does not exist, APIBadRequest is raised.
@@ -288,3 +291,38 @@ class SimilarityValidationTest(unittest.TestCase):
         with self.assertRaises(APIBadRequest) as ex:
             similarity._check_index_params(metric)
         self.assertEqual(str(ex.exception), "An index with the specified metric does not exist.")
+
+    def test_check_index_params_neighbours(self):
+        with self.app.test_request_context(query_string={'n_neighbours': '-4'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(n_neighbours, 1)
+        with self.app.test_request_context(query_string={'n_neighbours': 'x'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(n_neighbours, 200)
+        with self.app.test_request_context(query_string={'n_neighbours': '1400'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(n_neighbours, 1000)
+        with self.app.test_request_context(query_string={'n_neighbours': '0'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(n_neighbours, 1)
+
+    def test_check_index_params_threshold(self):
+        with self.app.test_request_context(query_string={'threshold': '-4'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(threshold, 0)
+
+        with self.app.test_request_context(query_string={'threshold': '-4'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(threshold, 0)
+
+        with self.app.test_request_context(query_string={'threshold': '0.3'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(threshold, 0.3)
+
+        with self.app.test_request_context(query_string={'threshold': '2'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertEqual(threshold, 1)
+
+        with self.app.test_request_context(query_string={'threshold': 'x'}):
+            metric, distance_type, n_trees, n_neighbours, threshold = similarity._check_index_params('mfccs')
+            self.assertIsNone(threshold)

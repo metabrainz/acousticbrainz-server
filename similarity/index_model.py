@@ -8,7 +8,6 @@ import db.exceptions
 from annoy import AnnoyIndex
 from collections import defaultdict
 
-
 class AnnoyModel(object):
     def __init__(self, metric_name, n_trees=10, distance_type='angular', load_existing=False):
         """
@@ -178,10 +177,10 @@ class AnnoyModel(object):
     def get_nns_by_mbid(self, mbid, offset, num_neighbours):
         # Find corresponding lowlevel.id to (mbid, offset) combination,
         # then call get_nns_by_id
-        id = db.data.get_lowlevel_id(mbid, offset)
-        return self.get_nns_by_id(id, num_neighbours)
+        lookup = self.get_bulk_nns_by_mbid([(mbid, offset)], num_neighbours)
+        return lookup[mbid][str(offset)]
 
-    def get_bulk_nns_by_mbid(self, recordings, num_neighbours, extended_info=False):
+    def get_bulk_nns_by_mbid(self, recordings, num_neighbours):
         """Get most similar recordings for each (MBID, offset) tuple provided.
         Similar recordings list returned is ordered with the most similar at
         index 0.
@@ -190,28 +189,11 @@ class AnnoyModel(object):
             recordings: a list of tuples of form (MBID, offset), for which
             similar recordings will be found
 
-            num_neighbours: an integer, the number of similar recordings desired
+            num_neighbours (int): the number of similar recordings desired
             for each recording specified.
 
-            extended_info: boolean, whether or not lowlevel.id and distance
-            should be returned alongside (MBID, offset) of a similar recording.
-
         Returns:
-            if extended_info = True, list of similar recordings
-            contains tuples of the form (lowlevel.id, (MBID, offset), distance)
-
-                {"mbid1": {"offset1": [similar_rec_1, ..., similar_rec_n],
-                           ...,
-                           "offsetn": [similar_rec_1, ..., similar_rec_n]
-                          },
-                 ...,
-                 "mbidn": {"offset1": [similar_rec_1, ..., similar_rec_n],
-                           ...,
-                           "offsetn": [similar_rec_1, ..., similar_rec_n]
-                          }
-                }
-
-            if extended_info = False, a list of (MBID, offset) tuples:
+            a list of (MBID, offset) tuples:
 
                 {"mbid1": {"offset1": [(MBID, offset), ..., (MBID, offset)],
                            ...,
@@ -225,13 +207,17 @@ class AnnoyModel(object):
                 }
         """
         recordings_info = defaultdict(dict)
-        for mbid, offset in recordings:
+
+        ids = db.data.get_ids_by_mbids(recordings)
+        for recording_id, (mbid, offset) in zip(ids, recordings):
             try:
-                ids, similar_recordings, distances = self.get_nns_by_mbid(mbid, offset, num_neighbours)
-                if extended_info:
-                    recordings_info[mbid][str(offset)] = list(zip(ids, similar_recordings, distances))
-                else:
-                    recordings_info[mbid][str(offset)] = similar_recordings
+                ids, similar_recordings, distances = self.get_nns_by_id(recording_id, num_neighbours)
+                data = []
+                for recording, distance in zip(similar_recordings, distances):
+                    data.append({'recording_mbid': recording[0], 
+                                 'offset': recording[1], 
+                                 'distance': distance})
+                recordings_info[mbid][str(offset)] = data
             except (similarity.exceptions.ItemNotFoundException, db.exceptions.NoDataFoundException):
                 continue
 
@@ -249,8 +235,9 @@ class AnnoyModel(object):
             If an IndexError occurs (one or more of ids is not indexed)
             then None is returned.
         """
-        id_1 = db.data.get_lowlevel_id(rec_one[0], rec_one[1])
-        id_2 = db.data.get_lowlevel_id(rec_two[0], rec_two[1])
+        id_1, id_2 = db.data.get_ids_by_mbids([rec_one, rec_two])
+        if id_1 is None or id_2 is None:
+            return None
         try:
             return self.index.get_distance(id_1, id_2)
         except IndexError:

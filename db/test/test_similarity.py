@@ -41,11 +41,11 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
 
         # Check that with submissions, the correct values are inserted
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        id_1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+        id_1 = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
         build_sha = "test"
         db.data.write_high_level(self.test_mbid, id_1, self.test_highlevel_data, build_sha)
         db.data.submit_low_level_data(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
-        id_2 = db.data.get_lowlevel_id(self.test_mbid_two, 0)
+        id_2 = db.data.get_ids_by_mbids([(self.test_mbid_two, 0)])[0]
         self.show_highlevel_models()
 
         db.similarity_stats.compute_stats(sample_size)
@@ -82,11 +82,11 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
             self.assertEqual(None, result)
 
             db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-            id_1 = db.data.get_lowlevel_id(self.test_mbid, 0)
+            id_1 = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
             build_sha = "test"
             db.data.write_high_level(self.test_mbid, id_1, self.test_highlevel_data, build_sha)
             db.data.submit_low_level_data(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
-            id_2 = db.data.get_lowlevel_id(self.test_mbid_two, 0)
+            id_2 = db.data.get_ids_by_mbids([(self.test_mbid_two, 0)])[0]
             self.show_highlevel_models()
 
             # If there is no highlevel data written, it will be missing from the returned data
@@ -132,7 +132,7 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
         # Submitted lowlevel, but not highlevel.
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         db.similarity_stats.compute_stats(1)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
+        id = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
         db.similarity.submit_similarity_by_id(id)
 
         # High level metrics have empty vectors.
@@ -180,7 +180,7 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
         # Submit low and highlevel data.
         db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
         db.similarity_stats.compute_stats(1)
-        id = db.data.get_lowlevel_id(self.test_mbid, 0)
+        id = db.data.get_ids_by_mbids([(self.test_mbid, 0)])[0]
         build_sha = "test"
         db.data.write_high_level(self.test_mbid, id, self.test_highlevel_data, build_sha)
 
@@ -227,13 +227,13 @@ class SimilarityDBTestCase(AcousticbrainzTestCase):
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
 
-    @mock.patch("db.data.get_lowlevel_id")
+    @mock.patch("db.data.get_ids_by_mbids")
     @mock.patch("db.similarity.submit_similarity_by_id")
-    def test_submit_similarity_by_mbid(self, submit_similarity_by_id, get_lowlevel_id):
+    def test_submit_similarity_by_mbid(self, submit_similarity_by_id, get_ids_by_mbids):
         # Check that lowlevel.id is found and passed to submit_similarity_by_id
-        get_lowlevel_id.return_value = 0
+        get_ids_by_mbids.return_value = [0]
         db.similarity.submit_similarity_by_mbid(self.test_mbid, 0)
-        get_lowlevel_id.assert_called_with(self.test_mbid, 0)
+        get_ids_by_mbids.assert_called_with([(self.test_mbid, 0)])
         submit_similarity_by_id.assert_called_with(0)
 
     def show_highlevel_models(self):

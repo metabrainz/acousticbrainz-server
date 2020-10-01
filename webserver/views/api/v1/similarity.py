@@ -34,21 +34,11 @@ def get_similar_recordings(metric, mbid):
     :query n: *Optional.* Integer specifying an offset for a document.
         The first submission has offset n=0. If not specified, this
         submission will be used as the default value.
-    **NOTE** This parameter will currently default to angular.
-    We need to decide with evaluation which distance measure is most appropriate.
-    :query distance_type: *Optional.* String determining the distance
-        formula that an index will use when computing similarity.
-        Default is angular.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
-    :query n_trees: *Optional.* Integer determines the number of trees
-        in the index that is used to compute similarity.
-        Default is 10 trees.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
     :query n_neighbours *Optional.* Integer determines the number of
         similar recordings that should be returned.
         Default is 200 recordings.
+    :query threshold: *Optional.* Only return items whose distance from the query recording
+        is less than this (0-1).
     :query metric: *Required.* String specifying the metric name to be
         used when finding the most similar recordings.
         The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRICS`.
@@ -56,22 +46,27 @@ def get_similar_recordings(metric, mbid):
     :resheader Content-Type: *application/json*
     """
     offset = validate_offset(request.args.get("n"))
-    metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
+    metric, distance_type, n_trees, n_neighbours, threshold = _check_index_params(metric)
     try:
         index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
     except IndexNotFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
 
     try:
-        ids, similar_recordings, distances = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
-        return jsonify(similar_recordings)
+        recordings = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
+        response = []
+        for recording in recordings:
+            if threshold is None or recording['distance'] <= threshold:
+                response.append(recording)
+        return jsonify(response)
+
     except NoDataFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("No submission exists for the given (MBID, offset) combination.")
     except ItemNotFoundException:
         raise webserver.views.api.exceptions.APIBadRequest("The submission of interest is not indexed.")
 
 
-def _check_index_params(metric):
+def  _check_index_params(metric):
     if metric not in BASE_INDICES:
         raise webserver.views.api.exceptions.APIBadRequest("An index with the specified metric does not exist.")
 
@@ -88,12 +83,25 @@ def _check_index_params(metric):
     n_neighbours = request.args.get("n_neighbours")
     try:
         n_neighbours = int(n_neighbours)
-        if n_neighbours > 1000:
-            raise ValueError
+        if n_neighbours < 1:
+            n_neighbours = 1
+        elif n_neighbours > 1000:
+            n_neighbours = 1000
     except (ValueError, TypeError):
         n_neighbours = 200
 
-    return metric, distance_type, n_trees, n_neighbours
+    threshold = request.args.get("threshold")
+    try:
+        if threshold:
+            threshold = float(threshold)
+            if threshold > 1.0:
+                threshold = 1.0
+            if threshold < 0:
+                threshold = 0.0
+    except (ValueError, TypeError):
+        threshold = None
+
+    return metric, distance_type, n_trees, n_neighbours, threshold
 
 
 @bp_similarity.route("/<metric>", methods=["GET"])
@@ -126,23 +134,8 @@ def get_many_similar_recordings(metric):
     present in the database, then it is silently ignored and will not appear
     in the returned data.
 
-
-    **NOTE** This parameter will currently default to angular.
-    We need to decide with evaluation which distance measure is most appropriate.
-    :query distance_type: *Optional.* String determining the distance
-        formula that an index will use when computing similarity.
-        Default is angular.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
-
-    :query n_trees: *Optional.* Integer determines the number of trees
-        in the index that is used to compute similarity.
-        Default is 10 trees.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
-
-    :query n_neighbours *Optional.* Integer determines the number of
-        similar recordings that should be returned.
+    :query n_neighbours *Optional.* The number of similar recordings that
+        should be returned for each item in ``recording_ids`` (1-1000).
         Default is 200 recordings.
 
     :query metric: *Required.* String specifying the metric name to be
@@ -154,11 +147,14 @@ def get_many_similar_recordings(metric):
       Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
       be >= 0
 
+    :query threshold: *Optional.* Only return items whose distance from the query recording
+    is less than this (0-1).
+
     :resheader Content-Type: *application/json*
     """
     recordings = _get_recording_ids_from_request()
     recordings = [(mbid, offset) for _, mbid, offset in recordings]
-    metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
+    metric, distance_type, n_trees, n_neighbours, threshold = _check_index_params(metric)
     try:
         index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
     except IndexNotFoundException:
@@ -219,24 +215,10 @@ def get_similarity_between(metric):
         Takes the form `mbid[:offset]:mbid[:offset]`. Offsets are optional, and should
         be integers >= 0
 
-    **NOTE** This parameter will currently default to angular.
-    We need to decide with evaluation which distance measure is most appropriate.
-    :query distance_type: *Optional.* String determining the distance
-        formula that an index will use when computing similarity.
-        Default is angular.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
-
-    :query n_trees: *Optional.* Integer determines the number of trees
-        in the index that is used to compute similarity.
-        Default is 10 trees.
-        This parameter will no longer exist when we have developed a set
-        list of index specifications that we will use.
-
     :resheader Content-Type: *application/json*
     """
     recordings = check_bad_request_between_recordings()
-    metric, distance_type, n_trees, n_neighbours = _check_index_params(metric)
+    metric, distance_type, n_trees, n_neighbours, threshold = _check_index_params(metric)
     try:
         index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
     except IndexNotFoundException:

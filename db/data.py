@@ -753,18 +753,18 @@ def get_mbids_by_ids(ids):
                  , gid
                  , submission_offset
               FROM lowlevel
-             WHERE id = :id
+             WHERE id in :ids
         """)
-        recordings = []
+        id_to_recording = {}
+        result = connection.execute(query, {'ids': tuple(ids)})
+        for row in result.fetchall():
+            id_to_recording[row['id']] = (str(row['gid']), row['submission_offset'])
+            recordings = []
         for id in ids:
-            result = connection.execute(query, {"id": id})
-            row = result.fetchone()
-            if row:
-                recordings.append((str(row["gid"]), row["submission_offset"]))
+            recordings.append(id_to_recording.get(id, (None, None)))
         return recordings
 
 
-# I noticed that we usually only do things by (MBID, offset), not id - should this work match that pattern?
 def get_lowlevel_metric_feature(id, path):
     # Get lowlevel data only for a specified path.
     try:
@@ -842,33 +842,33 @@ def get_highlevel_models(id):
         return row["data"]
 
 
-def get_lowlevel_id(mbid, offset):
-    # Get lowlevel.id for (MBID, offset)
-    mbid = str(mbid).lower()
+def get_ids_by_mbids(mbids):
+    """Get lowlevel IDs for a list of submissions
+    Arguments:
+        mbids: A list of (mbid, submission_offset) pairs
+
+    Returns:
+        a list of integer IDs for the submissions referred to by ``mbids``,
+        in the same order that they were provided.
+        If an (mbid, submission_offset) pair doesn't exist in the database, None is used
+        as an ID"""
     with db.engine.connect() as connection:
         query = text("""
             SELECT id
-            FROM lowlevel
-            WHERE gid = :mbid AND submission_offset = :offset
+                 , gid::text
+                 , submission_offset
+              FROM lowlevel
+             WHERE (gid, submission_offset) in :mbid_offsets 
         """)
-        result = connection.execute(query, {"mbid": mbid, "offset": offset})
-        if not result.rowcount:
-            raise db.exceptions.NoDataFoundException('No data exists for the (MBID, offset) pair specified')
-        return result.fetchone()["id"]
-
-
-def check_for_submission(id):
-    # Check that a submission with the given lowlevel.id exists
-    with db.engine.connect() as connection:
-        query = text("""
-                    SELECT *
-                      FROM lowlevel
-                     WHERE id = :id
-                """)
-        result = connection.execute(query, {"id": id})
-        if not result.rowcount:
-            return False
-        return True
+        result = connection.execute(query, {"mbid_offsets": tuple(mbids)})
+        mbid_to_id = {}
+        for row in result.fetchall():
+            mbid_to_id[(row['gid'], row['submission_offset'])] = row['id']
+        result = []
+        for mbid, offset in mbids:
+            data = (str(mbid) .lower(), offset)
+            result.append(mbid_to_id.get(data))
+        return result
 
 
 def count_all_lowlevel():

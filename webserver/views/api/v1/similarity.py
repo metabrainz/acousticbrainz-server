@@ -27,7 +27,9 @@ def get_similar_recordings(metric, mbid):
     endpoint.
 
     **Example response**:
+
     .. sourcecode:: json
+
         {"mbid": {"offset": [(most_similar_mbid, offset),
                                 ...,
                             (least_similar_mbid, offset)]
@@ -37,7 +39,7 @@ def get_similar_recordings(metric, mbid):
     :query n: *Optional.* Integer specifying an offset for a document.
         The first submission has offset n=0. If not specified, this
         submission will be used as the default value.
-    :query n_neighbours *Optional.* Integer determines the number of
+    :query n_neighbours: *Optional.* Integer determines the number of
         similar recordings that should be returned.
         Default is 200 recordings.
     :query threshold: *Optional.* Only return items whose distance from the query recording
@@ -48,7 +50,7 @@ def get_similar_recordings(metric, mbid):
         n_neighbours if it is set.
     :query metric: *Required.* String specifying the metric name to be
         used when finding the most similar recordings.
-        The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRICS`.
+        The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRIC_NAMES`.
 
     :resheader Content-Type: *application/json*
     """
@@ -156,7 +158,9 @@ def get_many_similar_recordings(metric):
     """Get the most similar submissions to multiple (MBID, offset) combinations.
 
     **Example response**:
+
     .. sourcecode:: json
+
         {"mbid1": {"offset1": [(most_similar_mbid, offset),
                                 ...,
                             (least_similar_mbid, offset)],
@@ -180,26 +184,25 @@ def get_many_similar_recordings(metric):
     present in the database, then it is silently ignored and will not appear
     in the returned data.
 
-    :query n_neighbours *Optional.* The number of similar recordings that
+    :query n_neighbours: *Optional.* The number of similar recordings that
         should be returned for each item in ``recording_ids`` (1-1000).
         Default is 200 recordings.
 
     :query metric: *Required.* String specifying the metric name to be
         used when finding the most similar recordings.
-        The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRICS`.
+        The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRIC_NAMES`.
 
     :query recording_ids: *Required.* A list of recording MBIDs to retrieve
-
-      Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
-      be >= 0
+        Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
+        be >= 0
 
     :query threshold: *Optional.* Only return items whose distance from the query recording
-    is less than this (0-1). This may result in the number of returned items being less than
-    n_neighbours if it is set.
+        is less than this (0-1). This may result in the number of returned items being less than
+        n_neighbours if it is set.
 
     :query remove_dups: *Optional.* If ``true``, remove duplicate submissions that have the
-    same score.  This may result in the number of returned items being less than
-    n_neighbours if it is set.
+        same score.  This may result in the number of returned items being less than
+        n_neighbours if it is set.
 
     :resheader Content-Type: *application/json*
     """
@@ -257,10 +260,12 @@ def get_similarity_between(metric):
     The distance measure will correspond to the index of the
     specified metric.
 
-    The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRICS`.
+    The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRIC_NAMES`.
 
     **Example response**:
+
     .. sourcecode:: json
+
         {"metric": [<distance_vector>]}
 
     **NOTE** If an (MBID, offset) combination specified does not exist, or is not

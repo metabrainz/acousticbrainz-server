@@ -253,7 +253,8 @@ _BASE_METRICS_LIST = [
 ]
 
 BASE_METRICS = {cls.name: cls for cls in _BASE_METRICS_LIST}
-
+#: Available similarity metrics
+BASE_METRIC_NAMES = [cls.name for cls in _BASE_METRICS_LIST]
 
 # Highlevel models required to compute all similarity metrics
 BASE_MODELS = [("danceability", "v2.1_beta1", "show"),

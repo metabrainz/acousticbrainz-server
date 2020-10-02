@@ -84,9 +84,9 @@ metric. Recordings are organized from most similar to least similar. Alongside
 the list of the most similar recordings, you may provide input:
 
 - Rate whether the recording should be higher or lower on the list of similarity,
-or whether this result seems accurate.
+  or whether this result seems accurate.
 - Provide additional suggestions related to a specific similar recording, or in
-general.
+  general.
 
 Feel free to provide as much or as little feedback as you wish when browsing.
 We appreciate your help in improving similarity at AcousticBrainz!

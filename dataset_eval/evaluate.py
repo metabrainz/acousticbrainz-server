@@ -167,6 +167,18 @@ def load_best_results_sklearn(exported_path, project_file, exports_directory):
     with open(best_model_path) as json_file:
         data_best_model = json.load(json_file)
 
+    # load the best model's instances and matrix dictionary
+    fold_matrix_path = os.path.join(exported_path, project_file, "folded_dataset_instances_cm.json")
+    logging.info("Best Instances and Matrix JSON path: {}".format(fold_matrix_path))
+    with open(fold_matrix_path) as json_file_cm:
+        data_fold_matrix = json.load(json_file_cm)
+
+    # load the best model's simplified matrix dictionary
+    # fold_simplified_matrix_path = os.path.join(exported_path, project_file, "folded_simplified_matrix.json")
+    # logging.info(f"Best models simplified matrix JSON path: {fold_simplified_matrix_path}")
+    # with open(fold_simplified_matrix_path) as json_file_simple_cm:
+    #     data_fold_simplified_matrix = json.load(json_file_simple_cm)
+
     # export the matrix dictionary from the folded dataset
     folded_results_matrix_path = os.path.join(exported_path, exports_directory)
     simplified_cm = simplified_matrix_export(best_result_file="folded_dataset_results_matrix.json",

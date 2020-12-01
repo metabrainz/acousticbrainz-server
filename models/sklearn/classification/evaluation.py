@@ -15,6 +15,7 @@ from ..helper_functions.utils import FindCreateDirectory
 from ..transformation.transform import Transform
 from ..classification.report_files_export import export_report
 from ..helper_functions.logging_tool import LoggerSetup
+from ..classification.matrix_creation import matrix_creation, simplified_matrix_export
 
 
 def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, log_level):
@@ -42,10 +43,10 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
     images_path = FindCreateDirectory(exports_path,
                                       os.path.join(exports_dir, "images")).inspect_directory()
 
-    # load best model
-    load_model_params_path = os.path.join(exports_path, exports_dir, "best_model_{}.json".format(class_name))
-    with open(load_model_params_path) as model_params_file:
-        model_params_data = json.load(model_params_file)
+    # load best model params and score data
+    load_best_model_params_score_path = os.path.join(exports_path, exports_dir, "best_model_{}.json".format(class_name))
+    with open(load_best_model_params_score_path) as model_params_score_file:
+        best_params_score_data = json.load(model_params_score_file)
 
     logger.info("Best model preprocessing step: {}".format(process))
     # load the saved classifier
@@ -89,7 +90,24 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
                                                 dataset_path=dataset_path,
                                                 logger=logger)
 
-    # ACCURACIES in each fold
+    logger.debug("PRINT THE WHOLE GESTURES DF:\n{}".format(df_predictions))
+
+    # list of each column from the dataframe for the folded indexed tracks, y, adn predictions
+    tracks_folded_list = df_predictions["track"].to_list()
+    y_folded_list = df_predictions[class_name].to_list()
+    pred_folded_list = df_predictions["predictions"].to_list()
+
+    # export the matrix dictionary from the folded dataset
+    folded_results_matrix_path = os.path.join(exports_path, exports_dir)
+    folded_matrix_dict = matrix_creation(classes=clf.classes_,
+                                         tracks=tracks_folded_list,
+                                         y_actual=y_folded_list,
+                                         y_hat=pred_folded_list,
+                                         logger=logger,
+                                         export_save_path=folded_results_matrix_path,
+                                         export_name="folded_dataset_results_matrix.json")
+
+    # ACCURACIES for each fold
     export_accuracies(accuracy_model=accuracy_model,
                       config=config,
                       class_name=class_name,
@@ -97,11 +115,26 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
                       images_path=images_path,
                       logger=logger)
 
-    # Folded Tracks Dictionary
-    export_folded_instances(tracks_fold_indexing_dict=tracks_fold_indexing_dict,
-                            class_name=class_name,
-                            dataset_path=dataset_path,
-                            logger=logger)
+    # Folded Tracks Dictionary --> export also the Folded instances dictionary
+    folded_instances_dict = export_folded_instances(tracks_fold_indexing_dict=tracks_fold_indexing_dict,
+                                                    class_name=class_name,
+                                                    dataset_path=dataset_path,
+                                                    logger=logger)
+
+    concat_save_model_instances_matrix_json(instances_dict=folded_instances_dict,
+                                            cm_dict=folded_matrix_dict,
+                                            exports_path=exports_path,
+                                            exports_dir=exports_dir,
+                                            logger=logger,
+                                            export_name="folded_dataset_instances_cm.json")
+
+    simplified_cm = simplified_matrix_export(best_result_file="folded_dataset_results_matrix.json",
+                                             logger=logger,
+                                             export_save_path=folded_results_matrix_path,
+                                             export_name="folded_simplified_matrix.json",
+                                             write_mode=True)
+
+    logger.info("Simplified CM of the evaluated folded dataset:\n{}".format(simplified_cm))
 
     # Evaluation to the folded Dataset
     export_evaluation_results(config=config,
@@ -113,7 +146,7 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
                               logger=logger
                               )
 
-    # Train to the whole dataset
+    # ---------- TRAIN TO THE WHOLE DATASET WITH THE BEST CLASSIFIER ----------
     logger.info("Train the classifier with the whole dataset..")
     clf.fit(features_prepared, y)
     # prediction for the whole dataset
@@ -122,6 +155,29 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
     best_model_path = os.path.join(exports_path, exports_dir, "best_clf_model.pkl")
     joblib.dump(clf, best_model_path)
     logger.info("Best model saved.")
+
+    # export the matrix dictionary from the whole dataset
+    whole_results_matrix_path = os.path.join(exports_path, exports_dir)
+    whole_matrix_dict = matrix_creation(classes=clf.classes_,
+                                        tracks=tracks,
+                                        y_actual=predictions_all,
+                                        y_hat=y,
+                                        logger=logger,
+                                        export_save_path=whole_results_matrix_path,
+                                        export_name="whole_dataset_results_matrix.json")
+
+    matrix_export(best_result_file="whole_dataset_results_matrix.json",
+                  logger=logger,
+                  export_save_path=whole_results_matrix_path,
+                  export_name="whole_dataset_cm_dict.json")
+
+    concat_save_model_instances_matrix_json(instances_dict=None,
+                                            cm_dict=whole_matrix_dict,
+                                            exports_path=exports_path,
+                                            exports_dir=exports_dir,
+                                            logger=logger,
+                                            export_name="whole_dataset_instances_cm.json")
+
     # Evaluation to the whole Dataset
     export_evaluation_results(config=config,
                               set_name="Whole",
@@ -133,7 +189,56 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
                               )
 
 
+def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_path, exports_dir, logger, export_name):
+    """
+    Save the best model's folded instances and confusion matrix dictionary merged into one dictionary
+
+    Args:
+        instances_dict:
+        cm_dict:
+        exports_path:
+        exports_dir:
+        logger:
+        export_name:
+
+    Returns:
+
+    """
+    best_folds_cm_merge_dict_path = os.path.join(exports_path, exports_dir)
+
+    if instances_dict:
+        # in case of the folded dataset where folds exist
+        best_folds_cm_merge_dict = {**instances_dict, **cm_dict}
+    else:
+        # in case of the whole datset where no folds exist
+        best_folds_cm_merge_dict = cm_dict
+
+    # Serializing json
+    json_object_folds_cm = json.dumps(best_folds_cm_merge_dict, indent=4)
+    # Writing to json
+    load_file_path = os.path.join(best_folds_cm_merge_dict_path, export_name)
+    with open(load_file_path, "w") as outfile:
+        outfile.write(json_object_folds_cm)
+    logger.info("Whole folded instaces and matrix dictionary stored successfully.")
+
+
 def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name, logger):
+    """
+
+    Args:
+        clf: the classifier model object
+        inner_cv: the KFold object
+        feats_prepared:
+        y: the true values
+        tracks:
+        class_name:
+        logger:
+
+    Returns:
+        tracks_fold_indexing_dict:
+        accuracy_model:
+        predictions_df_list:
+    """
     tracks_fold_indexing_dict = {}
     accuracy_model = []
     predictions_df_list = []
@@ -158,14 +263,14 @@ def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name, logge
         clf.fit(X_train, y_train)
         logger.debug("Classifier classes: {}".format(clf.classes_))
         # create a df for this fold with the predictions
-        df_pred_general = fold_predictions(clf=clf,
-                                           class_name=class_name,
-                                           X_test=X_test,
-                                           test_index=test_index,
-                                           tracks_list=tracks_list,
-                                           y_test=y_test,
-                                           logger=logger)
-        # Append the folded dataset to a list that will contain all the folded datasets:
+        df_pred_general = create_fold_predictions(clf=clf,
+                                                  class_name=class_name,
+                                                  X_test=X_test,
+                                                  test_index=test_index,
+                                                  tracks_list=tracks_list,
+                                                  y_test=y_test,
+                                                  logger=logger)
+        # Append the folded dataset to a list that will contain all the folded datasets
         predictions_df_list.append(df_pred_general)
         # Append each accuracy of the folded model to a list that contains all the accuracies resulted from each fold
         accuracy_model.append(accuracy_score(y_test, clf.predict(X_test), normalize=True) * 100)
@@ -174,7 +279,7 @@ def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name, logge
     return predictions_df_list, accuracy_model, tracks_fold_indexing_dict
 
 
-def fold_predictions(clf, class_name, X_test, test_index, tracks_list, y_test, logger):
+def create_fold_predictions(clf, class_name, X_test, test_index, tracks_list, y_test, logger):
     """
     Creates a pandas DataFrame from each fold with the predictions in
     order later to extract the shuffled dataset with the tracks, the percentage
@@ -215,6 +320,19 @@ def fold_predictions(clf, class_name, X_test, test_index, tracks_list, y_test, l
 
 
 def export_accuracies(accuracy_model, config, class_name, exports_path, images_path, logger):
+    """
+
+    Args:
+        accuracy_model:
+        config:
+        class_name:
+        exports_path:
+        images_path:
+        logger:
+
+    Returns:
+
+    """
     logger.info("Accuracies in each fold: {}".format(accuracy_model))
     logger.info("Mean of accuracies: {}".format(np.mean(accuracy_model)))
     logger.info("Standard Deviation of accuracies: {}".format(np.std(accuracy_model)))
@@ -234,6 +352,16 @@ def export_accuracies(accuracy_model, config, class_name, exports_path, images_p
 
 
 def create_dataset_predictions(list_df_predictions, class_name, dataset_path, logger):
+    """
+    Args:
+        list_df_predictions:
+        class_name:
+        dataset_path:
+        logger:
+
+    Returns:
+
+    """
     logger.info("Make Predictions DataFrame for all the folded instances together.")
     df_concat_predictions = pd.concat(list_df_predictions)
     logger.debug("\n{}".format(df_concat_predictions.head()))
@@ -266,10 +394,23 @@ def create_accuracies_dist_plot(accuracies_list, images_path, logger):
 def export_folded_instances(tracks_fold_indexing_dict, class_name, dataset_path, logger):
     logger.info("Writing Folded Tracks Dictionary locally to check where each track is folded..")
     logger.debug("length of keys: {}".format(len(tracks_fold_indexing_dict.keys())))
-    folded_dataset_path = os.path.join(dataset_path, "{}.yaml".format(class_name))
-    with open(folded_dataset_path, 'w') as file:
-        folded_dataset = yaml.dump(tracks_fold_indexing_dict, file)
-    logger.info("Folded dataset written successfully to disk.")
+    fold_dict = {"fold": tracks_fold_indexing_dict}
+
+    # writing to yaml
+    folded_dataset_path_yml = os.path.join(dataset_path, "{}.yaml".format(class_name))
+    with open(folded_dataset_path_yml, 'w') as file:
+        folded_dataset = yaml.dump(fold_dict, file)
+
+    # Serializing json
+    json_object = json.dumps(fold_dict, indent=4)
+    # Writing to json
+    folded_dataset_path_json = os.path.join(dataset_path, "{}.json".format(class_name))
+    with open(folded_dataset_path_json, "w") as outfile:
+        outfile.write(json_object)
+
+    logger.info("Folded dataset written successfully to disk both in yaml and json format.")
+
+    return fold_dict
 
 
 def export_evaluation_results(config, set_name, y_true_values, predictions, class_name, exports_path, logger):

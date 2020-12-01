@@ -22,6 +22,7 @@ eval_tool_use = "gaia"
 is_sklearn = os.getenv("MODEL_TRAINING_SKLEARN")
 if is_sklearn == "1":
     from models.sklearn.model.classification_project import create_classification_project
+    from models.sklearn.classification.matrix_creation import simplified_matrix_export
     eval_tool_use = "sklearn"
 
 is_gaia = os.getenv("MODEL_TRAINING_GAIA")
@@ -141,7 +142,9 @@ def evaluate_sklearn(options, eval_location, dataset_dir, storage_dir, eval_job)
                                   )
 
     logging.info("Saving results...")
-    results = load_best_results_sklearn(exported_path=eval_location, project_file=eval_job["id"])
+    results = load_best_results_sklearn(exported_path=eval_location,
+                                        project_file=eval_job["id"],
+                                        exports_directory=eval_job["id"])
     db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
         "project_path": eval_location,
         "parameters": results["parameters"],
@@ -151,7 +154,7 @@ def evaluate_sklearn(options, eval_location, dataset_dir, storage_dir, eval_job)
     }))
 
 
-def load_best_results_sklearn(exported_path, project_file):
+def load_best_results_sklearn(exported_path, project_file, exports_directory):
     project_conf_file_path = os.path.join(exported_path, f"{project_file}.yaml")
     logging.info(f"Config file path: {project_conf_file_path}")
     with open(project_conf_file_path) as fp:
@@ -176,10 +179,18 @@ def load_best_results_sklearn(exported_path, project_file):
     # with open(fold_simplified_matrix_path) as json_file_simple_cm:
     #     data_fold_simplified_matrix = json.load(json_file_simple_cm)
 
+    # export the matrix dictionary from the folded dataset
+    folded_results_matrix_path = os.path.join(exported_path, exports_directory)
+    simplified_cm = simplified_matrix_export(best_result_file="folded_dataset_results_matrix.json",
+                                             logger=logging,
+                                             export_save_path=folded_results_matrix_path,
+                                             export_name="simplified_cm.json",
+                                             write_mode=False)
+
     return {
         "parameters": data_best_model["params"],
         "accuracy": round(data_best_model["score"], 2),
-        # "confusion_matrix": data_fold_simplified_matrix,
+        "confusion_matrix": simplified_cm,
         "history_path": "Does not exist because of sklearn training usage"
     }
 

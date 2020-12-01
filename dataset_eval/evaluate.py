@@ -140,6 +140,49 @@ def evaluate_sklearn(options, eval_location, dataset_dir, storage_dir, eval_job)
                                   preprocessing_values=options.get("preprocessing_values", [])
                                   )
 
+    logging.info("Saving results...")
+    results = load_best_results_sklearn(exported_path=eval_location, project_file=eval_job["id"])
+    db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
+        "project_path": eval_location,
+        "parameters": results["parameters"],
+        "accuracy": results["accuracy"],
+        "confusion_matrix": results["confusion_matrix"],
+        "history_path": results["history_path"],
+    }))
+
+
+def load_best_results_sklearn(exported_path, project_file):
+    project_conf_file_path = os.path.join(exported_path, f"{project_file}.yaml")
+    logging.info(f"Config file path: {project_conf_file_path}")
+    with open(project_conf_file_path) as fp:
+        project_data = yaml.load(fp, Loader=yaml.FullLoader)
+    logging.info(f"Model: {project_data['class_name']}")
+
+    # load the best model dictionary
+    best_model_path = os.path.join(exported_path, project_file, f"best_model_{project_data['class_name']}.json")
+    logging.info(f"Best model path: {best_model_path}")
+    with open(best_model_path) as json_file:
+        data_best_model = json.load(json_file)
+
+    # load the best model's instances and matrix dictionary
+    fold_matrix_path = os.path.join(exported_path, project_file, "folded_dataset_instances_cm.json")
+    logging.info(f"Best Instances and Matrix JSON path: {fold_matrix_path}")
+    with open(fold_matrix_path) as json_file_cm:
+        data_fold_matrix = json.load(json_file_cm)
+
+    # load the best model's simplified matrix dictionary
+    # fold_simplified_matrix_path = os.path.join(exported_path, project_file, "folded_simplified_matrix.json")
+    # logging.info(f"Best models simplified matrix JSON path: {fold_simplified_matrix_path}")
+    # with open(fold_simplified_matrix_path) as json_file_simple_cm:
+    #     data_fold_simplified_matrix = json.load(json_file_simple_cm)
+
+    return {
+        "parameters": data_best_model["params"],
+        "accuracy": round(data_best_model["score"], 2),
+        # "confusion_matrix": data_fold_simplified_matrix,
+        "history_path": "Does not exist because of sklearn training usage"
+    }
+
 
 def create_groundtruth_dict(name, datadict):
     groundtruth = {

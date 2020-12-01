@@ -166,10 +166,13 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
                                         export_save_path=whole_results_matrix_path,
                                         export_name="whole_dataset_results_matrix.json")
 
-    matrix_export(best_result_file="whole_dataset_results_matrix.json",
-                  logger=logger,
-                  export_save_path=whole_results_matrix_path,
-                  export_name="whole_dataset_cm_dict.json")
+    simplified_cm_whole = simplified_matrix_export(best_result_file="whole_dataset_results_matrix.json",
+                                                   logger=logger,
+                                                   export_save_path=whole_results_matrix_path,
+                                                   export_name="whole_dataset_cm_dict.json",
+                                                   write_mode=True)
+
+    logger.info("Simplified CM of the evaluated whole dataset:\n{}".format(simplified_cm_whole))
 
     concat_save_model_instances_matrix_json(instances_dict=None,
                                             cm_dict=whole_matrix_dict,

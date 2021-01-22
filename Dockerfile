@@ -104,9 +104,6 @@ RUN pip install --no-cache-dir uWSGI==2.0.17.1
 
 RUN mkdir /cache_namespaces && chown -R acousticbrainz:acousticbrainz /cache_namespaces
 
-# Consul template service is already set up, just need to copy the configuration
-COPY ./docker/consul-template.conf /etc/consul-template.conf
-
 # runit service files
 # All services are created with a `down` file, preventing them from starting
 # rc.local removes the down file for the specific service we want to run in a container
@@ -129,7 +126,9 @@ COPY ./docker/dataset_eval/consul-template-dataset-eval.conf /etc/consul-templat
 RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs
-COPY docker/crontab /etc/cron.d/acousticbrainz
+COPY ./docker/cron/crontab /etc/cron.d/acousticbrainz
+COPY ./docker/cron/cron.service /etc/service/cron/run
+COPY ./docker/cron/consul-template-cron.conf /etc/consul-template-cron.conf
 RUN chmod 0644 /etc/cron.d/acousticbrainz
 RUN touch /etc/service/cron/down
 

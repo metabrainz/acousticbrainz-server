@@ -1,4 +1,4 @@
-FROM metabrainz/python:2.7-20190302 AS acousticbrainz-base
+FROM metabrainz/python:2.7-20210115 AS acousticbrainz-base
 
 # Dockerize
 ENV DOCKERIZE_VERSION v0.6.1

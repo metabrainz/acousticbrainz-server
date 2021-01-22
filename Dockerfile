@@ -115,14 +115,17 @@ COPY ./docker/consul-template.conf /etc/consul-template.conf
 # uwsgi service files
 COPY ./docker/uwsgi/uwsgi.service /etc/service/uwsgi/run
 COPY ./docker/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
+COPY ./docker/uswgi/consul-template-uswgi.conf /etc/consul-template-uswgi.conf
 RUN touch /etc/service/uwsgi/down
 
 # hl_extractor service files
 COPY ./docker/hl_extractor/hl_extractor.service /etc/service/hl_extractor/run
+COPY docker/hl_extractor/consul-template-hl-extractor.conf /etc/consul-template-hl-extractor.conf
 RUN touch /etc/service/hl_extractor/down
 
 # dataset evaluator service files
 COPY ./docker/dataset_eval/dataset_eval.service /etc/service/dataset_eval/run
+COPY ./docker/dataset_eval/consul-template-dataset-eval.conf /etc/consul-template-dataset-eval.conf
 RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs

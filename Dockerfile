@@ -143,5 +143,7 @@ COPY --chown=acousticbrainz:acousticbrainz . /code
 
 RUN npm run build:prod
 
+COPY ./docker/start-ab-command.sh /usr/bin/start-ab-command.sh
+
 # Our entrypoint runs as root
 USER root

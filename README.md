@@ -182,7 +182,7 @@ Before commiting new code or making a pull request, run the unit tests on your c
 
     ./test.sh
 
-This will start a set of docker containers separate to your development environment,
+This will start a set of docker containers separate from your development environment,
 run the tests, and then stop and remove the containers. To run tests more rapidly
 without having to bring up and take down containers all the time, you can run
 each step individually. To bring up containers in the background:

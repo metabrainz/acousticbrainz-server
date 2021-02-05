@@ -77,6 +77,9 @@ RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
 
 RUN chown acousticbrainz:acousticbrainz /code
 
+# Last version of pip that supports python2
+RUN pip install pip==20.3.4
+
 # Python dependencies
 RUN mkdir /code/docs/ && chown acousticbrainz:acousticbrainz /code/docs/
 COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requirements.txt

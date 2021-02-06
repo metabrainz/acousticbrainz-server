@@ -273,45 +273,11 @@ def _copy_dataset_tables(location, tar, archive_name, start_time=None, end_time=
     connection = db.engine.raw_connection()
     try:
         cursor = connection.cursor()
-        # dataset
-        _copy_table(cursor, location, "dataset", "SELECT %s FROM dataset" %
-                    (", ".join(_DATASET_TABLES["dataset"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset")
 
-        # dataset_class
-        _copy_table(cursor, location, "dataset_class", "SELECT %s FROM dataset_class" %
-                    (", ".join(_DATASET_TABLES["dataset_class"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_class")
+        for table in _DATASET_TABLES:
+            _copy_table(cursor, location, table, "SELECT %s FROM %s" % (", ".join(_DATASET_TABLES[table]), table))
+            _add_file_to_tar_and_delete(location, archive_name, tar, table)
 
-        # dataset_class_member
-        _copy_table(cursor, location, "dataset_class_member", "SELECT %s FROM dataset_class_member" %
-                    (", ".join(_DATASET_TABLES["dataset_class_member"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_class_member")
-
-        # dataset_snapshot
-        _copy_table(cursor, location, "dataset_snapshot", "SELECT %s FROM dataset_snapshot" %
-                    (", ".join(_DATASET_TABLES["dataset_snapshot"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_snapshot")
-
-        # dataset_eval_sets
-        _copy_table(cursor, location, "dataset_eval_sets", "SELECT %s FROM dataset_eval_sets" %
-                    (", ".join(_DATASET_TABLES["dataset_eval_sets"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_eval_sets")
-
-        # dataset_eval_jobs
-        _copy_table(cursor, location, "dataset_eval_jobs", "SELECT %s FROM dataset_eval_jobs" %
-                    (", ".join(_DATASET_TABLES["dataset_eval_jobs"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_eval_jobs")
-
-        # challenge
-        _copy_table(cursor, location, "challenge", "SELECT %s FROM challenge" %
-                    (", ".join(_DATASET_TABLES["challenge"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "challenge")
-
-        # dataset_eval_challenge
-        _copy_table(cursor, location, "dataset_eval_challenge", "SELECT %s FROM dataset_eval_challenge" %
-                    (", ".join(_DATASET_TABLES["dataset_eval_challenge"])))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "dataset_eval_challenge")
     finally:
         connection.close()
 

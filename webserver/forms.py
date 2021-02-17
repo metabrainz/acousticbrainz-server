@@ -10,6 +10,9 @@ DATASET_EVAL_NO_FILTER = "no_filtering"
 DATASET_EVAL_LOCAL = "local"
 DATASET_EVAL_REMOTE = "remote"
 
+DATASET_TOOL_EVALUATION_GAIA = "gaia"
+DATASET_TOOL_EVALUATION_SKLEARN = "sklearn"
+
 DATASET_PENDING = "pending"
 DATASET_RUNNING = "running"
 DATASET_DONE = "done"
@@ -59,6 +62,11 @@ class DatasetEvaluationForm(FlaskForm):
     svm_filtering = BooleanField("Use advanced SVM options",
                                  render_kw={"data-toggle": "collapse",
                                             "data-target": "#collapseSvmOptions"})
+
+    training_tool = SelectField("Model training tool", choices=[
+        (DATASET_TOOL_EVALUATION_GAIA, "gaia"),
+        (DATASET_TOOL_EVALUATION_SKLEARN, "sklearn")],
+                                  default=DATASET_TOOL_EVALUATION_GAIA)
 
     # C parameter to SVM
     c_value = StringField('C Values', default=DATASET_C_VALUE,

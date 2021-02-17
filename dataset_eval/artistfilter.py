@@ -1,3 +1,4 @@
+from __future__ import print_function
 import collections
 import json
 import logging
@@ -28,7 +29,7 @@ def print_datadict_summary(datadict):
     for r, cls in datadict.items():
         counter[cls] += 1
     for cls, count in counter.most_common():
-        print "%s\t\t%s" % (cls, count)
+        print("%s\t\t%s" % (cls, count))
 
 def normalise_datadict(datadict, cut_to):
     """Take a dictionary of groundtruth and cut all classes to

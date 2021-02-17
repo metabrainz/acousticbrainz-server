@@ -87,7 +87,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         # No dataset normalization
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, False, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         job = dataset_eval.get_job(job_id)
 
         self.assertIsNotNone(job)
@@ -98,7 +98,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         # dataset normalization
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         job = dataset_eval.get_job(job_id)
 
         self.assertIsNotNone(job)
@@ -109,7 +109,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         # Artist filtering as an option
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, False, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=dataset_eval.FILTER_ARTIST)
+                                          filter_type=dataset_eval.FILTER_ARTIST, training_tool="gaia")
         job = dataset_eval.get_job(job_id)
 
         self.assertIsNotNone(job)
@@ -120,7 +120,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         # C, gamma, and preprocessing values
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=dataset_eval.FILTER_ARTIST)
+                                          filter_type=dataset_eval.FILTER_ARTIST, training_tool="gaia")
         job = dataset_eval.get_job(job_id)
 
         self.assertIsNotNone(job)
@@ -134,27 +134,27 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         with self.assertRaises(ValueError):
             dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                      c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                     filter_type="test")
+                                     filter_type="test", training_tool="gaia")
 
     def test_create_job_badlocation(self):
         # an invalid eval_location
         with self.assertRaises(ValueError):
             dataset_eval._create_job(self.conn, self.test_dataset_id, True, "not_a_location",
                                      c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                     filter_type=None)
+                                     filter_type=None, training_tool="gaia")
 
     def test_job_exists(self):
         self.assertFalse(dataset_eval.job_exists(self.test_dataset_id))
         dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                  c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                 filter_type=None)
+                                 filter_type=None, training_tool="gaia")
 
         self.assertTrue(dataset_eval.job_exists(self.test_dataset_id))
 
     def test_get_job(self):
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         random_id = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
         # just in case
         self.assertNotEqual(random_id, job_id)
@@ -164,7 +164,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
     def test_set_job_result(self):
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
 
         result = {
             u"accuracy": 1,
@@ -182,7 +182,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
     def test_set_job_status(self):
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         job = dataset_eval.get_job(job_id)
         self.assertEqual(job["status"], dataset_eval.STATUS_PENDING)
 
@@ -196,12 +196,12 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
     def test_get_next_pending_job(self):
         job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                            c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                           filter_type=None)
+                                           filter_type=None, training_tool="gaia")
         job1 = dataset_eval.get_job(job1_id)
 
         job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                            c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                           filter_type=None)
+                                           filter_type=None, training_tool="gaia")
         job2 = dataset_eval.get_job(job2_id)
 
         next_pending = dataset_eval.get_next_pending_job()
@@ -218,12 +218,12 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         # If we have a remote pending job with the most recent timestamp, skip it
         job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE,
                                            c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                           filter_type=None)
+                                           filter_type=None, training_tool="gaia")
         job1 = dataset_eval.get_job(job1_id)
 
         job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                            c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                           filter_type=None)
+                                           filter_type=None, training_tool="gaia")
         job2 = dataset_eval.get_job(job2_id)
 
         next_pending = dataset_eval.get_next_pending_job()
@@ -235,7 +235,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         snapshots = dataset.get_snapshots_for_dataset(self.test_dataset_id)
         self.assertEqual(len(snapshots), 1)
         self.assertIsNotNone(dataset_eval.get_job(job_id))
@@ -247,13 +247,13 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
     def test_eval_job_location(self):
         job1_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE,
                                            c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                           filter_type=None)
+                                           filter_type=None, training_tool="gaia")
         job1 = dataset_eval.get_job(job1_id)
         self.assertEqual(job1["eval_location"], dataset_eval.EVAL_REMOTE)
 
         job2_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                            c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                           filter_type=None)
+                                           filter_type=None, training_tool="gaia")
         job2 = dataset_eval.get_job(job2_id)
         self.assertEqual(job2["eval_location"], dataset_eval.EVAL_LOCAL)
 
@@ -262,7 +262,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
 
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         job_details = db.dataset_eval.get_job(job_id)
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
@@ -277,7 +277,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         """ Check that a local eval dataset for this user doesn't show """
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_LOCAL,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         job_details = db.dataset_eval.get_job(job_id)
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
@@ -290,7 +290,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         another_dataset_id = dataset.create_from_dict(self.test_data, author_id=another_user_id)
         job_id = dataset_eval._create_job(self.conn, another_dataset_id, True, dataset_eval.EVAL_REMOTE,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)
         self.assertEqual(response, [])
@@ -299,7 +299,7 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
         """ Check that a remote eval job with a done status doesn't show """
         job_id = dataset_eval._create_job(self.conn, self.test_dataset_id, True, dataset_eval.EVAL_REMOTE,
                                           c_value=[1, 2, 3], gamma_value=[4, 5, 6], preprocessing_values=["basic"],
-                                          filter_type=None)
+                                          filter_type=None, training_tool="gaia")
         db.dataset_eval.set_job_status(job_id, db.dataset_eval.STATUS_DONE)
 
         response = dataset_eval.get_remote_pending_jobs_for_user(self.test_user_id)

@@ -15,7 +15,7 @@ import db.user
 import csv
 import math
 import six
-import StringIO
+from six import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
 # Below values are defined in 'classification_project_template.yaml' file.
@@ -127,7 +127,7 @@ def _convert_dataset_to_csv_stringio(dataset):
     #   - dataset description, class names, class descriptions
     # TODO: On upgrade to python 3, check that stringio accepts the correct data
     #       (may have to change to bytesio if we encode this data)
-    fp = StringIO.StringIO()
+    fp = StringIO()
     writer = csv.writer(fp)
 
     # write dataset description only if it is set
@@ -253,6 +253,7 @@ def evaluate(dataset_id):
                 gamma_values=gamma_values,
                 preprocessing_values=preprocessing_values,
                 filter_type=form.filter_type.data,
+                training_tool=form.training_tool.data
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException as e:

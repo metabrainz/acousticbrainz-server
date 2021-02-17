@@ -46,7 +46,7 @@ DEFAULT_PARAMETER_GAMMA = [3, 1, -1, -3, -5, -7, -9, -11]
 
 
 def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_values=None,
-                     preprocessing_values=None, filter_type=None):
+                     preprocessing_values=None, filter_type=None, training_tool="gaia"):
     """Add dataset into evaluation queue.
 
     Args:
@@ -67,6 +67,7 @@ def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_
         filter_type: Optional filtering that will be applied to the dataset.
             See FILTER_* variables in this module for a list of existing
             filters.
+        training_tool (optional): The tool to use to train the model (gaia or sklearn)
 
     Raises:
         JobExistsException: if the dataset has already been submitted for evaluation
@@ -90,7 +91,8 @@ def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_
         # Validate dataset contents
         validate_dataset_contents(db.dataset.get(dataset_id))
         return _create_job(connection, dataset_id, normalize, eval_location,
-                           c_values, gamma_values, preprocessing_values, filter_type)
+                           c_values, gamma_values, preprocessing_values, filter_type,
+                           training_tool)
 
 
 def job_exists(dataset_id):
@@ -164,7 +166,7 @@ def validate_dataset_contents(dataset):
                 )
 
 
-def get_next_pending_job():
+def get_next_pending_job(training_tool="gaia"):
     """
     Get the earliest submitted job which is still in the pending state.
 
@@ -179,10 +181,11 @@ def get_next_pending_job():
                    ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE status = :status
                   AND eval_location = 'local'
+                  AND options->>'training_tool' = :training_tool
              ORDER BY created ASC
                 LIMIT 1
             """ % EVAL_COLUMNS_COMMA_SEPARATED)
-        result = connection.execute(query, {"status": STATUS_PENDING})
+        result = connection.execute(query, {"status": STATUS_PENDING, "training_tool": training_tool})
         row = result.fetchone()
         return dict(row) if row else None
 
@@ -330,7 +333,7 @@ def add_dataset_eval_set(connection, data):
 
 
 def _create_job(connection, dataset_id, normalize, eval_location, c_value,
-                gamma_value, preprocessing_values, filter_type):
+                gamma_value, preprocessing_values, filter_type, training_tool):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -345,6 +348,7 @@ def _create_job(connection, dataset_id, normalize, eval_location, c_value,
             "c_values": c_value,
             "gamma_values": gamma_value,
             "preprocessing_values": preprocessing_values,
+            "training_tool": training_tool
         }
 
     snapshot_id = db.dataset.create_snapshot(dataset_id)

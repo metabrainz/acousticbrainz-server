@@ -77,4 +77,7 @@ FEATURE_EVAL_FILTERING = True
 # Choose settings used for model training
 FEATURE_EVAL_MODEL_SELECTION = False
 
+# Choose the ML tool used for model training (gaia/sklearn)
+FEATURE_EVAL_TOOL_SELECTION = False
+
 DEBUG_TB_INTERCEPT_REDIRECTS = False

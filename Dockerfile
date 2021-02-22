@@ -112,7 +112,7 @@ RUN mkdir /cache_namespaces && chown -R acousticbrainz:acousticbrainz /cache_nam
 # uwsgi service files
 COPY ./docker/uwsgi/uwsgi.service /etc/service/uwsgi/run
 COPY ./docker/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
-COPY ./docker/uswgi/consul-template-uswgi.conf /etc/consul-template-uswgi.conf
+COPY ./docker/uwsgi/consul-template-uwsgi.conf /etc/consul-template-uwsgi.conf
 RUN touch /etc/service/uwsgi/down
 
 # hl_extractor service files
@@ -127,12 +127,13 @@ RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs
 COPY ./docker/cron/crontab /etc/cron.d/acousticbrainz
-COPY ./docker/cron/cron.service /etc/service/cron/run
-COPY ./docker/cron/consul-template-cron.conf /etc/consul-template-cron.conf
-RUN chmod 0644 /etc/cron.d/acousticbrainz
+COPY ./docker/cron/cron-config.service /etc/service/cron-config/run
+COPY docker/cron/consul-template-cron-config.conf /etc/consul-template-cron-config.conf
 RUN touch /etc/service/cron/down
+RUN touch /etc/service/cron-config/down
 
 COPY ./docker/rc.local /etc/rc.local
+COPY ./docker/run-ab-command /usr/bin/run-ab-command
 
 COPY --chown=acousticbrainz:acousticbrainz package.json /code
 
@@ -142,8 +143,6 @@ RUN npm install
 COPY --chown=acousticbrainz:acousticbrainz . /code
 
 RUN npm run build:prod
-
-COPY ./docker/start-ab-command.sh /usr/bin/start-ab-command.sh
 
 # Our entrypoint runs as root
 USER root

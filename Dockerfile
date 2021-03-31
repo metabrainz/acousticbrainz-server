@@ -149,3 +149,6 @@ RUN npm run build:prod
 
 # Our entrypoint runs as root
 USER root
+
+ARG GIT_COMMIT_SHA
+ENV GIT_SHA ${GIT_COMMIT_SHA}

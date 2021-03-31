@@ -19,7 +19,8 @@ TAG=${2:-beta}
 
 echo "Building AcousticBrainz web image with env $ENV tag $TAG..."
 docker build -t metabrainz/acousticbrainz:$TAG \
-        --target acousticbrainz-prod .
+        --target acousticbrainz-prod \
+        --build-arg GIT_COMMIT_SHA=$(git describe --tags --dirty --always) .
 echo "Done!"
 echo "Pushing image to docker hub metabrainz/acousticbrainz-web:$TAG..."
 docker push metabrainz/acousticbrainz:$TAG

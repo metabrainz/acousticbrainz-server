@@ -47,17 +47,6 @@ RATELIMIT_WINDOW = 10
 #    'backup_count': 10, # optional
 # }
 
-# LOG_EMAIL = {
-#    'mail_server': 'localhost',
-#    'mail_port': 25,
-#    'mail_from_host': 'acousticbrainz.org',
-#    'log_email_recipients': [
-#        '',
-#    ],
-#    'log_email_topic': 'AcousticBrainz Error',
-#    'level': 'ERROR',
-# }
-
 # LOG_SENTRY = {
 #    'dsn':'',
 #    'environment': 'development',

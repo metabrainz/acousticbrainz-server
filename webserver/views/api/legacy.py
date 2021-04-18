@@ -19,7 +19,7 @@ def count(mbid):
     """
     This API is redirected to the /api/v1/core view with a HTTP 301 redirect
     """
-    return(redirect(url_for('api_v1_core.count', mbid=mbid),code=301))
+    return(redirect(url_for('api_v1_core.count', mbid=mbid), code=301))
 
 
 @api_legacy_bp.route("/<string:mbid>/low-level", methods=["GET"])
@@ -29,7 +29,7 @@ def get_low_level(mbid):
     """Endpoint for fetching low-level data.
     If there is more than one document with the same mbid, you can specify
     an offset as a query parameter in the form of ?n=x, where x is an integer
-    starting from 0          
+    starting from 0
     This API is redirected to the /api/v1/core view with a HTTP 301 redirect
     """
     return(redirect(url_for('api_v1_core.get_low_level', mbid=mbid), code=301))
@@ -43,7 +43,7 @@ def get_high_level(mbid):
     """Endpoint for fetching high-level data.
     If there is more than one document with the same mbid, you can specify
     an offset as a query parameter in the form of ?n=x, where x is an integer
-    starting from 0       
+    starting from 0
     This API is redirected to the /api/v1/core view with a HTTP 301 redirect
     """
     return(redirect(url_for('api_v1_core.get_high_level', mbid=mbid), code=301))

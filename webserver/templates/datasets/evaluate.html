@@ -3,46 +3,109 @@
 {% block title %}Evaluate dataset "{{ dataset['name'] }}" - AcousticBrainz{% endblock %}
 
 {% block content %}
-  <h2 class="page-title">Evaluate dataset "{{ dataset['name'] }}"</h2>
-  <hr />
+    <h2 class="page-title">Evaluate dataset "{{ dataset['name'] }}"</h2>
+    <hr/>
 
-  {% for field in form.errors %}
-    {% for error in form.errors[field] %}
-      <div class="alert alert-danger">{{ field }}: {{ error }}</div>
+    {% for field in form.errors %}
+        {% for error in form.errors[field] %}
+            <div class="alert alert-danger">{{ form[field].label }}: {{ error }}</div>
+        {% endfor %}
     {% endfor %}
-  {% endfor %}
 
-  {# TODO(roman): Add some information about options presented on this page. #}
-  <form method="POST" class="form-horizontal" role="form">
-    {{ form.hidden_tag() }}
-    <fieldset>
-      <div class="form-group">
-        <label class="col-sm-2 control-label">{{ form.filter_type.label.text }}</label>
-        <div class="col-sm-4">{{ form.filter_type(class="form-control", required="required") }}</div>
-      </div>
-      <div class="form-group">
-        <div class="col-sm-offset-2 col-sm-4">
-          <div class="checkbox">
-            <label id="agreement">
-              {{ form.normalize }}
-              {{ form.normalize.label.text }}
-            </label>
-          </div>
+    Submit your dataset and train a model that can be used to predict characteristics for new recordings.
+    <form method="POST" class="form-horizontal" role="form">
+        {{ form.hidden_tag() }}
+        {% if config.get('FEATURE_EVAL_FILTERING') %}
+            <fieldset>
+                <div class="form-group">
+                    <div class="col-sm-6">
+                        <label>{{ form.option_filtering }} {{ form.option_filtering.label.text }}</label>
+                    </div>
+                </div>
+                <div class="collapse  {% if form.option_filtering.data %}in{% endif %}" id="collapseFilterOptions">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">{{ form.filter_type.label.text }}</label>
+                        <div class="col-sm-4">{{ form.filter_type(class="form-control", required="required") }}</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-4">
+                            <div class="checkbox">
+                                <label id="agreement">
+                                    {{ form.normalize }}
+                                    {{ form.normalize.label.text }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        {% endif %}
+        {% if config.get('FEATURE_EVAL_LOCATION') %}
+            <fieldset>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">{{ form.evaluation_location.label.text }}</label>
+                    <div class="col-sm-4">{{ form.evaluation_location(class="form-control", required="required") }}</div>
+                </div>
+            </fieldset>
+        {% endif %}
+        {% if config.get('FEATURE_EVAL_MODEL_SELECTION') %}
+            <fieldset>
+            <div class="form-group">
+                <div class="col-sm-6">
+                    <label>{{ form.svm_filtering }} {{ form.svm_filtering.label.text }}</label>
+                </div>
+            </div>
+            <div class="collapse {% if form.svm_filtering.data %}in{% endif %}" id="collapseSvmOptions">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">{{ form.c_value.label.text }}</label>
+                    <div class="col-sm-4">
+                        <span class="input-group">
+                        {{ form.c_value(class="form-control", required="required") }}
+                        <div class="input-group-btn">
+                            <button class="btn btn-outline-secondary" type="button" id="button-c-reset">Reset</button>
+                        </div>
+                        </span>
+                        <p class="help-block">Up to 10 numbers separated by commas. Represented in the SVM as 2**n</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">{{ form.gamma_value.label.text }}</label>
+                    <div class="col-sm-4">
+                    <span class="input-group">
+                        {{ form.gamma_value(class="form-control", required="required") }}
+                        <div class="input-group-btn">
+                            <button class="btn btn-outline-secondary" type="button" id="button-g-reset">Reset</button>
+                        </div>
+                        </span>
+                        <p class="help-block">Up to 10 numbers separated by commas. Represented in the SVM as 2**n</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">{{ form.preprocessing_values.label.text }}</label>
+                    <div class="col-sm-4">{{ form.preprocessing_values(required="required") }}</div>
+                </div>
+            </div>
+        {% endif %}
+        </fieldset>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-4">
+                <button type="submit" class="btn btn-primary">Evaluate</button>
+            </div>
         </div>
-      </div>
-    </fieldset>
-    <fieldset>
-      {% if config.get('FEATURE_EVAL_LOCATION') %}
-      <div class="form-group">
-        <label class="col-sm-2 control-label">{{ form.evaluation_location.label.text }}</label>
-        <div class="col-sm-4">{{ form.evaluation_location(class="form-control", required="required") }}</div>
-      </div>
-      {% endif %}
-    </fieldset>
-    <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-4">
-        <button type="submit" class="btn btn-primary">Evaluate</button>
-      </div>
-    </div>
-  </form>
+    </form>
 {% endblock %}
+
+
+  {%- block scripts -%}
+    {{ super() }}
+    <script>
+    $(function() {
+        $("#button-c-reset").click(function() {
+           $("#c_value").val($("#c_value").data('default'))
+        });
+        $("#button-g-reset").click(function() {
+           $("#gamma_value").val($("#gamma_value").data('default'))
+        });
+    });
+    </script>
+  {%- endblock -%}

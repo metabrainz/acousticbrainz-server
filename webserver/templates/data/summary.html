@@ -42,11 +42,11 @@
       </tr>
       <tr>
         <td><a href="http://essentia.upf.edu/documentation/reference/streaming_Danceability.html">danceability</a></td>
-        <td>{{ data.lowlevel.rhythm.danceability }}</td>
+        <td>{{ data.lowlevel.rhythm.danceability|round(2) }}</td>
       </tr>
       <tr>
         <td><a href="http://essentia.upf.edu/documentation/reference/streaming_RhythmExtractor2013.html">bpm</a></td>
-        <td>{{ data.lowlevel.rhythm.bpm }}</td></tr>
+        <td>{{ data.lowlevel.rhythm.bpm|round|int }}</td></tr>
       <tr>
         <td>beat count</td>
         <td>{{ data.lowlevel.rhythm.beats_count }}</td>
@@ -57,11 +57,14 @@
       <h3>High-level information</h3>
 
       {% macro print_row(row) %}
-        {# Prints <name, value, probability> table row. #}
         <tr>
-          <td>{{ row[0] }}</td> {# Name #}
-          <td>{{ row[1] }}</td> {# Value #}
-          <td>{{ row[2]|float * 100 }}%</td>
+          <td><a href="{{ row.model_href }}">{{ row.name }}</a></td>
+          <td>
+              {% if row.original %}<abbr title="{{ row.original }}">{% endif %}
+              {{ row.value }}
+              {% if row.original %}</abbr>{% endif %}
+          </td>
+          <td>{{ row.percent }}%</td>
         </tr>
       {% endmacro %}
 

@@ -1,4 +1,4 @@
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 import unittest
 import db
 import db.stats
@@ -14,16 +14,17 @@ from db import gid_types
 class StatsTestCase(unittest.TestCase):
     """Statistics methods which use mocked database methods for testing"""
 
-    def test_get_next_hour(self):
-        date1 = datetime.datetime(2016, 01, 07, 10, 20, 39, tzinfo=pytz.utc)
-        next_hour = db.stats._get_next_hour(date1)
-        expected = datetime.datetime(2016, 01, 07, 11, 0, 0, tzinfo=pytz.utc)
-        self.assertEqual(next_hour, expected)
+    def test_get_next_day(self):
+        date1 = datetime.datetime(2016, 1, 7, 10, 20, 39, tzinfo=pytz.utc)
+        next_day = db.stats._get_next_day(date1)
+        expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
+        self.assertEqual(next_day, expected)
 
-        date2 = datetime.datetime(2016, 01, 07, 13, 0, 0, tzinfo=pytz.utc)
-        next_hour = db.stats._get_next_hour(date2)
-        expected = datetime.datetime(2016, 01, 07, 14, 0, 0, tzinfo=pytz.utc)
-        self.assertEqual(next_hour, expected)
+        # midnight on one day goes forward to midnight the next day
+        date2 = datetime.datetime(2016, 1, 7, 0, 0, 0, tzinfo=pytz.utc)
+        next_day = db.stats._get_next_day(date2)
+        expected = datetime.datetime(2016, 1, 8, 0, 0, 0, tzinfo=pytz.utc)
+        self.assertEqual(next_day, expected)
 
     @mock.patch("brainzutils.cache.get")
     @mock.patch("brainzutils.cache.set")
@@ -67,7 +68,7 @@ class StatsTestCase(unittest.TestCase):
         stats, last_collected = db.stats.get_stats_summary()
         self.assertIsNone(last_collected)
         expected = {"lowlevel-lossy": 0, "lowlevel-lossy-unique": 0, "lowlevel-lossless": 0,
-                "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
+                    "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
         self.assertEquals(expected, stats)
 
         # No cache and yes database, return db
@@ -89,8 +90,15 @@ class StatsTestCase(unittest.TestCase):
     @mock.patch("brainzutils.cache.get")
     def test_get_stats_from_cache(self, cacheget):
 
+        # magicmocks have all properties set to non-null, but timezone.localize
+        # in _get_stats_from_cache checks this field to see if it's naive or not.
+        # Explicitly set it to None so that 'localize' succeeds and the date is converted
+        mockdt = mock.MagicMock()
+        mockdt.tzinfo = None
+        cacheget.side_effect = [mock.MagicMock(), mockdt]
         db.stats._get_stats_from_cache()
-        getcalls = [mock.call("recent-stats", namespace="statistics"), mock.call("recent-stats-last-updated", namespace="statistics")]
+        getcalls = [mock.call("recent-stats", namespace="statistics"),
+                    mock.call("recent-stats-last-updated", namespace="statistics")]
         cacheget.assert_has_calls(getcalls)
 
     @mock.patch("db.engine.connect")
@@ -111,18 +119,16 @@ class StatsTestCase(unittest.TestCase):
         count.assert_called_once_with(connection, datetimenow)
         connect.assert_called_once_with()
         dt.datetime.now.assert_called_once_with(pytz.utc)
-        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=600, namespace="statistics"), mock.call("recent-stats-last-updated", datetimenow, time=600, namespace="statistics")]
+        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=3600, namespace="statistics"),
+                    mock.call("recent-stats-last-updated", datetimenow, time=3600, namespace="statistics")]
         cacheset.assert_has_calls(setcalls)
 
-    def test_compute_stats(self):
-        pass
 
-
-class StatsDatabaseTestCase(DatabaseTestCase):
+class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
     """Statistics methods which read and write from/to the database"""
 
     def setUp(self):
-        super(StatsDatabaseTestCase, self).setUp()
+        super(StatsAcousticbrainzTestCase, self).setUp()
 
     def test_count_submissions_to_date(self):
         """If we add some items, we can count them"""
@@ -204,6 +210,27 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
+    def test_write_stats_error(self):
+        """Test that we can generate highcharts format, even if some
+           data is missing for a date."""
+
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                  "lowlevel-lossless": 15, "lowlevel-lossless-unique": "not-a-number",
+                  "lowlevel-total": 25, "lowlevel-total-unique": 16}
+
+        with self.assertRaises(ValueError):
+            with db.engine.connect() as connection:
+                db.stats._write_stats(connection, date1, stats1)
+
+        stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
+                  "lowlevel-lossless": 20,  # missing lowlevel-lossless-unique
+                  "lowlevel-total": 35, "lowlevel-total-unique": 20}
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
+        with self.assertRaises(ValueError):
+            with db.engine.connect() as connection:
+                db.stats._write_stats(connection, date2, stats2)
+
     def test_format_statistics_for_hicharts(self):
         """Format statistics for display on history graph"""
 
@@ -251,7 +278,6 @@ class StatsDatabaseTestCase(DatabaseTestCase):
         ]
         self.assertEqual(list(expected_data), list(data))
 
-
     def test_get_earliest_submission_date(self):
         # If nothing is in the database, the date should be None
         with db.engine.connect() as connection:
@@ -277,14 +303,27 @@ def add_empty_lowlevel(mbid, lossless, date):
     gid_type = gid_types.GID_TYPE_MSID
     with db.engine.connect() as connection:
         query = text("""
-            INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, gid_type)
-                 VALUES (:mbid, :build_sha1, :lossless, :submitted, :gid_type)
+            SELECT MAX(submission_offset)
+              FROM lowlevel
+             WHERE gid::text = :mbid
+        """)
+        result = connection.execute(query, {"mbid": str(mbid)})
+        row = result.fetchone()
+        if row[0] is not None:
+            submission_offset = row[0] + 1
+        else:
+            submission_offset = 0
+
+        query = text("""
+            INSERT INTO lowlevel (gid, build_sha1, lossless, submitted, gid_type, submission_offset)
+                 VALUES (:mbid, :build_sha1, :lossless, :submitted, :gid_type, :submission_offset)
               RETURNING id
         """)
         result = connection.execute(query,
-                {"mbid": mbid, "build_sha1": build_sha1,
-                 "lossless": lossless, "submitted": date,
-                 "gid_type": gid_types.GID_TYPE_MSID})
+                                    {"mbid": mbid, "build_sha1": build_sha1,
+                                     "lossless": lossless, "submitted": date,
+                                     "gid_type": gid_types.GID_TYPE_MSID,
+                                     "submission_offset": submission_offset})
         id = result.fetchone()[0]
 
         version_id = db.data.insert_version(connection, {}, db.data.VERSION_TYPE_LOWLEVEL)
@@ -293,5 +332,72 @@ def add_empty_lowlevel(mbid, lossless, date):
                VALUES (:id, :data, :data_sha256, :version)
         """)
         connection.execute(query,
-                {"id": id, "data": data_json,
-                 "data_sha256": data_sha256, "version": version_id})
+                           {"id": id, "data": data_json,
+                            "data_sha256": data_sha256, "version": version_id})
+
+
+class StatsHighchartsTestCase(AcousticbrainzTestCase):
+    """Statistics methods which test the graphs on the website"""
+
+    def setUp(self):
+        super(StatsHighchartsTestCase, self).setUp()
+
+    def test_get_statistics_history(self):
+        """Test that we can generate highcharts format."""
+        stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                  "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
+                  "lowlevel-total": 25, "lowlevel-total-unique": 16}
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
+                  "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
+                  "lowlevel-total": 35, "lowlevel-total-unique": 20}
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
+        with db.engine.connect() as connection:
+            db.stats._write_stats(connection, date1, stats1)
+            db.stats._write_stats(connection, date2, stats2)
+
+        history = db.stats.get_statistics_history()
+        # 6 data types
+        self.assertEqual(len(history), 6)
+        # each item has 2 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 2)
+        # Example of date conversion
+        self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
+
+    @mock.patch("db.stats._get_stats_from_cache")
+    def test_stats_cache(self, get_stats_from_cache):
+        """If there are stats calculated and stored in the cache since the last time
+        they were added to the database, also include them"""
+
+        stats = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
+                 "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
+                 "lowlevel-total": 25, "lowlevel-total-unique": 16}
+        date = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
+        with db.engine.connect() as connection:
+            db.stats._write_stats(connection, date, stats)
+            db.stats._write_stats(connection, date2, stats)
+
+        # No items returned from cache, don't add anything
+        get_stats_from_cache.return_value = (None, None)
+        history = db.stats.get_statistics_history()
+        # 6 data types
+        self.assertEqual(len(history), 6)
+        # each item has 2 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 2)
+
+        # Cache item is earlier than most recent database value, don't add anything
+        datecache = datetime.datetime(2016, 1, 10, 22, 0, tzinfo=pytz.utc)
+        get_stats_from_cache.return_value = (datecache, stats)
+        history = db.stats.get_statistics_history()
+        self.assertEqual(len(history[0]["data"]), 2)
+
+        # Cache item is later than most recent database value, add it to the stats
+        datecache = datetime.datetime(2016, 1, 11, 1, 0, tzinfo=pytz.utc)
+        get_stats_from_cache.return_value = (datecache, stats)
+        history = db.stats.get_statistics_history()
+        # Each item now has 3 dates
+        for h in history:
+            self.assertEqual(len(h["data"]), 3)

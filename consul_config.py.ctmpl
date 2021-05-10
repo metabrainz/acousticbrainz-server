@@ -21,8 +21,8 @@ POSTGRES_ADMIN_AB_URI="postgresql://postgres@{{.Address}}:{{.Port}}/acousticbrai
 {{end}}
 {{end}}
 
-{{if service "listenbrainz-redis"}}
-{{with index (service "listenbrainz-redis") 0}}
+{{if service "acousticbrainz-redis"}}
+{{with index (service "acousticbrainz-redis") 0}}
 REDIS_HOST = "{{.Address}}"
 REDIS_PORT = {{.Port}}
 REDIS_NAMESPACE = "acousticbrainz"
@@ -39,13 +39,17 @@ MUSICBRAINZ_CLIENT_SECRET = '''{{template "KEY" "musicbrainz/client_secret"}}'''
 # Set to True if Less should be compiled in browser. Set to False if styling is pre-compiled.
 COMPILE_LESS = False
 
-LOG_FILE_ENABLED = False
-LOG_FILE = "./acousticbrainz.log"
-
-LOG_SENTRY_ENABLED = True
-SENTRY_DSN = '''{{template "KEY" "sentry_dsn"}}'''
+LOG_SENTRY = {
+   'dsn':'''{{template "KEY" "sentry/dsn"}}''',
+   'environment': '''{{template "KEY" "sentry/environment"}}''',
+   'level': 'WARN',
+   'release': os.getenv('GIT_SHA', None),
+}
 
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
 FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
 
 FEATURE_EVAL_LOCATION = False
+
+RATELIMIT_PER_IP = {{template "KEY" "ratelimit_per_ip"}} # number of requests per ip
+RATELIMIT_WINDOW = {{template "KEY" "ratelimit_window"}} # window size in seconds

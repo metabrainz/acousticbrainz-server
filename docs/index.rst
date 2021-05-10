@@ -7,6 +7,7 @@ Contents:
    :maxdepth: 2
 
    api
+   dev/deployment
 
 Indices and tables
 ==================

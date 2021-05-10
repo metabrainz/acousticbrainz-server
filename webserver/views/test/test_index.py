@@ -10,10 +10,10 @@ from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 import db.user as db_user
 import webserver.login
 from webserver import create_app
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
 
 
-class IndexViewsTestCase(ServerTestCase):
+class IndexViewsTestCase(AcousticbrainzTestCase):
 
     def test_index(self):
         resp = self.client.get(url_for('index.index'))

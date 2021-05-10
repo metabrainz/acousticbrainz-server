@@ -1,5 +1,5 @@
 from flask_uuid import UUID_RE
-from six import string_types
+from six import string_types, ensure_text
 
 DATASET_NAME_LEN_MIN = 1
 DATASET_NAME_LEN_MAX = 100
@@ -66,7 +66,7 @@ def _validate_dataset_name(name):
     if not isinstance(name, string_types):
         raise ValidationException("Field `name` must be a string.")
     if not (DATASET_NAME_LEN_MIN <= len(name) <= DATASET_NAME_LEN_MAX):
-        raise ValidationException("Class name must be between %s and %s characters" %
+        raise ValidationException("Dataset name must be between %s and %s characters" %
                                   (DATASET_NAME_LEN_MIN, DATASET_NAME_LEN_MAX))
 
 
@@ -232,7 +232,7 @@ def _validate_recordings(recordings, cls_name, cls_index=None):
         raise ValidationException('Field `recordings` in class "%s"%s is not a list.'
                                   % (cls_name, class_number_text))
     for recording in recordings:
-        if not UUID_RE.match(str(recording)):
+        if not isinstance(recording, string_types) or not UUID_RE.match(ensure_text(recording)):
             raise ValidationException('"%s" is not a valid recording MBID in class "%s"%s.' %
                                       (recording, cls_name, class_number_text))
 
@@ -262,4 +262,11 @@ def _check_dict_structure(dictionary, keys, error_location):
 
 class ValidationException(Exception):
     """Base class for dataset validation exceptions."""
-    pass
+    def __init__(self, error, *args, **kwargs):
+        """Create a new ValidationException
+
+        Arguments:
+            error: A description of why this error was raised
+        """
+        super(Exception, self).__init__(error, *args, **kwargs)
+        self.error = error

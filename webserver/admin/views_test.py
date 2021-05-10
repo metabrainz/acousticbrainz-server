@@ -1,8 +1,8 @@
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
 from flask import url_for
 
 
-class AdminViewsTestCase(ServerTestCase):
+class AdminViewsTestCase(AcousticbrainzTestCase):
 
     def test_access(self):
         self.assertStatus(self.client.get(url_for('admin.index')), 302)

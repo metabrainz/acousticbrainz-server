@@ -1,4 +1,5 @@
 import sqlalchemy
+from flask import current_app
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
@@ -32,7 +33,7 @@ def run_sql_script_without_transaction(sql_file_path):
                 if line and not line.startswith("--"):
                     connection.execute(line)
         except sqlalchemy.exc.ProgrammingError as e:
-            print("Error: {}".format(e))
+            current_app.logger.error("Error: {}".format(e))
             return False
         finally:
             connection.connection.set_isolation_level(1)

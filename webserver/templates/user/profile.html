@@ -50,7 +50,7 @@
       <tbody>
       {% for dataset in datasets %}
         <tr>
-          <td><a href="{{ url_for('datasets.view', id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
+          <td><a href="{{ url_for('datasets.view', dataset_id=dataset['id']) }}">{{ dataset['name'] }}</a></td>
           <td>{{ dataset['created']|datetime }}</td>
           <td>
             {% if own_page %}

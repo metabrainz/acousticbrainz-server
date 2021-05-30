@@ -9,7 +9,7 @@ guidelines we may direct you to them before accepting your contribution.
 ## Community/Discussion
 
 If you want to discuss something, join us in the [#metabrainz](ircs://irc.libera.chat:6697/metabrainz)
-IRC channel on irc.libera.net. More info is available at https://wiki.musicbrainz.org/Communication.
+IRC channel on irc.libera.chat. More info is available at https://wiki.musicbrainz.org/Communication.
 Alternatively, you can post something in the [AcousticBrainz category](https://community.metabrainz.org/c/acousticbrainz)
 of the MetaBrainz forums.
 

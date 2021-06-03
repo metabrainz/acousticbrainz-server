@@ -188,13 +188,15 @@ def generate_zip_from_dataset(ds):
         class_name = slugify(data["name"])
         # TODO: Chunk this into blocks of ~100 in order to not request too much
         #  data from the database at once
+        CHUNK_SIZE = 100
         recordings = [(mbid, 0) for mbid in data.get("recordings", [])]
-        recordings_json = db.data.load_many_low_level(recordings)
-        for mbid, offset in recordings:
-            data = recordings_json.get(mbid, {}).get(str(offset))
-            if data:
-                zipfp.writestr(os.path.join(dataset_name, class_name, "{}.json".format(mbid)),
-                               json.dumps(data))
+        chunks = [recordings[i: i + CHUNK_SIZE] for i in xrange(0, len(recordings), CHUNK_SIZE)]
+        for chunk in chunks:
+            recordings_json = db.data.load_many_low_level(chunk)
+            for mbid, offset in chunk:
+                data = recordings_json.get(mbid, {}).get(str(offset))
+                if data:
+                    zipfp.writestr(os.path.join(dataset_name, class_name, "{}.json".format(mbid)), json.dumps(data))
 
     zipfp.close()
     sio.seek(0)

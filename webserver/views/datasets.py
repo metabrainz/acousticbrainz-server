@@ -10,7 +10,7 @@ import zipfile
 from collections import defaultdict
 
 import six
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file, current_app
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
 
@@ -163,6 +163,11 @@ def _convert_dataset_to_csv_stringio(dataset):
 @datasets_bp.route("/<uuid:dataset_id>/download_dataset")
 def download_dataset(dataset_id):
     ds = get_dataset(dataset_id)
+    count = sum(map(lambda x: len(x.get("recordings", [])), ds["classes"]))
+    if count > current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"]:
+        flash.error("Downloading complete dataset is disabled for datasets with "
+                    "more than %d recordings." % current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"])
+        return redirect(url_for("dataset_bp.view", dataset_id=dataset_id))
     dataset_name = slugify(ds["name"])
     zip_file = generate_zip_from_dataset(ds)
     return send_file(zip_file,

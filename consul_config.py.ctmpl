@@ -53,3 +53,5 @@ FEATURE_EVAL_LOCATION = False
 
 RATELIMIT_PER_IP = {{template "KEY" "ratelimit_per_ip"}} # number of requests per ip
 RATELIMIT_WINDOW = {{template "KEY" "ratelimit_window"}} # window size in seconds
+
+DATASET_DOWNLOAD_RECORDINGS_LIMIT = 5000

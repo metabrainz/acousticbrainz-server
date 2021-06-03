@@ -167,7 +167,7 @@ def download_dataset(dataset_id):
     if count > current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"]:
         flash.error("Downloading complete dataset is disabled for datasets with "
                     "more than %d recordings." % current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"])
-        return redirect(url_for("dataset_bp.view", dataset_id=dataset_id))
+        return redirect(url_for(".view", dataset_id=dataset_id))
     dataset_name = slugify(ds["name"])
     zip_file = generate_zip_from_dataset(ds)
     return send_file(zip_file,

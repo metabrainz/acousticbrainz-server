@@ -15,7 +15,7 @@
   </button>
   <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
     <li><a href="{{ url_for('datasets.download_annotation_csv', dataset_id=dataset['id']) }}">Download metadata</a></li>
-    {% if dataset['classes']|map(attribute='recordings', default=[])|map('length')|sum < current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"] %}
+    {% if dataset['classes']|map(attribute='recordings', default=[])|map('length')|sum < config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"] %}
     <li><a href="{{ url_for('datasets.download_dataset', dataset_id=dataset['id']) }}">Download complete dataset</a></li>
     {% endif %}
   </ul>

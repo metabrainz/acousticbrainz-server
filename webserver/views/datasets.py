@@ -183,11 +183,9 @@ def generate_zip_from_dataset(ds):
 
     dataset_name = slugify(ds["name"])
     sio = StringIO.StringIO()
-    zipfp = zipfile.ZipFile(sio, "w")
+    zipfp = zipfile.ZipFile(sio, "w", allowZip64=True)
     for data in ds["classes"]:
         class_name = slugify(data["name"])
-        # TODO: Chunk this into blocks of ~100 in order to not request too much
-        #  data from the database at once
         CHUNK_SIZE = 100
         recordings = [(mbid, 0) for mbid in data.get("recordings", [])]
         chunks = [recordings[i: i + CHUNK_SIZE] for i in xrange(0, len(recordings), CHUNK_SIZE)]

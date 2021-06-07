@@ -7,6 +7,7 @@ import os
 import db
 import db.exceptions
 from flask import current_app
+from brainzutils import musicbrainz_db
 
 from sqlalchemy import text
 import sqlalchemy.exc
@@ -633,3 +634,89 @@ def write_replication_control(replication_seq):
                  VALUES (:replication_seq)
         """)
         connection.execute(query, {'replication_seq': replication_seq})
+
+
+def get_mbids_from_gid_redirect_tables_from_MB_db():
+    """Fetch mbids from recording gid redirect table of MusicBrainz
+    database over the direct connection and calls function
+    get_original_entity to get the redirected result.
+
+    Returns:
+        Dictionary containing the redirected original entity ids with MBIDs as keys.
+            - mbid: Recording mbids of the entities
+            - id: Original redirected ids of the entities after mbid redirect
+    """
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT gid
+              FROM musicbrainz.recording_gid_redirect
+        """)
+        result = connection.execute(query)
+        mbids = result.fetchall()
+
+        recording_mbids = []
+        for mbid in mbids:
+            recording_mbids.append(str(mbid[0]))
+        return recording_mbids
+
+
+def load_lowlevel_and_recording_data():
+    """Fetch data in which gid column value is present in both lowlevel
+    and musicbrainz.recording table from AcousticBrainz database.
+
+    Returns:
+        data (of type - sqlalchemy.resultproxy): data retrieved
+        from the lowlevel and recording table.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM lowlevel
+        INNER JOIN musicbrainz.recording
+                ON musicbrainz.recording.gid = lowlevel.gid
+             LIMIT 10000
+        """)
+        result = connection.execute(query)
+        data = result.fetchall()
+        return data
+
+
+def load_lowlevel_data():
+    """Fetch lowlevel data from AcousticBrainz database.
+
+    Returns:
+        lowlevel_data (of type - sqlalchemy.resultproxy): data retrieved
+        from lowlevel table.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM lowlevel
+             LIMIT 10000
+        """)
+        result = connection.execute(query)
+        lowlevel_data = result.fetchall()
+        return lowlevel_data
+
+
+def load_recording_data_from_MB_db(lowlevel_data):
+    """Fetch recording data from MusicBrainz database over the
+    direct connection whose gid matches with those in lowlevel
+    table in AB database.
+
+    Args:
+        lowlevel_data: list of gids of the data present in lowlevel table.
+
+    Returns:
+        rec_data (of type - sqlalchemy.resultproxy): data retrieved
+        from recording table of MusicBrainz database.
+    """
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM recording
+             WHERE recording.gid in :gids
+        """)
+        result = connection.execute(query, {"gids": tuple(lowlevel_data)})
+        rec_data = result.fetchall()
+        return rec_data

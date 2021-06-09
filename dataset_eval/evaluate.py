@@ -60,11 +60,15 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
+        # Passing more user preferences to train the model.
         logging.info("Training model...")
         results = gaia_wrapper.train_model(
             project_dir=eval_location,
             groundtruth_file=groundtruth_path,
             filelist_file=filelist_path,
+            c_values=eval_job["options"].get("c_values", []),
+            gamma_values=eval_job["options"].get("gamma_values", []),
+            preprocessing_values=eval_job["options"].get("preprocessing_values", []),
         )
         logging.info("Saving results...")
         save_history_file(storage_dir, results["history_path"], eval_job["id"])

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# AcousticBrainz rc.local
+# Enables a specific runit service depending on what the
+# CONTAINER_ROLE variable is set to
+
+# All services contain a name and an environment (e.g. acousticbrainz-web-prod).
+# Set DEPLOY_ENV to 'prod' or 'beta' to indicate this
+
+if [ "${CONTAINER_ROLE}" = "acousticbrainz-web-${DEPLOY_ENV}" ]
+then
+    rm -f /etc/service/uwsgi/down
+    exit 0
+fi
+
+if [ "${CONTAINER_ROLE}" = "acousticbrainz-hl-extractor-${DEPLOY_ENV}" ]
+then
+    rm -f /etc/service/hl_extractor/down
+    exit 0
+fi
+
+if [ "${CONTAINER_ROLE}" = "acousticbrainz-dataset-evaluator-${DEPLOY_ENV}" ]
+then
+    rm -f /etc/service/dataset_eval/down
+    exit 0
+fi
+
+if [ "${CONTAINER_ROLE}" = "acousticbrainz-cron-${DEPLOY_ENV}" ]
+then
+    rm -f /etc/service/cron/down
+    rm -f /etc/service/cron-config/down
+    exit 0
+fi
+
+echo "init script has no clue which service to start. Set env vars CONTAINER_ROLE and DEPLOY_ENV"
+exit 1

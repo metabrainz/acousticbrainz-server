@@ -1,6 +1,6 @@
 import db
 import db.exceptions
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 from db import dataset, user
 from utils import dataset_validator
 from sqlalchemy import text
@@ -9,7 +9,7 @@ import copy
 import mock
 
 
-class DatasetTestCase(DatabaseTestCase):
+class DatasetTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DatasetTestCase, self).setUp()
@@ -49,6 +49,24 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertIsNotNone(ds)
         self.assertEqual(len(ds["classes"][0]["recordings"]), 2)
         self.assertEqual(len(ds["classes"][1]["recordings"]), 3)
+
+    def test_create_from_dict_none_description(self):
+        bad_dict = copy.deepcopy(self.test_data)
+        bad_dict["description"] = None
+        bad_dict["classes"][1]["description"] = None
+        id = dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
+        ds = dataset.get(id)
+        self.assertEqual(ds["classes"][1]["description"], "")
+        self.assertEqual(ds["description"], "")
+
+    def test_create_from_dict_absence_description(self):
+        bad_dict = copy.deepcopy(self.test_data)
+        bad_dict.pop("description")
+        bad_dict["classes"][1].pop("description")
+        id = dataset.create_from_dict(bad_dict, author_id=self.test_user_id)
+        ds = dataset.get(id)
+        self.assertEqual(ds["classes"][1]["description"], "")
+        self.assertEqual(ds["description"], "")
 
     def test_create_from_dict_duplicates(self):
         bad_dict = copy.deepcopy(self.test_data)
@@ -383,7 +401,7 @@ class DatasetTestCase(DatabaseTestCase):
         self.assertFalse(resp)
 
 
-class GetPublicDatasetsTestCase(DatabaseTestCase):
+class GetPublicDatasetsTestCase(AcousticbrainzTestCase):
     """A whole testcase because there are lots of cases to test"""
 
     def setUp(self):
@@ -396,7 +414,7 @@ class GetPublicDatasetsTestCase(DatabaseTestCase):
             res = connection.execute(query, {"name": name})
             return res.fetchone()[0]
 
-    def _create_dataset(self, author_id, name, desc=None, public=True):
+    def _create_dataset(self, author_id, name, desc="", public=True):
         """Creates a dataset for an author with a name and returns its id"""
 
         dataset_id = str(uuid.uuid4())

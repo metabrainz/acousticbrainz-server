@@ -3,59 +3,15 @@
 {%- block content -%}
   <h2 class="page-title">AcousticBrainz data</h2>
   <p><ul>
-      <li><a href="#getting-data">Getting data</a>
-      <li><a href="#highlevel-data">Highlevel data and datasets</a>
+      <li><a href="#api-reference">API Reference</a>
+    <li><a href="#highlevel-data">Highlevel data and datasets</a>
       <li><a href="#sample-data">Sample data</a>
   </ul></p>
-  <p>
-    Before diving into the API details, please have a look at the
-    <a href="#sample-data">sample data</a> below.
-  </p>
 
-  <a name="getting-data"></a>
-  <h3>Getting data</h3>
-  <p>
-    To fetch the JSON documents for a given MusicBrainz recording ID, you can
-    construct the following endpoints for low-level and high-level:
-  </p>
-<pre>
-   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/low-level
-   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/high-level
-</pre>
-  <p><em>Examples:</em></p>
-<pre>
-   GET <a href="https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/low-level">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/low-level</a>
-   GET <a href="https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/high-level">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/high-level</a>
-</pre>
-  <p>
-    You can find out how many low-level documents we have for a given recording
-    using the following endpoint:
-  </p>
-<pre>
-   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/count
-</pre>
-  <p><em>Example:</em></p>
-<pre>
-   GET <a href="https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/count">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/count</a>
-</pre>
-  <p>If there's more than one document, you can specify a number argument <em>n</em>:</p>
-<pre>
-   GET https://acousticbrainz.org/api/v1/&lt;MBID&gt;/low-level?n=1
-</pre>
-  <p>Documents are counted from 0 to count-1.</p>
-  <p><em>Example:</em></p>
-<pre>
-   GET <a href="https://acousticbrainz.org/96685213-a25c-4678-9a13-abd9ec81cf35/low-level?n=1">https://acousticbrainz.org/api/v1/96685213-a25c-4678-9a13-abd9ec81cf35/low-level?n=1</a>
-</pre>
-
-  <h3>Submitting data</h3>
-  <p>The submit API endpoint is:</p>
-<pre>
-   POST https://acousticbrainz.org/api/v1/&lt;MBID&gt;/low-level
-</pre>
-  <p>
-    It expects a JSON payload, containing the output of a feature extractor
-    (see <a href="{{ url_for('index.contribute') }}">the contribute page</a>).
+  <a name="api-reference"></a>
+  <h3>API Reference</h3>
+  <p>Data in AcousticBrainz can be read using our API. 
+    <a href="https://acousticbrainz.readthedocs.io">The API reference can be found here.</a>
   </p>
 
   <a name="highlevel-data"></a>

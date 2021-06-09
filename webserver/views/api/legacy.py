@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from flask import Blueprint, request, jsonify
+from brainzutils.ratelimit import ratelimit
 from db.data import count_lowlevel, submit_low_level_data
 from db.exceptions import NoDataFoundException, BadDataException
 from webserver.decorators import crossdomain
@@ -11,9 +12,11 @@ import uuid
 api_legacy_bp = Blueprint('api', __name__)
 
 
-@api_legacy_bp.route("/<uuid:mbid>/count", methods=["GET"])
+@api_legacy_bp.route("/<uuid(strict=False):mbid>/count", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def count(mbid):
+    mbid, offset = _validate_data_arguments(str(mbid), None)
     return jsonify({
         'mbid': mbid,
         'count': count_lowlevel(mbid),
@@ -22,6 +25,7 @@ def count(mbid):
 
 @api_legacy_bp.route("/<string:mbid>/low-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_low_level(mbid):
     """Endpoint for fetching low-level data.
     If there is more than one document with the same mbid, you can specify
@@ -37,6 +41,7 @@ def get_low_level(mbid):
 
 @api_legacy_bp.route("/<string:mbid>/high-level", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_high_level(mbid):
     """Endpoint for fetching high-level data.
     If there is more than one document with the same mbid, you can specify
@@ -71,7 +76,7 @@ def _validate_data_arguments(mbid, offset):
     If the offset is None, return 0, otherwise interpret it as a number. If it is
     not a number, raise 400."""
     try:
-        uuid.UUID(mbid)
+        mbid = str(uuid.UUID(mbid))
     except ValueError:
         # an invalid uuid is 404
         raise exceptions.APINotFound("Not found")

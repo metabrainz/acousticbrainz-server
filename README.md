@@ -10,33 +10,64 @@ Please report issues here: http://tickets.musicbrainz.org/browse/AB
 
 ### Docker
 
-You can use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server. Make sure docker and docker-compose are installed.
-Then copy two config files:
+We use [docker](https://www.docker.com/) and [docker-compose](https://docs.docker.com/compose/) to run the AcousticBrainz server.
+Ensure that you have these tools installed, [following the installation instructions](https://docs.docker.com/engine/install/).
 
-1. `config.py.example` to `config.py`, you'll need to add your custom configs to this file.
+### Configuration
+
+Copy the following two configuration files:
+
+1. `config.py.example` to `config.py`
 2. `profile.conf.in.sample` to `profile.conf.in` in the `./hl_extractor/` directory
   In `profile.conf.in` you need to set the `models_essentia_git_sha` value.
   Unless you know what you are doing, this value should be **v2.1_beta1**
 
 #### Running `docker-compose` commands
 
-For convenience, we provide a script `develop.sh` which does the same as running:
+For convenience, we provide a script `develop.sh` which calls `docker-compose`. We also have some additional
+subcommands for commonly used commands. Some of these subcommands take no arguments:
 
-    docker-compose -f docker/docker-compose.yml -p acousticbrainz-server <args>
+    ./develop.sh bash   # open a bash shell in a new container in the webserver service
+    ./develop.sh psql   # run psql, connecting to the database
+    ./develop.sh shell  # run a flask shell in ipython
 
-Then, in order to download all the software and build and start the containers needed to run AcousticBrainz, use the following command:
+And some subcommands take arguments, passing them to the underlying program:
 
-#### Build
+    ./develop.sh npm    # run npm in a new container in the webserver service
+    ./develop.sh manage # run python manage.py in a new container in the webserver service
+    ./develop.sh ...    # run docker-compose
 
-    ./develop.sh up --build
+If you want to run `docker-compose` yourself you are welcome to do so, however keep in
+mind that we call it in the following way, to standardise the project name:
 
-The first time you install acousticbrainz, you will need to initialize the AcousticBrainz database:
+    docker-compose -f docker/docker-compose.dev.yml -p acousticbrainz-server <args>
 
-    ./develop.sh run --rm  webserver python2 manage.py init_db
+### Build and initial configuration
+
+Build the docker containers needed for AcousticBrainz by running the following:
+
+    ./develop.sh build
+
+### Running 
+
+Start the webserver and other required services with:
+
+    ./develop.sh up
+
+The first time you install AcousticBrainz, you will need to initialize the AcousticBrainz database.
+Run in a separate terminal:
+
+    ./develop.sh manage init_db
+    
+You will be able to view your local AcousticBrainz server at http://localhost:8080
+
+## Development notes
+
+### Database
 
 In order to load a psql session, use the following command:
 
-    ./develop.sh run --rm db psql -U acousticbrainz -h db
+    ./develop.sh psql
 
 ### Setup the MusicBrainz Server
 
@@ -117,23 +148,24 @@ Full installation instructions are available in [INSTALL.md](https://github.com/
 
 ### Building static files
 
-We use Gulp as our JavaScript/CSS build system.
+We use webpack as our JavaScript/CSS build system.
 
-#### First-time installation
+#### First-time npm setup
 For development, the first time that you install acousticbrainz you must install
 node packages in your local directory.
 
-    ./develop.sh run --rm --user `id -u`:`id -g` -e HOME=/tmp webserver npm install
+    ./develop.sh npm install
 
 This has the effect of creating a `node_modules` directory in your local code checkout.
-The `--user` and `-e` flags are needed on a Linux host to make this directory owned
-by your local user.
 
-To build stylesheets and javascript bundles, run gulp:
+To build stylesheets and javascript bundles, run webpack:
 
-    ./develop.sh run --rm webserver ./node_modules/.bin/gulp
+    ./develop.sh npm run build:dev
 
-*You will need to rebuild static files after you modify JavaScript or CSS.*
+You will need to rebuild static files after you modify JavaScript or CSS. If you want to rebuild
+these source files as you change them then you can run webpack in watch mode:
+
+    ./develop.sh npm run build:watch
 
 ### Login
 
@@ -154,7 +186,7 @@ to log in.
 
 Once you have logged in, you can make your user an admin, by running
 
-    ./develop.sh run --rm webserver python2 manage.py add_admin <your user>
+    ./develop.sh manage add_admin <your user>
 
 You should now be able to access the admin section at http://localhost:8080/admin
 
@@ -198,24 +230,24 @@ format. Both ways support incremental dumping.
 
 **Full database dump:**
 
-    ./develop.sh run --rm webserver python2 manage.py dump full_db
+    ./develop.sh manage dump full_db
 
 **JSON dump:**
 
-    ./develop.sh run --rm webserver python2 manage.py dump json
+    ./develop.sh manage dump json
 
 *Creates two separate full JSON dumps with low-level and high-level data.*
 
 **Incremental dumps:**
 
-    ./develop.sh run --rm webserver python2 manage.py dump incremental
+    ./develop.sh manage dump incremental
 
 *Creates new incremental dump in three different formats: usual database dump,
 low-level and high-level JSON.*
 
 **Previous incremental dumps:**
 
-    ./develop.sh run --rm webserver python2 manage.py dump incremental --id 42
+    ./develop.sh manage dump incremental --id 42
 
 *Same as another one, but recreates previously created incremental dump.*
 
@@ -227,7 +259,7 @@ Before commiting new code or making a pull request, run the unit tests on your c
 
     ./test.sh
 
-This will start a set of docker containers separate to your development environment,
+This will start a set of docker containers separate from your development environment,
 run the tests, and then stop and remove the containers. To run tests more rapidly
 without having to bring up and take down containers all the time, you can run
 each step individually. To bring up containers in the background:

@@ -1,0 +1,5 @@
+# Compute stats, 5 minutes past midnight
+5 0 * * * acousticbrainz /usr/local/bin/python /code/manage.py compute_stats
+
+# Cache stats, every 10 minutes
+*/10 * * * * acousticbrainz /usr/local/bin/python /code/manage.py cache_stats

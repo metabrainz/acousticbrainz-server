@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user
 from webserver.decorators import auth_required
 from webserver.views.api import exceptions as api_exceptions
+from brainzutils.ratelimit import ratelimit
 import db.dataset
 import db.exceptions
 from utils import dataset_validator
@@ -19,6 +20,7 @@ def get_dataset(dataset_id):
     return jsonify(get_check_dataset(dataset_id))
 
 
+# don't ratelimit this function, since it is called from our JS
 @bp_datasets.route("/", methods=["POST"])
 @auth_required
 def create_dataset():
@@ -75,7 +77,7 @@ def create_dataset():
     try:
         dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     return jsonify(
         success=True,
@@ -85,11 +87,10 @@ def create_dataset():
 
 @bp_datasets.route("/<uuid:dataset_id>", methods=["DELETE"])
 @auth_required
+@ratelimit()
 def delete_dataset(dataset_id):
     """Delete a dataset."""
-    ds = get_dataset(dataset_id)
-    if ds["author"] != current_user.id:
-        raise api_exceptions.APIUnauthorized("You can't delete this dataset.")
+    ds = get_check_dataset(dataset_id, write=True)
     db.dataset.delete(ds["id"])
     return jsonify(
         success=True,
@@ -99,6 +100,7 @@ def delete_dataset(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>", methods=["PUT"])
 @auth_required
+@ratelimit()
 def update_dataset_details(dataset_id):
     """Update dataset details.
 
@@ -127,7 +129,7 @@ def update_dataset_details(dataset_id):
     try:
         dataset_validator.validate_dataset_update(dataset_data)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     db.dataset.update_dataset_meta(ds["id"], dataset_data)
     return jsonify(
@@ -138,6 +140,7 @@ def update_dataset_details(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["POST"])
 @auth_required
+@ratelimit()
 def add_class(dataset_id):
     """Add a class to a dataset.
 
@@ -172,7 +175,7 @@ def add_class(dataset_id):
     try:
         dataset_validator.validate_class(class_dict, recordings_required=False)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     if "recordings" in class_dict:
         unique_mbids = list(set(class_dict["recordings"]))
@@ -187,6 +190,7 @@ def add_class(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["PUT"])
 @auth_required
+@ratelimit()
 def update_class(dataset_id):
     """Update class in a dataset.
 
@@ -214,7 +218,7 @@ def update_class(dataset_id):
     try:
         dataset_validator.validate_class_update(class_data)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     try:
         db.dataset.update_class(ds["id"], class_data["name"], class_data)
@@ -232,6 +236,7 @@ def update_class(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/classes", methods=["DELETE"])
 @auth_required
+@ratelimit()
 def delete_class(dataset_id):
     """Delete class and all of its recordings from a dataset.
 
@@ -254,7 +259,7 @@ def delete_class(dataset_id):
     try:
         dataset_validator.validate_class(class_dict, recordings_required=False)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     db.dataset.delete_class(ds["id"], class_dict)
     return jsonify(
@@ -265,6 +270,7 @@ def delete_class(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["PUT"])
 @auth_required
+@ratelimit()
 def add_recordings(dataset_id):
     """Add recordings to a class in a dataset.
 
@@ -288,7 +294,7 @@ def add_recordings(dataset_id):
     try:
         dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids
@@ -309,6 +315,7 @@ def add_recordings(dataset_id):
 
 @bp_datasets.route("/<uuid:dataset_id>/recordings", methods=["DELETE"])
 @auth_required
+@ratelimit()
 def delete_recordings(dataset_id):
     """Delete recordings from a class in a dataset.
 
@@ -332,7 +339,7 @@ def delete_recordings(dataset_id):
     try:
         dataset_validator.validate_recordings_add_delete(class_dict)
     except dataset_validator.ValidationException as e:
-        raise api_exceptions.APIBadRequest(str(e))
+        raise api_exceptions.APIBadRequest(e.error)
 
     unique_mbids = list(set(class_dict["recordings"]))
     class_dict["recordings"] = unique_mbids

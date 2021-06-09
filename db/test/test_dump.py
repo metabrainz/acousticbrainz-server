@@ -1,12 +1,15 @@
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 from db import dump
+from db.dump import _TABLES
+
+import os
 import os.path
 import tempfile
 import shutil
 import unittest
 
 
-class DatabaseDumpTestCase(DatabaseTestCase):
+class DatabaseDumpTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DatabaseDumpTestCase, self).setUp()
@@ -21,13 +24,18 @@ class DatabaseDumpTestCase(DatabaseTestCase):
         self.assertTrue(os.path.isfile(path))
 
     def test_import_db_dump(self):
+        id1 = dump._create_new_inc_dump_record()[0]
         path = dump.dump_db(self.temp_dir)
         self.reset_db()
-        dump.import_db_dump(path)
+        dump.import_db_dump(path, _TABLES)
+        self.assertEqual(dump.list_incremental_dumps()[0][0], id1)
+        id2 = dump._create_new_inc_dump_record()[0]
+        self.assertGreater(id2, id1)
 
     def test_dump_lowlevel_json(self):
         path = dump.dump_lowlevel_json(self.temp_dir)
-        self.assertTrue(os.path.isfile(path))
+        for f in os.listdir(path):
+            self.assertTrue(os.path.isfile(os.path.join(path, f)))
 
     @unittest.skip
     def test_dump_highlevel_json(self):

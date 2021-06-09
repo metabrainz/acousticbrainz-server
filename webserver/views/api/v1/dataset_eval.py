@@ -3,12 +3,14 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user
 from webserver.decorators import auth_required
 from webserver.views.api import exceptions
+from brainzutils.ratelimit import ratelimit
 import db.dataset_eval
 import db.dataset
 from webserver.views.api.v1 import datasets
 
 bp_dataset_eval = Blueprint('api_v1_dataset_eval', __name__)
 
+# Don't ratelimit this view since it is being used by JS
 @bp_dataset_eval.route("/jobs", methods=["GET"])
 @auth_required
 def get_jobs():
@@ -53,6 +55,7 @@ def get_jobs():
 
 @bp_dataset_eval.route("/jobs/<uuid:job_id>", methods=["GET"])
 @auth_required
+@ratelimit()
 def job_details(job_id):
     """Returns the details of a particular job.
        API key argument is required.
@@ -114,4 +117,3 @@ def job_details(job_id):
 
     job['dataset'] = datasets.get_check_dataset(job['dataset_id'])
     return jsonify(job)
-

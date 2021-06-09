@@ -1,67 +1,54 @@
 from __future__ import print_function
 
 from brainzutils.flask import CustomFlask
+from brainzutils.ratelimit import set_rate_limits, inject_x_rate_headers
 from flask import request, url_for, redirect
 from flask_login import current_user
+from pprint import pprint
 
 import os
-import pprint
-import sys
 import time
+import urlparse
 
 API_PREFIX = '/api/'
-
 
 # Check to see if we're running under a docker deployment. If so, don't second guess
 # the config file setup and just wait for the correct configuration to be generated.
 deploy_env = os.environ.get('DEPLOY_ENV', '')
 CONSUL_CONFIG_FILE_RETRY_COUNT = 10
 
+
 def create_app_flaskgroup(script_info):
     """Factory function that accepts script_info and creates a Flask application"""
-    return create_app()
+    return create_app(debug=True)
 
 
-def create_app_with_configuration(config_path=None):
-    """Create a Flask application and load all configuration files"""
+def load_config(app):
+    """Load configuration file for specified Flask app"""
+    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
+    if deploy_env:
+        for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
+            if not os.path.exists(config_file):
+                time.sleep(1)
 
+        if not os.path.exists(config_file):
+            print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
+
+    app.config.from_pyfile(config_file)
+
+    if deploy_env:
+        print('Config file loaded!')
+        pprint(dict(app.config))
+
+
+def create_app(debug=None):
     app = CustomFlask(
         import_name=__name__,
         use_flask_uuid=True,
     )
 
     # Configuration
-
-    # if deploying in a production docker environment, load consul_config.py
-    if deploy_env and not config_path:
-        consul_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "consul_config.py")
-        print("Checking if consul generated config file exists: %s" % consul_config)
-        for _ in range(CONSUL_CONFIG_FILE_RETRY_COUNT):
-            if not os.path.exists(consul_config):
-                time.sleep(1)
-
-        if not os.path.exists(consul_config):
-            print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
-            sys.exit(-1)
-
-        print('Loading consul_config.py...')
-        app.config.from_pyfile(consul_config)
-        return app
-
-    print('Loading config.py...')
-    config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "config.py")
-    app.config.from_pyfile(config_file)
-
-    if config_path:
-        app.config.from_pyfile(config_path, silent=True)
-
-    return app
-
-
-def create_app(debug=None, config_path=None):
-    app = create_app_with_configuration(config_path)
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(app.config)
+    load_config(app)
 
     if debug is not None:
         app.debug = debug
@@ -70,8 +57,9 @@ def create_app(debug=None, config_path=None):
         app.init_debug_toolbar()
 
     # Logging
-    from webserver.loggers import init_loggers
-    init_loggers(app) # TODO: use CustomFlask.init_loggers here instead
+    app.init_loggers(file_config=app.config.get('LOG_FILE'),
+                     sentry_config=app.config.get('LOG_SENTRY')
+                     )
 
     # Database connection
     from db import init_db_engine
@@ -96,11 +84,16 @@ def create_app(debug=None, config_path=None):
             namespace=app.config['REDIS_NAMESPACE'],
             ns_versions_loc=app.config['REDIS_NS_VERSIONS_LOCATION'])
     else:
-        raise Exception('One or more redis cache configuration options are missing from custom_config.py')
+        raise Exception('One or more redis cache configuration options are missing from config.py')
 
-    # Extensions
-    from flask_uuid import FlaskUUID
-    FlaskUUID(app)
+    # Add rate limiting support
+    @app.after_request
+    def after_request_callbacks(response):
+        return inject_x_rate_headers(response)
+
+    # check for ratelimit config values and set them if present
+    if 'RATELIMIT_PER_IP' in app.config and 'RATELIMIT_WINDOW' in app.config:
+        set_rate_limits(app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_PER_IP'], app.config['RATELIMIT_WINDOW'])
 
     # MusicBrainz
     import musicbrainzngs
@@ -121,14 +114,19 @@ def create_app(debug=None, config_path=None):
 
     # Static files
     import static_manager
-    static_manager.read_manifest()
 
     # Template utilities
     app.jinja_env.add_extension('jinja2.ext.do')
     from webserver import utils
     app.jinja_env.filters['date'] = utils.reformat_date
     app.jinja_env.filters['datetime'] = utils.reformat_datetime
-    app.context_processor(lambda: dict(get_static_path=static_manager.get_static_path))
+    # During development, built js and css assets don't have a hash, but in production we use
+    # a manifest to map a name to name.hash.extension for caching/cache busting
+    if app.debug:
+        app.context_processor(lambda: dict(get_static_path=static_manager.development_get_static_path))
+    else:
+        static_manager.read_manifest()
+        app.context_processor(lambda: dict(get_static_path=static_manager.manifest_get_static_path))
 
     _register_blueprints(app)
 
@@ -138,7 +136,19 @@ def create_app(debug=None, config_path=None):
     admin = Admin(app, index_view=admin_views.HomeView(name='Admin'))
     admin.add_view(admin_views.AdminsView(name='Admins'))
 
-    @ app.before_request
+    @app.before_request
+    def prod_https_login_redirect():
+        """ Redirect to HTTPS in production except for the API endpoints
+        """
+        if urlparse.urlsplit(request.url).scheme == 'http' \
+                and app.config['DEBUG'] == False \
+                and app.config['TESTING'] == False \
+                and request.blueprint not in ('api', 'api_v1_core', 'api_v1_datasets', 'api_v1_dataset_eval'):
+            url = request.url[7:] # remove http:// from url
+            return redirect('https://{}'.format(url), 301)
+
+
+    @app.before_request
     def before_request_gdpr_check():
         # skip certain pages, static content and the API
         if request.path == url_for('index.gdpr_notice') \
@@ -162,7 +172,7 @@ def create_app_sphinx():
     that we use, so we have to ignore these initialization steps. Only
     blueprints/views are needed to build documentation.
     """
-    app = CustomFlask(import_name=__name__)
+    app = CustomFlask(import_name=__name__, use_flask_uuid=True)
     _register_blueprints(app)
     return app
 

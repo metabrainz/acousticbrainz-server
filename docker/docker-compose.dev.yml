@@ -1,24 +1,35 @@
 # Docker Compose file for development
-version: "2"
+version: "3.4"
+
+volumes:
+  postgres:
+  # root home dir in the postgres container to hold psql history
+  postgreshome:
+  # root home dir in the webserver container to hold ipython history
+  webhome:
+
 services:
 
   db:
-    image: postgres:9.5.4
+    image: postgres:10.5
     volumes:
-      - ../data/pgdata:/var/lib/postgresql/data/pgdata
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
+      - postgres:/var/lib/postgresql/data
+      - postgreshome:/root
     ports:
       - "15432:5432"
 
   webserver:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
-    command: python manage.py runserver
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
+    environment:
+      FLASK_APP: webserver
+      FLASK_ENV: development
+    command: flask run -h 0.0.0.0 -p 8080
     volumes:
       - ../:/code
-      - ../data/app:/data
+      - webhome:/root
     ports:
       - "8080:8080"
     depends_on:
@@ -42,17 +53,22 @@ services:
   hl_extractor:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
     command: python2 worker_manage.py hl_extractor
+    volumes:
+      - ../:/code
     depends_on:
       - db
 
   dataset_evaluator:
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile.dev
+      dockerfile: Dockerfile
+      target: acousticbrainz-dev
     command: python2 worker_manage.py dataset_evaluator
     volumes:
+      - ../:/code
       - ../data/datasets:/data/datasets
       - ../data/files:/data/files
     depends_on:

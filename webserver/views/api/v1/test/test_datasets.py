@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from werkzeug.exceptions import InternalServerError
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
 import webserver.views.api
 import db.exceptions
 import flask
@@ -15,7 +15,7 @@ import mock
 import uuid
 
 
-class GetCheckDatasetTestCase(ServerTestCase):
+class GetCheckDatasetTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(GetCheckDatasetTestCase, self).setUp()
@@ -33,7 +33,7 @@ class GetCheckDatasetTestCase(ServerTestCase):
     @contextmanager
     def context(self):
         with self.create_app().app_context():
-            flask.session["user_id"] = self.test_user_id
+            flask.session["_user_id"] = self.test_user_id
             flask.session["_fresh"] = True
             yield
 
@@ -114,7 +114,7 @@ class GetCheckDatasetTestCase(ServerTestCase):
             self.assertDictEqual(dataset, {"id": "d0d11ad2-df0d-4689-8b71-b041905d7893", "public": True, "author": 1})
 
 
-class APIDatasetViewsTestCase(ServerTestCase):
+class APIDatasetViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(APIDatasetViewsTestCase, self).setUp()
@@ -239,7 +239,7 @@ class APIDatasetViewsTestCase(ServerTestCase):
         resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         self.assertEqual(resp.status_code, 404)
-        expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
+        expected_result = {"message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."}
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch("db.dataset.get")
@@ -255,6 +255,39 @@ class APIDatasetViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 500)
         expected_result = {"message": "An unknown error occurred"}
         self.assertEqual(resp.json, expected_result)
+
+    @mock.patch("db.dataset.get")
+    @mock.patch("db.dataset.delete")
+    def test_delete_dataset(self, dataset_delete, dataset_get):
+        dsid = "e01f7638-3902-4bd4-afda-ac73d240a4b3"
+
+        # Not logged in
+        url = "/api/v1/datasets/%s" % (dsid,)
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, 401)
+        dataset_get.assert_not_called()
+        dataset_delete.assert_not_called()
+
+        # Logged in, different user
+        def get(id):
+            return {"id": dsid, "public": False, "author": self.test_user_id + 1}
+        dataset_get.side_effect = get
+        self.temporary_login(self.test_user_id)
+        url = "/api/v1/datasets/%s" % (dsid,)
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, 401)
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        dataset_delete.assert_not_called()
+
+        # Correct user
+        def get(id):
+            return {"id": dsid, "public": False, "author": self.test_user_id}
+        dataset_get.side_effect = get
+        url = "/api/v1/datasets/%s" % (dsid,)
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, 200)
+        dataset_get.assert_called_with(uuid.UUID(dsid))
+        dataset_delete.assert_called_with(dsid)
 
     @mock.patch("db.dataset.add_class")
     @mock.patch("db.dataset.get")

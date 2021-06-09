@@ -94,7 +94,7 @@ def init_db(archive, force, skip_create_db=False):
     current_app.logger.info("Done!")
 
 
-@cli.command(name='import_data')
+@cli.command(name='init_mb_db')
 @click.option("--drop-constraints", "-d", is_flag=True, help="Drop primary and foreign keys before importing.")
 @click.option("--force", "-f", is_flag=True, help="Drop existing MusicBrainz schema and tables.")
 def init_mb_db(force):

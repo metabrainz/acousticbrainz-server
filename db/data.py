@@ -1057,7 +1057,7 @@ def load_recording_data_from_MB_db(lowlevel_data):
     Args:
         lowlevel_data: list of gids of the data present in lowlevel table.
 
-    Returns:
+    Returns:0
         rec_data (of type - sqlalchemy.resultproxy): data retrieved
         from recording table of MusicBrainz database.
     """

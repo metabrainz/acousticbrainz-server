@@ -1420,12 +1420,13 @@ def write_language(connection, MB_language_data):
                  ON CONFLICT (iso_code_2b) DO NOTHING
     """)
     values = [{
-        "iso_code_2t": value[0],
-        "iso_code_2b": value[1],
-        "iso_code_1": value[2],
-        "name": value[3],
-        "frequency": value[4],
-        "iso_code_3": value[5]} for value in MB_language_data
+        "id": value[0],
+        "iso_code_2t": value[1],
+        "iso_code_2b": value[2],
+        "iso_code_1": value[3],
+        "name": value[4],
+        "frequency": value[5],
+        "iso_code_3": value[6]} for value in MB_language_data
     ]
     connection.execute(language_query, values)
     logging.info('Inserted %d rows in language table!' % len(MB_language_data))

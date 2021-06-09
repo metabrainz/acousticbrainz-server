@@ -121,12 +121,13 @@ def init_mb_db(drop_constraints, force):
     print('Creating MusicBrainz tables...')
     db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_tables.sql'))
 
-    print('Creating MusicBrainz primary and foreign keys...')
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_primary_keys.sql'))
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_foreign_keys.sql'))
+    if not drop_constraints:
+        print('Creating MusicBrainz primary and foreign keys...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_primary_keys.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_foreign_keys.sql'))
 
-    print('Creating MusicBrainz indexes...')
-    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_indexes.sql'))
+        print('Creating MusicBrainz indexes...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_indexes.sql'))
 
     print("Done!")
 

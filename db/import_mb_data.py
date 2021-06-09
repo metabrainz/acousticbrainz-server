@@ -1416,7 +1416,7 @@ def write_language(connection, MB_language_data):
     """
     language_query = text("""
         INSERT INTO musicbrainz.language
-             VALUES (:iso_code_2t, :iso_code_2b, :iso_code_1, :name, :frequency, :iso_code_3)
+             VALUES (:id, :iso_code_2t, :iso_code_2b, :iso_code_1, :name, :frequency, :iso_code_3)
                  ON CONFLICT (iso_code_2b) DO NOTHING
     """)
     values = [{

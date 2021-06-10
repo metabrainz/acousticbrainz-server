@@ -318,21 +318,27 @@ def apply_replication_changes():
     musicbrainz_importer.apply_replication_changes.main()
 
 
-@cli.command()
+@cli.command(help="Time imported data from AB first, then time data by directly accessing AB and MB")
 def evaluate_access_methods():
     print('Evaluating both MusicBrainz database access methods...')
     webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported()
     webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct()
 
 
-@cli.command()
+@cli.command(help="Time imported data from AB")
 def evaluate_import():
     webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported()
 
 
-@cli.command()
+@cli.command(help="Time data by directly accessing AB and MB")
 def evaluate_direct():
     webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct()
+
+
+@cli.command(help="Time data by directly accessing but only AB")
+def evaluate_direct_AB_only():
+    webserver.external.evaluate_mbdatabase_access.get_AB_only_direct()
+
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

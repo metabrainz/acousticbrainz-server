@@ -1070,3 +1070,26 @@ def load_recording_data_from_MB_db(lowlevel_data):
         result = connection.execute(query, {"gids": tuple(lowlevel_data)})
         rec_data = result.fetchall()
         return rec_data
+
+
+def load_recording_data_from_AB_db(lowlevel_data):
+    """Fetch recording data from MusicBrainz database over the
+    direct connection whose gid matches with those in lowlevel
+    table in AB database.
+
+    Args:
+        lowlevel_data: list of gids of the data present in lowlevel table.
+
+    Returns:0
+        rec_data (of type - sqlalchemy.resultproxy): data retrieved
+        from recording table of MusicBrainz database.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM musicbrainz.recording
+             WHERE musicbrainz.recording.gid in :gids
+        """)
+        result = connection.execute(query, {"gids": tuple(lowlevel_data)})
+        rec_data = result.fetchall()
+        return rec_data

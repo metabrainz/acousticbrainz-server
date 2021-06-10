@@ -321,7 +321,18 @@ def apply_replication_changes():
 @cli.command()
 def evaluate_access_methods():
     print('Evaluating both MusicBrainz database access methods...')
-    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_tables_data()
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported()
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct()
+
+
+@cli.command()
+def evaluate_import():
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported()
+
+
+@cli.command()
+def evaluate_direct():
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct()
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

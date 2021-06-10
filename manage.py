@@ -340,6 +340,11 @@ def evaluate_direct_AB_only():
     webserver.external.evaluate_mbdatabase_access.get_AB_only_direct()
 
 
+@cli.command(help="Time data by importing but using exists clause")
+def evaluate_import_exists():
+    webserver.external.evaluate_mbdatabase_access.get_AB_only_direct()
+
+
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")
 

@@ -43,3 +43,14 @@ def get_AB_only_direct():
 
     second_time_taken = time.time() - start_time
     logging.info('Data imported from direct connection to MusicBrainz database in %.2f seconds.' % second_time_taken)
+
+
+def get_AB_and_MB_imported_with_exists():
+    # Testing with both AcousticBrainz & MusicBrainz database tables (the direct connection method).
+    logging.info("Querying directly from AcousticBrainz database for import MB database method using EXISTS clause...")
+    start_time = time.time()
+
+    data = db.data.load_lowlevel_and_recording_data_using_exists()
+
+    second_time_taken = time.time() - start_time
+    logging.info('Data imported from direct connection to MusicBrainz database in %.2f seconds.' % second_time_taken)

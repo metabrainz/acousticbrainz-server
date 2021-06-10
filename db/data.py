@@ -1093,3 +1093,27 @@ def load_recording_data_from_AB_db(lowlevel_data):
         result = connection.execute(query, {"gids": tuple(lowlevel_data)})
         rec_data = result.fetchall()
         return rec_data
+
+
+def load_lowlevel_and_recording_data_using_exists():
+    """Fetch data in which gid column value is present in both lowlevel
+    and musicbrainz.recording table from AcousticBrainz database.
+
+    Returns:
+        data (of type - sqlalchemy.resultproxy): data retrieved
+        from the lowlevel and recording table.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+            FROM lowlevel
+            WHERE EXISTS (
+                SELECT musicbrainz.recording.gid 
+                FROM musicbrainz.recording
+                WHERE musicbrainz.recording.gid = lowlevel.gid
+            )
+            LIMIT 10000
+        """)
+        result = connection.execute(query)
+        data = result.fetchall()
+        return data

@@ -344,6 +344,23 @@ def evaluate_direct_AB_only():
 def evaluate_import_exists():
     webserver.external.evaluate_mbdatabase_access.get_AB_only_direct()
 
+@cli.command(help="Time imported data from AB using given dataset")
+@click.argument("dataset", required=True)
+def evaluate_import_dataset(dataset):
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported_from_dataset(dataset)
+
+
+@cli.command(help="Time data by directly accessing AB and MB using given dataset")
+@click.argument("dataset", required=True)
+def evaluate_direct_dataset(dataset):
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct_from_dataset(dataset)
+
+
+@cli.command(help="Time data by directly accessing but only AB using given dataset")
+@click.argument("dataset", required=True)
+def evaluate_direct_AB_only_dataset(dataset):
+    webserver.external.evaluate_mbdatabase_access.get_AB_only_direct_from_dataset(dataset)
+
 
 # Please keep additional sets of commands down there
 cli.add_command(db.dump_manage.cli, name="dump")

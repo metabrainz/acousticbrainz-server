@@ -1117,3 +1117,39 @@ def load_lowlevel_and_recording_data_using_exists():
         result = connection.execute(query)
         data = result.fetchall()
         return data
+
+def load_lowlevel_data_from_dataset(dataset_id):
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT lowlevel.*, musicbrainz.recording.*
+              FROM lowlevel
+        INNER JOIN musicbrainz.recording
+                ON musicbrainz.recording.gid = lowlevel.gid
+        INNER JOIN dataset_class_member
+                ON dataset_class_member.mbid = lowlevel.gid
+        INNER JOIN dataset_class
+                ON dataset_class.id = dataset_class_member.class 
+        INNER JOIN dataset 
+                ON dataset.id = dataset_class.dataset 
+             WHERE dataset.id = :id
+             LIMIT 10000
+        """)
+        result = connection.execute(query, {"id": dataset_id})
+        data = result.fetchall()
+        return data
+
+def get_all_recordings_in_dataset(dataset_id):
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM dataset_class_member
+        INNER JOIN dataset_class
+                ON dataset_class.id = dataset_class_member.class 
+        INNER JOIN dataset 
+                ON dataset.id = dataset_class.dataset 
+             WHERE dataset.id = :id
+             LIMIT 10000
+        """)
+        result = connection.execute(query, {"id": dataset_id})
+        data = result.fetchall()
+        return data

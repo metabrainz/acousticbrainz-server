@@ -54,3 +54,42 @@ def get_AB_and_MB_imported_with_exists():
 
     second_time_taken = time.time() - start_time
     logging.info('Data imported from direct connection to MusicBrainz database in %.2f seconds.' % second_time_taken)
+
+
+def get_AB_and_MB_imported_from_dataset(dataset):
+    # Testing with the AcousticBrainz database tables (import MB db method).
+    logging.info("Querying directly from AcousticBrainz database for import MB database method...")
+    start_time = time.time()
+
+    data = db.data.load_lowlevel_data_from_dataset(dataset)
+
+    first_time_taken = time.time() - start_time
+    logging.info('Data imported from AcousticBrainz database in %.2f seconds.' % first_time_taken)
+
+
+def get_AB_and_MB_direct_from_dataset(dataset):
+    # Testing with both AcousticBrainz & MusicBrainz database tables (the direct connection method).
+    logging.info("Separate queries from AcousticBrainz and MusicBrainz databases over the direct connection...")
+    start_time = time.time()
+
+    lowlevel_data = db.data.get_all_recordings_in_dataset(dataset)
+    lowlevel_data = list({value['mbid'] for value in lowlevel_data})
+
+    recording_data = db.data.load_recording_data_from_MB_db(lowlevel_data)
+
+    second_time_taken = time.time() - start_time
+    logging.info('Data imported from direct connection to MusicBrainz database in %.2f seconds.' % second_time_taken)
+
+
+def get_AB_only_direct_from_dataset(dataset):
+    # Testing with both AcousticBrainz & MusicBrainz database tables (the direct connection method).
+    logging.info("Separate queries from AcousticBrainz and MusicBrainz databases over the direct connection...")
+    start_time = time.time()
+
+    lowlevel_data = db.data.get_all_recordings_in_dataset(dataset)
+    lowlevel_data = list({value['mbid'] for value in lowlevel_data})
+
+    recording_data = db.data.load_recording_data_from_AB_db(lowlevel_data)
+
+    second_time_taken = time.time() - start_time
+    logging.info('Data imported from direct connection to MusicBrainz database in %.2f seconds.' % second_time_taken)

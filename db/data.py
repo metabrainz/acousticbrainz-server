@@ -11,6 +11,10 @@ from sqlalchemy import text
 
 import db
 import db.exceptions
+from flask import current_app
+
+from brainzutils import musicbrainz_db
+
 
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
@@ -873,3 +877,279 @@ def get_summary_data(mbid, offset=0):
         pass
 
     return summary
+
+
+def get_new_recordings_from_lowlevel():
+    with db.engine.begin() as connection:
+        rows_to_fetch = current_app.config['RECORDINGS_FETCHED_PER_BATCH']
+
+        query = text("""SELECT lowlevel.gid
+                          FROM lowlevel
+                     LEFT JOIN musicbrainz.recording
+                            ON lowlevel.gid = musicbrainz.recording.gid
+                         WHERE musicbrainz.recording.gid is NULL
+                      ORDER BY lowlevel.id
+                         LIMIT :rows_to_fetch
+        """)
+        gids = connection.execute(query, {"rows_to_fetch": rows_to_fetch})
+        gids = gids.fetchall()
+        gids_in_AB = [value[0] for value in gids]
+
+        return gids_in_AB
+
+
+def get_mbids_from_gid_redirect_tables():
+    """Fetch mbids from recording gid redirect table and calls function
+    get_original_entity to get the redirected result.
+
+    Returns:
+        Dictionary containing the redirected original entity ids with MBIDs as keys.
+            - mbid: Recording mbids of the entities
+            - id: Original redirected ids of the entities after mbid redirect
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT gid
+              FROM musicbrainz.recording_gid_redirect
+        """)
+        result = connection.execute(query)
+        mbids = result.fetchall()
+
+        recording_mbids = []
+        for mbid in mbids:
+            recording_mbids.append(str(mbid[0]))
+        return recording_mbids
+
+
+def get_current_schema_and_replication_sequence():
+    """Fetch current schema sequence and current replication number
+    from the musicbrainz database.
+
+    Returns:
+        schema_seq: last schema sequence number.
+        mb_replication_seq: last updated replication sequence.
+    """
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT current_schema_sequence, current_replication_sequence
+              FROM replication_control
+        """)
+        result = connection.execute(query)
+        schema_seq, mb_replication_seq = result.fetchone()
+        return schema_seq, mb_replication_seq
+
+
+def get_replication_sequence_from_mb_schema():
+    """Fetch current replication sequence last updated in replication
+    control table in musicbrainz schema in AB database.
+
+    Returns:
+        sequence[0]: current replication sequence number from a sqlachemy
+        type object.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT current_replication_sequence
+              FROM musicbrainz.replication_control
+        """)
+        result = connection.execute(query)
+        sequence = result.fetchone()
+        return sequence[0]
+
+
+def update_replication_sequence(replication_seq):
+    """Store new replication sequence into replication_control table for future
+    updates and deletes from replication packets.
+
+    Args:
+        replication_seq: Current replication sequence to replace the old one.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            UPDATE musicbrainz.replication_control
+               SET current_replication_sequence = :replication_seq
+        """)
+        connection.execute(query, {'replication_seq': replication_seq})
+
+
+def write_replication_control(replication_seq):
+    """Insert first replication sequence into replication_control table.
+
+    Args:
+        replication_seq: first replication sequence to start the download of packets from.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            INSERT INTO musicbrainz.replication_control (current_replication_sequence)
+                 VALUES (:replication_seq)
+        """)
+        connection.execute(query, {'replication_seq': replication_seq})
+
+
+def get_mbids_from_gid_redirect_tables_from_MB_db():
+    """Fetch mbids from recording gid redirect table of MusicBrainz
+    database over the direct connection and calls function
+    get_original_entity to get the redirected result.
+
+    Returns:
+        Dictionary containing the redirected original entity ids with MBIDs as keys.
+            - mbid: Recording mbids of the entities
+            - id: Original redirected ids of the entities after mbid redirect
+    """
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT gid
+              FROM musicbrainz.recording_gid_redirect
+        """)
+        result = connection.execute(query)
+        mbids = result.fetchall()
+
+        recording_mbids = []
+        for mbid in mbids:
+            recording_mbids.append(str(mbid[0]))
+        return recording_mbids
+
+
+def load_lowlevel_and_recording_data():
+    """Fetch data in which gid column value is present in both lowlevel
+    and musicbrainz.recording table from AcousticBrainz database.
+
+    Returns:
+        data (of type - sqlalchemy.resultproxy): data retrieved
+        from the lowlevel and recording table.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM lowlevel
+        INNER JOIN musicbrainz.recording
+                ON musicbrainz.recording.gid = lowlevel.gid
+             LIMIT 10000
+        """)
+        result = connection.execute(query)
+        data = result.fetchall()
+        return data
+
+
+def load_lowlevel_data():
+    """Fetch lowlevel data from AcousticBrainz database.
+
+    Returns:
+        lowlevel_data (of type - sqlalchemy.resultproxy): data retrieved
+        from lowlevel table.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM lowlevel
+             LIMIT 10000
+        """)
+        result = connection.execute(query)
+        lowlevel_data = result.fetchall()
+        return lowlevel_data
+
+
+def load_recording_data_from_MB_db(lowlevel_data):
+    """Fetch recording data from MusicBrainz database over the
+    direct connection whose gid matches with those in lowlevel
+    table in AB database.
+
+    Args:
+        lowlevel_data: list of gids of the data present in lowlevel table.
+
+    Returns:0
+        rec_data (of type - sqlalchemy.resultproxy): data retrieved
+        from recording table of MusicBrainz database.
+    """
+    with musicbrainz_db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM recording
+             WHERE recording.gid in :gids
+        """)
+        result = connection.execute(query, {"gids": tuple(lowlevel_data)})
+        rec_data = result.fetchall()
+        return rec_data
+
+
+def load_recording_data_from_AB_db(lowlevel_data):
+    """Fetch recording data from MusicBrainz database over the
+    direct connection whose gid matches with those in lowlevel
+    table in AB database.
+
+    Args:
+        lowlevel_data: list of gids of the data present in lowlevel table.
+
+    Returns:0
+        rec_data (of type - sqlalchemy.resultproxy): data retrieved
+        from recording table of MusicBrainz database.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM musicbrainz.recording
+             WHERE musicbrainz.recording.gid in :gids
+        """)
+        result = connection.execute(query, {"gids": tuple(lowlevel_data)})
+        rec_data = result.fetchall()
+        return rec_data
+
+
+def load_lowlevel_and_recording_data_using_exists():
+    """Fetch data in which gid column value is present in both lowlevel
+    and musicbrainz.recording table from AcousticBrainz database.
+
+    Returns:
+        data (of type - sqlalchemy.resultproxy): data retrieved
+        from the lowlevel and recording table.
+    """
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+            FROM lowlevel
+            WHERE EXISTS (
+                SELECT musicbrainz.recording.gid 
+                FROM musicbrainz.recording
+                WHERE musicbrainz.recording.gid = lowlevel.gid
+            )
+            LIMIT 10000
+        """)
+        result = connection.execute(query)
+        data = result.fetchall()
+        return data
+
+def load_lowlevel_data_from_dataset(dataset_id):
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT lowlevel.*, musicbrainz.recording.*
+              FROM lowlevel
+        INNER JOIN musicbrainz.recording
+                ON musicbrainz.recording.gid = lowlevel.gid
+        INNER JOIN dataset_class_member
+                ON dataset_class_member.mbid = lowlevel.gid
+        INNER JOIN dataset_class
+                ON dataset_class.id = dataset_class_member.class 
+        INNER JOIN dataset 
+                ON dataset.id = dataset_class.dataset 
+             WHERE dataset.id = :id
+             LIMIT 10000
+        """)
+        result = connection.execute(query, {"id": dataset_id})
+        data = result.fetchall()
+        return data
+
+def get_all_recordings_in_dataset(dataset_id):
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT *
+              FROM dataset_class_member
+        INNER JOIN dataset_class
+                ON dataset_class.id = dataset_class_member.class 
+        INNER JOIN dataset 
+                ON dataset.id = dataset_class.dataset 
+             WHERE dataset.id = :id
+             LIMIT 10000
+        """)
+        result = connection.execute(query, {"id": dataset_id})
+        data = result.fetchall()
+        return data

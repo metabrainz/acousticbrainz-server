@@ -3,6 +3,8 @@ import json
 import os.path
 
 import mock
+import copy
+import uuid
 import sqlalchemy
 
 import db.data
@@ -606,7 +608,7 @@ class DataDBTestCase(AcousticbrainzTestCase):
         second_data["metadata"]["tags"]["album"] = ["Another album"]
 
         db.data.write_low_level(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        db.data.write_low_level(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)        
+        db.data.write_low_level(self.test_mbid, second_data, gid_types.GID_TYPE_MBID)
         db.data.write_low_level(self.test_mbid_two, self.test_lowlevel_data_two, gid_types.GID_TYPE_MBID)
 
         # If no data exists for an (mbid, offset) pair, it is skipped
@@ -786,6 +788,18 @@ class DataDBTestCase(AcousticbrainzTestCase):
 
     def test_get_summary_data(self):
         pass
+
+
+    def test_load_new_recordings_from_lowlevel(self):
+        """Two mbids are inserted into lowlevel table and then fetch a list of newly added mbids
+        and then check if both the lists contain similar items"""
+        recording_mbids = [uuid.UUID('ceec2751-44fe-44ff-b281-de00df9117d8'), uuid.UUID('575519b3-c06b-4157-b172-5d7ca80a8382')]
+        one = {"data": "one", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        two = {"data": "two", "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+        db.data.write_low_level(recording_mbids[0], one, gid_types.GID_TYPE_MBID)
+        db.data.write_low_level(recording_mbids[1], two, gid_types.GID_TYPE_MBID)
+
+        self.assertEqual(recording_mbids, db.data.get_new_recordings_from_lowlevel())
 
 
 class DataUtilTestCase(AcousticbrainzTestCase):

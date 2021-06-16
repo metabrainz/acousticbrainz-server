@@ -11,6 +11,9 @@ SECRET_KEY = "CHANGE_ME"
 # Primary database
 SQLALCHEMY_DATABASE_URI = "postgresql://acousticbrainz@db/acousticbrainz"
 
+# MusicBrainz Database
+MB_DATABASE_URI = "postgresql://musicbrainz:musicbrainz@musicbrainz_db:5432/musicbrainz_db"
+
 # URI to connect to an empty database as the superuser
 POSTGRES_ADMIN_URI = "postgresql://postgres@db/template1"
 # URI to connect to the acousticbrainz database as the superuser (to install extensions)
@@ -67,3 +70,17 @@ FEATURE_EVAL_FILTERING = True
 FEATURE_EVAL_MODEL_SELECTION = False
 
 DEBUG_TB_INTERCEPT_REDIRECTS = False
+
+# Maximum number of recordings to fetch at a time for importing MusicBrainz metadata.
+RECORDINGS_FETCHED_PER_BATCH = 10000
+
+# Sleep duration for musicbrainz importer to wait after a complete import and
+# between every 2 batches
+SLEEP_DURATION = 30  # number of seconds to wait between runs
+BATCH_SLEEP_DURATION = 5 # number of seconds to wait between batches
+
+# Base url to download the replication packets
+REPLICATION_PACKETS_URL = "https://metabrainz.org/api/musicbrainz/"
+
+# Token to access any MetaBrainz API
+# ACCESS_TOKEN = ""

@@ -16,7 +16,14 @@ import db.dump_manage
 import db.exceptions
 import db.stats
 import db.user
+import db.import_mb_data
 import webserver
+from brainzutils import musicbrainz_db
+from db.testing import DatabaseTestCase
+import musicbrainz_importer.apply_replication_changes
+
+import webserver.external.get_entities
+import webserver.external.evaluate_mbdatabase_access
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
@@ -87,8 +94,47 @@ def init_db(archive, force, skip_create_db=False):
     current_app.logger.info("Done!")
 
 
-@cli.command(name='import_data')
+@cli.command(name='init_mb_db')
 @click.option("--drop-constraints", "-d", is_flag=True, help="Drop primary and foreign keys before importing.")
+@click.option("--force", "-f", is_flag=True, help="Drop existing MusicBrainz schema and tables.")
+def init_mb_db(drop_constraints, force):
+    """Initialize the MusicBrainz database.
+
+    This process involves several steps:
+    1. MusicBrainz schema is created.
+    2. MusicBrainz Table structure is created.
+    3. Primary keys and foreign keys are created.
+    4. Indexes are created.
+    """
+
+    musicbrainz_db.init_db_engine(current_app.config['MB_DATABASE_URI'])
+
+    if force:
+        print('Dropping MusicBrainz schema...')
+        res = db.run_sql_script_without_transaction(os.path.join(ADMIN_SQL_DIR, 'drop_musicbrainz_schema.sql'))
+        if not res:
+            raise Exception('Failed to drop existing musicbrainz schema and tables! Exit code: %i' % res)
+
+    print('Creating MusicBrainz schema...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_schema.sql'))
+
+    print('Creating MusicBrainz tables...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_tables.sql'))
+
+    print('Creating MusicBrainz primary keys...')
+    db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_primary_keys.sql'))
+
+    if not drop_constraints:
+        print('Creating MusicBrainz foreign keys...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_foreign_keys.sql'))
+
+        print('Creating MusicBrainz indexes...')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_musicbrainz_indexes.sql'))
+
+    print("Done!")
+
+
+@cli.command()
 @click.argument("archive", type=click.Path(exists=True))
 def import_data(archive, drop_constraints=False):
     """Imports data dump into the database."""
@@ -252,6 +298,68 @@ def set_rate_limits(per_ip, window_size):
         current_app.logger.info("New ratelimit parameters set:")
         current_app.logger.info("Requests per IP: %s" % per_ip)
         current_app.logger.info("Window size (s): %s" % window_size)
+
+
+@cli.command()
+def import_musicbrainz_db():
+    print("\nImporting MusicBrainz data...")
+    db.import_mb_data.start_import()
+
+
+@cli.command()
+def get_entities():
+    print('Redirecting mbids to original entities...')
+    webserver.external.get_entities.main()
+
+
+@cli.command()
+def apply_replication_changes():
+    print("\nUpdating musicbrainz schema by applying replication packets...")
+    musicbrainz_importer.apply_replication_changes.main()
+
+
+@cli.command(help="Time imported data from AB first, then time data by directly accessing AB and MB")
+def evaluate_access_methods():
+    print('Evaluating both MusicBrainz database access methods...')
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported()
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct()
+
+
+@cli.command(help="Time imported data from AB")
+def evaluate_import():
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported()
+
+
+@cli.command(help="Time data by directly accessing AB and MB")
+def evaluate_direct():
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct()
+
+
+@cli.command(help="Time data by directly accessing but only AB")
+def evaluate_direct_AB_only():
+    webserver.external.evaluate_mbdatabase_access.get_AB_only_direct()
+
+
+@cli.command(help="Time data by importing but using exists clause")
+def evaluate_import_exists():
+    webserver.external.evaluate_mbdatabase_access.get_AB_only_direct()
+
+@cli.command(help="Time imported data from AB using given dataset")
+@click.argument("dataset", required=True)
+def evaluate_import_dataset(dataset):
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_imported_from_dataset(dataset)
+
+
+@cli.command(help="Time data by directly accessing AB and MB using given dataset")
+@click.argument("dataset", required=True)
+def evaluate_direct_dataset(dataset):
+    webserver.external.evaluate_mbdatabase_access.get_AB_and_MB_direct_from_dataset(dataset)
+
+
+@cli.command(help="Time data by directly accessing but only AB using given dataset")
+@click.argument("dataset", required=True)
+def evaluate_direct_AB_only_dataset(dataset):
+    webserver.external.evaluate_mbdatabase_access.get_AB_only_direct_from_dataset(dataset)
 
 
 # Please keep additional sets of commands down there

@@ -68,4 +68,5 @@ FEATURE_EVAL_MODEL_SELECTION = False
 
 DEBUG_TB_INTERCEPT_REDIRECTS = False
 
+# maximum number of recordings in the dataset for which the download dataset button is shown
 DATASET_DOWNLOAD_RECORDINGS_LIMIT = 5000

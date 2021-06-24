@@ -13,6 +13,8 @@ from sqlalchemy import text
 import db
 import db.exceptions
 
+from six import ensure_binary
+
 _whitelist_file = os.path.join(os.path.dirname(__file__), "tagwhitelist.json")
 _whitelist_tags = set(json.load(open(_whitelist_file)))
 
@@ -183,7 +185,7 @@ def submit_low_level_data(mbid, data, gid_type):
 def insert_version(connection, data, version_type):
     # TODO: Memoise sha -> id
     norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    sha = sha256(norm_data).hexdigest()
+    sha = sha256(ensure_binary(norm_data)).hexdigest()
     query = text("""
             SELECT id
               FROM version
@@ -244,7 +246,7 @@ def write_low_level(mbid, data, is_mbid):
     version = data['metadata']['version']
     build_sha1 = version['essentia_build_sha']
     data_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    data_sha256 = sha256(data_json.encode("utf-8")).hexdigest()
+    data_sha256 = sha256(ensure_binary(data_json)).hexdigest()
     with db.engine.begin() as connection:
         # See if we already have this data
         existing = _get_by_data_sha256(connection, data_sha256)
@@ -343,7 +345,7 @@ def _get_model_id(model_name, version):
 
 def write_high_level_item(connection, model_name, model_version, ll_id, version_id, data):
     item_norm_data = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    item_sha = sha256(item_norm_data).hexdigest()
+    item_sha = sha256(ensure_binary(item_norm_data)).hexdigest()
 
     model_id = _get_model_id(model_name, model_version)
     if model_id is None:
@@ -376,7 +378,7 @@ def write_high_level_meta(connection, ll_id, mbid, build_sha1, json_meta):
 
     if json_meta:
         meta_norm_data = json.dumps(json_meta, sort_keys=True, separators=(',', ':'))
-        sha = sha256(meta_norm_data).hexdigest()
+        sha = sha256(ensure_binary(meta_norm_data)).hexdigest()
         hl_meta = text(
             """INSERT INTO highlevel_meta (id, data, data_sha256)
                     VALUES (:id, :data, :data_sha256)""")

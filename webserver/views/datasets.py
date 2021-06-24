@@ -15,7 +15,7 @@ import db.user
 import csv
 import math
 import six
-import StringIO
+from six import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
 from six.moves import range
@@ -128,7 +128,7 @@ def _convert_dataset_to_csv_stringio(dataset):
     #   - dataset description, class names, class descriptions
     # TODO: On upgrade to python 3, check that stringio accepts the correct data
     #       (may have to change to bytesio if we encode this data)
-    fp = StringIO.StringIO()
+    fp = StringIO()
     writer = csv.writer(fp)
 
     # write dataset description only if it is set

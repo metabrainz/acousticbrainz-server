@@ -8,6 +8,7 @@ import uuid
 import mock
 import datetime
 import pytz
+from operator import itemgetter
 from sqlalchemy import text
 from db import gid_types
 from six.moves import range
@@ -257,7 +258,7 @@ class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
             {'data': [[1452384000000, 6], [1452470400000, 10]], 'name': 'Lossy (unique)'},
             {'data': [[1452384000000, 25], [1452470400000, 35]], 'name': 'Total (all)'},
             {'data': [[1452384000000, 16], [1452470400000, 20]], 'name': 'Total (unique)'}]
-        self.assertEqual(sorted(expected_formatted), sorted(formatted))
+        self.assertEqual(sorted(expected_formatted, key=itemgetter('name')), sorted(formatted, key=itemgetter('name')))
 
     def test_get_statistics_data_limit(self):
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
@@ -365,7 +366,7 @@ class StatsHighchartsTestCase(AcousticbrainzTestCase):
         for h in history:
             self.assertEqual(len(h["data"]), 2)
         # Example of date conversion
-        self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
+        self.assertTrue({"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"} in history)
 
     @mock.patch("db.stats._get_stats_from_cache")
     def test_stats_cache(self, get_stats_from_cache):

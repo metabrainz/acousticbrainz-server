@@ -459,7 +459,7 @@ def import_db_dump(archive_path, tables):
     pxz_command = ["pxz", "--decompress", "--stdout", archive_path]
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 
-    table_names = list(tables.keys())
+    table_names = tables.keys()
     latest_file_num_imported = {}
     connection = db.engine.raw_connection()
     try:

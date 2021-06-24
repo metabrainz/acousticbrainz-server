@@ -91,7 +91,7 @@ def update_dataset_meta(dataset_id, meta):
         params["public"] = public
 
     if meta:
-        raise ValueError("Unexpected meta value(s): %s" % ", ".join(list(meta.keys())))
+        raise ValueError("Unexpected meta value(s): %s" % ", ".join(meta.keys()))
 
     setstr = ", ".join(updates)
     query = text("""UPDATE dataset

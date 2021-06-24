@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from flask import current_app
 from flask.cli import FlaskGroup
 from db import dump
@@ -8,6 +9,7 @@ import click
 import re
 import os
 import webserver
+from six.moves import filter
 
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
@@ -158,12 +160,12 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
     """
     entries = [os.path.join(location, e) for e in os.listdir(location)]
     pattern = re.compile(pattern)
-    entries = filter(lambda x: pattern.search(x), entries)
+    entries = [x for x in entries if pattern.search(x)]
 
     if is_dir:
-        entries = filter(os.path.isdir, entries)
+        entries = list(filter(os.path.isdir, entries))
     else:
-        entries = filter(os.path.isfile, entries)
+        entries = list(filter(os.path.isfile, entries))
 
     if sort_key is None:
         entries.sort()

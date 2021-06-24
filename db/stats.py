@@ -3,6 +3,7 @@
 Values are stored in `statistics` table and are referenced by <name, timestamp>
 pair.
 """
+from __future__ import absolute_import
 from brainzutils import cache
 from sqlalchemy.dialects.postgresql import JSONB
 

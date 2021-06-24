@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import json
 import logging
@@ -736,7 +737,7 @@ def parse_features_row(row, features):
         for key in alias_keys[1:-1]:
             temp[key] = {}
             temp = temp[key]
-        if alias in row.keys() and row[alias]:
+        if alias in list(row.keys()) and row[alias]:
             temp[alias_keys[-1]] = row[alias]
         else:
             temp[alias_keys[-1]] = default_type

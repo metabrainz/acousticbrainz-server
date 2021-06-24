@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import db
 import db.exceptions
 import sqlalchemy
 import string
 import random
+from six.moves import range
 
 KEY_LENGTH = 40
 

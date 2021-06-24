@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import db
 import db.exceptions
 from webserver.testing import AcousticbrainzTestCase

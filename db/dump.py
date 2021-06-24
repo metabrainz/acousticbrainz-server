@@ -9,6 +9,7 @@ include information from the previous dumps).
 """
 from __future__ import print_function
 
+from __future__ import absolute_import
 from flask import current_app
 
 import utils.path
@@ -458,7 +459,7 @@ def import_db_dump(archive_path, tables):
     pxz_command = ["pxz", "--decompress", "--stdout", archive_path]
     pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
 
-    table_names = tables.keys()
+    table_names = list(tables.keys())
     latest_file_num_imported = {}
     connection = db.engine.raw_connection()
     try:

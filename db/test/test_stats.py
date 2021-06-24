@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 import unittest
 import db
@@ -9,6 +10,7 @@ import datetime
 import pytz
 from sqlalchemy import text
 from db import gid_types
+from six.moves import range
 
 
 class StatsTestCase(unittest.TestCase):
@@ -176,7 +178,7 @@ class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
 
     def test_get_most_recent_stats_date(self):
         """Get the most recent date that we have for stats"""
-        date = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date = datetime.datetime(2016, 0o1, 10, 00, 00, tzinfo=pytz.utc)
         stats = {'lowlevel-lossless': 2,
                  'lowlevel-lossless-unique': 2,
                  'lowlevel-lossy': 0,
@@ -193,11 +195,11 @@ class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                   "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 25, "lowlevel-total-unique": 16}
-        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date1 = datetime.datetime(2016, 0o1, 10, 00, 00, tzinfo=pytz.utc)
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
                   "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
-        date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 0o1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
             db.stats._write_stats(connection, date1, stats1)
             db.stats._write_stats(connection, date2, stats2)
@@ -237,11 +239,11 @@ class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                   "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 25, "lowlevel-total-unique": 16}
-        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date1 = datetime.datetime(2016, 0o1, 10, 00, 00, tzinfo=pytz.utc)
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
                   "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
-        date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 0o1, 11, 00, 00, tzinfo=pytz.utc)
         data = [
             {"collected": date1, "stats": stats1},
             {"collected": date2, "stats": stats2}
@@ -261,11 +263,11 @@ class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                   "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 25, "lowlevel-total-unique": 16}
-        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date1 = datetime.datetime(2016, 0o1, 10, 00, 00, tzinfo=pytz.utc)
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
                   "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
-        date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 0o1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
             db.stats._write_stats(connection, date1, stats1)
             db.stats._write_stats(connection, date2, stats2)
@@ -285,8 +287,8 @@ class StatsAcousticbrainzTestCase(AcousticbrainzTestCase):
             self.assertIsNone(earliest_date)
 
             # otherwise, the first submitted date
-            date1 = datetime.datetime(2016, 01, 07, 10, 20, 39, tzinfo=pytz.utc)
-            date2 = datetime.datetime(2016, 01, 07, 12, 30, 20, tzinfo=pytz.utc)
+            date1 = datetime.datetime(2016, 0o1, 0o7, 10, 20, 39, tzinfo=pytz.utc)
+            date2 = datetime.datetime(2016, 0o1, 0o7, 12, 30, 20, tzinfo=pytz.utc)
             add_empty_lowlevel(uuid.uuid4(), True, date1)
             add_empty_lowlevel(uuid.uuid4(), True, date2)
 

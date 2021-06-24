@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import string
 import random
+from six.moves import range
 
 
 def generate_string(length):

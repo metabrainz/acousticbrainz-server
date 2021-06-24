@@ -18,6 +18,7 @@ import six
 import StringIO
 
 from webserver.views.api.exceptions import APIUnauthorized
+from six.moves import range
 # Below values are defined in 'classification_project_template.yaml' file.
 C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
 gamma = '3, 1, -1, -3, -5, -7, -9, -11'

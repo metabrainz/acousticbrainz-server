@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 from flask import url_for
 

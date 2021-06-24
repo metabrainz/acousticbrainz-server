@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from rauth import OAuth2Service
 from flask import request, session, url_for
 from webserver.login import User

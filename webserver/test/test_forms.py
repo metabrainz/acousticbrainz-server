@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from webserver.forms import DatasetEvaluationForm
 from webserver.testing import AcousticbrainzTestCase
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import six
 from flask import render_template, jsonify, request, has_request_context, _request_ctx_stack, current_app
 

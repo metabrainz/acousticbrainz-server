@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from flask import request, url_for, redirect
 from flask_admin import expose
 from webserver.admin import AdminIndexView, AdminBaseView, forms

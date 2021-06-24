@@ -13,6 +13,7 @@ import webserver.views.api.exceptions
 from webserver.testing import AcousticbrainzTestCase
 from webserver.testing import DB_TEST_DATA_PATH
 from webserver.views.api.v1 import core
+from six.moves import range
 
 
 class CoreViewsTestCase(AcousticbrainzTestCase):

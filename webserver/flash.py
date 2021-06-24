@@ -9,6 +9,7 @@ make sure that they match.
 More information about flash messages is available at
 http://flask.pocoo.org/docs/0.10/patterns/flashing/.
 """
+from __future__ import absolute_import
 from flask import flash
 
 _INFO = "info"  # this is a default category

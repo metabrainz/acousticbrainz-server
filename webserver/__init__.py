@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from brainzutils.flask import CustomFlask
 from brainzutils.ratelimit import set_rate_limits, inject_x_rate_headers
 from flask import request, url_for, redirect
@@ -8,7 +9,8 @@ from pprint import pprint
 
 import os
 import time
-import urlparse
+import six.moves.urllib.parse
+from six.moves import range
 
 API_PREFIX = '/api/'
 
@@ -109,7 +111,7 @@ def create_app(debug=None):
     init_error_handlers(app)
 
     # Static files
-    import static_manager
+    from . import static_manager
 
     # Template utilities
     app.jinja_env.add_extension('jinja2.ext.do')
@@ -136,7 +138,7 @@ def create_app(debug=None):
     def prod_https_login_redirect():
         """ Redirect to HTTPS in production except for the API endpoints
         """
-        if urlparse.urlsplit(request.url).scheme == 'http' \
+        if six.moves.urllib.parse.urlsplit(request.url).scheme == 'http' \
                 and app.config['DEBUG'] == False \
                 and app.config['TESTING'] == False \
                 and request.blueprint not in ('api', 'api_v1_core', 'api_v1_datasets', 'api_v1_dataset_eval'):

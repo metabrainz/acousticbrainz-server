@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from flask import current_app
 from wtforms import BooleanField, SelectField, StringField, TextAreaField, \
     SelectMultipleField, widgets, ValidationError

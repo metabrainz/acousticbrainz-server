@@ -4,6 +4,7 @@ import json
 import os.path
 
 import mock
+import six
 import sqlalchemy
 
 import db.data
@@ -894,7 +895,6 @@ class DataUtilTestCase(AcousticbrainzTestCase):
         mapped = db.data.map_highlevel_class_names(highlevel, mapping)
 
         self.assertEqual(mapped["value"], "Jazz")
-        self.assertEqual(
-            sorted(mapped["all"]),
-            sorted(["Blues", "Classical", "Country", "Disco", "Hiphop",
-                    "Jazz", "Metal", "Pop", "Reggae", "Rock"]))
+        six.assertCountEqual(self, mapped["all"],
+                             ["Blues", "Classical", "Country", "Disco",
+                              "Hiphop", "Jazz", "Metal", "Pop", "Reggae", "Rock"])

@@ -578,9 +578,15 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
         resp = self.client.delete(url, data=json.dumps(submit), content_type="application/json")
         self.assertEqual(resp.status_code, 200)
 
-        delete_recordings.assert_called_with(dsid, "Class #2", ["19e698e7-71df-48a9-930e-d4b1a2026c82",
-                                                                "ed94c67d-bea8-4741-a3a6-593f20a22eb6"])
         dataset_get.assert_called_with(uuid.UUID(dsid))
+
+        # We need to check the list of recordings separately because the ordering of list can
+        # be changed by the view function before calling the db delete method.
+        delete_recordings.assert_called_with(dsid, "Class #2", mock.ANY)
+        # get the last argument from the argument list with which the mock was latest called
+        actual_recordings = delete_recordings.call_args.args[-1]
+        self.assertCountEqual(actual_recordings, submit["recordings"])
+
         expected = {"success": True, "message": "Recordings deleted."}
         self.assertEqual(resp.json, expected)
 
@@ -604,8 +610,13 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
         self.assertEqual(resp.status_code, 200)
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
-        delete_recordings.assert_called_with(dsid, "Class #1", ["ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                                                             "1c085555-3805-428a-982f-e14e0a2b18e6"])
+
+        # We need to check the list of recordings separately because the ordering of list can
+        # be changed by the view function before calling the db delete method.
+        delete_recordings.assert_called_with(dsid, "Class #1", mock.ANY)
+        # get the last argument from the argument list with which the mock was latest called
+        actual_recordings = delete_recordings.call_args.args[-1]
+        self.assertCountEqual(actual_recordings, set(submit["recordings"]))
 
         expected = {"success": True, "message": "Recordings deleted."}
         self.assertEqual(resp.json, expected)

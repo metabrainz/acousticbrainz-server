@@ -15,7 +15,7 @@ import db.user
 import csv
 import math
 import six
-from six import StringIO
+from io import StringIO, TextIOWrapper
 
 from webserver.views.api.exceptions import APIUnauthorized
 from six.moves import range
@@ -134,17 +134,17 @@ def _convert_dataset_to_csv_stringio(dataset):
     # write dataset description only if it is set
     if dataset["description"]:
         description = dataset["description"]
-        writer.writerow(["description", description.encode("utf-8")])
+        writer.writerow(["description", description])
 
     for ds_class in dataset["classes"]:
         # write class description only if it is set
         if ds_class["description"]:
             ds_class_description = ds_class["description"]
-            ds_class_desc_head = "description:" + ds_class["name"].encode("utf-8")
-            writer.writerow([ds_class_desc_head, ds_class_description.encode("utf-8")])
+            ds_class_desc_head = "description:" + ds_class["name"]
+            writer.writerow([ds_class_desc_head, ds_class_description])
 
     for ds_class in dataset["classes"]:
-        class_name = ds_class["name"].encode("utf-8")
+        class_name = ds_class["name"]
         for rec in ds_class["recordings"]:
             writer.writerow([rec, class_name])
 
@@ -319,7 +319,12 @@ def create_service():
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
-        description, classes = _parse_dataset_csv(request.files[form.file.name])
+        # Decode the rows as UTF-8.
+        # The utf-8-sig codec removes a UTF-8 BOM if it exists at the start of a file.
+        # In that case, col1 in the first row could start with 0xfeff, so remove it.
+        # For all other items it will decode as regular UTF-8
+        file = TextIOWrapper(request.files[form.file.name], encoding='utf-8-sig')
+        description, classes = _parse_dataset_csv(file)
         dataset_dict = {
             "name": form.name.data,
             "description": description if description else form.description.data,
@@ -345,6 +350,11 @@ def _parse_dataset_csv(file):
       description,<dataset_description>
       description:<classname>,<class_description>
 
+    Note:
+        The caller should open the stream in the 'utf-8-sig' encoding to remove
+        the UTF-8 BOM before passing it to this method. This method no longer
+        handles BOM.
+
     Arguments:
         file: path to the csv file containing the dataset
     Returns: a tuple of (dataset description, [classes]), where classes is a list of dictionaries
@@ -357,12 +367,8 @@ def _parse_dataset_csv(file):
         if len(class_row) != 2:
             raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
 
-        # Decode the rows as UTF-8.
-        # The utf-8-sig codec removes a UTF-8 BOM if it exists at the start of a file.
-        # In that case, col1 in the first row could start with 0xfeff, so remove it.
-        # For all other items it will decode as regular UTF-8
-        col1 = class_row[0].decode("utf-8-sig")
-        col2 = class_row[1].decode("utf-8-sig")
+        col1 = class_row[0]
+        col2 = class_row[1]
 
         if col1 == "description":
             # row is the dataset description

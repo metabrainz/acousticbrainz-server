@@ -8,8 +8,16 @@
 # ./test.sh -s             stop test containers without removing
 # ./test.sh -d             clean test containers
 
-COMPOSE_FILE_LOC=docker/docker-compose.test.yml
+# Set PY2 environment variable to a non empty value to run tests with Python 2, otherwise tests are run with Python 3.
+
+COMPOSE_FILE_LOC=("-f" "docker/docker-compose.test.yml")
 COMPOSE_PROJECT_NAME_ORIGINAL=acousticbrainz_test
+TESTS_TO_RUN="db webserver utils"
+
+if [[ -n "$PY2" ]]; then
+    COMPOSE_FILE_LOC+=("-f" "docker/docker-compose.test.py2.yml")
+    TESTS_TO_RUN="db utils hl_extractor dataset_eval"
+fi
 
 # Project name is sanitized by Compose, so we need to do the same thing.
 # See https://github.com/docker/compose/issues/2119.
@@ -30,17 +38,17 @@ if [[ ! -d "docker" ]]; then
 fi
 
 function build {
-    docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME build
+    docker-compose "${COMPOSE_FILE_LOC[@]}" -p $COMPOSE_PROJECT_NAME build
 }
 
 function bring_up_db {
-    docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME up -d db redis
+    docker-compose "${COMPOSE_FILE_LOC[@]}" -p $COMPOSE_PROJECT_NAME up -d db redis
 }
 
 function setup {
     echo "Running setup"
     # PostgreSQL Database initialization
-    docker-compose -f $COMPOSE_FILE_LOC -p $COMPOSE_PROJECT_NAME run --rm acousticbrainz dockerize -wait tcp://db:5432 -timeout 60s \
+    docker-compose "${COMPOSE_FILE_LOC[@]}" -p $COMPOSE_PROJECT_NAME run --rm acousticbrainz dockerize -wait tcp://db:5432 -timeout 60s \
                 bash -c "python manage.py init_db --force"
 }
 
@@ -68,14 +76,14 @@ function is_db_exists {
 function stop {
     echo "stop"
     # Stopping all containers associated with this project
-    docker-compose -f $COMPOSE_FILE_LOC \
+    docker-compose "${COMPOSE_FILE_LOC[@]}" \
                    -p $COMPOSE_PROJECT_NAME \
                stop
 }
 
 function dcdown {
     # Shutting down all containers associated with this project
-    docker-compose -f $COMPOSE_FILE_LOC \
+    docker-compose "${COMPOSE_FILE_LOC[@]}" \
                    -p $COMPOSE_PROJECT_NAME \
                down
     docker volume rm -f acousticbrainztest_postgres
@@ -128,13 +136,13 @@ if [ $DB_EXISTS -eq 1 -a $DB_RUNNING -eq 1 ]; then
     build
     bring_up_db
     setup
-    docker-compose -f $COMPOSE_FILE_LOC \
+    docker-compose "${COMPOSE_FILE_LOC[@]}" \
                    -p $COMPOSE_PROJECT_NAME \
-                   run --rm acousticbrainz pytest -s "$@"
+                   run --rm acousticbrainz pytest -s "$TESTS_TO_RUN" "$@"
     dcdown
 else
     # Else, we have containers, just run tests
-    docker-compose -f $COMPOSE_FILE_LOC \
+    docker-compose "${COMPOSE_FILE_LOC[@]}" \
                    -p $COMPOSE_PROJECT_NAME \
-                   run --rm acousticbrainz pytest -s "$@"
+                   run --rm acousticbrainz pytest -s "$TESTS_TO_RUN" "$@"
 fi

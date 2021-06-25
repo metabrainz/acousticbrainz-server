@@ -1,4 +1,4 @@
-name: AcousticBrainz Unit Tests - Python 3
+name: AcousticBrainz Unit Tests - Python 2
 
 on:
   push:
@@ -29,6 +29,8 @@ jobs:
       continue-on-error: true
 
     - name: Run tests
+      env:
+        PY2: true
       run: ./test.sh
       
   prod:
@@ -48,4 +50,4 @@ jobs:
         continue-on-error: true
         
       - name: Build production image
-        run: docker build --target acousticbrainz-prod --build-arg GIT_COMMIT_SHA=HEAD .
+        run: docker build -f Dockerfile.py2 --target acousticbrainz-prod --build-arg GIT_COMMIT_SHA=HEAD .

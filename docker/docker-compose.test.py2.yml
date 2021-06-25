@@ -1,0 +1,8 @@
+# Docker Compose override file for running tests on Python 2
+version: "3.4"
+
+services:
+
+  acousticbrainz:
+    build:
+      dockerfile: Dockerfile.py2

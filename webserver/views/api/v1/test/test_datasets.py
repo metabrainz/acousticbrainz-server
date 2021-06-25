@@ -356,8 +356,16 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
             "description": "This is class number 2",
             "recordings": ["323565da-57b1-4eae-b3c4-cdf431061391", "1c085555-3805-428a-982f-e14e0a2b18e6"]
         }
-        add_class.assert_called_with(dsid, expected)
         dataset_get.assert_called_with(uuid.UUID(dsid))
+        add_class.assert_called_once()
+
+        # We need to check the called arguments separately because the order of recordings lists can
+        # be changed by the view function before calling the db add method.
+        actual = add_class.call_args.args
+        self.assertEqual(dsid, actual[0])
+        self.assertEqual(expected["name"], actual[1]["name"])
+        self.assertEqual(expected["description"], actual[1]["description"])
+        self.assertCountEqual(expected["recordings"], actual[1]["recordings"])
 
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Class added."}
@@ -510,8 +518,13 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
         resp = self.client.put(url, data=json.dumps(submit), content_type="application/json")
 
         dataset_get.assert_called_with(uuid.UUID(dsid))
-        add_recordings.assert_called_with(dsid, "Class #1", ["ed94c67d-bea8-4741-a3a6-593f20a22eb6",
-                                                             "1c085555-3805-428a-982f-e14e0a2b18e6"])
+
+        # We need to check the list of recordings separately because the ordering of list can
+        # be changed by the view function before calling the db add method.
+        add_recordings.assert_called_with(dsid, "Class #1", mock.ANY)
+        # get the last argument from the argument list with which the mock was latest called
+        actual_recordings = add_recordings.call_args.args[-1]
+        self.assertCountEqual(actual_recordings, set(submit["recordings"]))
 
         self.assertEqual(resp.status_code, 200)
         expected = {"success": True, "message": "Recordings added."}

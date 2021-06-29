@@ -40,9 +40,10 @@ MUSICBRAINZ_CLIENT_SECRET = '''{{template "KEY" "musicbrainz/client_secret"}}'''
 COMPILE_LESS = False
 
 LOG_SENTRY = {
-   'dsn':'''{{template "KEY" "sentry_dsn"}}''',
-   'environment': 'production',
+   'dsn':'''{{template "KEY" "sentry/dsn"}}''',
+   'environment': '''{{template "KEY" "sentry/environment"}}''',
    'level': 'WARN',
+   'release': os.getenv('GIT_SHA', None),
 }
 
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''

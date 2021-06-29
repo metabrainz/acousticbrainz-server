@@ -1,3 +1,4 @@
+from flask import current_app
 from wtforms import BooleanField, SelectField, StringField, TextAreaField, \
     SelectMultipleField, widgets, ValidationError
 from wtforms.validators import DataRequired
@@ -50,13 +51,13 @@ class DatasetEvaluationForm(FlaskForm):
     filter_type = SelectField("Filtering", choices=[
         (DATASET_EVAL_NO_FILTER, "Don't filter"),
         (dataset_eval.FILTER_ARTIST, "By Artist"),
-    ])
+    ], validate_choice=False)
     normalize = BooleanField("Normalize classes")
     evaluation_location = SelectField("Evaluation location", choices=[
         (DATASET_EVAL_LOCAL, "Evaluate on acousticbrainz.org"),
         (DATASET_EVAL_REMOTE, "Evaluate on your own machine")],
-                                      default=DATASET_EVAL_LOCAL
-                                      )
+                                      default=DATASET_EVAL_LOCAL,
+                                      validate_choice=False)
 
     svm_filtering = BooleanField("Use advanced SVM options",
                                  render_kw={"data-toggle": "collapse",
@@ -78,6 +79,11 @@ class DatasetEvaluationForm(FlaskForm):
     preprocessing_values = MultiCheckboxField('Preprocessing Values', choices=PREPROCESSING_VALUES,
                                               default=[p for p, _ in PREPROCESSING_VALUES],
                                               render_kw={"class": "list-unstyled"})
+
+    def validate_filter_type(self, field):
+        if current_app.config['FEATURE_EVAL_FILTERING']:
+            field.validate_choice = True
+            field.pre_validate(self)
 
     def validate_preprocessing_values(self, field):
         # If we don't have SVM options enabled, don't validate the field

@@ -1,28 +1,37 @@
 from __future__ import absolute_import
 from __future__ import division
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
+
+import StringIO
+import csv
+import json
+import math
+import os
+import zipfile
+from collections import defaultdict
+
+import six
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file, current_app
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
-from webserver.external import musicbrainz
-from webserver import flash, forms
-from webserver.decorators import auth_required
-from utils import dataset_validator
-from collections import defaultdict
-import db.exceptions
+
 import db.dataset
 import db.dataset_eval
+import db.exceptions
+import db.data
 import db.user
-import csv
-import math
-import six
-import StringIO
-
+from db.dataset import slugify
+from utils import dataset_validator
+from webserver import flash, forms
+from webserver.decorators import auth_required
+from webserver.external import musicbrainz
 from webserver.views.api.exceptions import APIUnauthorized
+
 # Below values are defined in 'classification_project_template.yaml' file.
 C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
 gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
+
 
 def _pagenum_to_offset(pagenum, limit):
     # Page number and limit to list elements
@@ -103,7 +112,7 @@ def download_annotation_csv(dataset_id):
     ds = get_dataset(dataset_id)
     fp = _convert_dataset_to_csv_stringio(ds)
 
-    file_name = "dataset_annotations_%s.csv" % db.dataset._slugify(ds["name"])
+    file_name = "dataset_annotations_%s.csv" % db.dataset.slugify(ds["name"])
 
     return send_file(fp,
                      mimetype='text/csv',
@@ -149,6 +158,60 @@ def _convert_dataset_to_csv_stringio(dataset):
 
     fp.seek(0)
     return fp
+
+
+@datasets_bp.route("/<uuid:dataset_id>/download_dataset")
+def download_dataset(dataset_id):
+    """Download the full contents of a dataset, including lowlevel files.
+    The dataset is given as a zip file.
+
+    If the number of items in a dataset is more than config.DATASET_DOWNLOAD_RECORDINGS_LIMIT
+    then redirect back to the dataset page and don't download it.
+    """
+    if current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"] <= 0:
+        flash.error("Downloading complete dataset is disabled")
+        return redirect(url_for(".view", dataset_id=dataset_id))
+    ds = get_dataset(dataset_id)
+    if ds["num_recordings"] > current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"]:
+        flash.error("Downloading complete dataset is disabled for datasets with "
+                    "more than %d recordings." % current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"])
+        return redirect(url_for(".view", dataset_id=dataset_id))
+    dataset_name = slugify(ds["name"])
+    zip_file = generate_zip_from_dataset(ds)
+    return send_file(zip_file,
+                     as_attachment=True,
+                     attachment_filename="acousticbrainz-dataset-{}-{}.zip".format(dataset_id, dataset_name))
+
+
+def generate_zip_from_dataset(ds):
+    """Build a zip archive of all low-level documents that make up this dataset.
+    A folder is made for each class.
+
+    Arguments:
+        ds: the dataset to generate data for
+
+    Returns:
+        A rewound StringIO containing a zip file with the dataset contents
+    """
+
+    dataset_name = slugify(ds["name"])
+    sio = StringIO.StringIO()
+    zipfp = zipfile.ZipFile(sio, "w", allowZip64=True)
+    for data in ds["classes"]:
+        class_name = slugify(data["name"])
+        CHUNK_SIZE = 100
+        recordings = [(mbid, 0) for mbid in data.get("recordings", [])]
+        chunks = [recordings[i: i + CHUNK_SIZE] for i in xrange(0, len(recordings), CHUNK_SIZE)]
+        for chunk in chunks:
+            recordings_json = db.data.load_many_low_level(chunk)
+            for mbid, offset in chunk:
+                data = recordings_json.get(mbid, {}).get(str(offset))
+                if data:
+                    zipfp.writestr(os.path.join(dataset_name, class_name, "{}.json".format(mbid)), json.dumps(data))
+
+    zipfp.close()
+    sio.seek(0)
+    return sio
 
 
 @datasets_bp.route("/accuracy")

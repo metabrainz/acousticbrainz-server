@@ -162,9 +162,17 @@ def _convert_dataset_to_csv_stringio(dataset):
 
 @datasets_bp.route("/<uuid:dataset_id>/download_dataset")
 def download_dataset(dataset_id):
+    """Download the full contents of a dataset, including lowlevel files.
+    The dataset is given as a zip file.
+
+    If the number of items in a dataset is more than config.DATASET_DOWNLOAD_RECORDINGS_LIMIT
+    then redirect back to the dataset page and don't download it.
+    """
+    if current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"] <= 0:
+        flash.error("Downloading complete dataset is disabled")
+        return redirect(url_for(".view", dataset_id=dataset_id))
     ds = get_dataset(dataset_id)
-    count = sum(map(lambda x: len(x.get("recordings", [])), ds["classes"]))
-    if count > current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"]:
+    if ds["num_recordings"] > current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"]:
         flash.error("Downloading complete dataset is disabled for datasets with "
                     "more than %d recordings." % current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"])
         return redirect(url_for(".view", dataset_id=dataset_id))

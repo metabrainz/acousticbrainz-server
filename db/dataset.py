@@ -153,6 +153,7 @@ def get(id):
             raise exceptions.NoDataFoundException("Can't find dataset with a specified ID.")
         row = dict(result.fetchone())
         row["classes"] = _get_classes(row["id"])
+        row["num_recordings"] = sum([len(cl.get("recordings", [])) for cl in row["classes"]])
         return row
 
 

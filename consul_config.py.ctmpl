@@ -49,7 +49,13 @@ LOG_SENTRY = {
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
 FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
 
-FEATURE_EVAL_LOCATION = False
+#Feature Flags
+# Choose a server to perform the evaluation on
+FEATURE_EVAL_LOCATION = {{template "KEY" "feature/eval_location"}}
+# Choose dataset preprocessing processes
+FEATURE_EVAL_FILTERING = {{template "KEY" "feature/eval_filtering"}}
+# Choose settings used for model training
+FEATURE_EVAL_MODEL_SELECTION = {{template "KEY" "feature/eval_model_selection"}}
 
 RATELIMIT_PER_IP = {{template "KEY" "ratelimit_per_ip"}} # number of requests per ip
 RATELIMIT_WINDOW = {{template "KEY" "ratelimit_window"}} # window size in seconds

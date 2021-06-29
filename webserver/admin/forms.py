@@ -31,7 +31,7 @@ class EditChallengeForm(FlaskForm):
         kwargs.setdefault('name', default_name)
         kwargs.setdefault('start_time', default_start_time)
         kwargs.setdefault('end_time', default_end_time)
-        Form.__init__(self, **kwargs)
+        FlaskForm.__init__(self, **kwargs)
 
 
 class AddChallengeForm(EditChallengeForm):

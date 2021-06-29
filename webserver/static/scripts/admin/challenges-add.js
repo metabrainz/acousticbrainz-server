@@ -31,7 +31,7 @@ $(function () {
     load: function(query, callback) {
       if (!query.length) return callback();
       $.ajax({
-        url: "/datasets/suggest",
+        url: "/datasets/service/suggest",
         type: 'GET',
         dataType: 'json',
         data: {q: query},

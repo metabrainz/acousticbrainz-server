@@ -245,6 +245,23 @@ def eval_info(dataset_id):
     )
 
 
+@datasets_bp.route("/service/suggest")
+@login_required
+def dataset_suggest():
+    """Find datasets created by the current user with a given name
+
+    :query q: search query
+
+    Returns:
+        (json) an array of objects with keys `name` and `id`.
+    """
+    query = request.args.get("q")
+    datasets = db.dataset.find(query, current_user.id)
+    response = {"datasets":
+                    [{"id": ds["id"], "name": ds["name"], "description": ds["description"]} for ds in datasets]}
+    return jsonify(response)
+
+
 @datasets_bp.route("/service/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
 def eval_job(dataset_id, job_id):
     # Getting dataset to check if it exists and current user is allowed to view it.

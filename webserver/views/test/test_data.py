@@ -4,10 +4,11 @@ import mock
 from flask import url_for
 
 from webserver.external import musicbrainz
-from webserver.testing import ServerTestCase
+from webserver.testing import AcousticbrainzTestCase
+import webserver.views.data
 
 
-class DataViewsTestCase(ServerTestCase):
+class DataViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(DataViewsTestCase, self).setUp()
@@ -47,6 +48,31 @@ class DataViewsTestCase(ServerTestCase):
         self.assertEqual(resp.status_code, 404)
         self.assertIn("We don't have any information about this recording yet.",
                       resp.data.decode("utf-8"))
+
+    def test_format_length(self):
+        # less than a minute, 00:ss
+        length = "45000"
+        self.assertEqual(webserver.views.data._format_length(length), "00:45")
+
+        # less than 10 minutes, m:ss
+        length = "430000"
+        self.assertEqual(webserver.views.data._format_length(length), "7:10")
+
+        # over 10 minutes, mm:ss
+        length = "1383000"
+        self.assertEqual(webserver.views.data._format_length(length), "23:03")
+
+        # an hour: 1:00:00
+        length = "3600000"
+        self.assertEqual(webserver.views.data._format_length(length), "1:00:00")
+
+        # less than 70 minutes, 1:mm:ss
+        length = "3661000"
+        self.assertEqual(webserver.views.data._format_length(length), "1:01:01")
+
+        # error, non-numeric
+        length = "test"
+        self.assertEqual(webserver.views.data._format_length(length), "?:??")
 
 
 class FakeMusicBrainz(object):

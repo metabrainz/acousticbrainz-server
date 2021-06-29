@@ -90,8 +90,7 @@ _TABLES = {
         "created",
     ),
     "statistics": (
-        "name",
-        "value",
+        "stats",
         "collected",
     ),
     "incremental_dumps": (

@@ -1,21 +1,37 @@
 from __future__ import absolute_import
 from __future__ import division
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
-from flask_login import login_required, current_user
-from werkzeug.exceptions import NotFound, Unauthorized, BadRequest
-from webserver.external import musicbrainz
-from webserver import flash, forms
-from utils import dataset_validator
+
+import StringIO
+import csv
+import json
+import math
+import os
+import zipfile
 from collections import defaultdict
-import db.exceptions
+
+import six
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file, current_app
+from flask_login import login_required, current_user
+from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
+
 import db.dataset
 import db.dataset_eval
+import db.exceptions
+import db.data
 import db.user
-import csv
-import math
-import six
+from db.dataset import slugify
+from utils import dataset_validator
+from webserver import flash, forms
+from webserver.decorators import auth_required
+from webserver.external import musicbrainz
+from webserver.views.api.exceptions import APIUnauthorized
+
+# Below values are defined in 'classification_project_template.yaml' file.
+C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
+gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
+
 
 def _pagenum_to_offset(pagenum, limit):
     # Page number and limit to list elements
@@ -79,9 +95,9 @@ def list_datasets(status):
             nextpage=nextpage)
 
 
-@datasets_bp.route("/<uuid:id>")
-def view(id):
-    ds = get_dataset(id)
+@datasets_bp.route("/<uuid:dataset_id>")
+def view(dataset_id):
+    ds = get_dataset(dataset_id)
     return render_template(
         "datasets/view.html",
         dataset=ds,
@@ -105,6 +121,114 @@ def view_snapshot_json(snapshot_id):
     except db.exceptions.NoDataFoundException as e:
         raise NotFound("Can't find this dataset.")
 
+@datasets_bp.route("/<uuid:dataset_id>/download_annotation")
+def download_annotation_csv(dataset_id):
+    """ Converts dataset dict to csv for user to download
+    """
+    ds = get_dataset(dataset_id)
+    fp = _convert_dataset_to_csv_stringio(ds)
+
+    file_name = "dataset_annotations_%s.csv" % db.dataset.slugify(ds["name"])
+
+    return send_file(fp,
+                     mimetype='text/csv',
+                     as_attachment=True,
+                     attachment_filename=file_name)
+
+
+def _convert_dataset_to_csv_stringio(dataset):
+    """Convert a dataset to a CSV representation that can be imported
+    by the dataset importer.
+    A dataset file contains a line for each item in the format
+        classname,mbid
+
+    Arguments:
+        dataset: a dataset loaded with get_dataset
+
+    Returns:
+        A rewound StringIO containing a CSV representation of the dataset"""
+
+    # We need to encode all text fields, because they may have non-ascii characters
+    #   - dataset description, class names, class descriptions
+    # TODO: On upgrade to python 3, check that stringio accepts the correct data
+    #       (may have to change to bytesio if we encode this data)
+    fp = StringIO.StringIO()
+    writer = csv.writer(fp)
+
+    # write dataset description only if it is set
+    if dataset["description"]:
+        description = dataset["description"]
+        writer.writerow(["description", description.encode("utf-8")])
+
+    for ds_class in dataset["classes"]:
+        # write class description only if it is set
+        if ds_class["description"]:
+            ds_class_description = ds_class["description"]
+            ds_class_desc_head = "description:" + ds_class["name"].encode("utf-8")
+            writer.writerow([ds_class_desc_head, ds_class_description.encode("utf-8")])
+
+    for ds_class in dataset["classes"]:
+        class_name = ds_class["name"].encode("utf-8")
+        for rec in ds_class["recordings"]:
+            writer.writerow([rec, class_name])
+
+    fp.seek(0)
+    return fp
+
+
+@datasets_bp.route("/<uuid:dataset_id>/download_dataset")
+def download_dataset(dataset_id):
+    """Download the full contents of a dataset, including lowlevel files.
+    The dataset is given as a zip file.
+
+    If the number of items in a dataset is more than config.DATASET_DOWNLOAD_RECORDINGS_LIMIT
+    then redirect back to the dataset page and don't download it.
+    """
+    if current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"] <= 0:
+        flash.error("Downloading complete dataset is disabled")
+        return redirect(url_for(".view", dataset_id=dataset_id))
+    ds = get_dataset(dataset_id)
+    if ds["num_recordings"] > current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"]:
+        flash.error("Downloading complete dataset is disabled for datasets with "
+                    "more than %d recordings." % current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"])
+        return redirect(url_for(".view", dataset_id=dataset_id))
+    dataset_name = slugify(ds["name"])
+    zip_file = generate_zip_from_dataset(ds)
+    return send_file(zip_file,
+                     as_attachment=True,
+                     attachment_filename="acousticbrainz-dataset-{}-{}.zip".format(dataset_id, dataset_name))
+
+
+def generate_zip_from_dataset(ds):
+    """Build a zip archive of all low-level documents that make up this dataset.
+    A folder is made for each class.
+
+    Arguments:
+        ds: the dataset to generate data for
+
+    Returns:
+        A rewound StringIO containing a zip file with the dataset contents
+    """
+
+    dataset_name = slugify(ds["name"])
+    sio = StringIO.StringIO()
+    zipfp = zipfile.ZipFile(sio, "w", allowZip64=True)
+    for data in ds["classes"]:
+        class_name = slugify(data["name"])
+        CHUNK_SIZE = 100
+        recordings = [(mbid, 0) for mbid in data.get("recordings", [])]
+        chunks = [recordings[i: i + CHUNK_SIZE] for i in xrange(0, len(recordings), CHUNK_SIZE)]
+        for chunk in chunks:
+            recordings_json = db.data.load_many_low_level(chunk)
+            for mbid, offset in chunk:
+                data = recordings_json.get(mbid, {}).get(str(offset))
+                if data:
+                    zipfp.writestr(os.path.join(dataset_name, class_name, "{}.json".format(mbid)), json.dumps(data))
+
+    zipfp.close()
+    sio.seek(0)
+    return sio
+
 
 @datasets_bp.route("/accuracy")
 def accuracy():
@@ -121,7 +245,7 @@ def eval_info(dataset_id):
     )
 
 
-@datasets_bp.route("/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
+@datasets_bp.route("/service/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
 def eval_job(dataset_id, job_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
@@ -148,7 +272,7 @@ def eval_job(dataset_id, job_id):
         return jsonify({"success": True})
 
 
-@datasets_bp.route("/<uuid:dataset_id>/evaluation/json")
+@datasets_bp.route("/service/<uuid:dataset_id>/evaluation/json")
 def eval_jobs(dataset_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
@@ -175,8 +299,15 @@ def evaluate(dataset_id):
         flash.warn("Can't add private datasets into evaluation queue.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
     if db.dataset_eval.job_exists(dataset_id):
-        flash.warn("Evaluation job for this dataset has been already created.")
+        flash.warn("An evaluation job for this dataset has been already created.")
         return redirect(url_for(".eval_info", dataset_id=dataset_id))
+
+    # Validate dataset structure before choosing evaluation preferences
+    try:
+        db.dataset_eval.validate_dataset_structure(ds)
+    except db.dataset_eval.IncompleteDatasetException as e:
+        flash.error("Cannot add this dataset because of a validation error: %s" % e)
+        return redirect(url_for("datasets.view", dataset_id=dataset_id))
 
     form = forms.DatasetEvaluationForm()
 
@@ -184,10 +315,22 @@ def evaluate(dataset_id):
         try:
             if form.filter_type.data == forms.DATASET_EVAL_NO_FILTER:
                 form.filter_type.data = None
+
+            c_values = None
+            gamma_values = None
+            preprocessing_values = None
+            if form.svm_filtering.data:
+                c_values = [int(i) for i in form.c_value.data.split(",")]
+                gamma_values = [int(i) for i in form.gamma_value.data.split(",")]
+                preprocessing_values = form.preprocessing_values.data
+
             db.dataset_eval.evaluate_dataset(
                 dataset_id=ds["id"],
                 normalize=form.normalize.data,
                 eval_location=form.evaluation_location.data,
+                c_values=c_values,
+                gamma_values=gamma_values,
+                preprocessing_values=preprocessing_values,
                 filter_type=form.filter_type.data,
                 challenge_id=form.challenge_id.data,
             )
@@ -201,9 +344,9 @@ def evaluate(dataset_id):
     return render_template("datasets/evaluate.html", dataset=ds, form=form)
 
 
-@datasets_bp.route("/<uuid:id>/json")
-def view_json(id):
-    dataset = get_dataset(id)
+@datasets_bp.route("/service/<uuid:dataset_id>/json")
+def view_json(dataset_id):
+    dataset = get_dataset(dataset_id)
     dataset_clean = {
         "name": dataset["name"],
         "description": dataset["description"],
@@ -219,9 +362,15 @@ def view_json(id):
     return jsonify(dataset_clean)
 
 
-@datasets_bp.route("/create", methods=("GET", "POST"))
+@datasets_bp.route("/create", methods=("GET", ))
 @login_required
 def create():
+    return render_template("datasets/edit.html", mode="create")
+
+
+@datasets_bp.route("/service/create", methods=("POST", ))
+@auth_required
+def create_service():
     if request.method == "POST":
         dataset_dict = request.get_json()
         if not dataset_dict:
@@ -235,7 +384,7 @@ def create():
         except dataset_validator.ValidationException as e:
             return jsonify(
                 success=False,
-                error=str(e),
+                error=e.error,
             ), 400
 
         return jsonify(
@@ -243,53 +392,102 @@ def create():
             dataset_id=dataset_id,
         )
 
-    else:  # GET
-        return render_template("datasets/edit.html", mode="create")
-
 
 @datasets_bp.route("/import", methods=("GET", "POST"))
 @login_required
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
+        description, classes = _parse_dataset_csv(request.files[form.file.name])
         dataset_dict = {
             "name": form.name.data,
-            "description": form.description.data,
-            "classes": _parse_dataset_csv(request.files[form.file.name]),
-            "public": True,
+            "description": description if description else form.description.data,
+            "classes": classes,
+            "public": form.public.data,
         }
+
         try:
             dataset_id = db.dataset.create_from_dict(dataset_dict, current_user.id)
         except dataset_validator.ValidationException as e:
-            raise BadRequest(str(e))
+            raise BadRequest(e.error)
         flash.info("Dataset has been imported successfully.")
-        return redirect(url_for(".view", id=dataset_id))
+        return redirect(url_for(".view", dataset_id=dataset_id))
 
     else:
         return render_template("datasets/import.html", form=form)
 
 
 def _parse_dataset_csv(file):
-    classes_dict = defaultdict(list)
+    """Parse a csv file containing a representation of a dataset.
+    The csv file should have rows with 2 columns in one of the following forms:
+      <recording_id>,<classname>
+      description,<dataset_description>
+      description:<classname>,<class_description>
+
+    Arguments:
+        file: path to the csv file containing the dataset
+    Returns: a tuple of (dataset description, [classes]), where classes is a list of dictionaries
+             {"name": class name, "description": class description, "recordings": []}
+             a class is only returned if there are recordings for it. A class
+        """
+    classes_dict = defaultdict(lambda: {"description": "", "recordings": []})
+    dataset_description = None
     for class_row in csv.reader(file):
         if len(class_row) != 2:
             raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
-        classes_dict[class_row[1]].append(class_row[0])
+
+        # Decode the rows as UTF-8.
+        # The utf-8-sig codec removes a UTF-8 BOM if it exists at the start of a file.
+        # In that case, col1 in the first row could start with 0xfeff, so remove it.
+        # For all other items it will decode as regular UTF-8
+        col1 = class_row[0].decode("utf-8-sig")
+        col2 = class_row[1].decode("utf-8-sig")
+
+        if col1 == "description":
+            # row is the dataset description
+            dataset_description = col2
+        elif col1[:12] == "description:":
+            # row is a class description
+            class_name = col1[12:]
+            classes_dict[class_name]["description"] = col2
+        else:
+            # row is a recording
+            classes_dict[col2]["recordings"].append(col1)
+
     classes = []
-    for name, recordings in six.iteritems(classes_dict):
-        classes.append({
-            "name": name,
-            "recordings": recordings,
-        })
-    return classes
+
+    for name, class_data in six.iteritems(classes_dict):
+        if class_data["recordings"]:
+            classes.append({
+                "recordings": class_data["recordings"] if "recordings" in class_data else [],
+                "name": name,
+                "description": class_data["description"] if "description" in class_data else None,
+            })
+
+    return dataset_description, classes
 
 
-@datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", "POST"))
+@datasets_bp.route("/<uuid:dataset_id>/edit", methods=("GET", ))
 @login_required
 def edit(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
+
+    return render_template(
+        "datasets/edit.html",
+        mode="edit",
+        dataset_id=str(dataset_id),
+        dataset_name=ds["name"],
+    )
+
+
+@datasets_bp.route("/service/<uuid:dataset_id>/edit", methods=("POST", ))
+@auth_required
+def edit_service(dataset_id):
+    ds = get_dataset(dataset_id)
+    if ds["author"] != current_user.id:
+        raise APIUnauthorized("You can't edit this dataset.")
 
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -304,20 +502,12 @@ def edit(dataset_id):
         except dataset_validator.ValidationException as e:
             return jsonify(
                 success=False,
-                error=str(e),
+                error=e.error,
             ), 400
 
         return jsonify(
             success=True,
             dataset_id=dataset_id,
-        )
-
-    else:  # GET
-        return render_template(
-            "datasets/edit.html",
-            mode="edit",
-            dataset_id=str(dataset_id),
-            dataset_name=ds["name"],
         )
 
 
@@ -326,10 +516,7 @@ def edit(dataset_id):
 def delete(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
-        return jsonify(
-            error=True,
-            description="You can't delete this dataset.",
-        ), 401  # Unauthorized
+        raise Forbidden("You can't delete this dataset.")
 
     if request.method == "POST":
         db.dataset.delete(ds["id"])

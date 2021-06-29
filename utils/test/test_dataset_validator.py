@@ -1,4 +1,8 @@
+# coding=utf-8
 import unittest
+
+import six
+
 from utils import dataset_validator
 
 
@@ -10,26 +14,34 @@ class DatasetValidatorTestCase(unittest.TestCase):
         # not a dictionary
         with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete("not_dictionary")
-        self.assertEqual(str(out.exception), "Request must be a dictionary.")
+        self.assertEqual(six.ensure_text(out.exception.error), "Request must be a dictionary.")
 
         # missing a required element
         with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test"})
-        self.assertEqual(str(out.exception), "Field `recordings` is missing from recordings dictionary.")
+        self.assertEqual(six.ensure_text(out.exception.error),
+                         "Field `recordings` is missing from recordings dictionary.")
 
         with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": [], "other": None})
-        self.assertEqual(str(out.exception), "Unexpected field `other` in recordings dictionary.")
+        self.assertEqual(six.ensure_text(out.exception.error), "Unexpected field `other` in recordings dictionary.")
 
         # recordings not a list
         with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": "notlist"})
-        self.assertEqual(str(out.exception), 'Field `recordings` in class "Test" is not a list.')
+        self.assertEqual(six.ensure_text(out.exception.error), 'Field `recordings` in class "Test" is not a list.')
 
         # recording item not a uuid
         with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": [1]})
-        self.assertEqual(str(out.exception), '"1" is not a valid recording MBID in class "Test".')
+        self.assertEqual(six.ensure_text(out.exception.error), '"1" is not a valid recording MBID in class "Test".')
+
+        # utf-8 characters in the uuid field
+        with self.assertRaises(dataset_validator.ValidationException) as out:
+            dataset_validator.validate_recordings_add_delete({"class_name": "Test",
+                                                              "recordings": [u"bé686320-8057-4ca2-b484-e01434a3a2b1"]})
+        self.assertEqual(six.ensure_text(out.exception.error),
+                         u'"bé686320-8057-4ca2-b484-e01434a3a2b1" is not a valid recording MBID in class "Test".')
 
         # all ok
         dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": ["cc355a8a-1cf0-4eda-a693-fd38dc1dd4e2"]})
@@ -41,7 +53,7 @@ class DatasetValidatorTestCase(unittest.TestCase):
         # recordings required depending on flag
         with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_class({"name": "Test", "description": "Desc"}, recordings_required=True)
-        self.assertEqual(str(out.exception), "Field `recordings` is missing from class.")
+        self.assertEqual(six.ensure_text(out.exception.error), "Field `recordings` is missing from class.")
 
         # Required=False, no error
         dataset_validator.validate_class({"name": "Test", "description": "Desc"}, recordings_required=False)
@@ -289,20 +301,24 @@ class DatasetValidatorTestCase(unittest.TestCase):
 
     def test_dataset_item_lengths(self):
         # Incorrect lengths
-        with self.assertRaises(dataset_validator.ValidationException):
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "",  # Smaller than Min Len
                 "classes": [],
                 "public": False,
             })
-        with self.assertRaises(dataset_validator.ValidationException):
+        self.assertEqual(six.ensure_text(ar.exception.error), "Dataset name must be between 1 and 100 characters")
+
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv \
                 wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghj",  # Greater than Max Len
                 "classes": [],
                 "public": False,
             })
-        with self.assertRaises(dataset_validator.ValidationException):
+        self.assertEqual(six.ensure_text(ar.exception.error), "Dataset name must be between 1 and 100 characters")
+
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "this dataset",
                 "classes": [
@@ -313,7 +329,9 @@ class DatasetValidatorTestCase(unittest.TestCase):
                 ],
                 "public": False,
             })
-        with self.assertRaises(dataset_validator.ValidationException):
+        self.assertEqual(six.ensure_text(ar.exception.error), "Length of the `name` field in class number 0 doesn't fit the limits. Class name must be between 1 and 100 characters")
+
+        with self.assertRaises(dataset_validator.ValidationException) as ar:
             dataset_validator.validate({
                 "name": "this dataset",
                 "classes": [
@@ -325,6 +343,8 @@ class DatasetValidatorTestCase(unittest.TestCase):
                 ],
                 "public": False,
             })
+        self.assertEqual(six.ensure_text(ar.exception.error), "Length of the `name` field in class number 0 doesn't fit the limits. Class name must be between 1 and 100 characters")
+
         with self.assertRaises(dataset_validator.ValidationException):
             dataset_validator.validate({
                 "name": "test",

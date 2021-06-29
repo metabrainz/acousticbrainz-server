@@ -1,22 +1,23 @@
-from hashlib import sha1
+import hashlib
+
 import yaml
-import sys
 
 
-def create_profile(in_file, out_file, sha1, models=None):
+class HighLevelConfigurationError(Exception):
+    """Indicates an error configuring the highlevel extractor on startup,
+    before processing items"""
+
+
+def create_profile(in_file, out_file, sha1):
     """Prepare a profile file for use with essentia. Sanity check to make sure
     important values are present.
     """
 
     try:
         with open(in_file, 'r') as f:
-            doc = yaml.load(f)
+            doc = yaml.load(f, Loader=yaml.SafeLoader)
     except IOError as e:
-        print("Cannot read profile %s: %s" % (in_file, e))
-        sys.exit(-1)
-
-    if models:
-        doc['highlevel']['svm_models'] = models
+        raise HighLevelConfigurationError(u"Cannot read profile {}: {}".format(in_file, e))
 
     try:
         models_ver = doc['mergeValues']['metadata']['version']['highlevel']['models_essentia_git_sha']
@@ -24,28 +25,24 @@ def create_profile(in_file, out_file, sha1, models=None):
         models_ver = None
 
     if not models_ver:
-        print("profile.conf.in needs to have 'metadata : version : highlevel :"
-              " models_essentia_git_sha' defined.")
-        sys.exit(-1)
+        raise HighLevelConfigurationError("{} needs to have mergeValues.metadata.version.highlevel."
+                                          "models_essentia_git_sha defined".format(in_file))
 
     doc['mergeValues']['metadata']['version']['highlevel']['essentia_build_sha'] = sha1
 
     try:
         with open(out_file, 'w') as yaml_file:
-            yaml_file.write( yaml.dump(doc, default_flow_style=False))
+            yaml.dump(doc, yaml_file, default_flow_style=False)
     except IOError as e:
-        print("Cannot write profile %s: %s" % (out_file, e))
-        sys.exit(-1)
+        raise HighLevelConfigurationError(u"Cannot write profile {}: {}".format(out_file, e))
 
 
 def get_build_sha1(binary):
     """Calculate the SHA1 of the binary we're using."""
     try:
-        f = open(binary, "r")
-        bin = f.read()
-        f.close()
+        with open(binary, "rb") as fp:
+            contents = fp.read()
     except IOError as e:
-        print("Cannot calculate the SHA1 of the high-level extractor binary: %s" % e)
-        sys.exit(-1)
+        raise HighLevelConfigurationError("Cannot calculate the SHA1 of the high-level extractor binary: {}".format(e))
 
-    return sha1(bin).hexdigest()
+    return hashlib.sha1(contents).hexdigest()

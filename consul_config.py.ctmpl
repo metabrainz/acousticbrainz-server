@@ -40,12 +40,19 @@ MUSICBRAINZ_CLIENT_SECRET = '''{{template "KEY" "musicbrainz/client_secret"}}'''
 COMPILE_LESS = False
 
 LOG_SENTRY = {
-   'dsn':'''{{template "KEY" "sentry_dsn"}}''',
-   'environment': 'production',
+   'dsn':'''{{template "KEY" "sentry/dsn"}}''',
+   'environment': '''{{template "KEY" "sentry/environment"}}''',
    'level': 'WARN',
+   'release': os.getenv('GIT_SHA', None),
 }
 
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
 FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
 
 FEATURE_EVAL_LOCATION = False
+
+RATELIMIT_PER_IP = {{template "KEY" "ratelimit_per_ip"}} # number of requests per ip
+RATELIMIT_WINDOW = {{template "KEY" "ratelimit_window"}} # window size in seconds
+
+# maximum number of recordings in the dataset for which the download dataset button is shown
+DATASET_DOWNLOAD_RECORDINGS_LIMIT = {{template "KEY" "dataset_download_recordings_limit"}}

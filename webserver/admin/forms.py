@@ -13,7 +13,7 @@ class AddAdminForm(FlaskForm):
     force = BooleanField("Create user if doesn't exist")
 
 
-class EditChallengeForm(Form):
+class EditChallengeForm(FlaskForm):
     name = StringField(
         "Name",
         validators=[DataRequired("Name of the challenge is required!")],

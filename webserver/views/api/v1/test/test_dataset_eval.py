@@ -1,20 +1,17 @@
 from __future__ import absolute_import
 from werkzeug.exceptions import InternalServerError
-from webserver.testing import ServerTestCase
-from db.testing import TEST_DATA_PATH
+from webserver.testing import AcousticbrainzTestCase
 import db.exceptions
 import db.dataset
 import db.dataset_eval
 import db.api_key
 import webserver.views.api.exceptions
-import datetime
-from utils import dataset_validator
 
 import json
 import mock
-import os
 
-class APIDatasetEvaluationViewsTestCase(ServerTestCase):
+
+class APIDatasetEvaluationViewsTestCase(AcousticbrainzTestCase):
 
     def setUp(self):
         super(APIDatasetEvaluationViewsTestCase, self).setUp()
@@ -158,7 +155,7 @@ class APIDatasetEvaluationViewsTestCase(ServerTestCase):
         resp = self.client.get('/api/v1/datasets/evaluation/jobs/7804abe5-58be-4c9c-a787-22b91d03xxxx', content_type='application/json')
         self.assertEqual(resp.status_code, 404)
 
-        expected_result = {"message": "The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again."}
+        expected_result = {"message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."}
         self.assertEqual(resp.json, expected_result)
 
     @mock.patch('db.dataset_eval.get_job')

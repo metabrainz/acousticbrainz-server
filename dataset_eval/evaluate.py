@@ -60,11 +60,15 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
         with open(groundtruth_path, "w") as f:
             yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
+        # Passing more user preferences to train the model.
         logging.info("Training model...")
         results = gaia_wrapper.train_model(
             project_dir=eval_location,
             groundtruth_file=groundtruth_path,
             filelist_file=filelist_path,
+            c_values=eval_job["options"].get("c_values", []),
+            gamma_values=eval_job["options"].get("gamma_values", []),
+            preprocessing_values=eval_job["options"].get("preprocessing_values", []),
         )
         logging.info("Saving results...")
         save_history_file(storage_dir, results["history_path"], eval_job["id"])
@@ -99,7 +103,7 @@ def create_groundtruth_dict(name, datadict):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": db.dataset._slugify(unicode(name)),
+        "className": db.dataset.slugify(unicode(name)),
         "groundTruth": {},
     }
     for r, cls in datadict.items():
@@ -114,7 +118,7 @@ def create_groundtruth(dataset):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": db.dataset._slugify(unicode(dataset["name"])),
+        "className": db.dataset.slugify(unicode(dataset["name"])),
         "groundTruth": {},
     }
     for cls in dataset["classes"]:

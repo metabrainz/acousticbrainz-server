@@ -23,18 +23,18 @@ htmlcov
 pip-log.txt
 pip-delete-this-directory.txt
 
+## AcousticBrainz
+
+# Pytest
+.pytest_cache
+
 # Configuration
-hl_extractor/streaming_extractor_music_svm
-hl_extractor/svm_models
+config.py
 hl_extractor/profile.conf
 hl_extractor/profile.conf.in
 
 # Node.js
-/node_modules
+node_modules
 
 # Other stuff
-/static/download
-export
-/files
-ve
 *.swp

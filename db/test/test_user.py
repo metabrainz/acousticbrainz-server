@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from db.testing import DatabaseTestCase
+from webserver.testing import AcousticbrainzTestCase
 import db.user
 import db.api_key
 import db.exceptions
 
 
-class UserTestCase(DatabaseTestCase):
+class UserTestCase(AcousticbrainzTestCase):
 
     def test_create(self):
         user_id = db.user.create("fuzzy_dunlop")

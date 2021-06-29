@@ -2,8 +2,6 @@ import os
 
 
 DEBUG = False  # set to False in production mode
-# Additional files to watch to restart the development server
-RELOAD_ON_FILES = ["webserver/static/build/rev-manifest.json"]
 
 SECRET_KEY = "CHANGE_ME"
 
@@ -34,6 +32,11 @@ REDIS_PORT = 6379
 REDIS_NAMESPACE = "AB"
 REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache_namespaces')
 
+# RATE LIMITING
+# set a limit of per_ip requests per window seconds per unique ip address
+RATELIMIT_PER_IP = 100
+RATELIMIT_WINDOW = 10
+
 # LOGGING
 # Uncomment any of the following logging stubs if you want to enable logging
 # during development. In general you shouldn't need to do this.
@@ -42,17 +45,6 @@ REDIS_NS_VERSIONS_LOCATION = os.path.join(os.path.dirname(os.path.realpath(__fil
 #    'filename': './acousticbrainz.log',
 #    'max_bytes': 512 * 1024, # optional
 #    'backup_count': 10, # optional
-# }
-
-# LOG_EMAIL = {
-#    'mail_server': 'localhost',
-#    'mail_port': 25,
-#    'mail_from_host': 'acousticbrainz.org',
-#    'log_email_recipients': [
-#        '',
-#    ],
-#    'log_email_topic': 'AcousticBrainz Error',
-#    'level': 'ERROR',
 # }
 
 # LOG_SENTRY = {
@@ -67,4 +59,14 @@ DATASET_DIR = "/data/datasets"
 FILE_STORAGE_DIR = "/data/files"
 
 #Feature Flags
+# Choose a server to perform the evaluation on
 FEATURE_EVAL_LOCATION = False
+# Choose dataset preprocessing processes
+FEATURE_EVAL_FILTERING = True
+# Choose settings used for model training
+FEATURE_EVAL_MODEL_SELECTION = False
+
+DEBUG_TB_INTERCEPT_REDIRECTS = False
+
+# maximum number of recordings in the dataset for which the download dataset button is shown
+DATASET_DOWNLOAD_RECORDINGS_LIMIT = 5000

@@ -64,11 +64,14 @@
       {% endif %}
 
       {% macro print_row(row) %}
-        {# Prints <name, value, probability> table row. #}
         <tr>
-          <td>{{ row[0] }}</td> {# Name #}
-          <td>{{ row[1] }}</td> {# Value #}
-          <td>{{ row[2]|float * 100 }}%</td>
+          <td><a href="{{ row.model_href }}">{{ row.name }}</a></td>
+          <td>
+              {% if row.original %}<abbr title="{{ row.original }}">{% endif %}
+              {{ row.value }}
+              {% if row.original %}</abbr>{% endif %}
+          </td>
+          <td>{{ row.percent }}%</td>
           {% if current_user and not current_user.is_anonymous %}
             <td id="feedback-{{ row[3]['highlevel_model_id'] }}"></td>
           {% endif %}

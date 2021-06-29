@@ -13,4 +13,9 @@
 {% block scripts %}
   {{ super() }}
   <script src="{{ get_static_path('datasets.js') }}"></script>
+  <script>
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip();
+    });
+  </script>
 {% endblock %}

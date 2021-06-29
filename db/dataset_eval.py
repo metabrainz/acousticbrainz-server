@@ -14,6 +14,21 @@ STATUS_RUNNING = "running"
 STATUS_DONE = "done"
 STATUS_FAILED = "failed"
 
+# Columns to select when getting a job
+EVAL_COLUMNS = ["dataset_eval_jobs.id::text",
+                "dataset_snapshot.dataset_id::text",
+                "dataset_eval_jobs.snapshot_id::text",
+                "dataset_eval_jobs.status",
+                "dataset_eval_jobs.status_msg", 
+                "dataset_eval_jobs.result", 
+                "dataset_eval_jobs.options", 
+                "dataset_eval_jobs.training_snapshot", 
+                "dataset_eval_jobs.testing_snapshot", 
+                "dataset_eval_jobs.created", 
+                "dataset_eval_jobs.updated", 
+                "dataset_eval_jobs.eval_location"]
+EVAL_COLUMNS_COMMA_SEPARATED = ", ".join(EVAL_COLUMNS)
+
 VALID_STATUSES = [STATUS_PENDING, STATUS_RUNNING, STATUS_DONE, STATUS_FAILED]
 
 # Location to run an evaluation (on the AB server of the user's local server),
@@ -25,8 +40,14 @@ VALID_EVAL_LOCATION = [EVAL_LOCAL, EVAL_REMOTE]
 # Filter types are defined in `eval_filter_type` type. See schema definition.
 FILTER_ARTIST = "artist"
 
+# Default values for parameters
+DEFAULT_PARAMETER_PREPROCESSING = ['basic', 'lowlevel', 'nobands', 'normalized', 'gaussianized']
+DEFAULT_PARAMETER_C = [-5, -3, -1, 1, 3, 5, 7, 9, 11]
+DEFAULT_PARAMETER_GAMMA = [3, 1, -1, -3, -5, -7, -9, -11]
 
-def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None, challenge_id=None):
+
+def evaluate_dataset(dataset_id, normalize, eval_location, c_values=None, gamma_values=None,
+                     preprocessing_values=None, filter_type=None, challenge_id=None):
     """Add dataset into evaluation queue.
 
     Args:
@@ -38,27 +59,42 @@ def evaluate_dataset(dataset_id, normalize, eval_location, filter_type=None, cha
         eval_location: The user should choose to evaluate on his own machine
             or on the AB server. 'local' is for AB server and 'remote' is for
             user's machine.
+        c_values (optional): A list of numerical values to use as the C parameter to the SVM model.
+            If not set, use DEFAULT_PARAMETER_C
+        gamma_values (optional): A list of numerical values to be used as the gamma parameter
+            to the SVM model. If not set, use DEFAULT_PARAMETER_GAMMA
+        preprocessing_values (optional): A list of preprocessing steps to be performed in the
+            model grid search. If not set, use DEFAULT_PARAMETER_PREPROCESSING
         filter_type: Optional filtering that will be applied to the dataset.
             See FILTER_* variables in this module for a list of existing
             filters.
         challenge_id: Optional UUID of a challenge. If specified, evaluation
             job will be submitted as a part of that challenge.
 
+    Raises:
+        JobExistsException: if the dataset has already been submitted for evaluation
+        IncompleteDatasetException: if the dataset is incomplete (it has recordings that aren't in AB)
+
     Returns:
         ID of the newly created evaluation job.
     """
+
+    if c_values is None:
+        c_values = DEFAULT_PARAMETER_C
+    if gamma_values is None:
+        gamma_values = DEFAULT_PARAMETER_GAMMA
+    if preprocessing_values is None:
+        preprocessing_values = DEFAULT_PARAMETER_PREPROCESSING
+
     with db.engine.begin() as connection:
         if _job_exists(connection, dataset_id):
             raise JobExistsException
-        validate_dataset(db.dataset.get(dataset_id))
-        return _create_job(
-            connection=connection,
-            dataset_id=dataset_id,
-            normalize=normalize,
-            eval_location=eval_location,
-            filter_type=filter_type,
-            challenge_id=challenge_id,
-        )
+
+        # Validate dataset contents
+        validate_dataset_contents(db.dataset.get(dataset_id))
+        return _create_job(connection, dataset_id, normalize, eval_location,
+                           c_values, gamma_values, preprocessing_values, filter_type,
+                           challenge_id=challenge_id)
 
 
 def job_exists(dataset_id):
@@ -80,24 +116,23 @@ def _job_exists(connection, dataset_id):
         SELECT count(*)
           FROM dataset_eval_jobs
           JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-         WHERE dataset_snapshot.dataset_id = :dataset_id AND dataset_eval_jobs.status IN :statses
+         WHERE dataset_snapshot.dataset_id = :dataset_id AND dataset_eval_jobs.status IN :statuses
     """), {
         "dataset_id": dataset_id,
-        "statses": (STATUS_PENDING, STATUS_RUNNING),
+        "statuses": (STATUS_PENDING, STATUS_RUNNING),
     })
     return result.fetchone()[0] > 0
 
 
-def validate_dataset(dataset):
-    """Validate dataset by making sure that it's complete and checking if all
-    recordings referenced in classes have low-level information in the database.
+def validate_dataset_structure(dataset):
+    """Validate dataset structure by making sure that it has at
+    least two classes and two recordings in each class.
 
-    Raises IncompleteDatasetException if dataset is not ready for evaluation.
+    Raises IncompleteDatasetException if dataset doesn't satisfy the
+    structure needs for evaluation.
     """
     MIN_CLASSES = 2
     MIN_RECORDINGS_IN_CLASS = 2
-
-    rec_memo = {}
 
     if len(dataset["classes"]) < MIN_CLASSES:
         raise IncompleteDatasetException(
@@ -105,12 +140,23 @@ def validate_dataset(dataset):
         )
     for cls in dataset["classes"]:
         if len(cls["recordings"]) < MIN_RECORDINGS_IN_CLASS:
-            # TODO: Would be nice to mention class name in an error message.
             raise IncompleteDatasetException(
                 "There are not enough recordings in a class `%s` (%s). "
                 "At least %s are required in each class." %
                 (cls["name"], len(cls["recordings"]), MIN_RECORDINGS_IN_CLASS)
             )
+
+
+def validate_dataset_contents(dataset):
+    """Validate dataset contents by checking if all recordings referenced
+    in classes have low-level information in the database.
+
+    Raises IncompleteDatasetException if contents of the dataset are not
+    found.
+    """
+    rec_memo = {}
+
+    for cls in dataset["classes"]:
         for recording_mbid in cls["recordings"]:
             if recording_mbid in rec_memo and rec_memo[recording_mbid]:
                 pass
@@ -123,40 +169,44 @@ def validate_dataset(dataset):
 
 
 def get_next_pending_job():
-    # TODO: This should return the same data as `get_job`, so
-    #       we run 2 queries, however it would be more efficient
-    #       to do it in 1 query
+    """
+    Get the earliest submitted job which is still in the pending state.
+
+    Returns:
+         The next job to process
+    """
     with db.engine.connect() as connection:
         query = text(
-            """SELECT id::text
+            """SELECT %s
                  FROM dataset_eval_jobs
+                 JOIN dataset_snapshot 
+                   ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
                 WHERE status = :status
                   AND eval_location = 'local'
              ORDER BY created ASC
-                LIMIT 1""")
+                LIMIT 1
+            """ % EVAL_COLUMNS_COMMA_SEPARATED)
         result = connection.execute(query, {"status": STATUS_PENDING})
         row = result.fetchone()
-        return get_job(row[0]) if row else None
+        return dict(row) if row else None
 
 
 def get_job(job_id):
+    """
+    Get an evaluation job.
+
+    Arguments:
+        job_id: the id to the job to retrieve
+
+    Returns:
+        The evaluation job with the specified id
+    """
     with db.engine.connect() as connection:
         query = text(
-            """SELECT dataset_eval_jobs.id::text
-                    , dataset_snapshot.dataset_id::text
-                    , dataset_eval_jobs.snapshot_id::text
-                    , dataset_eval_jobs.status
-                    , dataset_eval_jobs.status_msg
-                    , dataset_eval_jobs.result
-                    , dataset_eval_jobs.options
-                    , dataset_eval_jobs.training_snapshot
-                    , dataset_eval_jobs.testing_snapshot
-                    , dataset_eval_jobs.created
-                    , dataset_eval_jobs.updated
-                    , dataset_eval_jobs.eval_location
+            """SELECT %s
                  FROM dataset_eval_jobs
                  JOIN dataset_snapshot ON dataset_snapshot.id = dataset_eval_jobs.snapshot_id
-                WHERE dataset_eval_jobs.id = :id""")
+                WHERE dataset_eval_jobs.id = :id""" % EVAL_COLUMNS_COMMA_SEPARATED)
         result = connection.execute(query, {"id": job_id})
 
         row = result.fetchone()
@@ -295,7 +345,8 @@ def add_dataset_eval_set(connection, data):
     return snapshot_id
 
 
-def _create_job(connection, dataset_id, normalize, eval_location, filter_type=None, challenge_id=None):
+def _create_job(connection, dataset_id, normalize, eval_location, c_value,
+                gamma_value, preprocessing_values, filter_type, challenge_id=None):
     if not isinstance(normalize, bool):
         raise ValueError("Argument 'normalize' must be a boolean.")
     if filter_type is not None:
@@ -303,6 +354,15 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
             raise ValueError("Incorrect 'filter_type'. See module documentation.")
     if eval_location not in VALID_EVAL_LOCATION:
         raise ValueError("Incorrect 'eval_location'. Must be one of %s" % VALID_EVAL_LOCATION)
+
+    options = {
+            "normalize": normalize,
+            "filter_type": filter_type,
+            "c_values": c_value,
+            "gamma_values": gamma_value,
+            "preprocessing_values": preprocessing_values,
+        }
+
     snapshot_id = db.dataset.create_snapshot(dataset_id)
     query = sqlalchemy.text("""
                 INSERT INTO dataset_eval_jobs (id, snapshot_id, status, options, eval_location)
@@ -312,10 +372,7 @@ def _create_job(connection, dataset_id, normalize, eval_location, filter_type=No
     result = connection.execute(query, {
         "snapshot_id": snapshot_id,
         "status": STATUS_PENDING,
-        "options": json.dumps({
-            "normalize": normalize,
-            "filter_type": filter_type,
-        }),
+        "options": json.dumps(options),
         "eval_location": eval_location
     })
     job_id = result.fetchone()[0]

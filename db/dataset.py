@@ -13,7 +13,7 @@ from db import exceptions
 from utils import dataset_validator
 
 
-def _slugify(string):
+def slugify(string):
     """Converts unicode string to lowercase, removes alphanumerics and
     underscores, and converts spaces to hyphens. Also strips leading and
     trailing whitespace.
@@ -34,8 +34,8 @@ def create_from_dict(dictionary, author_id):
     dataset_validator.validate(dictionary)
 
     with db.engine.begin() as connection:
-        if "description" not in dictionary:
-            dictionary["description"] = None
+        if "description" not in dictionary or dictionary["description"] is None:
+            dictionary["description"] = ""
 
         result = connection.execute("""INSERT INTO dataset (id, name, description, public, author)
                           VALUES (uuid_generate_v4(), %s, %s, %s, %s) RETURNING id""",
@@ -43,15 +43,16 @@ def create_from_dict(dictionary, author_id):
         dataset_id = result.fetchone()[0]
 
         for cls in dictionary["classes"]:
-            if "description" not in cls:
-                cls["description"] = None
+            if "description" not in cls or cls["description"] is None:
+                cls["description"] = ""
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
                                         (cls["name"], cls["description"], dataset_id))
             cls_id = result.fetchone()[0]
 
-            # Removing duplicate recordings
-            cls["recordings"] = list(set(cls["recordings"]))
+            # Remove duplicate recordings, preserving order
+            seen = set()
+            cls["recordings"] = [r for r in cls["recordings"] if not (r in seen or seen.add(r))]
 
             for recording_mbid in cls["recordings"]:
                 connection.execute("INSERT INTO dataset_class_member (class, mbid) VALUES (%s, %s)",
@@ -110,8 +111,8 @@ def update(dataset_id, dictionary, author_id):
     dataset_validator.validate(dictionary)
 
     with db.engine.begin() as connection:
-        if "description" not in dictionary:
-            dictionary["description"] = None
+        if "description" not in dictionary or dictionary["description"] is None:
+            dictionary["description"] = ""
 
         connection.execute("""UPDATE dataset
                           SET (name, description, public, author, last_edited) = (%s, %s, %s, %s, now())
@@ -122,8 +123,8 @@ def update(dataset_id, dictionary, author_id):
         connection.execute("""DELETE FROM dataset_class WHERE dataset = %s""", (dataset_id,))
 
         for cls in dictionary["classes"]:
-            if "description" not in cls:
-                cls["description"] = None
+            if "description" not in cls or cls["description"] is None:
+                cls["description"] = ""
             result = connection.execute("""INSERT INTO dataset_class (name, description, dataset)
                               VALUES (%s, %s, %s) RETURNING id""",
                                         (cls["name"], cls["description"], dataset_id))
@@ -152,6 +153,7 @@ def get(id):
             raise exceptions.NoDataFoundException("Can't find dataset with a specified ID.")
         row = dict(result.fetchone())
         row["classes"] = _get_classes(row["id"])
+        row["num_recordings"] = sum([len(cl.get("recordings", [])) for cl in row["classes"]])
         return row
 
 
@@ -477,7 +479,7 @@ def add_class(dataset_id, class_data):
 
     with db.engine.begin() as connection:
         if "description" not in class_data:
-            class_data["description"] = None
+            class_data["description"] = ""
         connection.execute(sqlalchemy.text("""
             INSERT INTO dataset_class (name, description, dataset)
                  SELECT :name, :description, :datasetid
@@ -562,7 +564,7 @@ def check_recording_in_dataset(dataset_id, mbid):
             SELECT dataset_class.id
               FROM dataset_class
               JOIN dataset_class_member
-                ON dataset_class_member.class = dataset_class.id 
+                ON dataset_class_member.class = dataset_class.id
              WHERE dataset_class.dataset = :dataset_id
                AND dataset_class_member.mbid = :mbid
         """), {"dataset_id": dataset_id, "mbid": mbid})

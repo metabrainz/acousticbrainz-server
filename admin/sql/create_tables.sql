@@ -1,12 +1,13 @@
 BEGIN;
 
 CREATE TABLE lowlevel (
-  id         SERIAL,
-  gid        UUID      NOT NULL,
-  build_sha1 TEXT      NOT NULL,
-  lossless   BOOLEAN                  DEFAULT 'n',
-  submitted  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  gid_type   gid_type  NOT NULL
+  id                SERIAL,
+  gid               UUID      NOT NULL,
+  build_sha1        TEXT      NOT NULL,
+  lossless          BOOLEAN                  DEFAULT 'n',
+  submitted         TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  gid_type          gid_type  NOT NULL,
+  submission_offset INTEGER   NOT NULL
 );
 
 CREATE TABLE lowlevel_json (
@@ -52,13 +53,13 @@ CREATE TABLE model (
   model         TEXT         NOT NULL,
   model_version TEXT         NOT NULL,
   date          TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  status        model_status NOT NULL    DEFAULT 'hidden'
+  status        model_status NOT NULL    DEFAULT 'hidden',
+  class_mapping JSONB
 );
 
 CREATE TABLE statistics (
   collected TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  name      TEXT                     NOT NULL,
-  value     INTEGER                  NOT NULL
+  stats     JSONB                    NOT NULL
 );
 
 CREATE TABLE incremental_dumps (
@@ -78,7 +79,7 @@ ALTER TABLE "user" ADD CONSTRAINT user_musicbrainz_id_key UNIQUE (musicbrainz_id
 CREATE TABLE dataset (
   id          UUID,
   name        VARCHAR NOT NULL,
-  description TEXT,
+  description TEXT NOT NULL,
   author      INT NOT NULL, -- FK to user
   public      BOOLEAN NOT NULL,
   created     TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -88,7 +89,7 @@ CREATE TABLE dataset (
 CREATE TABLE dataset_class (
   id          SERIAL,
   name        VARCHAR NOT NULL,
-  description TEXT,
+  description TEXT    NOT NULL,
   dataset     UUID    NOT NULL -- FK to dataset
 );
 

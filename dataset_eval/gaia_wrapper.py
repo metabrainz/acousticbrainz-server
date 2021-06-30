@@ -73,8 +73,6 @@ def update_parameters(project_file, c_values, gamma_values, preprocessing_values
             pref['gamma'] = gamma_values
         if preprocessing_values:
             pref['preprocessing'] = preprocessing_values
-    # Temporarily disable to avoid errors while training to avoid didn't match any descriptor error
-    project['failOnUnmatched'] = False
     with open(project_file, "w") as pfile:
         yaml.dump(project, pfile)
 

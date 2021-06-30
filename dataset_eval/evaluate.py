@@ -71,15 +71,14 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             filelist_path = os.path.join(eval_location, "filelist.yaml")
             filelist = dump_lowlevel_data(train.keys(), temp_dir)
             with open(filelist_path, "w") as f:
-                yaml.dump(filelist, f)
+                yaml.safe_dump(filelist, f)
         elif training_tool == "sklearn":
             dump_lowlevel_data_sklearn(train.keys(), dataset_dir)
 
         logging.info("Generating groundtruth.yaml...")
         groundtruth_path = os.path.join(eval_location, "groundtruth.yaml")
         with open(groundtruth_path, "w") as f:
-            # yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
-            yaml.dump(create_groundtruth_dict(snapshot["data"]["name"], train), f, Dumper=yaml.SafeDumper)
+            yaml.safe_dump(create_groundtruth_dict(snapshot["data"]["name"], train), f)
 
         if training_tool == "gaia":
             logging.info("Training GAIA model...")
@@ -250,7 +249,7 @@ def lowlevel_data_to_yaml(data):
     if 'lossless' in data['metadata']['audio_properties']:
         del data['metadata']['audio_properties']['lossless']
 
-    return yaml.dump(data)
+    return yaml.safe_dump(data)
 
 
 def dump_lowlevel_data_sklearn(recordings, location):

@@ -21,8 +21,8 @@ from dataset_eval import artistfilter
 eval_tool_use = "gaia"
 is_sklearn = os.getenv("MODEL_TRAINING_SKLEARN")
 if is_sklearn == "1":
-    from models.sklearn.model.classification_project import create_classification_project
-    from models.sklearn.classification.matrix_creation import simplified_matrix_export
+    from acousticbrainz.models.sklearn.model.classification_project import create_classification_project
+    from acousticbrainz.models.sklearn.classification.matrix_creation import simplified_matrix_export
     eval_tool_use = "sklearn"
 
 is_gaia = os.getenv("MODEL_TRAINING_GAIA")

@@ -54,8 +54,8 @@ COPY --chown=acousticbrainz:acousticbrainz requirements.txt /code/requirements.t
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Python dependencies for sklearn
-COPY --chown=acousticbrainz:acousticbrainz models/sklearn/requirements.txt /code/models/sklearn/requirements.txt
-RUN pip install --no-cache-dir -r /code/models/sklearn/requirements.txt
+COPY --chown=acousticbrainz:acousticbrainz acousticbrainz/models/sklearn/requirements.txt /code/acousticbrainz/models/sklearn/requirements.txt
+RUN pip install --no-cache-dir -r /code/acousticbrainz/models/sklearn/requirements.txt
 
 
 FROM acousticbrainz-sklearn AS acousticbrainz-dev

@@ -1,6 +1,3 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
 from brainzutils.flask import CustomFlask
 from brainzutils.ratelimit import set_rate_limits, inject_x_rate_headers
 from flask import request, url_for, redirect
@@ -34,7 +31,7 @@ def load_config(app):
                 time.sleep(1)
 
         if not os.path.exists(config_file):
-            print("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT)
+            print(("No config file generated. Retried %d times, exiting." % CONSUL_CONFIG_FILE_RETRY_COUNT))
 
     app.config.from_pyfile(config_file)
 

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from functools import update_wrapper, wraps
 from datetime import timedelta
 from flask import request, current_app, make_response

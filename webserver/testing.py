@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from brainzutils.ratelimit import set_rate_limits
 
 import db

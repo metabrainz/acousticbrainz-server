@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import ResponseError
 from brainzutils import cache

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
@@ -537,7 +535,7 @@ def prepare_table_from_cm(confusion_matrix):
     for actual in all_classes:
         # Counting how many tracks were associated with that class during classification
         predicted_class_size = 0
-        for predicted in confusion_matrix[actual].values():
+        for predicted in list(confusion_matrix[actual].values()):
             predicted_class_size += predicted
 
         row = {

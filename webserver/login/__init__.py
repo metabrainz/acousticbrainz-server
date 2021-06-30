@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from flask import redirect, url_for
 from flask_login import LoginManager, UserMixin, current_user
 from functools import wraps

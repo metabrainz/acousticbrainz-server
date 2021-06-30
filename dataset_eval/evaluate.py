@@ -55,7 +55,8 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
 
     eval_location = os.path.join(os.path.abspath(dataset_dir), eval_job["id"])
     utils.path.create_path(eval_location)
-    temp_dir = tempfile.mkdtemp()
+    temp_dir = os.path.join(eval_location, 'temp')
+    utils.path.create_path(temp_dir)
 
     training_tool = eval_job["options"].get("training_tool", "gaia")
 
@@ -103,12 +104,6 @@ def evaluate_dataset(eval_job, dataset_dir, storage_dir):
             status_msg=str(e),
         )
         logging.info(e)
-
-    finally:
-        # Clean up the source files used to generate this model.
-        # We can recreate them from the database if we need them
-        # at a later stage.
-        shutil.rmtree(temp_dir)
 
 
 def evaluate_gaia(options, eval_location, groundtruth_path, filelist_path, storage_dir, eval_job):

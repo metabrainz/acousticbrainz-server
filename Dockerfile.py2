@@ -83,13 +83,13 @@ RUN pip install pip==20.3.4
 # Python dependencies
 RUN mkdir /code/docs/ && chown acousticbrainz:acousticbrainz /code/docs/
 COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requirements.txt
-COPY --chown=acousticbrainz:acousticbrainz requirements.py2.txt /code/requirements.txt
+COPY --chown=acousticbrainz:acousticbrainz requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 
 FROM acousticbrainz-base AS acousticbrainz-dev
 
-COPY --chown=acousticbrainz:acousticbrainz requirements_development.py2.txt /code/requirements_development.txt
+COPY --chown=acousticbrainz:acousticbrainz requirements_development.txt /code/requirements_development.txt
 RUN pip install --no-cache-dir -r requirements_development.txt
 
 

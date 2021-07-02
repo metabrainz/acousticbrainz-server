@@ -70,9 +70,8 @@ class DatasetEvaluationForm(FlaskForm):
     evaluation_location = SelectField("Evaluation location", choices=[
         (DATASET_EVAL_LOCAL, "Evaluate on acousticbrainz.org"),
         (DATASET_EVAL_REMOTE, "Evaluate on your own machine")],
-        default = DATASET_EVAL_LOCAL
+        default=DATASET_EVAL_LOCAL
     )
-    normalize = BooleanField("Normalize classes")
     challenge_id = DynamicSelectField("Challenge", choices=[],
                                       validators=[_OptionalUUID("Incorrect challenge ID!")])
 

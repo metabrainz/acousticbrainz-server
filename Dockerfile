@@ -1,4 +1,4 @@
-FROM metabrainz/python:2.7 AS acousticbrainz-base
+FROM metabrainz/python:2.7-20210115 AS acousticbrainz-base
 
 # Dockerize
 ENV DOCKERIZE_VERSION v0.6.1
@@ -77,6 +77,9 @@ RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
 
 RUN chown acousticbrainz:acousticbrainz /code
 
+# Last version of pip that supports python2
+RUN pip install pip==20.3.4
+
 # Python dependencies
 RUN mkdir /code/docs/ && chown acousticbrainz:acousticbrainz /code/docs/
 COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requirements.txt
@@ -104,9 +107,6 @@ RUN pip install --no-cache-dir uWSGI==2.0.17.1
 
 RUN mkdir /cache_namespaces && chown -R acousticbrainz:acousticbrainz /cache_namespaces
 
-# Consul template service is already set up, just need to copy the configuration
-COPY ./docker/consul-template.conf /etc/consul-template.conf
-
 # runit service files
 # All services are created with a `down` file, preventing them from starting
 # rc.local removes the down file for the specific service we want to run in a container
@@ -115,22 +115,28 @@ COPY ./docker/consul-template.conf /etc/consul-template.conf
 # uwsgi service files
 COPY ./docker/uwsgi/uwsgi.service /etc/service/uwsgi/run
 COPY ./docker/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
+COPY ./docker/uwsgi/consul-template-uwsgi.conf /etc/consul-template-uwsgi.conf
 RUN touch /etc/service/uwsgi/down
 
 # hl_extractor service files
 COPY ./docker/hl_extractor/hl_extractor.service /etc/service/hl_extractor/run
+COPY docker/hl_extractor/consul-template-hl-extractor.conf /etc/consul-template-hl-extractor.conf
 RUN touch /etc/service/hl_extractor/down
 
 # dataset evaluator service files
 COPY ./docker/dataset_eval/dataset_eval.service /etc/service/dataset_eval/run
+COPY ./docker/dataset_eval/consul-template-dataset-eval.conf /etc/consul-template-dataset-eval.conf
 RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs
-COPY docker/crontab /etc/cron.d/acousticbrainz
-RUN chmod 0644 /etc/cron.d/acousticbrainz
+COPY ./docker/cron/crontab /etc/cron.d/acousticbrainz
+COPY ./docker/cron/cron-config.service /etc/service/cron-config/run
+COPY docker/cron/consul-template-cron-config.conf /etc/consul-template-cron-config.conf
 RUN touch /etc/service/cron/down
+RUN touch /etc/service/cron-config/down
 
 COPY ./docker/rc.local /etc/rc.local
+COPY ./docker/run-ab-command /usr/bin/run-ab-command
 
 COPY --chown=acousticbrainz:acousticbrainz package.json /code
 
@@ -143,3 +149,6 @@ RUN npm run build:prod
 
 # Our entrypoint runs as root
 USER root
+
+ARG GIT_COMMIT_SHA
+ENV GIT_SHA ${GIT_COMMIT_SHA}

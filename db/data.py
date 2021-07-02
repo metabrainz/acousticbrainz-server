@@ -463,7 +463,7 @@ def load_many_low_level(recordings):
         result = connection.execute(query, {'recordings': tuple(recordings)})
 
         recordings_info = defaultdict(dict)
-        for row in result.fetchall():
+        for row in result:
             recordings_info[row['gid']][row['submission_offset']] = row['data']
 
         return dict(recordings_info)

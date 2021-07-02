@@ -28,6 +28,7 @@ fi
 if [ "${CONTAINER_ROLE}" = "acousticbrainz-cron-${DEPLOY_ENV}" ]
 then
     rm -f /etc/service/cron/down
+    rm -f /etc/service/cron-config/down
     exit 0
 fi
 

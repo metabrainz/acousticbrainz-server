@@ -103,7 +103,7 @@ def create_groundtruth_dict(name, datadict):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": db.dataset._slugify(unicode(name)),
+        "className": db.dataset.slugify(unicode(name)),
         "groundTruth": {},
     }
     for r, cls in datadict.items():
@@ -118,7 +118,7 @@ def create_groundtruth(dataset):
     groundtruth = {
         "type": "unknown",  # TODO: See if that needs to be modified.
         "version": 1.0,
-        "className": db.dataset._slugify(unicode(dataset["name"])),
+        "className": db.dataset.slugify(unicode(dataset["name"])),
         "groundTruth": {},
     }
     for cls in dataset["classes"]:

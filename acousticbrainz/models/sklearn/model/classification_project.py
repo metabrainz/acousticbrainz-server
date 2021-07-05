@@ -5,13 +5,13 @@ import time
 from ..classification.train_class import train_class
 
 
-def create_classification_project(ground_truth_directory, eval_job_id=None, project_file=None, exports_directory=None, exports_path=None,
+def create_classification_project(ground_truth_file, dataset_dir, project_file=None, exports_directory=None, exports_path=None,
                                   c_values=None, gamma_values=None, preprocessing_values=None,
                                   seed=None, jobs=-1, verbose=1, logging="logging.INFO"):
     """
     Args:
-        ground_truth_directory: The path (str) to the dataset directory where the
-         groundtruth yaml file is located. It is required.
+        ground_truth_file: The path (str) to the groundtruth yaml file of the dataset. It is required.
+        dataset_dir: The path to main datasets_dir containing the .json files.
         project_file: The name (str) of the project configuration yaml file that
             will be created. Default: None. If None, the tool will create
             automatically a project file name in form of "project_CLASS_NAME",
@@ -47,7 +47,8 @@ def create_classification_project(ground_truth_directory, eval_job_id=None, proj
 
     print("Seed argument: {}".format(seed))
 
-    project_template["ground_truth_directory"] = ground_truth_directory
+    project_template["ground_truth_file"] = ground_truth_file
+    project_template["dataset_dir"] = datasets_dir
     project_template["project_file"] = project_file
     project_template["logging_level"] = logging
     project_template["seed"] = seed
@@ -67,7 +68,6 @@ def create_classification_project(ground_truth_directory, eval_job_id=None, proj
     print()
     print("-------------------------------------------------------")
 
-    ground_truth_file = os.path.join(ground_truth_directory, eval_job_id, "groundtruth.yaml")
     print("Loading GroundTruth yaml file:", ground_truth_file)
     train_class(project_template, ground_truth_file, exports_directory, c_values, gamma_values, preprocessing_values, logging)
 
@@ -81,8 +81,13 @@ if __name__ == '__main__':
                     'essentia version found on the descriptor files.')
 
     parser.add_argument("-g", "--groundtruth",
-                        dest="ground_truth_directory",
-                        help="Path of the dataset directory containing the groundtruth file/s.",
+                        dest="ground_truth_file",
+                        help="Path of the dataset's groundtruth file/s.",
+                        required=True)
+
+    parser.add_argument("-d", "--datasetsdir",
+                        dest="dataset_dir",
+                        help="Path of the main datasets dir containing .json file/s.",
                         required=True)
 
     parser.add_argument("-f", "--file",
@@ -90,7 +95,7 @@ if __name__ == '__main__':
                         help="Name of the project configuration file (.yaml) will be stored. If not specified "
                              "it takes automatically the name <project_CLASS_NAME>.")
 
-    parser.add_argument("-d", "--exportsdir",
+    parser.add_argument("-e", "--exportsdir",
                         dest="exports_directory",
                         help="Name of the exports directory that the project's results will be stored.")
 
@@ -122,7 +127,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    create_classification_project(ground_truth_directory=args.ground_truth_directory,
+    create_classification_project(ground_truth_file=args.ground_truth_file,
+                                  dataset_dir=args.dataset_dir,
                                   project_file=args.project_file,
                                   exports_directory=args.exports_directory,
                                   exports_path=args.exports_path,

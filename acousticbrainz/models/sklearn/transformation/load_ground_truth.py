@@ -164,11 +164,8 @@ class DatasetExporter:
         """
 
         self.logger.info("---- EXPORTING FEATURES - LABELS - TRACKS ----")
-        # the class name from the ground truth data that is the target
-        self.dataset_dir = self.config.get("ground_truth_directory")
-        # self.class_dir = self.config.get("class_dir")
+        self.dataset_dir = self.config.get("dataset_dir")
         print('DATASET-DIR', self.dataset_dir)
-        # print('CLASS NAME PATH', self.class_dir)
         dirpath = os.path.join(os.getcwd(), self.dataset_dir)
         low_level_list = list()
         for (dirpath, dirnames, filenames) in os.walk(dirpath):

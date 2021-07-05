@@ -41,6 +41,7 @@ AVAILABLE_FEATURES = {
     "rhythm.onset_rate": ["llj.data->'rhythm'->'onset_rate'", None],
     "tonal.chords_key": ["llj.data->'tonal'->'chords_key'", None],
     "tonal.chords_scale": ["llj.data->'tonal'->'chords_scale'", None],
+    "tonal.chords_changes_rate": ["llj.data->'tonal'->'chords_changes_rate'", None],
     "tonal.key_key": ["llj.data->'tonal'->'key_key'", None],
     "tonal.key_scale": ["llj.data->'tonal'->'key_scale'", None],
     "tonal.key_strength": ["llj.data->'tonal'->'key_strength'", None],

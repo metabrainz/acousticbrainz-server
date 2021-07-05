@@ -5,7 +5,7 @@ import time
 from ..classification.train_class import train_class
 
 
-def create_classification_project(ground_truth_directory, project_file=None, exports_directory=None, exports_path=None,
+def create_classification_project(ground_truth_directory, eval_job_id=None, project_file=None, exports_directory=None, exports_path=None,
                                   c_values=None, gamma_values=None, preprocessing_values=None,
                                   seed=None, jobs=-1, verbose=1, logging="logging.INFO"):
     """
@@ -67,7 +67,7 @@ def create_classification_project(ground_truth_directory, project_file=None, exp
     print()
     print("-------------------------------------------------------")
 
-    ground_truth_file = os.path.join(ground_truth_directory, "groundtruth.yaml")
+    ground_truth_file = os.path.join(ground_truth_directory, eval_job_id, "groundtruth.yaml")
     print("Loading GroundTruth yaml file:", ground_truth_file)
     train_class(project_template, ground_truth_file, exports_directory, c_values, gamma_values, preprocessing_values, logging)
 

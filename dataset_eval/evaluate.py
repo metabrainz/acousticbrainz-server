@@ -126,7 +126,8 @@ def evaluate_gaia(options, eval_location, groundtruth_path, filelist_path, stora
 
 
 def evaluate_sklearn(options, eval_location, dataset_dir, storage_dir, eval_job):
-    create_classification_project(ground_truth_directory=eval_location,
+    create_classification_project(ground_truth_directory=dataset_dir,
+                                  eval_job_id=eval_job["id"],
                                   project_file=eval_job["id"],
                                   exports_directory=eval_job["id"],
                                   exports_path=eval_location,

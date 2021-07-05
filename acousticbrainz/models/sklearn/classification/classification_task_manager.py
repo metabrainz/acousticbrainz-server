@@ -37,7 +37,6 @@ class ClassificationTaskManager:
         self.exports_path = exports_path
         self.log_level = log_level
 
-        self.exports_dir = ""
         self.results_path = ""
         self.logs_path = ""
         self.tracks_path = ""
@@ -64,28 +63,20 @@ class ClassificationTaskManager:
         Ensure that all the folders will exist before the training process starts.
         """
         # main exports
-        self.exports_dir = self.config.get("exports_directory")
         # train results exports
-        self.results_path = FindCreateDirectory(self.exports_path,
-                                                os.path.join(self.exports_dir, "results")).inspect_directory()
+        self.results_path = FindCreateDirectory(self.exports_path, "results").inspect_directory()
         # logs
-        self.logs_path = FindCreateDirectory(self.exports_path,
-                                             os.path.join(self.exports_dir, "logs")).inspect_directory()
+        self.logs_path = FindCreateDirectory(self.exports_path, "logs").inspect_directory()
         # tracks
-        self.tracks_path = FindCreateDirectory(self.exports_path,
-                                               os.path.join(self.exports_dir, "tracks_csv_format")).inspect_directory()
+        self.tracks_path = FindCreateDirectory(self.exports_path, "tracks_csv_format").inspect_directory()
         # datasets
-        self.dataset_path = FindCreateDirectory(self.exports_path,
-                                                os.path.join(self.exports_dir, "dataset")).inspect_directory()
+        self.dataset_path = FindCreateDirectory(self.exports_path, "dataset").inspect_directory()
         # models
-        self.models_path = FindCreateDirectory(self.exports_path,
-                                               os.path.join(self.exports_dir, "models")).inspect_directory()
+        self.models_path = FindCreateDirectory(self.exports_path, "models").inspect_directory()
         # images
-        self.images_path = FindCreateDirectory(self.exports_path,
-                                               os.path.join(self.exports_dir, "images")).inspect_directory()
+        self.images_path = FindCreateDirectory(self.exports_path, "images").inspect_directory()
         # reports
-        self.reports_path = FindCreateDirectory(self.exports_path,
-                                                os.path.join(self.exports_dir, "reports")).inspect_directory()
+        self.reports_path = FindCreateDirectory(self.exports_path, "reports").inspect_directory()
 
     def config_file_analysis(self):
         """

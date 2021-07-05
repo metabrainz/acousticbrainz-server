@@ -66,12 +66,9 @@ class TrainGridClassifier:
                               logger=self.logger)
 
             # save best results for each train process
-            exports_dir = self.config.get("exports_directory")
             # paths declaration for saving the grid training results
-            results_path = FindCreateDirectory(self.exports_path,
-                                               os.path.join(exports_dir, "results")).inspect_directory()
-            models_path = FindCreateDirectory(self.exports_path,
-                                              os.path.join(exports_dir, "models")).inspect_directory()
+            results_path = FindCreateDirectory(self.exports_path, "results").inspect_directory()
+            models_path = FindCreateDirectory(self.exports_path, "models").inspect_directory()
             best_process_model_path = os.path.join(models_path, "model_grid_{}.pkl".format(tr_process["preprocess"]))
 
             # save the results from each train process step and return the results from that train in a dictionary
@@ -105,8 +102,7 @@ class TrainGridClassifier:
                 # model["params"]["gamma"] = math.log2(model["params"]["gamma"])
                 self.logger.info("{}".format(model))
                 best_model_name = "best_model_{}.json".format(self.class_name)
-                exports_dir = self.config.get("exports_directory")
-                with open(os.path.join(self.exports_path, exports_dir, best_model_name), "w") as best_model:
+                with open(os.path.join(self.exports_path, best_model_name), "w") as best_model:
                     json.dump(model, best_model, indent=4)
                     self.logger.info("Best {} model parameters saved successfully to disk.".format(self.class_name))
 

@@ -51,7 +51,6 @@ class LoggerSetup:
         self.mode = mode
         self.level = level
 
-        self.exports_dir = ""
         self.logs_path = ""
 
     def setup_logger(self):
@@ -62,9 +61,7 @@ class LoggerSetup:
         Returns:
             The logger object.
         """
-        self.exports_dir = self.config.get("exports_directory")
-        self.logs_path = FindCreateDirectory(self.exports_path,
-                                             os.path.join(self.exports_dir, "logs")).inspect_directory()
+        self.logs_path = FindCreateDirectory(self.exports_path, "logs").inspect_directory()
 
         # Create a custom logger
         logger_object = logging.getLogger(self.name)

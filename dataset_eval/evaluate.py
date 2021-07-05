@@ -130,7 +130,6 @@ def evaluate_sklearn(options, eval_location, ground_truth_file, dataset_dir, sto
     create_classification_project(ground_truth_file=ground_truth_file,
                                   dataset_dir=dataset_dir,
                                   project_file=eval_job["id"],
-                                  exports_directory=eval_job["id"],
                                   exports_path=eval_location,
                                   c_values=options.get("c_values", []),
                                   gamma_values=options.get("gamma_values", []),
@@ -139,8 +138,7 @@ def evaluate_sklearn(options, eval_location, ground_truth_file, dataset_dir, sto
 
     logging.info("Saving results...")
     results = load_best_results_sklearn(exported_path=eval_location,
-                                        project_file=eval_job["id"],
-                                        exports_directory=eval_job["id"])
+                                        project_file=eval_job["id"])
     db.dataset_eval.set_job_result(eval_job["id"], json.dumps({
         "project_path": eval_location,
         "parameters": results["parameters"],
@@ -150,7 +148,7 @@ def evaluate_sklearn(options, eval_location, ground_truth_file, dataset_dir, sto
     }))
 
 
-def load_best_results_sklearn(exported_path, project_file, exports_directory):
+def load_best_results_sklearn(exported_path, project_file):
     project_conf_file_path = os.path.join(exported_path, "{}.yaml".format(project_file))
     logging.info("Config file path: {}".format(project_conf_file_path))
     with open(project_conf_file_path) as fp:
@@ -176,10 +174,9 @@ def load_best_results_sklearn(exported_path, project_file, exports_directory):
     #     data_fold_simplified_matrix = json.load(json_file_simple_cm)
 
     # export the matrix dictionary from the folded dataset
-    folded_results_matrix_path = os.path.join(exported_path, exports_directory)
     simplified_cm = simplified_matrix_export(best_result_file="folded_dataset_results_matrix.json",
                                              logger=logging,
-                                             export_save_path=folded_results_matrix_path,
+                                             export_save_path=exported_path,
                                              export_name="simplified_cm.json",
                                              write_mode=False)
 

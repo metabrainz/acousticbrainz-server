@@ -19,7 +19,6 @@ class Predict:
 
         self.class_name = ""
         self.exports_path = ""
-        self.exports_dir = ""
         self.best_model = ""
         self.track_feats = dict()
 
@@ -33,11 +32,9 @@ class Predict:
     def load_best_model(self):
         self.class_name = self.config["class_name"]
         self.exports_path = self.config["exports_path"]
-        self.exports_dir = self.config["exports_directory"]
 
         # self.exports_path = os.path.join(self.exports_path, "{}_{}".format(self.exports_dir, self.class_name))
         best_model_path = os.path.join(self.exports_path,
-                                       self.exports_dir,
                                        "best_model_{}.json".format(self.class_name))
         # best_model_path = os.path.join(self.exports_dir, "models", "model_grid_{}.pkl".format[""])
         with open(best_model_path) as json_file:
@@ -87,8 +84,7 @@ class Predict:
         # best_model_path = os.path.join(models_path, "model_grid_{}.pkl".format(self.best_model["preprocessing"]))
 
         # load the best model that is trained to the whole dataset
-        models_path = FindCreateDirectory(self.exports_path, self.exports_dir).inspect_directory()
-        best_model_path = os.path.join(models_path, "best_clf_model.pkl")
+        best_model_path = os.path.join(self.exports_path, "best_clf_model.pkl")
         clf_loaded = joblib.load(best_model_path)
         predicted = clf_loaded.predict(features_prepared)
         predicted_prob = clf_loaded.predict_proba(features_prepared)

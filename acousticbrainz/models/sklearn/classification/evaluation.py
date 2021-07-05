@@ -34,17 +34,13 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
     logger.debug("Tracks list length: {}".format(len(tracks)))
 
     # load project directory and the corresponding save paths
-    exports_dir = config.get("exports_directory")
 
-    dataset_path = FindCreateDirectory(exports_path,
-                                       os.path.join(exports_dir, "dataset")).inspect_directory()
-    models_path = FindCreateDirectory(exports_path,
-                                      os.path.join(exports_dir, "models")).inspect_directory()
-    images_path = FindCreateDirectory(exports_path,
-                                      os.path.join(exports_dir, "images")).inspect_directory()
+    dataset_path = FindCreateDirectory(exports_path, "dataset").inspect_directory()
+    models_path = FindCreateDirectory(exports_path, "models").inspect_directory()
+    images_path = FindCreateDirectory(exports_path, "images").inspect_directory()
 
     # load best model params and score data
-    load_best_model_params_score_path = os.path.join(exports_path, exports_dir, "best_model_{}.json".format(class_name))
+    load_best_model_params_score_path = os.path.join(exports_path, "best_model_{}.json".format(class_name))
     with open(load_best_model_params_score_path) as model_params_score_file:
         best_params_score_data = json.load(model_params_score_file)
 
@@ -98,13 +94,12 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
     pred_folded_list = df_predictions["predictions"].to_list()
 
     # export the matrix dictionary from the folded dataset
-    folded_results_matrix_path = os.path.join(exports_path, exports_dir)
     folded_matrix_dict = matrix_creation(classes=clf.classes_,
                                          tracks=tracks_folded_list,
                                          y_actual=y_folded_list,
                                          y_hat=pred_folded_list,
                                          logger=logger,
-                                         export_save_path=folded_results_matrix_path,
+                                         export_save_path=exports_path,
                                          export_name="folded_dataset_results_matrix.json")
 
     # ACCURACIES for each fold
@@ -124,13 +119,12 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
     concat_save_model_instances_matrix_json(instances_dict=folded_instances_dict,
                                             cm_dict=folded_matrix_dict,
                                             exports_path=exports_path,
-                                            exports_dir=exports_dir,
                                             logger=logger,
                                             export_name="folded_dataset_instances_cm.json")
 
     simplified_cm = simplified_matrix_export(best_result_file="folded_dataset_results_matrix.json",
                                              logger=logger,
-                                             export_save_path=folded_results_matrix_path,
+                                             export_save_path=exports_path,
                                              export_name="folded_simplified_matrix.json",
                                              write_mode=True)
 
@@ -152,23 +146,22 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
     # prediction for the whole dataset
     predictions_all = clf.predict(features_prepared)
     # save the model that is trained to the whole dataset
-    best_model_path = os.path.join(exports_path, exports_dir, "best_clf_model.pkl")
+    best_model_path = os.path.join(exports_path, "best_clf_model.pkl")
     joblib.dump(clf, best_model_path)
     logger.info("Best model saved.")
 
     # export the matrix dictionary from the whole dataset
-    whole_results_matrix_path = os.path.join(exports_path, exports_dir)
     whole_matrix_dict = matrix_creation(classes=clf.classes_,
                                         tracks=tracks,
                                         y_actual=predictions_all,
                                         y_hat=y,
                                         logger=logger,
-                                        export_save_path=whole_results_matrix_path,
+                                        export_save_path=exports_path,
                                         export_name="whole_dataset_results_matrix.json")
 
     simplified_cm_whole = simplified_matrix_export(best_result_file="whole_dataset_results_matrix.json",
                                                    logger=logger,
-                                                   export_save_path=whole_results_matrix_path,
+                                                   export_save_path=exports_path,
                                                    export_name="whole_dataset_cm_dict.json",
                                                    write_mode=True)
 
@@ -177,7 +170,6 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
     concat_save_model_instances_matrix_json(instances_dict=None,
                                             cm_dict=whole_matrix_dict,
                                             exports_path=exports_path,
-                                            exports_dir=exports_dir,
                                             logger=logger,
                                             export_name="whole_dataset_instances_cm.json")
 
@@ -192,7 +184,7 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
                               )
 
 
-def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_path, exports_dir, logger, export_name):
+def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_path, logger, export_name):
     """
     Save the best model's folded instances and confusion matrix dictionary merged into one dictionary
 
@@ -200,15 +192,12 @@ def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_pat
         instances_dict:
         cm_dict:
         exports_path:
-        exports_dir:
         logger:
         export_name:
 
     Returns:
 
     """
-    best_folds_cm_merge_dict_path = os.path.join(exports_path, exports_dir)
-
     if instances_dict:
         # in case of the folded dataset where folds exist
         best_folds_cm_merge_dict = {**instances_dict, **cm_dict}
@@ -219,7 +208,7 @@ def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_pat
     # Serializing json
     json_object_folds_cm = json.dumps(best_folds_cm_merge_dict, indent=4)
     # Writing to json
-    load_file_path = os.path.join(best_folds_cm_merge_dict_path, export_name)
+    load_file_path = os.path.join(exports_path, export_name)
     with open(load_file_path, "w") as outfile:
         outfile.write(json_object_folds_cm)
     logger.info("Whole folded instaces and matrix dictionary stored successfully.")

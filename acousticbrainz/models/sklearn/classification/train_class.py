@@ -8,7 +8,7 @@ from ..transformation.load_ground_truth import DatasetExporter
 from ..helper_functions.logging_tool import LoggerSetup
 
 
-def train_class(config, gt_file, exports_directory, c_values, gamma_values, preprocessing_values, log_level):
+def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, log_level):
     exports_path = config["exports_path"]
     gt_data = GroundTruthLoad(config, gt_file, exports_path, log_level)
     # tracks shuffled and exported
@@ -17,13 +17,6 @@ def train_class(config, gt_file, exports_directory, c_values, gamma_values, prep
     # class to train
     class_name = gt_data.export_train_class()
     config["class_name"] = class_name
-
-    # project directory where the models and outputs will be saved
-    if exports_directory is None:
-        prefix_exports_dir = "exports"
-        config["exports_directory"] = "{}_{}".format(prefix_exports_dir, class_name)
-    else:
-        config["exports_directory"] = exports_directory
 
     config = update_parameters(config=config,
                                c_values=c_values,

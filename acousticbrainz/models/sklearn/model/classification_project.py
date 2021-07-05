@@ -5,7 +5,7 @@ import time
 from ..classification.train_class import train_class
 
 
-def create_classification_project(ground_truth_file, dataset_dir, project_file=None, exports_directory=None, exports_path=None,
+def create_classification_project(ground_truth_file, dataset_dir, project_file=None, exports_path=None,
                                   c_values=None, gamma_values=None, preprocessing_values=None,
                                   seed=None, jobs=-1, verbose=1, logging="logging.INFO"):
     """
@@ -16,13 +16,8 @@ def create_classification_project(ground_truth_file, dataset_dir, project_file=N
             will be created. Default: None. If None, the tool will create
             automatically a project file name in form of "project_CLASS_NAME",
             where CLASS_NAME is the target class as referred to the groundtruth data.
-        exports_directory: The name (str) of the directory that the results
-            of the classification project will be save to. Default: None. If None,
-            the tool will automatically create a directory with the name
-            "exports_CLASS_NAME", where CLASS_NAME is the target class as referred
-            to the groundtruth data.
-        exports_path: The path (str) to the exports directory. Default: None. If
-            None, the exports directory will be saved inside the app folder.
+        exports_path: The path (str) where the results of the classification project will be saved to.
+            Default: None. If None, the exports directory will be saved inside the app folder.
         seed: The seed (int) of the random shuffle generator. Default: 1
         jobs: The cores (int) that will be exploited during the training phase.
             Default: -1. If -1, all the available cores will be used.
@@ -62,14 +57,12 @@ def create_classification_project(ground_truth_file, dataset_dir, project_file=N
     print("Exports path: {}".format(exports_path))
     project_template["exports_path"] = exports_path
 
-    print("Exports directory: {}".format(exports_directory))
-
     print()
     print()
     print("-------------------------------------------------------")
 
     print("Loading GroundTruth yaml file:", ground_truth_file)
-    train_class(project_template, ground_truth_file, exports_directory, c_values, gamma_values, preprocessing_values, logging)
+    train_class(project_template, ground_truth_file, c_values, gamma_values, preprocessing_values, logging)
 
 
 if __name__ == '__main__':
@@ -94,10 +87,6 @@ if __name__ == '__main__':
                         dest="project_file",
                         help="Name of the project configuration file (.yaml) will be stored. If not specified "
                              "it takes automatically the name <project_CLASS_NAME>.")
-
-    parser.add_argument("-e", "--exportsdir",
-                        dest="exports_directory",
-                        help="Name of the exports directory that the project's results will be stored.")
 
     parser.add_argument("-p", "--path",
                         dest="exports_path",
@@ -130,7 +119,6 @@ if __name__ == '__main__':
     create_classification_project(ground_truth_file=args.ground_truth_file,
                                   dataset_dir=args.dataset_dir,
                                   project_file=args.project_file,
-                                  exports_directory=args.exports_directory,
                                   exports_path=args.exports_path,
                                   seed=args.seed,
                                   jobs=args.jobs,

@@ -73,9 +73,8 @@ class ClassificationTask:
 
         # load best model to check its parameters
         self.logger.debug("Loading the Best Model..")
-        exports_dir = self.config.get("exports_directory")
         best_model_name = "best_model_{}.json".format(self.train_class)
-        with open(os.path.join(self.exports_path, exports_dir, best_model_name)) as best_model_file:
+        with open(os.path.join(self.exports_path, best_model_name)) as best_model_file:
             best_model = json.load(best_model_file)
         self.logger.debug("BEST MODEL: {}".format(best_model))
 

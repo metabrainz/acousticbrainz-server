@@ -156,13 +156,13 @@ def load_best_results_sklearn(exported_path, project_file):
     logging.info("Model: {}".format(project_data['class_name']))
 
     # load the best model dictionary
-    best_model_path = os.path.join(exported_path, project_file, "best_model_{}.json".format(project_data['class_name']))
+    best_model_path = os.path.join(exported_path, "best_model_{}.json".format(project_data['class_name']))
     logging.info("Best model path: {}".format(best_model_path))
     with open(best_model_path) as json_file:
         data_best_model = json.load(json_file)
 
     # load the best model's instances and matrix dictionary
-    fold_matrix_path = os.path.join(exported_path, project_file, "folded_dataset_instances_cm.json")
+    fold_matrix_path = os.path.join(exported_path, "folded_dataset_instances_cm.json")
     logging.info("Best Instances and Matrix JSON path: {}".format(fold_matrix_path))
     with open(fold_matrix_path) as json_file_cm:
         data_fold_matrix = json.load(json_file_cm)

@@ -285,7 +285,7 @@ class JobRow extends React.Component {
                 <td className="created">
                     <span>{this.props.created}</span>
                 </td>
-                <td className="tool" style="text-transform: capitalize;">{this.props.training_tool}</td>
+                <td className="tool" style={{textTransform: 'capitalize'}}>{this.props.training_tool}</td>
                 <td className="controls">{controls}</td>
             </tr>
         );

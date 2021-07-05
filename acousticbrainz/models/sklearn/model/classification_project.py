@@ -48,7 +48,7 @@ def create_classification_project(ground_truth_file, dataset_dir, project_file=N
     print("Seed argument: {}".format(seed))
 
     project_template["ground_truth_file"] = ground_truth_file
-    project_template["dataset_dir"] = datasets_dir
+    project_template["dataset_dir"] = dataset_dir
     project_template["project_file"] = project_file
     project_template["logging_level"] = logging
     project_template["seed"] = seed

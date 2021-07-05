@@ -2,7 +2,6 @@ import os
 import argparse
 from ..helper_functions.utils import load_yaml
 import time
-from ..transformation.load_ground_truth import ListGroundTruthFiles
 from ..classification.train_class import train_class
 
 
@@ -67,15 +66,10 @@ def create_classification_project(ground_truth_directory, project_file=None, exp
     print()
     print()
     print("-------------------------------------------------------")
-    # print("AFTER:")
-    # pprint(project_template)
 
-    gt_files_list = ListGroundTruthFiles(project_template).list_gt_filenames()
-    print("List GroundTruth yaml files found:")
-    print(gt_files_list)
-    print("LOAD GROUND TRUTH")
-    for gt_file in gt_files_list:
-        train_class(project_template, gt_file, exports_directory, c_values, gamma_values, preprocessing_values, logging)
+    ground_truth_file = os.path.join(ground_truth_directory, "groundtruth.yaml")
+    print("Loading GroundTruth yaml file:", ground_truth_file)
+    train_class(project_template, ground_truth_file, exports_directory, c_values, gamma_values, preprocessing_values, logging)
 
 
 if __name__ == '__main__':
@@ -88,8 +82,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-g", "--groundtruth",
                         dest="ground_truth_directory",
-                        default="datasets",
-                        help="Path of the main dataset directory containing the groundtruth file/s.",
+                        help="Path of the dataset directory containing the groundtruth file/s.",
                         required=True)
 
     parser.add_argument("-f", "--file",

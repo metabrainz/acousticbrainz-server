@@ -9,33 +9,6 @@ from ..transformation.load_low_level import FeaturesDf
 from ..helper_functions.logging_tool import LoggerSetup
 
 
-class ListGroundTruthFiles:
-    """
-    Lists the groundtruth yaml files that are detected in a folder specified in
-    the configuration file. The yaml files contain the target class and the tracks
-    to be analyzed.
-    """
-    def __init__(self, config):
-        """
-        Args:
-            config: The configuration data
-        """
-        self.config = config
-        self.dataset_dir = ""
-
-    def list_gt_filenames(self):
-        """
-        Returns:
-            A list of the groundtruth detected yaml files.
-        """
-        self.dataset_dir = self.config.get("ground_truth_directory")
-        ground_truth_list = list()
-        dirpath = os.path.join(os.getcwd(), self.dataset_dir)
-        for (dirpath, dirnames, filenames) in os.walk(dirpath):
-            ground_truth_list += [os.path.join(dirpath, file) for file in filenames if file.startswith("groundtruth")]
-        return ground_truth_list
-
-
 class GroundTruthLoad:
     """
         The Ground Truth data which contains the tracks and the corresponding

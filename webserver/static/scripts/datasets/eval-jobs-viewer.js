@@ -207,6 +207,7 @@ class JobList extends React.Component {
                             <th className="id">Job ID</th>
                             <th className="status">Status</th>
                             <th className="created">Creation time</th>
+                            <th className="tool">Training Tool</th>
                             <th className="controls" />
                         </tr>
                     </thead>

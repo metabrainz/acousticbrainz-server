@@ -183,7 +183,8 @@ def load_best_results_sklearn(exported_path, project_file, exports_directory):
 
     return {
         "parameters": data_best_model["params"],
-        "accuracy": round(data_best_model["score"], 2),
+        # for consistency with gaia which reports accuracy on scale of 0 to 100
+        "accuracy": round(data_best_model["score"] * 100, 2),
         "confusion_matrix": simplified_cm,
         "history_path": "Does not exist because of sklearn training usage"
     }

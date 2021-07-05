@@ -191,6 +191,7 @@ class JobList extends React.Component {
                             id={cls.id}
                             created={cls.created}
                             status={cls.status}
+                            training_tool={cls.options.training_tool ?? "gaia"}
                             outdated={cls.outdated}
                             showDelete={this.props.showDelete}
                             onViewDetails={this.props.onViewDetails}
@@ -227,6 +228,7 @@ class JobRow extends React.Component {
         id: PropTypes.string.isRequired,
         created: PropTypes.string.isRequired,
         status: PropTypes.string.isRequired,
+        training_tool: PropTypes.string.isRequired,
         outdated: PropTypes.string.isRequired,
         showDelete: PropTypes.bool.isRequired,
         onViewDetails: PropTypes.func.isRequired,
@@ -283,6 +285,7 @@ class JobRow extends React.Component {
                 <td className="created">
                     <span>{this.props.created}</span>
                 </td>
+                <td className="tool" style="text-transform: capitalize;">{this.props.training_tool}</td>
                 <td className="controls">{controls}</td>
             </tr>
         );

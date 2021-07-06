@@ -6,7 +6,6 @@ import os
 import six
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from ..helper_functions.utils import FindCreateDirectory
 from ..transformation.utils_preprocessing import list_descr_handler
 from ..transformation.utils_preprocessing import feats_selector_list
 from ..helper_functions.logging_tool import LoggerSetup
@@ -53,7 +52,7 @@ class TransformPredictions:
 
         self.list_features = list(self.df_feats.columns)
 
-        models_path = FindCreateDirectory(self.exports_path, "models").inspect_directory()
+        models_path = os.path.join(self.exports_path, "models")
 
         # clean list
         print(colored("Cleaning..", "yellow"))

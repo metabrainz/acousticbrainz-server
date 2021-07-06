@@ -11,7 +11,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, classification_report
 import joblib
 
-from ..helper_functions.utils import FindCreateDirectory
 from ..transformation.transform import Transform
 from ..classification.report_files_export import export_report
 from ..helper_functions.logging_tool import LoggerSetup
@@ -35,9 +34,9 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
 
     # load project directory and the corresponding save paths
 
-    dataset_path = FindCreateDirectory(exports_path, "dataset").inspect_directory()
-    models_path = FindCreateDirectory(exports_path, "models").inspect_directory()
-    images_path = FindCreateDirectory(exports_path, "images").inspect_directory()
+    dataset_path = os.path.join(exports_path, "dataset")
+    models_path = os.path.join(exports_path, "models")
+    images_path = os.path.join(exports_path, "images")
 
     # load best model params and score data
     load_best_model_params_score_path = os.path.join(exports_path, "best_model_{}.json".format(class_name))

@@ -4,7 +4,7 @@ import pandas as pd
 from pprint import pprint
 from termcolor import colored
 import random
-from ..helper_functions.utils import load_yaml, FindCreateDirectory
+from ..helper_functions.utils import create_directory
 from ..transformation.load_low_level import FeaturesDf
 from ..helper_functions.logging_tool import LoggerSetup
 
@@ -207,7 +207,7 @@ class DatasetExporter:
                 self.logger.info("There are no NULL values found.")
 
             # export shuffled tracks to CSV format
-            tracks_path = FindCreateDirectory(self.exports_path, "tracks_csv_format").inspect_directory()
+            tracks_path = create_directory(self.exports_path, "tracks_csv_format")
             self.df_tracks.to_csv(os.path.join(tracks_path, "tracks_{}_shuffled.csv".format(self.train_class)))
             self.logger.debug("DF INFO:")
             self.logger.debug("{}".format(self.df_tracks.info()))

@@ -3,7 +3,7 @@ from time import time
 from termcolor import colored
 from datetime import datetime
 
-from ..helper_functions.utils import FindCreateDirectory, TrainingProcesses
+from ..helper_functions.utils import create_directory, TrainingProcesses
 from ..classification.classification_task import ClassificationTask
 from ..helper_functions.logging_tool import LoggerSetup
 
@@ -64,19 +64,19 @@ class ClassificationTaskManager:
         """
         # main exports
         # train results exports
-        self.results_path = FindCreateDirectory(self.exports_path, "results").inspect_directory()
+        self.results_path = create_directory(self.exports_path, "results")
         # logs
-        self.logs_path = FindCreateDirectory(self.exports_path, "logs").inspect_directory()
+        self.logs_path = create_directory(self.exports_path, "logs")
         # tracks
-        self.tracks_path = FindCreateDirectory(self.exports_path, "tracks_csv_format").inspect_directory()
+        self.tracks_path = create_directory(self.exports_path, "tracks_csv_format")
         # datasets
-        self.dataset_path = FindCreateDirectory(self.exports_path, "dataset").inspect_directory()
+        self.dataset_path = create_directory(self.exports_path, "dataset")
         # models
-        self.models_path = FindCreateDirectory(self.exports_path, "models").inspect_directory()
+        self.models_path = create_directory(self.exports_path, "models")
         # images
-        self.images_path = FindCreateDirectory(self.exports_path, "images").inspect_directory()
+        self.images_path = create_directory(self.exports_path, "images")
         # reports
-        self.reports_path = FindCreateDirectory(self.exports_path, "reports").inspect_directory()
+        self.reports_path = create_directory(self.exports_path, "reports")
 
     def config_file_analysis(self):
         """

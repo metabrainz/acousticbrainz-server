@@ -2,11 +2,9 @@ import os
 from datetime import datetime
 from termcolor import colored
 
-from ..helper_functions.utils import FindCreateDirectory
-
 
 def export_report(config, name, report, filename, train_class, exports_path):
-    reports_path = FindCreateDirectory(exports_path, "reports").inspect_directory()
+    reports_path = os.path.join(exports_path, "reports")
     # take current datetime
     now = datetime.now()
     datetime_str_verbose = now.isoformat()

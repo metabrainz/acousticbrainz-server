@@ -7,7 +7,6 @@ from sklearn.svm import SVC
 from sklearn.model_selection import KFold
 
 from ..transformation.transform import Transform
-from ..helper_functions.utils import FindCreateDirectory
 from ..helper_functions.logging_tool import LoggerSetup
 
 
@@ -67,8 +66,8 @@ class TrainGridClassifier:
 
             # save best results for each train process
             # paths declaration for saving the grid training results
-            results_path = FindCreateDirectory(self.exports_path, "results").inspect_directory()
-            models_path = FindCreateDirectory(self.exports_path, "models").inspect_directory()
+            results_path = os.path.join(self.exports_path, "results")
+            models_path = os.path.join(self.exports_path, "models")
             best_process_model_path = os.path.join(models_path, "model_grid_{}.pkl".format(tr_process["preprocess"]))
 
             # save the results from each train process step and return the results from that train in a dictionary

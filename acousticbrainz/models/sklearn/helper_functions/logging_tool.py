@@ -10,7 +10,6 @@ Here, the LoggerSetup and its embedded setup_logger() method set up a new logger
 """
 import logging
 import os
-from ..helper_functions.utils import FindCreateDirectory
 
 # # load yaml configuration file to a dict
 # config_data = load_yaml()
@@ -61,7 +60,7 @@ class LoggerSetup:
         Returns:
             The logger object.
         """
-        self.logs_path = FindCreateDirectory(self.exports_path, "logs").inspect_directory()
+        self.logs_path = os.path.join(self.exports_path, "logs")
 
         # Create a custom logger
         logger_object = logging.getLogger(self.name)

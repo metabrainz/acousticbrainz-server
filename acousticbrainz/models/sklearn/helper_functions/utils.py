@@ -51,17 +51,12 @@ class DfChecker:
             print(self.df_check["category"].value_counts())
 
 
-class FindCreateDirectory:
-    def __init__(self, exports_path, directory):
-        self.exports_path = exports_path
-        self.directory = directory
-
-    def inspect_directory(self):
-        # find dynamically the current script directory
-        full_path = os.path.join(self.exports_path, self.directory)
-        # create path directories if not exist --> else return the path
-        os.makedirs(full_path, exist_ok=True)
-        return full_path
+def create_directory(exports_path, directory):
+    # find dynamically the current script directory
+    full_path = os.path.join(exports_path, directory)
+    # create path directories if not exist --> else return the path
+    os.makedirs(full_path, exist_ok=True)
+    return full_path
 
 
 class LogsDeleter:

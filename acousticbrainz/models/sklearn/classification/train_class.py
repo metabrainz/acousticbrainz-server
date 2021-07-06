@@ -25,7 +25,8 @@ def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, l
 
     logger = setup_logger(
         exports_path=exports_path,
-        file_name="train_model_{}".format(class_name),
+        name="train_model_{}".format(class_name),
+        mode="w",
         level=log_level
     )
 
@@ -51,6 +52,7 @@ def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, l
                                                tracks_list=tracks_listed_shuffled,
                                                train_class=class_name,
                                                exports_path=exports_path,
+                                               logger=logger
                                                ).create_df_tracks()
     logger.debug("Types of exported files from GT:")
     logger.debug("Type of features: {}".format(type(features)))
@@ -62,7 +64,8 @@ def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, l
                                              X=features,
                                              y=labels,
                                              tracks=tracks,
-                                             exports_path=exports_path)
+                                             exports_path=exports_path,
+                                             logger=logger)
     classification_time = model_manage.apply_processing()
     print(colored("Classification ended successfully in {} minutes.".format(classification_time), "green"))
     logger.info("Classification ended successfully in {} minutes.".format(classification_time))

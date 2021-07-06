@@ -43,7 +43,8 @@ class Predict:
     def preprocessing(self):
         self.logger = setup_logger(
             exports_path=self.exports_path,
-            file_name="predict_{}".format(self.class_name),
+            name="predict_{}".format(self.class_name),
+            mode="w",
             level=self.log_level
         )
 

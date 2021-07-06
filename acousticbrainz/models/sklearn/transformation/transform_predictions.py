@@ -1,5 +1,3 @@
-import logging
-
 import pandas as pd
 from termcolor import colored
 import collections
@@ -17,11 +15,9 @@ try:
 except AttributeError:
     collectionsAbc = collections
 
-logger = logging.getLogger(__name__)
-
 
 class TransformPredictions:
-    def __init__(self, config, df_feats, process, train_class, exports_path):
+    def __init__(self, config, df_feats, process, train_class, exports_path, logger):
         self.config = config
         self.df_feats = df_feats
         self.process = process

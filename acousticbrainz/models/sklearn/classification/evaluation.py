@@ -1,4 +1,3 @@
-import logging
 import os
 import json
 import numpy as np
@@ -17,10 +16,7 @@ from ..classification.report_files_export import export_report
 from ..classification.matrix_creation import matrix_creation, simplified_matrix_export
 
 
-logger = logging.getLogger(__name__)
-
-
-def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path):
+def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, logger):
     print(colored("------ EVALUATION and FOLDING ------", "yellow"))
 
     logger.info("---- Folded evaluation of the model in the dataset ----")
@@ -62,7 +58,8 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path):
                                   df_feats=X,
                                   process=process,
                                   train_class=class_name,
-                                  exports_path=exports_path).post_processing()
+                                  exports_path=exports_path,
+                                  logger=logger).post_processing()
     logger.debug("Features prepared shape: {}".format(features_prepared.shape))
 
     # Starting Training, Predictions for each fold
@@ -72,12 +69,14 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path):
                                                                                       feats_prepared=features_prepared,
                                                                                       y=y,
                                                                                       tracks=tracks,
-                                                                                      class_name=class_name)
+                                                                                      class_name=class_name,
+                                                                                      logger=logger)
 
     # concatenate the folded predictions DFs
     df_predictions = create_dataset_predictions(list_df_predictions=predictions_df_list,
                                                 class_name=class_name,
-                                                dataset_path=dataset_path)
+                                                dataset_path=dataset_path,
+                                                logger=logger)
 
     logger.debug("PRINT THE WHOLE GESTURES DF:\n{}".format(df_predictions))
 
@@ -100,16 +99,19 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path):
                       config=config,
                       class_name=class_name,
                       exports_path=exports_path,
-                      images_path=images_path)
+                      images_path=images_path,
+                      logger=logger)
 
     # Folded Tracks Dictionary --> export also the Folded instances dictionary
     folded_instances_dict = export_folded_instances(tracks_fold_indexing_dict=tracks_fold_indexing_dict,
                                                     class_name=class_name,
-                                                    dataset_path=dataset_path)
+                                                    dataset_path=dataset_path,
+                                                    logger=logger)
 
     concat_save_model_instances_matrix_json(instances_dict=folded_instances_dict,
                                             cm_dict=folded_matrix_dict,
                                             exports_path=exports_path,
+                                            logger=logger,
                                             export_name="folded_dataset_instances_cm.json")
 
     simplified_cm = simplified_matrix_export(best_result_file="folded_dataset_results_matrix.json",
@@ -127,6 +129,7 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path):
                               predictions=df_predictions["predictions"],
                               class_name=class_name,
                               exports_path=exports_path,
+                              logger=logger
                               )
 
     # ---------- TRAIN TO THE WHOLE DATASET WITH THE BEST CLASSIFIER ----------
@@ -159,6 +162,7 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path):
     concat_save_model_instances_matrix_json(instances_dict=None,
                                             cm_dict=whole_matrix_dict,
                                             exports_path=exports_path,
+                                            logger=logger,
                                             export_name="whole_dataset_instances_cm.json")
 
     # Evaluation to the whole Dataset
@@ -168,10 +172,11 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path):
                               predictions=predictions_all,
                               class_name=class_name,
                               exports_path=exports_path,
+                              logger=logger
                               )
 
 
-def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_path, export_name):
+def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_path, logger, export_name):
     """
     Save the best model's folded instances and confusion matrix dictionary merged into one dictionary
 
@@ -179,6 +184,7 @@ def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_pat
         instances_dict:
         cm_dict:
         exports_path:
+        logger:
         export_name:
 
     Returns:
@@ -200,7 +206,7 @@ def concat_save_model_instances_matrix_json(instances_dict, cm_dict, exports_pat
     logger.info("Whole folded instaces and matrix dictionary stored successfully.")
 
 
-def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name):
+def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name, logger):
     """
 
     Args:
@@ -210,6 +216,7 @@ def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name):
         y: the true values
         tracks:
         class_name:
+        logger:
 
     Returns:
         tracks_fold_indexing_dict:
@@ -245,7 +252,8 @@ def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name):
                                                   X_test=X_test,
                                                   test_index=test_index,
                                                   tracks_list=tracks_list,
-                                                  y_test=y_test)
+                                                  y_test=y_test,
+                                                  logger=logger)
         # Append the folded dataset to a list that will contain all the folded datasets
         predictions_df_list.append(df_pred_general)
         # Append each accuracy of the folded model to a list that contains all the accuracies resulted from each fold
@@ -255,7 +263,7 @@ def predictions_fold(clf, inner_cv, feats_prepared, y, tracks, class_name):
     return predictions_df_list, accuracy_model, tracks_fold_indexing_dict
 
 
-def create_fold_predictions(clf, class_name, X_test, test_index, tracks_list, y_test):
+def create_fold_predictions(clf, class_name, X_test, test_index, tracks_list, y_test, logger):
     """
     Creates a pandas DataFrame from each fold with the predictions in
     order later to extract the shuffled dataset with the tracks, the percentage
@@ -269,6 +277,7 @@ def create_fold_predictions(clf, class_name, X_test, test_index, tracks_list, y_
         test_index:
         tracks_list:
         y_test:
+        logger:
 
     Returns:
         A pandas DataFrame with the predictions at each fold.
@@ -294,7 +303,7 @@ def create_fold_predictions(clf, class_name, X_test, test_index, tracks_list, y_
     return df_pred_general
 
 
-def export_accuracies(accuracy_model, config, class_name, exports_path, images_path):
+def export_accuracies(accuracy_model, config, class_name, exports_path, images_path, logger):
     """
 
     Args:
@@ -303,6 +312,7 @@ def export_accuracies(accuracy_model, config, class_name, exports_path, images_p
         class_name:
         exports_path:
         images_path:
+        logger:
 
     Returns:
 
@@ -321,15 +331,17 @@ def export_accuracies(accuracy_model, config, class_name, exports_path, images_p
 
     # Visualize accuracy for each iteration in a distribution plot
     create_accuracies_dist_plot(accuracies_list=accuracy_model,
-                                images_path=images_path)
+                                images_path=images_path,
+                                logger=logger)
 
 
-def create_dataset_predictions(list_df_predictions, class_name, dataset_path):
+def create_dataset_predictions(list_df_predictions, class_name, dataset_path, logger):
     """
     Args:
         list_df_predictions:
         class_name:
         dataset_path:
+        logger:
 
     Returns:
 
@@ -346,7 +358,7 @@ def create_dataset_predictions(list_df_predictions, class_name, dataset_path):
     return df_concat_predictions
 
 
-def create_accuracies_dist_plot(accuracies_list, images_path):
+def create_accuracies_dist_plot(accuracies_list, images_path, logger):
     logger.info("Visualize accuracy for each iteration.")
     list_folds = []
     counter_folds = 0
@@ -363,7 +375,7 @@ def create_accuracies_dist_plot(accuracies_list, images_path):
     logger.info("Plot saved successfully.")
 
 
-def export_folded_instances(tracks_fold_indexing_dict, class_name, dataset_path):
+def export_folded_instances(tracks_fold_indexing_dict, class_name, dataset_path, logger):
     logger.info("Writing Folded Tracks Dictionary locally to check where each track is folded..")
     logger.debug("length of keys: {}".format(len(tracks_fold_indexing_dict.keys())))
     fold_dict = {"fold": tracks_fold_indexing_dict}
@@ -385,7 +397,7 @@ def export_folded_instances(tracks_fold_indexing_dict, class_name, dataset_path)
     return fold_dict
 
 
-def export_evaluation_results(config, set_name, y_true_values, predictions, class_name, exports_path):
+def export_evaluation_results(config, set_name, y_true_values, predictions, class_name, exports_path, logger):
     logger.info("---- Evaluation to the {} dataset ----".format(set_name))
     # Confusion Matrix
     logger.info("Exporting Confusion Matrix applied to the {} dataset..".format(set_name))

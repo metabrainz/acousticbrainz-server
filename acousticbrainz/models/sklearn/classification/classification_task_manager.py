@@ -1,4 +1,3 @@
-import logging
 import os
 from time import time
 from termcolor import colored
@@ -7,8 +6,6 @@ from datetime import datetime
 from ..helper_functions.utils import create_directory, TrainingProcesses
 from ..classification.classification_task import ClassificationTask
 
-
-logger = logging.getLogger(__name__)
 
 validClassifiers = ["svm", "NN"]
 validEvaluations = ["nfoldcrossvalidation"]
@@ -23,7 +20,7 @@ class ClassificationTaskManager:
     with their corresponding preprocessing steps and parameters declaration for the
     classifier, and executes the classification task for each step.
     """
-    def __init__(self, config, train_class, X, y, tracks, exports_path):
+    def __init__(self, config, train_class, X, y, tracks, exports_path, logger):
         """
         Args:
             config: The configuration file name.
@@ -37,6 +34,7 @@ class ClassificationTaskManager:
         self.y = y
         self.tracks = tracks
         self.exports_path = exports_path
+        self.logger = logger
 
         self.results_path = ""
         self.logs_path = ""
@@ -74,25 +72,25 @@ class ClassificationTaskManager:
         """
         Check the keys of the configuration template file if they are set up correctly.
         """
-        logger.info("---- CHECK FOR INAPPROPRIATE CONFIG FILE FORMAT ----")
+        self.logger.info("---- CHECK FOR INAPPROPRIATE CONFIG FILE FORMAT ----")
         if "processing" not in self.config:
-            logger.error("No preprocessing defined in config.")
+            self.logger.error("No preprocessing defined in config.")
 
         if "evaluations" not in self.config:
-            logger.error("No evaluations defined in config.")
-            logger.error("Setting default evaluation to 10-fold cross-validation")
+            self.logger.error("No evaluations defined in config.")
+            self.logger.error("Setting default evaluation to 10-fold cross-validation")
             self.config["evaluations"] = {"nfoldcrossvalidation": [{"nfold": [10]}]}
 
         for classifier in self.config['classifiers'].keys():
             if classifier not in validClassifiers:
-                logger.error("Not a valid classifier: {}".format(classifier))
+                self.logger.error("Not a valid classifier: {}".format(classifier))
                 raise ValueError("The classifier name must be valid.")
 
         for evaluation in self.config['evaluations'].keys():
             if evaluation not in validEvaluations:
-                logger.error("Not a valid evaluation: {}".format(evaluation))
+                self.logger.error("Not a valid evaluation: {}".format(evaluation))
                 raise ValueError("The evaluation must be valid.")
-        logger.info("No errors in config file format found.")
+        self.logger.info("No errors in config file format found.")
 
     def apply_processing(self):
         """
@@ -100,7 +98,7 @@ class ClassificationTaskManager:
         """
         start_time = time()
         training_processes = TrainingProcesses(self.config).training_processes()
-        logger.info("Classifiers detected: {}".format(self.config["classifiers"].keys()))
+        self.logger.info("Classifiers detected: {}".format(self.config["classifiers"].keys()))
         for classifier in self.config["classifiers"].keys():
             print("Before Classification task: ", classifier)
             task = ClassificationTask(config=self.config,
@@ -111,17 +109,18 @@ class ClassificationTaskManager:
                                       y=self.y,
                                       exports_path=self.exports_path,
                                       tracks=self.tracks,
+                                      logger=self.logger
                                       )
             try:
                 task.run()
             except Exception as e:
-                logger.error('Running task failed: {}'.format(e))
+                self.logger.error('Running task failed: {}'.format(e))
                 print(colored('Running task failed: {}'.format(e), "red"))
         end_time = time()
 
         print()
         print(colored("Last evaluation took place at: {}".format(datetime.now()), "magenta"))
-        logger.info("Last evaluation took place at: {}".format(datetime.now()))
+        self.logger.info("Last evaluation took place at: {}".format(datetime.now()))
 
         # test duration
         time_duration = end_time - start_time

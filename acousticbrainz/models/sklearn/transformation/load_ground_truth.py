@@ -1,4 +1,3 @@
-import logging
 import os
 import yaml
 import pandas as pd
@@ -7,9 +6,6 @@ from termcolor import colored
 import random
 from ..helper_functions.utils import create_directory
 from ..transformation.load_low_level import FeaturesDf
-
-
-logger = logging.getLogger(__name__)
 
 
 class GroundTruthLoad:
@@ -31,7 +27,7 @@ class GroundTruthLoad:
         self.exports_path = exports_path
         self.log_level = log_level
 
-        logger = ""
+        self.logger = ""
         self.class_dir = ""
         self.ground_truth_data = {}
         self.labeled_tracks = {}
@@ -135,11 +131,12 @@ class DatasetExporter:
     """
     TODO: Description
     """
-    def __init__(self, config, tracks_list, train_class, exports_path):
+    def __init__(self, config, tracks_list, train_class, exports_path, logger):
         self.config = config
         self.tracks_list = tracks_list
         self.train_class = train_class
         self.exports_path = exports_path
+        self.logger = logger
 
         self.dataset_dir = ""
         self.class_dir = ""
@@ -155,7 +152,7 @@ class DatasetExporter:
             TODO: Description
         """
 
-        logger.info("---- EXPORTING FEATURES - LABELS - TRACKS ----")
+        self.logger.info("---- EXPORTING FEATURES - LABELS - TRACKS ----")
         self.dataset_dir = self.config.get("dataset_dir")
         print('DATASET-DIR', self.dataset_dir)
         dirpath = os.path.join(os.getcwd(), self.dataset_dir)
@@ -163,47 +160,47 @@ class DatasetExporter:
         for (dirpath, dirnames, filenames) in os.walk(dirpath):
             low_level_list += [os.path.join(dirpath, file) for file in filenames if file.endswith(".json")]
         if len(low_level_list) != 0:
-            logger.info("Low-level features for the tracks found.")
+            self.logger.info("Low-level features for the tracks found.")
             # processing the names of the tracks that are inside both the GT file and the low-level json files
             # list with the tracks that are included in the low-level json files
             tracks_existing_list = [e for e in self.tracks_list for i in low_level_list if e[0] in i]
             # list with the low-level json tracks' paths that are included in tracks list
             tracks_existing_path_list = [i for e in self.tracks_list for i in low_level_list if e[0] in i]
-            logger.debug("tracks existed found: {}".format(len(tracks_existing_list)))
-            logger.debug("tracks_path existed found: {}".format(len(tracks_existing_path_list)))
-            logger.debug("{}".format(tracks_existing_list[:4]))
-            logger.debug("{}".format(tracks_existing_path_list[:4]))
-            logger.debug("The founded tracks tracks listed successfully.")
-            logger.debug("Generate random number within a given range of listed tracks:")
+            self.logger.debug("tracks existed found: {}".format(len(tracks_existing_list)))
+            self.logger.debug("tracks_path existed found: {}".format(len(tracks_existing_path_list)))
+            self.logger.debug("{}".format(tracks_existing_list[:4]))
+            self.logger.debug("{}".format(tracks_existing_path_list[:4]))
+            self.logger.debug("The founded tracks tracks listed successfully.")
+            self.logger.debug("Generate random number within a given range of listed tracks:")
             # Random number between 0 and length of listed tracks
             random_num = random.randrange(len(tracks_existing_list))
-            logger.debug("Check if the tracks are the same in the same random index in both lists")
-            logger.debug("{}".format(tracks_existing_list[random_num]))
-            logger.debug("{}".format(tracks_existing_path_list[random_num]))
+            self.logger.debug("Check if the tracks are the same in the same random index in both lists")
+            self.logger.debug("{}".format(tracks_existing_list[random_num]))
+            self.logger.debug("{}".format(tracks_existing_path_list[random_num]))
 
             self.tracks_list = tracks_existing_list
             # create the dataframe with tracks that are bothe in low-level files and the GT file
             self.df_tracks = pd.DataFrame(data=self.tracks_list, columns=["track", self.train_class])
-            logger.debug("Shape of tracks DF created before cleaning: {}".format(self.df_tracks.shape))
-            logger.debug("Check the shape of a temporary DF that includes if there are any NULL values:")
-            logger.debug("{}".format(self.df_tracks[self.df_tracks.isnull().any(axis=1)].shape))
+            self.logger.debug("Shape of tracks DF created before cleaning: {}".format(self.df_tracks.shape))
+            self.logger.debug("Check the shape of a temporary DF that includes if there are any NULL values:")
+            self.logger.debug("{}".format(self.df_tracks[self.df_tracks.isnull().any(axis=1)].shape))
 
-            logger.debug("Drop rows with NULL values if they exist..")
+            self.logger.debug("Drop rows with NULL values if they exist..")
             if self.df_tracks[self.df_tracks.isnull().any(axis=1)].shape[0] != 0:
                 self.df_tracks.dropna(inplace=True)
-                logger.debug("Check if there are NULL values after the cleaning process:")
-                logger.debug("{}".format(self.df_tracks[self.df_tracks.isnull().any(axis=1)].shape))
-                logger.debug("Re-index the tracks DF..")
+                self.logger.debug("Check if there are NULL values after the cleaning process:")
+                self.logger.debug("{}".format(self.df_tracks[self.df_tracks.isnull().any(axis=1)].shape))
+                self.logger.debug("Re-index the tracks DF..")
                 self.df_tracks = self.df_tracks.reset_index(drop=True)
             else:
-                logger.info("There are no NULL values found.")
+                self.logger.info("There are no NULL values found.")
 
             # export shuffled tracks to CSV format
             tracks_path = create_directory(self.exports_path, "tracks_csv_format")
             self.df_tracks.to_csv(os.path.join(tracks_path, "tracks_{}_shuffled.csv".format(self.train_class)))
-            logger.debug("DF INFO:")
-            logger.debug("{}".format(self.df_tracks.info()))
-            logger.debug("COLUMNS CONTAIN OBJECTS: {}".format(
+            self.logger.debug("DF INFO:")
+            self.logger.debug("{}".format(self.df_tracks.info()))
+            self.logger.debug("COLUMNS CONTAIN OBJECTS: {}".format(
                 self.df_tracks.select_dtypes(include=['object']).columns))
 
             self.df_feats = FeaturesDf(df_tracks=self.df_tracks,
@@ -211,11 +208,12 @@ class DatasetExporter:
                                        list_path_tracks=tracks_existing_path_list,
                                        config=self.config,
                                        exports_path=self.exports_path,
+                                       logger=self.logger,
                                        ).create_low_level_df()
 
             self.y = self.df_tracks[self.train_class].values
-            logger.info("Features, Labels, and Tracks are exported successfully..")
+            self.logger.info("Features, Labels, and Tracks are exported successfully..")
             return self.df_feats, self.y, self.df_tracks["track"].values
         else:
-            logger.error("No low-level data found.")
+            self.logger.error("No low-level data found.")
             return None, None, None

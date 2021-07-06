@@ -1,5 +1,3 @@
-import logging
-
 import pandas as pd
 from termcolor import colored
 import collections
@@ -21,16 +19,15 @@ try:
 except AttributeError:
     collectionsAbc = collections
 
-logger = logging.getLogger(__name__)
-
 
 class Transform:
-    def __init__(self, config, df_feats, process, train_class, exports_path):
+    def __init__(self, config, df_feats, process, train_class, exports_path, logger):
         self.config = config
         self.df_feats = df_feats
         self.process = process
         self.train_class = train_class
         self.exports_path = exports_path
+        self.logger = logger
 
         self.list_features = []
         self.feats_cat_list = []
@@ -43,8 +40,8 @@ class Transform:
 
     def post_processing(self):
         print(colored("PROCESS: {}".format(self.process), "cyan"))
-        logger.debug("PROCESS: {}".format(self.process))
-        logger.debug("Process: {}".format(self.config["processing"][self.process]))
+        self.logger.debug("PROCESS: {}".format(self.process))
+        self.logger.debug("Process: {}".format(self.config["processing"][self.process]))
         # list_preprocesses = []
 
         self.list_features = list(self.df_feats.columns)
@@ -53,34 +50,34 @@ class Transform:
 
         # clean list
         print(colored("Cleaning..", "yellow"))
-        logger.info("Cleaning..")
+        self.logger.info("Cleaning..")
         cleaning_conf_list = list_descr_handler(self.config["excludedDescriptors"])
         feats_clean_list = feats_selector_list(self.df_feats.columns, cleaning_conf_list)
         self.list_features = [x for x in self.df_feats.columns if x not in feats_clean_list]
-        logger.debug("List after cleaning some feats: {}".format(len(self.list_features)))
+        self.logger.debug("List after cleaning some feats: {}".format(len(self.list_features)))
 
         # remove list
         print(colored("Removing unnecessary features..", "yellow"))
-        logger.info("Removing unnecessary features..")
+        self.logger.info("Removing unnecessary features..")
         if self.config["processing"][self.process][0]["transfo"] == "remove":
             remove_list = list_descr_handler(self.config["processing"][self.process][0]["params"]["descriptorNames"])
             feats_remove_list = feats_selector_list(self.df_feats.columns, remove_list)
             self.list_features = [x for x in self.list_features if x not in feats_remove_list]
-            logger.debug("List after removing unnecessary feats: {}".format(len(self.list_features)))
+            self.logger.debug("List after removing unnecessary feats: {}".format(len(self.list_features)))
 
         # enumerate list
         print(colored("Split numerical / categorical features..", "yellow"))
         if self.config["processing"][self.process][1]["transfo"] == "enumerate":
             enumerate_list = list_descr_handler(self.config["processing"][self.process][1]["params"]["descriptorNames"])
             self.feats_cat_list = feats_selector_list(self.list_features, enumerate_list)
-            logger.debug("Enumerating feats: {}".format(self.feats_cat_list))
+            self.logger.debug("Enumerating feats: {}".format(self.feats_cat_list))
             self.feats_num_list = [x for x in self.list_features if x not in self.feats_cat_list]
-            logger.debug("List Num feats: {}".format(len(self.feats_num_list)))
-            logger.debug("List Cat feats: {}".format(len(self.feats_cat_list), "blue"))
+            self.logger.debug("List Num feats: {}".format(len(self.feats_num_list)))
+            self.logger.debug("List Cat feats: {}".format(len(self.feats_cat_list), "blue"))
 
         # BASIC
         if self.process == "basic":
-            logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
+            self.logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
 
             num_pipeline = Pipeline([
                 ('selector', DataFrameSelector(self.feats_num_list))
@@ -105,7 +102,7 @@ class Transform:
         if self.process == "lowlevel" or self.process == "mfcc":
             sel_list = list_descr_handler(self.config["processing"][self.process][2]["params"]["descriptorNames"])
             self.feats_num_list = feats_selector_list(self.feats_num_list, sel_list)
-            logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
+            self.logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
 
             num_pipeline = Pipeline([
                 ('selector', DataFrameSelector(self.feats_num_list))
@@ -131,7 +128,7 @@ class Transform:
             sel_list = list_descr_handler(self.config["processing"][self.process][2]["params"]["descriptorNames"])
             feats_rem_list = feats_selector_list(self.df_feats, sel_list)
             self.feats_num_list = [x for x in self.feats_num_list if x not in feats_rem_list]
-            logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
+            self.logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
 
             num_pipeline = Pipeline([
                 ('selector', DataFrameSelector(self.feats_num_list))
@@ -154,7 +151,7 @@ class Transform:
 
         # NORMALIZED
         if self.process == "normalized":
-            logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
+            self.logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
             num_pipeline = Pipeline([
                 ('selector', DataFrameSelector(self.feats_num_list)),
                 ('minmax_scaler', MinMaxScaler()),
@@ -181,9 +178,9 @@ class Transform:
             feats_num_gauss_list = feats_selector_list(self.feats_num_list, gauss_list)
             feats_num_no_gauss_list = [x for x in self.feats_num_list if x not in feats_num_gauss_list]
 
-            logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
-            logger.debug("List post-Num-Gauss feats: {}".format(len(feats_num_gauss_list)))
-            logger.debug("List post-Num-No-Gauss feats: {}".format(len(feats_num_no_gauss_list)))
+            self.logger.debug("List post-Num feats: {}".format(len(self.feats_num_list)))
+            self.logger.debug("List post-Num-Gauss feats: {}".format(len(feats_num_gauss_list)))
+            self.logger.debug("List post-Num-No-Gauss feats: {}".format(len(feats_num_no_gauss_list)))
 
             num_norm_pipeline = Pipeline([
                 ("selector_num", DataFrameSelector(self.feats_num_list)),
@@ -201,7 +198,7 @@ class Transform:
             ])
 
             self.feats_prepared = full_normalize_pipeline.fit_transform(self.df_feats)
-            logger.debug("Feats prepared normalized shape: {}".format(self.feats_prepared.shape))
+            self.logger.debug("Feats prepared normalized shape: {}".format(self.feats_prepared.shape))
             # save pipeline
             joblib.dump(full_normalize_pipeline,
                         os.path.join(models_path, "full_normalize_pipeline_{}.pkl".format(self.process)))
@@ -214,9 +211,9 @@ class Transform:
             print(select_no_rename_list)
             new_feats_columns = select_rename_list + select_no_rename_list
             self.df_feats.columns = new_feats_columns
-            logger.debug("Normalized Features DF:")
-            logger.debug("\n{}".format(self.df_feats))
-            logger.debug("Shape: {}".format(self.df_feats.shape))
+            self.logger.debug("Normalized Features DF:")
+            self.logger.debug("\n{}".format(self.df_feats))
+            self.logger.debug("Shape: {}".format(self.df_feats.shape))
 
             feats_no_gauss_list = [x for x in new_feats_columns if x not in feats_num_gauss_list]
 

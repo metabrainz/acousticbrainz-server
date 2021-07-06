@@ -1,11 +1,7 @@
-import logging
 import os
 import json
 from ..classification.classifier_grid import TrainGridClassifier
 from ..classification.evaluation import evaluation
-
-
-logger = logging.getLogger(__name__)
 
 
 class ClassificationTask:
@@ -15,7 +11,7 @@ class ClassificationTask:
     to the configuration file declared class to train the model and then it uses that model
     for evaluation.
     """
-    def __init__(self, config, classifier, train_class, training_processes, X, y, exports_path, tracks):
+    def __init__(self, config, classifier, train_class, training_processes, X, y, exports_path, tracks, logger):
         """
         Args:
             config: The configuration data that contain the settings from the configuration
@@ -31,6 +27,7 @@ class ClassificationTask:
             y: The labels (NumPy array) of the target class
             exports_path: Path to where the classification project's results will be stored to.
             tracks: The tracks (numpy.ndarray) that are exported from the Groundtruth file.
+            log_level: The logging level (0-4).
         """
         self.config = config
         self.classifier = classifier
@@ -41,12 +38,13 @@ class ClassificationTask:
         self.training_processes = training_processes
         self.exports_path = exports_path
         self.tracks = tracks
+        self.logger = logger
 
 
     def run(self):
         # grid search train
         if self.config["train_kind"] == "grid":
-            logger.info("Train Classifier: Classifier with GridSearchCV")
+            self.logger.info("Train Classifier: Classifier with GridSearchCV")
             grid_svm_train = TrainGridClassifier(config=self.config,
                                                  classifier=self.classifier,
                                                  class_name=self.train_class,
@@ -59,15 +57,15 @@ class ClassificationTask:
             grid_svm_train.train_grid_search_clf()
             grid_svm_train.export_best_classifier()
         else:
-            logger.error("Use a valid classifier in the configuration file.")
-        logger.info("Training the classifier is completed successfully.")
+            self.logger.error("Use a valid classifier in the configuration file.")
+        self.logger.info("Training the classifier is completed successfully.")
 
         # load best model to check its parameters
-        logger.debug("Loading the Best Model..")
+        self.logger.debug("Loading the Best Model..")
         best_model_name = "best_model_{}.json".format(self.train_class)
         with open(os.path.join(self.exports_path, best_model_name)) as best_model_file:
             best_model = json.load(best_model_file)
-        logger.debug("BEST MODEL: {}".format(best_model))
+        self.logger.debug("BEST MODEL: {}".format(best_model))
 
         # evaluation
         evaluation(config=self.config,
@@ -77,4 +75,5 @@ class ClassificationTask:
                    tracks=self.tracks,
                    process=best_model["preprocessing"],
                    exports_path=self.exports_path,
+                   logger=self.logger
                    )

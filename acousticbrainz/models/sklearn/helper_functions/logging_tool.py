@@ -21,6 +21,7 @@ import os
 #         log_path = os.path.join(current_d, "logs_dir")
 # else:
 #     log_path = FindCreateDirectory(config_data["log_directory"]).inspect_directory()
+from acousticbrainz.models.sklearn.helper_functions.utils import create_directory
 
 
 class LoggerSetup:
@@ -60,7 +61,7 @@ class LoggerSetup:
         Returns:
             The logger object.
         """
-        self.logs_path = os.path.join(self.exports_path, "logs")
+        self.logs_path = create_directory(self.exports_path, "logs")
 
         # Create a custom logger
         logger_object = logging.getLogger(self.name)

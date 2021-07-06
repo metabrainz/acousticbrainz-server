@@ -52,7 +52,7 @@ class ClassificationTask:
                                                  y=self.y,
                                                  tr_processes=self.training_processes,
                                                  exports_path=self.exports_path,
-                                                 logger=logger
+                                                 logger=self.logger
                                                  )
             grid_svm_train.train_grid_search_clf()
             grid_svm_train.export_best_classifier()

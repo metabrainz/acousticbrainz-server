@@ -107,7 +107,7 @@ class Predict:
         return predict_list
 
 
-def prediction(exports_path, project_file, mbid, log_level="logging.INFO"):
+def prediction(exports_path, project_file, mbid, log_level="INFO"):
     # if empty, path is declared as the app's main directory
     try:
         project_data = load_yaml(exports_path, "{}.yaml".format(project_file))
@@ -130,39 +130,3 @@ def prediction(exports_path, project_file, mbid, log_level="logging.INFO"):
                                log_level=log_level
                                )
     prediction_track.preprocessing()
-
-
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(
-        description='Prediction of a track.')
-
-    parser.add_argument("-p", "--path",
-                        dest="exports_path",
-                        help="Path where the project file (.yaml) is stored.",
-                        required=True)
-
-    parser.add_argument("-f", "--file",
-                        dest="project_file",
-                        help="Name of the project configuration file (.yaml) that is to be loaded. The .yaml at the"
-                             "end of the file is not necessary. Just put the name of the file.",
-                        required=True)
-
-    parser.add_argument("-t", "--track",
-                        dest="mbid",
-                        help="MBID of the the low-level data from the AcousticBrainz API.",
-                        required=True)
-
-    parser.add_argument("-l", "--logging",
-                        dest="log_level",
-                        default="logging.INFO",
-                        help="The logging level that will be printed logging.DEBUG, logging.INFO, logging.WARNING, "
-                             "logging.ERROR, logging.CRITICAL).",
-                        type=str)
-
-    args = parser.parse_args()
-
-    prediction(exports_path=args.exports_path,
-               project_file=args.project_file,
-               mbid=args.mbid,
-               log_level=args.log_level)

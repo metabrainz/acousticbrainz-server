@@ -1,5 +1,4 @@
 import os
-import argparse
 from ..helper_functions.utils import load_yaml
 import time
 from ..classification.train_class import train_class
@@ -62,65 +61,3 @@ def create_classification_project(ground_truth_file, dataset_dir, project_file=N
 
     print("Loading GroundTruth yaml file:", ground_truth_file)
     train_class(project_template, ground_truth_file, c_values, gamma_values, preprocessing_values, logging)
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Generates a project configuration file given a filelist, a groundtruth file, '
-                    'and the directories to store the datasets and the results files. '
-                    'The script has a parameter to specify the project template to use. '
-                    'If it is not specified, it will try to guess the appropriated one from the '
-                    'essentia version found on the descriptor files.')
-
-    parser.add_argument("-g", "--groundtruth",
-                        dest="ground_truth_file",
-                        help="Path of the dataset's groundtruth file/s.",
-                        required=True)
-
-    parser.add_argument("-d", "--datasetsdir",
-                        dest="dataset_dir",
-                        help="Path of the main datasets dir containing .json file/s.",
-                        required=True)
-
-    parser.add_argument("-f", "--file",
-                        dest="project_file",
-                        help="Name of the project configuration file (.yaml) will be stored. If not specified "
-                             "it takes automatically the name <project_CLASS_NAME>.")
-
-    parser.add_argument("-p", "--path",
-                        dest="exports_path",
-                        help="Path where the project results will be stored. If empty, the results will be saved in "
-                             "the main app directory.")
-
-    parser.add_argument("-s", "--seed",
-                        default=None,
-                        help="Seed is used to generate the random shuffled dataset applied later to folding.",
-                        type=int)
-
-    parser.add_argument("-j", "--jobs",
-                        default=-1,
-                        help="Parallel jobs. Set to -1 to use all the available cores",
-                        type=int)
-
-    parser.add_argument("-v", "--verbose",
-                        default=1,
-                        help="Controls the verbosity: the higher, the more messages.",
-                        type=int)
-
-    parser.add_argument("-l", "--logging",
-                        default="INFO",
-                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                        help="The logging level that will be printed DEBUG, INFO, WARNING, "
-                             "ERROR, CRITICAL",
-                        type=str)
-
-    args = parser.parse_args()
-
-    create_classification_project(ground_truth_file=args.ground_truth_file,
-                                  dataset_dir=args.dataset_dir,
-                                  project_file=args.project_file,
-                                  exports_path=args.exports_path,
-                                  seed=args.seed,
-                                  jobs=args.jobs,
-                                  verbose=args.verbose,
-                                  logging=args.logging)

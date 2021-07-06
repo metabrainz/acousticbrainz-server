@@ -13,18 +13,11 @@ import joblib
 
 from ..transformation.transform import Transform
 from ..classification.report_files_export import export_report
-from ..helper_functions.logging_tool import LoggerSetup
 from ..classification.matrix_creation import matrix_creation, simplified_matrix_export
 
 
-def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, log_level):
+def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, logger):
     print(colored("------ EVALUATION and FOLDING ------", "yellow"))
-    logger = LoggerSetup(config=config,
-                         exports_path=exports_path,
-                         name="train_model_{}".format(class_name),
-                         train_class=class_name,
-                         mode="a",
-                         level=log_level).setup_logger()
 
     logger.info("---- Folded evaluation of the model in the dataset ----")
     logger.info("number of folds set to config: {}".format(n_fold))
@@ -66,7 +59,7 @@ def evaluation(config, n_fold, X, y, class_name, tracks, process, exports_path, 
                                   process=process,
                                   train_class=class_name,
                                   exports_path=exports_path,
-                                  log_level=log_level).post_processing()
+                                  logger=logger).post_processing()
     logger.debug("Features prepared shape: {}".format(features_prepared.shape))
 
     # Starting Training, Predictions for each fold

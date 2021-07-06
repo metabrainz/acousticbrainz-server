@@ -7,7 +7,7 @@ from ..classification.train_class import train_class
 
 def create_classification_project(ground_truth_file, dataset_dir, project_file=None, exports_path=None,
                                   c_values=None, gamma_values=None, preprocessing_values=None,
-                                  seed=None, jobs=-1, verbose=1, logging="logging.INFO"):
+                                  seed=None, jobs=-1, verbose=1, logging="INFO"):
     """
     Args:
         ground_truth_file: The path (str) to the groundtruth yaml file of the dataset. It is required.
@@ -24,9 +24,8 @@ def create_classification_project(ground_truth_file, dataset_dir, project_file=N
         verbose: The verbosity (int) of the printed messages where this function
             is available (for example in sklearn's GridSearch algorithm). Default: 1.
             The higher the number the higher the verbosity.
-        logging: The level (str) of the logging prints. Default: "logging.INFO".
-            Available values: logging.DEBUG, logging.INFO, logging.WARNING,
-            logging.ERROR, logging.CRITICAL.
+        logging: The level (str) of the logging prints. Default: "INFO".
+            Available values: DEBUG, INFO, WARNING, ERROR, CRITICAL.
     """
     try:
         path_template = os.path.dirname(os.path.realpath(__file__))
@@ -109,9 +108,10 @@ if __name__ == '__main__':
                         type=int)
 
     parser.add_argument("-l", "--logging",
-                        default="logging.INFO",
-                        help="The logging level that will be printed logging.DEBUG, logging.INFO, logging.WARNING, "
-                             "logging.ERROR, logging.CRITICAL).",
+                        default="INFO",
+                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                        help="The logging level that will be printed DEBUG, INFO, WARNING, "
+                             "ERROR, CRITICAL",
                         type=str)
 
     args = parser.parse_args()

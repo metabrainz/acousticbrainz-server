@@ -2,7 +2,6 @@ import os
 import json
 import pandas as pd
 from ..transformation.utils_preprocessing import flatten_dict_full
-from ..helper_functions.logging_tool import LoggerSetup
 
 
 class FeaturesDf:
@@ -12,29 +11,18 @@ class FeaturesDf:
             df_tracks (Pandas DataFrame): The tracks DataFrame that contains the track name, track low-level path,
                                         label, etc.
     """
-    def __init__(self, df_tracks, train_class, list_path_tracks, config, exports_path, log_level):
+    def __init__(self, df_tracks, train_class, list_path_tracks, config, exports_path, logger):
         self.df_tracks = df_tracks
         self.train_class = train_class
         self.list_path_tracks = list_path_tracks
         self.config = config
         self.exports_path = exports_path
-        self.log_level = log_level
+        self.logger = logger
         self.list_feats_tracks = []
         self.counter_items_transformed = 0
         self.df_feats_tracks = pd.DataFrame()
         self.df_feats_label = pd.DataFrame()
 
-        self.logger = ""
-
-        self.setting_logger()
-
-    def setting_logger(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="train_model_{}".format(self.train_class),
-                                  train_class=self.train_class,
-                                  mode="a",
-                                  level=self.log_level).setup_logger()
 
     def create_low_level_df(self):
         """

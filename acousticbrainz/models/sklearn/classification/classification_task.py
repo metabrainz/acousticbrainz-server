@@ -2,7 +2,6 @@ import os
 import json
 from ..classification.classifier_grid import TrainGridClassifier
 from ..classification.evaluation import evaluation
-from ..helper_functions.logging_tool import LoggerSetup
 
 
 class ClassificationTask:
@@ -12,7 +11,7 @@ class ClassificationTask:
     to the configuration file declared class to train the model and then it uses that model
     for evaluation.
     """
-    def __init__(self, config, classifier, train_class, training_processes, X, y, exports_path, tracks, log_level):
+    def __init__(self, config, classifier, train_class, training_processes, X, y, exports_path, tracks, logger):
         """
         Args:
             config: The configuration data that contain the settings from the configuration
@@ -33,24 +32,14 @@ class ClassificationTask:
         self.config = config
         self.classifier = classifier
         self.train_class = train_class
-        self.log_level = log_level
 
         self.X = X
         self.y = y
         self.training_processes = training_processes
         self.exports_path = exports_path
         self.tracks = tracks
-        self.logger = ""
+        self.logger = logger
 
-        self.setting_logger()
-
-    def setting_logger(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="train_model_{}".format(self.train_class),
-                                  train_class=self.train_class,
-                                  mode="a",
-                                  level=self.log_level).setup_logger()
 
     def run(self):
         # grid search train
@@ -63,7 +52,7 @@ class ClassificationTask:
                                                  y=self.y,
                                                  tr_processes=self.training_processes,
                                                  exports_path=self.exports_path,
-                                                 log_level=self.log_level
+                                                 logger=logger
                                                  )
             grid_svm_train.train_grid_search_clf()
             grid_svm_train.export_best_classifier()
@@ -86,5 +75,5 @@ class ClassificationTask:
                    tracks=self.tracks,
                    process=best_model["preprocessing"],
                    exports_path=self.exports_path,
-                   log_level=self.log_level
+                   logger=self.logger
                    )

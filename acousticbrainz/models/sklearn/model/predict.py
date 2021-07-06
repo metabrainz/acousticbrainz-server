@@ -8,7 +8,7 @@ import pandas as pd
 from ..helper_functions.utils import load_yaml
 from ..transformation.utils_preprocessing import flatten_dict_full
 from ..transformation.transform_predictions import TransformPredictions
-from ..helper_functions.logging_tool import LoggerSetup
+from ..helper_functions.logging_tool import setup_logger
 
 
 class Predict:
@@ -41,12 +41,12 @@ class Predict:
             self.best_model = json.load(json_file)
 
     def preprocessing(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="predict_{}".format(self.class_name),
-                                  train_class=self.class_name,
-                                  mode="w",
-                                  level=self.log_level).setup_logger()
+        self.logger = setup_logger(
+            exports_path=self.exports_path,
+            name="predict_{}".format(self.class_name),
+            mode="w",
+            level=self.log_level
+        )
 
         self.logger.info("Best model:")
         self.logger.info(self.best_model)
@@ -74,7 +74,7 @@ class Predict:
                                                  process=self.best_model["preprocessing"],
                                                  train_class=self.class_name,
                                                  exports_path=self.exports_path,
-                                                 log_level=self.log_level
+                                                 logger=self.logger
                                                  ).post_processing()
         self.logger.debug("Features shape after preparation: {}".format(features_prepared.shape))
 

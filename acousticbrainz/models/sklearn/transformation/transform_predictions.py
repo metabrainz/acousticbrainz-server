@@ -8,7 +8,6 @@ import six
 from sklearn.base import BaseEstimator, TransformerMixin
 from ..transformation.utils_preprocessing import list_descr_handler
 from ..transformation.utils_preprocessing import feats_selector_list
-from ..helper_functions.logging_tool import LoggerSetup
 
 # avoid the module's method call deprecation
 try:
@@ -18,30 +17,19 @@ except AttributeError:
 
 
 class TransformPredictions:
-    def __init__(self, config, df_feats, process, train_class, exports_path, log_level):
+    def __init__(self, config, df_feats, process, train_class, exports_path, logger):
         self.config = config
         self.df_feats = df_feats
         self.process = process
         self.train_class = train_class
         self.exports_path = exports_path
-        self.log_level = log_level
-
-        self.logger = ""
+        self.logger = logger
         self.list_features = []
         self.feats_cat_list = []
         self.feats_num_list = []
 
         self.feats_prepared = []
 
-        self.setting_logger()
-
-    def setting_logger(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="predict_{}".format(self.train_class),
-                                  train_class=self.train_class,
-                                  mode="a",
-                                  level=self.log_level).setup_logger()
 
     def post_processing(self):
         print(colored("PROCESS: {}".format(self.process), "cyan"))

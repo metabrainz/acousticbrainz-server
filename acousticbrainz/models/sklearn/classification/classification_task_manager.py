@@ -5,7 +5,6 @@ from datetime import datetime
 
 from ..helper_functions.utils import create_directory, TrainingProcesses
 from ..classification.classification_task import ClassificationTask
-from ..helper_functions.logging_tool import LoggerSetup
 
 
 validClassifiers = ["svm", "NN"]
@@ -21,7 +20,7 @@ class ClassificationTaskManager:
     with their corresponding preprocessing steps and parameters declaration for the
     classifier, and executes the classification task for each step.
     """
-    def __init__(self, config, train_class, X, y, tracks, exports_path, log_level):
+    def __init__(self, config, train_class, X, y, tracks, exports_path, logger):
         """
         Args:
             config: The configuration file name.
@@ -35,7 +34,7 @@ class ClassificationTaskManager:
         self.y = y
         self.tracks = tracks
         self.exports_path = exports_path
-        self.log_level = log_level
+        self.logger = logger
 
         self.results_path = ""
         self.logs_path = ""
@@ -45,18 +44,9 @@ class ClassificationTaskManager:
         self.images_path = ""
         self.reports_path = ""
 
-        self.logger = ""
-        self.setting_logger()
         self.files_existence()
         self.config_file_analysis()
 
-    def setting_logger(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="train_model_{}".format(self.train_class),
-                                  train_class=self.train_class,
-                                  mode="a",
-                                  level=self.log_level).setup_logger()
 
     def files_existence(self):
         """
@@ -119,7 +109,7 @@ class ClassificationTaskManager:
                                       y=self.y,
                                       exports_path=self.exports_path,
                                       tracks=self.tracks,
-                                      log_level=self.log_level
+                                      logger=self.logger
                                       )
             try:
                 task.run()

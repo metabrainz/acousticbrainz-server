@@ -6,7 +6,6 @@ from termcolor import colored
 import random
 from ..helper_functions.utils import create_directory
 from ..transformation.load_low_level import FeaturesDf
-from ..helper_functions.logging_tool import LoggerSetup
 
 
 class GroundTruthLoad:
@@ -132,29 +131,19 @@ class DatasetExporter:
     """
     TODO: Description
     """
-    def __init__(self, config, tracks_list, train_class, exports_path, log_level):
+    def __init__(self, config, tracks_list, train_class, exports_path, logger):
         self.config = config
         self.tracks_list = tracks_list
         self.train_class = train_class
         self.exports_path = exports_path
-        self.log_level = log_level
+        self.logger = logger
 
         self.dataset_dir = ""
         self.class_dir = ""
         self.df_tracks = pd.DataFrame()
         self.df_feats = pd.DataFrame()
         self.y = []
-        self.logger = ""
 
-        self.setting_logger()
-
-    def setting_logger(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="train_model_{}".format(self.train_class),
-                                  train_class=self.train_class,
-                                  mode="a",
-                                  level=self.log_level).setup_logger()
 
     def create_df_tracks(self):
         """
@@ -219,7 +208,7 @@ class DatasetExporter:
                                        list_path_tracks=tracks_existing_path_list,
                                        config=self.config,
                                        exports_path=self.exports_path,
-                                       log_level=self.log_level,
+                                       logger=self.logger,
                                        ).create_low_level_df()
 
             self.y = self.df_tracks[self.train_class].values

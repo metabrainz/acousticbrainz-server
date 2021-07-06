@@ -11,7 +11,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, QuantileTransformer
 from sklearn.pipeline import FeatureUnion
 from sklearn.pipeline import Pipeline
-from ..helper_functions.logging_tool import LoggerSetup
 
 
 # avoid the module's method call deprecation
@@ -22,13 +21,13 @@ except AttributeError:
 
 
 class Transform:
-    def __init__(self, config, df_feats, process, train_class, exports_path, log_level):
+    def __init__(self, config, df_feats, process, train_class, exports_path, logger):
         self.config = config
         self.df_feats = df_feats
         self.process = process
         self.train_class = train_class
         self.exports_path = exports_path
-        self.log_level = log_level
+        self.logger = logger
 
         self.list_features = []
         self.feats_cat_list = []
@@ -37,16 +36,7 @@ class Transform:
         self.df_num = pd.DataFrame()
 
         self.feats_prepared = []
-        self.logger = ""
-        self.setting_logger()
 
-    def setting_logger(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="train_model_{}".format(self.train_class),
-                                  train_class=self.train_class,
-                                  mode="a",
-                                  level=self.log_level).setup_logger()
 
     def post_processing(self):
         print(colored("PROCESS: {}".format(self.process), "cyan"))

@@ -2,10 +2,10 @@ import os
 from termcolor import colored
 import yaml
 
+from ..helper_functions.logging_tool import setup_logger
 from ..transformation.load_ground_truth import GroundTruthLoad
 from ..classification.classification_task_manager import ClassificationTaskManager
 from ..transformation.load_ground_truth import DatasetExporter
-from ..helper_functions.logging_tool import LoggerSetup
 
 
 def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, log_level):
@@ -23,12 +23,13 @@ def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, l
                                gamma_values=gamma_values,
                                preprocessing_values=preprocessing_values)
 
-    logger = LoggerSetup(config=config,
-                         exports_path=exports_path,
-                         name="train_model_{}".format(class_name),
-                         train_class=class_name,
-                         mode="w",
-                         level=log_level).setup_logger()
+    logger = setup_logger(
+        exports_path=exports_path,
+        name="train_model_{}".format(class_name),
+        mode="w",
+        level=log_level
+    )
+
     logger.info("---- TRAINING FOR THE {} MODEL HAS JUST STARTED ----".format(class_name))
     logger.debug("Type of exported GT data exported: {}".format(type(tracks_listed_shuffled)))
 
@@ -51,7 +52,7 @@ def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, l
                                                tracks_list=tracks_listed_shuffled,
                                                train_class=class_name,
                                                exports_path=exports_path,
-                                               log_level=log_level
+                                               logger=logger
                                                ).create_df_tracks()
     logger.debug("Types of exported files from GT:")
     logger.debug("Type of features: {}".format(type(features)))
@@ -64,7 +65,7 @@ def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, l
                                              y=labels,
                                              tracks=tracks,
                                              exports_path=exports_path,
-                                             log_level=log_level)
+                                             logger=logger)
     classification_time = model_manage.apply_processing()
     print(colored("Classification ended successfully in {} minutes.".format(classification_time), "green"))
     logger.info("Classification ended successfully in {} minutes.".format(classification_time))

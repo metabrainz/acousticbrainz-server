@@ -7,11 +7,10 @@ from sklearn.svm import SVC
 from sklearn.model_selection import KFold
 
 from ..transformation.transform import Transform
-from ..helper_functions.logging_tool import LoggerSetup
 
 
 class TrainGridClassifier:
-    def __init__(self, config, classifier, class_name, X, y, tr_processes, exports_path, log_level):
+    def __init__(self, config, classifier, class_name, X, y, tr_processes, exports_path, logger):
         self.config = config
         self.classifier = classifier
         self.class_name = class_name
@@ -19,21 +18,11 @@ class TrainGridClassifier:
         self.y = y
         self.tr_processes = tr_processes
         self.exports_path = exports_path
-        self.log_level = log_level
 
-        self.logger = ""
+        self.logger = logger
         self.best_models_list = []
         # self.train_grid_search_clf()
 
-        self.setting_logger()
-
-    def setting_logger(self):
-        self.logger = LoggerSetup(config=self.config,
-                                  exports_path=self.exports_path,
-                                  name="train_model_{}".format(self.class_name),
-                                  train_class=self.class_name,
-                                  mode="a",
-                                  level=self.log_level).setup_logger()
 
     def train_grid_search_clf(self):
         process_counter = 1
@@ -54,7 +43,7 @@ class TrainGridClassifier:
                                           process=tr_process["preprocess"],
                                           train_class=self.class_name,
                                           exports_path=self.exports_path,
-                                          log_level=self.log_level).post_processing()
+                                          logger=self.logger).post_processing()
 
             # train the grid classifier and return the trained model
             gsvc = train_grid(tr_process=tr_process,

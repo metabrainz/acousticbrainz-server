@@ -3,9 +3,8 @@ from termcolor import colored
 import yaml
 
 from ..helper_functions.logging_tool import setup_logger
-from ..transformation.load_ground_truth import GroundTruthLoad
+from ..transformation.load_ground_truth import GroundTruthLoad, create_df_tracks
 from ..classification.classification_task_manager import ClassificationTaskManager
-from ..transformation.load_ground_truth import DatasetExporter
 
 
 def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, log_level):
@@ -48,12 +47,11 @@ def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, l
     print("First N sample of shuffled tracks: \n{}".format(tracks_listed_shuffled[:4]))
 
     # create the exports with the features DF, labels, and tracks together
-    features, labels, tracks = DatasetExporter(config=config,
+    features, labels, tracks = create_df_tracks(config=config,
                                                tracks_list=tracks_listed_shuffled,
                                                train_class=class_name,
                                                exports_path=exports_path,
-                                               logger=logger
-                                               ).create_df_tracks()
+                                               logger=logger)
     logger.debug("Types of exported files from GT:")
     logger.debug("Type of features: {}".format(type(features)))
     logger.debug("Type of labels: {}".format(type(labels)))

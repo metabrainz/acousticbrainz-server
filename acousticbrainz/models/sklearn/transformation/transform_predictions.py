@@ -5,7 +5,6 @@ import joblib
 import os
 import six
 
-from sklearn.base import BaseEstimator, TransformerMixin
 from ..transformation.utils_preprocessing import list_descr_handler
 from ..transformation.utils_preprocessing import feats_selector_list
 
@@ -152,15 +151,3 @@ class TransformPredictions:
             self.feats_prepared = full_gauss_pipeline.transform(self.df_feats)
 
         return self.feats_prepared
-
-
-# Create a class to select numerical or categorical columns
-class DataFrameSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, attribute_names):
-        self.attribute_names = attribute_names
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X):
-        return X[self.attribute_names].values

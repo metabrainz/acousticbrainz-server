@@ -3,7 +3,7 @@ from time import time
 from termcolor import colored
 from datetime import datetime
 
-from ..helper_functions.utils import create_directory, TrainingProcesses
+from ..helper_functions.utils import create_directory, extract_training_processes
 from ..classification.classification_task import ClassificationTask
 
 
@@ -97,7 +97,7 @@ class ClassificationTaskManager:
         Evaluation steps extraction and classification task execution for each step.
         """
         start_time = time()
-        training_processes = TrainingProcesses(self.config).training_processes()
+        training_processes = extract_training_processes(self.config)
         self.logger.info("Classifiers detected: {}".format(self.config["classifiers"].keys()))
         for classifier in self.config["classifiers"].keys():
             print("Before Classification task: ", classifier)

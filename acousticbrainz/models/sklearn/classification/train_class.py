@@ -3,19 +3,20 @@ from termcolor import colored
 import yaml
 
 from ..helper_functions.logging_tool import setup_logger
-from ..transformation.load_ground_truth import GroundTruthLoad, create_df_tracks
+from ..transformation.load_ground_truth import load_local_ground_truth, export_gt_tracks, create_df_tracks
 from ..classification.classification_task_manager import ClassificationTaskManager
 
 
 def train_class(config, gt_file, c_values, gamma_values, preprocessing_values, log_level):
     exports_path = config["exports_path"]
-    gt_data = GroundTruthLoad(config, gt_file, exports_path, log_level)
+    ground_truth_data = load_local_ground_truth(gt_file)
     # tracks shuffled and exported
-    tracks_listed_shuffled = gt_data.export_gt_tracks()
+    tracks_listed_shuffled = export_gt_tracks(ground_truth_data, config.get("seed"))
 
     # class to train
-    class_name = gt_data.export_train_class()
+    class_name = ground_truth_data["className"]
     config["class_name"] = class_name
+    print("EXPORT CLASS NAME: {}".format(class_name))
 
     config = update_parameters(config=config,
                                c_values=c_values,

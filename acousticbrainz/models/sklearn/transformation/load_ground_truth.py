@@ -1,130 +1,47 @@
 import os
 import yaml
 import pandas as pd
-from pprint import pprint
 from termcolor import colored
 import random
 from ..helper_functions.utils import create_directory
 from ..transformation.load_low_level import FeaturesDf
 
 
-class GroundTruthLoad:
+def load_local_ground_truth(gt_filename):
+    """ Loads the the ground truth file.
+
+    The Ground Truth data which contains the tracks and the corresponding
+    labels they belong to. The path to the related tracks' low-level data
+    (features in JSON format) can be extracted from this file too.
     """
-        The Ground Truth data which contains the tracks and the corresponding
-        labels they belong to. The path to the related tracks' low-level data
-        (features in JSON format) can be extracted from this file too.
-        """
-    def __init__(self, config, gt_filename, exports_path, log_level):
-        """
-        Args:
-            config:
-            gt_filename:
-            exports_path:
-            log_level:
-        """
-        self.config = config
-        self.gt_filename = gt_filename
-        self.exports_path = exports_path
-        self.log_level = log_level
+    with open(gt_filename, "r") as stream:
+        try:
+            ground_truth_data = yaml.safe_load(stream)
+            print("Ground truth file loaded.")
+            return ground_truth_data
+        except yaml.YAMLError as exc:
+            print("Error in loading the ground truth file.")
+            print(exc)
 
-        self.logger = ""
-        self.class_dir = ""
-        self.ground_truth_data = {}
-        self.labeled_tracks = {}
-        self.train_class = ""
-        self.dataset_dir = ""
-        self.tracks = []
 
-        self.load_local_ground_truth()
+def export_gt_tracks(ground_truth_data, seed):
+    """
+    It takes a dictionary of the tracks from the groundtruth and it transforms it
+    to a list of tuples (track, label). Then it shuffles the list based on the seed
+    specified in the configuration file, and returns that shuffled list.
 
-    def load_local_ground_truth(self):
-        """
-        Loads the the ground truth file. The dataset directory is specified through
-        the parsing arguments of the create_classification_project method.
-        """
-        self.dataset_dir = self.config.get("dataset_dir")
-        with open(self.gt_filename, "r") as stream:
-            try:
-                self.ground_truth_data = yaml.safe_load(stream)
-                print("Ground truth file loaded.")
-            except yaml.YAMLError as exc:
-                print("Error in loading the ground truth file.")
-                print(exc)
-
-    def export_train_class(self):
-        """
-        Returns:
-            The target class to be modeled.
-        """
-        self.train_class = self.ground_truth_data["className"]
-        print("EXPORT CLASS NAME: {}".format(self.train_class))
-        return self.train_class
-
-    def export_gt_tracks(self):
-        """
-        It takes a dictionary of the tracks from the groundtruth and it transforms it
-        to a list of tuples (track, label). Then it shuffles the list based on the seed
-        specified in the configuration file, and returns that shuffled list.
-        Returns:
-            A list of tuples with the tracks and their corresponding labels.
-        """
-        self.labeled_tracks = self.ground_truth_data["groundTruth"]
-        tracks_list = []
-        for track, label in self.labeled_tracks.items():
-            tracks_list.append((track, label))
-        print(colored("SEED is set to: {}".format(self.config.get("seed"), "cyan")))
-        random.seed(a=self.config.get("seed"))
-        random.shuffle(tracks_list)
-        print("Listed tracks in GT file: {}".format(len(tracks_list)))
-        return tracks_list
-
-    def check_ground_truth_data(self):
-        """
-        Prints a dictionary of the groundtruth data in the corresponding yaml file.
-        It contains the target class and the tracks.
-        """
-        pprint(self.ground_truth_data)
-
-    def check_ground_truth_info(self):
-        """
-        Prints information about the groundtruth data that is loaded in a dictionary:
-            * The target class
-            * The tracks with their labels
-            * The tracks themselves
-        """
-        len(self.ground_truth_data["groundTruth"].keys())
-        print("Ground truth data class/target: {}".format(self.ground_truth_data["className"]))
-        print("Label tracks: {}".format(type(self.labeled_tracks)))
-        print("Ground truth data keys - tracks: {}".format(len(self.ground_truth_data["groundTruth"].keys())))
-
-    def check_tracks_folders(self):
-        """
-        Prints the directories that contain the low-level data.
-        """
-        if len(self.labeled_tracks.keys()) is not 0:
-            folders = []
-            for key in self.labeled_tracks:
-                key = key.split('/')
-                path_sub_dir = '/'.join(key[:-1])
-                folders.append(path_sub_dir)
-            folders = set(folders)
-            folders = list(folders)
-            folders.sort()
-            print("Directories that contain the low-level JSON data:")
-            print("{}".format(folders))
-
-    def count_json_low_level_files(self):
-        """
-        Prints the JSON low-level data that is contained inside the dataset directory (the dataset
-        directory is declared in configuration file).
-        """
-        counter = 0
-        for root, dirs, files in os.walk(os.path.join(os.getcwd(), self.dataset_dir)):
-            for file in files:
-                if file.endswith(".json"):
-                    # print(os.path.join(root, file))
-                    counter += 1
-        print("counted json files: {}".format(counter))
+    Returns:
+        A list of tuples with the tracks and their corresponding labels.
+    """
+    labeled_tracks = ground_truth_data["groundTruth"]
+    tracks_list = []
+    for track, label in labeled_tracks.items():
+        tracks_list.append((track, label))
+    print(colored("SEED is set to: {}".format(seed, "cyan")))
+    random.seed(a=seed)
+    random.shuffle(tracks_list)
+    print("Listed tracks in GT file: {}".format(len(tracks_list)))
+    return tracks_list
 
 
 def create_df_tracks(config, tracks_list, train_class, exports_path, logger):

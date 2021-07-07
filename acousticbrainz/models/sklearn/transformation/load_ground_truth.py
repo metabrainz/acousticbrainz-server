@@ -4,7 +4,7 @@ import pandas as pd
 from termcolor import colored
 import random
 from ..helper_functions.utils import create_directory
-from ..transformation.load_low_level import FeaturesDf
+from ..transformation.load_low_level import create_low_level_features_df
 
 
 def load_local_ground_truth(gt_filename):
@@ -102,13 +102,7 @@ def create_df_tracks(config, tracks_list, train_class, exports_path, logger):
         logger.debug("COLUMNS CONTAIN OBJECTS: {}".format(
             df_tracks.select_dtypes(include=['object']).columns))
 
-        df_feats = FeaturesDf(df_tracks=df_tracks,
-                              train_class=train_class,
-                              list_path_tracks=tracks_existing_path_list,
-                              config=config,
-                              exports_path=exports_path,
-                              logger=logger
-                              ).create_low_level_df()
+        df_feats = create_low_level_features_df(tracks_existing_path_list, logger)
 
         y = df_tracks[train_class].values
         logger.info("Features, Labels, and Tracks are exported successfully..")

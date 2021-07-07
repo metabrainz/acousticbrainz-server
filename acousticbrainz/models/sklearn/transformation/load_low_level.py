@@ -17,17 +17,16 @@ def create_low_level_features_df(list_path_tracks, logger):
 
     for track_low_level_path in list_path_tracks:
         try:
-            f = open(track_low_level_path)
-            data_feats_item = json.load(f, strict=False)
-        except Exception as e:
-            print("Exception occurred in loading file:", e)
-            logger.warning("Exception occurred in loading file: {}".format(e))
+            with open(track_low_level_path) as f:
+                data_feats_item = json.load(f, strict=False)
+        except Exception:
+            logger.error("Exception occurred in loading file:", exc_info=True)
         # remove unnecessary features data
         try:
             if 'beats_position' in data_feats_item['rhythm']:
                 del data_feats_item['rhythm']['beats_position']
-        except Exception as e:
-            print("There is no 'rhythm' key in the low level data. Exception:", e)
+        except KeyError:
+            logger.error("There is no 'rhythm' key in the low level data.", exc_info=True)
 
         # data dictionary transformed to a fully flattened dictionary
         data_feats_item = flatten_dict_full(data_feats_item)

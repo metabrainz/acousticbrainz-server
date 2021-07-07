@@ -1,7 +1,7 @@
 import os
 import json
 import numpy as np
-from ..classification.confusion_matrix_export import ConfusionMatrixCreation
+from ..classification.confusion_matrix_export import load_as_confusion_matrix
 
 
 def matrix_creation(classes, tracks, y_actual, y_hat, logger, export_save_path, export_name):
@@ -49,14 +49,13 @@ def matrix_creation(classes, tracks, y_actual, y_hat, logger, export_save_path, 
 
 
 def simplified_matrix_export(best_result_file, logger, export_save_path, export_name, write_mode=False):
-    cm = ConfusionMatrixCreation()
     load_file_path = os.path.join(export_save_path, best_result_file)
     # best model data load from JSON
     logger.info("load best model results from JSON format file")
-    cm.load(load_file_path)
+    confusion_matrix = load_as_confusion_matrix(load_file_path)
     logger.info("Best model results loaded..")
     simplified_cm = {}
-    for key, val in cm.matrix.items():
+    for key, val in confusion_matrix.items():
         simplified_cm[key] = {}
         for predicted_key, predicted_val in val.items():
             simplified_cm[key][predicted_key] = len(predicted_val)

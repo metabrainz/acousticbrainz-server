@@ -120,6 +120,31 @@ def download_annotation_csv(dataset_id):
                      attachment_filename=file_name)
 
 
+@datasets_bp.route("/<uuid:dataset_id>/<uuid:job_id>/download_model")
+@login_required
+def download_dataset_history(dataset_id, job_id):
+    """ Converts dataset dict to csv for user to download
+    """
+    ds = get_dataset(dataset_id)
+    jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
+    this_job = [j for j in jobs if j["id"] == job_id]
+    if not this_job:
+        raise NotFound("No such evaluation job")
+    this_job = this_job[0]
+    if this_job.get("status") != db.dataset_eval.STATUS_DONE:
+        raise NotFound("Job hasn't finished")
+    history_path = this_job.get("result", {}).get("history_path")
+    if not history_path or not os.path.exists(history_path):
+        raise NotFound("Cannot find history file")
+
+    file_name = os.path.basename(history_path)
+
+    return send_file(history_path,
+                     mimetype='application/octet-stream',
+                     as_attachment=True,
+                     attachment_filename=file_name)
+
+
 def _convert_dataset_to_csv_stringio(dataset):
     """Convert a dataset to a CSV representation that can be imported
     by the dataset importer.

@@ -141,7 +141,7 @@ class EvaluationJobsViewer extends React.Component {
 
     render() {
         if (this.state.jobs) {
-            if (this.state.active_section == SECTION_JOB_LIST) {
+            if (this.state.active_section === SECTION_JOB_LIST) {
                 return (
                     <JobList
                         jobs={this.state.jobs}
@@ -185,12 +185,14 @@ class JobList extends React.Component {
             const items = [];
             this.props.jobs.forEach(
                 function (cls, index) {
+                    const modelDownloadUrl = `/datasets/${container.dataset.datasetId}/${cls.id}/download_model`;
                     items.push(
                         <JobRow
                             index={index}
                             id={cls.id}
                             created={cls.created}
                             status={cls.status}
+                            modelDownloadUrl={modelDownloadUrl}
                             outdated={cls.outdated}
                             showDelete={this.props.showDelete}
                             onViewDetails={this.props.onViewDetails}
@@ -206,6 +208,7 @@ class JobList extends React.Component {
                             <th className="id">Job ID</th>
                             <th className="status">Status</th>
                             <th className="created">Creation time</th>
+                            <th className="download" />
                             <th className="controls" />
                         </tr>
                     </thead>
@@ -227,6 +230,7 @@ class JobRow extends React.Component {
         id: PropTypes.string.isRequired,
         created: PropTypes.string.isRequired,
         status: PropTypes.string.isRequired,
+        modelDownloadUrl: PropTypes.string,
         outdated: PropTypes.string.isRequired,
         showDelete: PropTypes.bool.isRequired,
         onViewDetails: PropTypes.func.isRequired,
@@ -266,6 +270,10 @@ class JobRow extends React.Component {
                 }
                 break;
         }
+        let download = "";
+        if (this.props.status === JOB_STATUS_DONE && this.props.modelDownloadUrl) {
+            download = <a href={this.props.modelDownloadUrl}>Download model</a>
+        }
         let controls = "";
         if (this.props.showDelete) {
             if (this.props.status === JOB_STATUS_PENDING) {
@@ -283,6 +291,7 @@ class JobRow extends React.Component {
                 <td className="created">
                     <span>{this.props.created}</span>
                 </td>
+                <td className="download">{download}</td>
                 <td className="controls">{controls}</td>
             </tr>
         );

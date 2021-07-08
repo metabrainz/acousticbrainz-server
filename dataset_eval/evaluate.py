@@ -144,7 +144,7 @@ def evaluate_sklearn(options, eval_location, ground_truth_file, dataset_dir, sto
         "parameters": results["parameters"],
         "accuracy": results["accuracy"],
         "confusion_matrix": results["confusion_matrix"],
-        "history_path": results["history_path"],
+        "model": results["model"],
     }))
 
 
@@ -185,7 +185,7 @@ def load_best_results_sklearn(exported_path, project_file):
         # for consistency with gaia which reports accuracy on scale of 0 to 100
         "accuracy": round(data_best_model["score"] * 100, 2),
         "confusion_matrix": simplified_cm,
-        "history_path": "Does not exist because of sklearn training usage"
+        "model": os.path.join(exported_path, "best_clf_model.pkl")  # path to best model pickle file
     }
 
 

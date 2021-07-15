@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% from 'datasets/macros.html' import render_job_status, render_challenge_class_list %}
+
+{% block title %}{{ challenge["name"] }} - Challenges - AcousticBrainz{% endblock %}
+
+{% block content %}
+  <div id="challenge-details-page">
+    <h2 class="page-title">{{ challenge["name"] }}</h2>
+    <h3 class="page-subtitle">Dataset creation challenge</h3>
+
+    <p>
+      This challenge has started on <strong>{{ challenge['start_time']|datetime }}</strong> and
+      {{ 'ended' if past_deadline else 'will end' }} on <strong>{{ challenge['end_time']|datetime }}</strong>.
+      <br />Challenge ID: <code>{{ challenge['id'] }}</code>
+      <br />Organizer ID: <code>{{ challenge['creator'] }}</code> (created on {{ challenge['created']|datetime }})
+    </p>
+
+    <h4>Classes</h4>
+    {{ render_challenge_class_list(challenge['classes']) }}
+
+    {% if past_deadline %}
+      <div class="alert alert-info" role="alert">
+        <strong>This challenge hasn't concluded yet.</strong>
+        Some of the submitted datasets still need to be evaluated.
+        Please, look at the table below for additional information.
+      </div>
+    {% endif %}
+
+    <h3>Results</h3>
+    <table id="results" class="table table-striped">
+      <thead>
+      <tr>
+        <th>#</th>
+        <th>Submitted by</th>
+        <th>Accuracy</th>
+        <th>Submission time</th>
+        <th>Snapshot ID</th>
+        <th>Job ID</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for s in submissions %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('user.profile', musicbrainz_id=s["eval_job"]["dataset"]["author"]["musicbrainz_id"]) }}">
+              {{ s["eval_job"]["dataset"]["author"]["musicbrainz_id"] }}
+            </a>
+          </td>
+          <td>
+            <strong>
+              {% if s["challenge_result"] %}
+                {{ (s["challenge_result"]["correct"] * 100 / s["challenge_result"]["total"]) | round(2) }}%
+              {% else %}
+                -
+              {% endif %}
+            </strong>
+          </td>
+          <td>{{ s["eval_job"]["created"]|datetime }}</td>
+          <td class="id">
+            <a href="{{ url_for('datasets.view_snapshot', snapshot_id=s["eval_job"]["snapshot_id"]) }}">
+              {{ s["eval_job"]["snapshot_id"] }}
+            </a>
+          </td>
+          <td class="id">
+            <a href="{{ url_for('datasets.eval_info', dataset_id=s["eval_job"]["dataset"]["id"]) }}#{{ s["eval_job"]['id'] }}">
+              {{ s["eval_job"]["id"] }}
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

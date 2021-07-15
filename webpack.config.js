@@ -16,7 +16,9 @@ module.exports = function (env) {
             homepage: ['./scripts/homepage.js'],
             profile: ['./scripts/profile.js'],
             stats: ['./scripts/stats.js'],
-            main: ['./styles/main.less']
+            main: ['./styles/main.less'],
+            challenges_add: ['./scripts/admin/challenges-add.js'],
+            eval_add: ['./scripts/eval-add.js']
         },
         output: {
             chunkFilename: production ? '[name].[chunkhash].js' : '[name].js',

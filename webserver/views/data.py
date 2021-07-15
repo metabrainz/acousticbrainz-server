@@ -1,9 +1,12 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify
+from flask_login import login_required, current_user
+from webserver.views.api import exceptions as api_exceptions
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus
 import db.data
+import db.feedback
 import db.exceptions
 import json
 
@@ -124,6 +127,21 @@ def summary(mbid):
             """MusicBrainz does not have data for this track. 
                 If the recording has been recently added to MusicBrainz, 
                 we might not have heard of it yet.""")
+
+
+
+@data_bp.route("/feedback", methods=["POST"])
+@login_required
+def feedback():
+    request_data = request.get_json()
+    if not request_data:
+        raise api_exceptions.APIBadRequest("Missing data")
+    db.feedback.submit(
+        hl_model_id=request_data.get("row_id"),
+        user_id=current_user.id,
+        is_correct=request_data.get("is_correct"),
+    )
+    return jsonify({"success": True})
 
 
 def _get_youtube_query(metadata):

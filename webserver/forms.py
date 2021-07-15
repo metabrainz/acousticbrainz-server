@@ -1,7 +1,7 @@
 from flask import current_app
 from wtforms import BooleanField, SelectField, StringField, TextAreaField, \
     SelectMultipleField, widgets, ValidationError
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, UUID
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from db import dataset_eval
@@ -14,6 +14,23 @@ DATASET_PENDING = "pending"
 DATASET_RUNNING = "running"
 DATASET_DONE = "done"
 DATASET_ALL = "all"
+
+
+class DynamicSelectField(SelectField):
+    """Select field for use with dynamic loader."""
+    def pre_validate(self, form):
+        pass
+
+
+class _OptionalUUID(UUID):
+    def __call__(self, form, field):
+        if not field.data:
+            return True
+        message = self.message
+        if message is None:
+            message = field.gettext('Invalid UUID.')
+        super(UUID, self).__call__(form, field, message)
+
 
 DATASET_C_VALUE = ", ".join([str(i) for i in dataset_eval.DEFAULT_PARAMETER_C])
 DATASET_GAMMA_VALUE = ", ".join([str(i) for i in dataset_eval.DEFAULT_PARAMETER_GAMMA])
@@ -53,8 +70,10 @@ class DatasetEvaluationForm(FlaskForm):
     evaluation_location = SelectField("Evaluation location", choices=[
         (DATASET_EVAL_LOCAL, "Evaluate on acousticbrainz.org"),
         (DATASET_EVAL_REMOTE, "Evaluate on your own machine")],
-                                      default=DATASET_EVAL_LOCAL,
-                                      validate_choice=False)
+        default=DATASET_EVAL_LOCAL
+    )
+    challenge_id = DynamicSelectField("Challenge", choices=[],
+                                      validators=[_OptionalUUID("Incorrect challenge ID!")])
 
     svm_filtering = BooleanField("Use advanced SVM options",
                                  render_kw={"data-toggle": "collapse",

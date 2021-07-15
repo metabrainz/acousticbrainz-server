@@ -56,6 +56,13 @@
     {% if data.highlevel %}
       <h3>High-level information</h3>
 
+      {% if not current_user or current_user.is_anonymous %}
+        <div class="alert alert-info">
+          <strong>Help us improve quality of the data!</strong>
+          <a href="{{ url_for('login.index', next=request.path) }}">Sign in</a> to submit feedback on high-level results.
+        </div>
+      {% endif %}
+
       {% macro print_row(row) %}
         <tr>
           <td><a href="{{ row.model_href }}">{{ row.name }}</a></td>
@@ -65,6 +72,9 @@
               {% if row.original %}</abbr>{% endif %}
           </td>
           <td>{{ row.percent }}%</td>
+          {% if current_user and not current_user.is_anonymous %}
+            <td id="feedback-{{ row[3]['highlevel_model_id'] }}"></td>
+          {% endif %}
         </tr>
       {% endmacro %}
 
@@ -112,4 +122,9 @@
     </ul>
 
   </div>
+{%- endblock -%}
+
+{%- block scripts -%}
+  {{ super() }}
+  <script src="{{ get_static_path('data.js') }}"></script>
 {%- endblock -%}

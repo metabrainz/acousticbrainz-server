@@ -105,6 +105,22 @@ def view(dataset_id):
     )
 
 
+@datasets_bp.route("/snapshot/<uuid:snapshot_id>")
+def view_snapshot(snapshot_id):
+    try:
+        snapshot = db.dataset.get_snapshot(snapshot_id)
+    except db.exceptions.NoDataFoundException as e:
+        raise NotFound("Can't find this dataset.")
+    return render_template("datasets/view_snapshot.html", snapshot=snapshot)
+
+
+@datasets_bp.route("/snapshot/<uuid:snapshot_id>/json")
+def view_snapshot_json(snapshot_id):
+    try:
+        return jsonify(db.dataset.get_snapshot(snapshot_id))
+    except db.exceptions.NoDataFoundException as e:
+        raise NotFound("Can't find this dataset.")
+
 @datasets_bp.route("/<uuid:dataset_id>/download_annotation")
 def download_annotation_csv(dataset_id):
     """ Converts dataset dict to csv for user to download
@@ -229,6 +245,23 @@ def eval_info(dataset_id):
     )
 
 
+@datasets_bp.route("/service/suggest")
+@login_required
+def dataset_suggest():
+    """Find datasets created by the current user with a given name
+
+    :query q: search query
+
+    Returns:
+        (json) an array of objects with keys `name` and `id`.
+    """
+    query = request.args.get("q")
+    datasets = db.dataset.find(query, current_user.id)
+    response = {"datasets":
+                    [{"id": ds["id"], "name": ds["name"], "description": ds["description"]} for ds in datasets]}
+    return jsonify(response)
+
+
 @datasets_bp.route("/service/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
 def eval_job(dataset_id, job_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
@@ -316,6 +349,7 @@ def evaluate(dataset_id):
                 gamma_values=gamma_values,
                 preprocessing_values=preprocessing_values,
                 filter_type=form.filter_type.data,
+                challenge_id=form.challenge_id.data,
             )
             flash.info("Dataset %s has been added into evaluation queue." % ds["id"])
         except db.dataset_eval.IncompleteDatasetException as e:

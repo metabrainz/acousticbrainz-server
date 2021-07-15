@@ -6,6 +6,7 @@ const PropTypes = require("prop-types");
  to be specified on container element. When Dataset component is mounted, it
  fetches existing dataset from the server.
  */
+const $ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
@@ -45,19 +46,21 @@ class Dataset extends React.Component {
         // Do not confuse property called "dataset" with our own datasets. See
         // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
         // for more info about it.
-        if (!container.dataset.datasetId) {
+        if (container.dataset.datasetId) {
+            $.get(`/datasets/service/${container.dataset.datasetId}/json`, function (result) {
+                this.setState({data: result});
+            }.bind(this));
+        } else if (container.dataset.snapshotId) {
+            $.get(`/datasets/snapshot/${container.dataset.snapshotId}/json`, function (result) {
+                this.setState({data: result});
+            }.bind(this));
+        } else {
             console.error(
-                "ID of existing dataset needs to be specified" +
-                    "in data-dataset-id property."
+                "ID of existing dataset/snapshot needs to be specified" +
+                "in data-dataset-id/data-snapshot-id property."
             );
             return;
         }
-        $.get(
-            `/datasets/service/${container.dataset.datasetId}/json`,
-            function (result) {
-                this.setState({ data: result });
-            }.bind(this)
-        );
     }
 
     handleViewDetails = (index) => {

@@ -8,6 +8,7 @@ import mock
 import yaml
 
 from hl_extractor import hl_calc
+import utils.hl_calc
 
 
 class HlCalcTest(unittest.TestCase):
@@ -118,7 +119,7 @@ mergeValues:
         """.strip()
         with open(inputname, "w") as fp:
             fp.write(source)
-        hl_calc.create_profile(inputname, outputname, 'this_value_to_interpolate')
+        utils.hl_calc.create_profile(inputname, outputname, 'this_value_to_interpolate')
 
         expected = {'indent': 0, 'mergeValues': {
                                      'metadata': {'version': {
@@ -137,9 +138,9 @@ mergeValues:
     def test_get_build_sha1(self):
         data_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_data")
         data_file = os.path.join(data_dir, "known_file")
-        result_sha1 = hl_calc.get_build_sha1(data_file)
+        result_sha1 = utils.hl_calc.get_build_sha1(data_file)
         self.assertEqual(result_sha1, "018507c3c54e655320feee0a87e7b56447a45258")
 
-        with self.assertRaises(hl_calc.HighLevelConfigurationError):
+        with self.assertRaises(utils.hl_calc.HighLevelConfigurationError):
             data_file = os.path.join(data_dir, "unknown_file")
-            hl_calc.get_build_sha1(data_file)
+            utils.hl_calc.get_build_sha1(data_file)

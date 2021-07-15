@@ -1,8 +1,9 @@
 @import "theme/theme.less";
 
 @import "highlight"; // Styles for highlight.js
+@import "selectize/selectize.bootstrap3";
 
-@icon-font-path:"/static/fonts/";
+@icon-font-path: "/static/fonts/";
 
 @pager-border-radius: @border-radius-base;
 
@@ -198,6 +199,19 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
   }
 }
 
+#dataset-eval-submit {
+  .challenge-suggestion {
+    font-size: 0.9em;
+    .name {
+      font-weight: bold;
+    }
+    .id {
+      white-space: nowrap;
+      font-family: monospace;
+    }
+  }
+}
+
 #accuracy-page {
   body { 
     font-family: sans-serif; 
@@ -263,5 +277,15 @@ h2.page-title { @media (max-width: @grid-float-breakpoint) { margin-top: 0px; } 
     background-color: rgb(249, 246, 245);
     min-height: 175px;
     a { display: block; }
+  }
+}
+
+#challenge-details-page {
+  #results {
+    table {
+      .id {
+        font-family: monospace;
+      }
+    }
   }
 }

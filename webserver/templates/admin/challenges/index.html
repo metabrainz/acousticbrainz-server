@@ -1,0 +1,95 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+  <h1>Challenges</h1>
+  <p><em>Dataset creation challenges.</em></p>
+  <p>
+    <a href="{{ url_for('challengesview.create') }}"
+       class="btn btn-small btn-primary">+ Create a new challenge</a>
+  </p>
+
+  <p>
+    <ul class="nav nav-pills">
+      <li role="presentation" {{ 'class=active' if content_filter == 'all' }}>
+        <a href="{{ url_for('challengesview.index', content_filter='all') }}">All</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if content_filter == 'active' }}>
+        <a href="{{ url_for('challengesview.index', content_filter='active') }}">Active</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if content_filter == 'upcoming' }}>
+        <a href="{{ url_for('challengesview.index', content_filter='upcoming') }}">Upcoming</a>
+      </li>
+      <li role="presentation" {{ 'class=active' if content_filter == 'ended' }}>
+        <a href="{{ url_for('challengesview.index', content_filter='ended') }}">Ended</a>
+      </li>
+    </ul>
+  </p>
+
+  <table class="table table-striped">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Creator (User ID)</th>
+      <th>Start time</th>
+      <th>End time</th>
+      <th>{# Controls #}</th>
+    </tr>
+    </thead>
+    {% for challenge in challenges %}
+      <tr>
+        <td>{{ challenge["id"] }}</td>
+        <td><strong>{{ challenge["name"] }}</strong></td>
+        <td>{{ challenge["creator"] }}</td>
+        <td>{{ challenge["start_time"] }}</td>
+        <td>{{ challenge["end_time"] }}</td>
+        <td>
+          <a href="{{ url_for('challengesview.modify', id=challenge["id"]) }}"
+             class="btn btn-mini btn-default" role="button">Modify</a>
+          <a href="{{ url_for('challengesview.delete', id=challenge["id"]) }}"
+             class="btn btn-mini btn-danger" role="button">Delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  {% if (page - 4) > 0 %}
+    {% set start = page - 4 %}
+  {% else %}
+    {% set start = 1 %}
+  {% endif %}
+  {% if last_page > 0 %}
+    <div class="pagination">
+      <ul>
+        <li {{ 'class=disabled' if page == 1 }}>
+          <a href="{{ url_for('challengesview.index', content_filter=content_filter, page=1) if page != 1 else '#' }}">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        <li {{ 'class=disabled' if page == 1 }}>
+          <a href="{{ url_for('challengesview.index', content_filter=content_filter, page=page-1) if page != 1 else '#' }}">
+            <span aria-hidden="true">&lsaquo;</span>
+          </a>
+        </li>
+
+        {% for cur_page in range(start, last_page+1) %}
+          {% if loop.index < 9 %}
+            <li {{ 'class=active' if cur_page == page }}>
+              <a href="{{ url_for('challengesview.index', content_filter=content_filter, page=cur_page) }}">{{ cur_page }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        <li {{ 'class=disabled' if page == last_page }}>
+          <a href="{{ url_for('challengesview.index', content_filter=content_filter, page=page+1) if page != last_page else '#' }}">
+            <span aria-hidden="true">&rsaquo;</span>
+          </a>
+        </li>
+        <li {{ 'class=disabled' if page == last_page }}>
+          <a href="{{ url_for('challengesview.index', content_filter=content_filter, page=last_page) if page != last_page else '#' }}">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  {% endif %}
+{% endblock %}

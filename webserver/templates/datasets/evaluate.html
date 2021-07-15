@@ -48,6 +48,21 @@
                 </div>
             </fieldset>
         {% endif %}
+        {% if config.get('FEATURE_CHALLENGES') %}
+            <fieldset>
+                <div class="form-group">
+                  <label class="col-sm-2 control-label">{{ form.challenge_id.label.text }}</label>
+                  <div class="col-sm-4">{{ form.challenge_id(id="challenge-id", class="form-control") }}</div>
+                  <div class="col-sm-offset-2 col-sm-10">
+                    <em class="text-muted">
+                      If you submit dataset for a challenge, recording filtering will be applied to it.
+                      It removes all the recordings that are present in a validation dataset. This may
+                      significantly reduce contents of your dataset.
+                    </em>
+                  </div>
+                </div>
+            </fieldset>
+        {% endif %}
         {% if config.get('FEATURE_EVAL_MODEL_SELECTION') %}
             <fieldset>
             <div class="form-group">

@@ -293,6 +293,27 @@ def create_snapshot(dataset_id):
         return result.fetchone()["id"]
 
 
+def replace_snapshot(snapshot_id, dataset):
+    snapshot = {
+        "name": dataset["name"],
+        "description": dataset["description"],
+        "classes": [{
+                        "name": c["name"],
+                        "description": c["description"],
+                        "recordings": c["recordings"],
+                    } for c in dataset["classes"]],
+    }
+    with db.engine.connect() as connection:
+         connection.execute(sqlalchemy.text("""
+            UPDATE dataset_snapshot
+               SET data = :data
+            WHERE id = :id
+        """), {
+            "id": snapshot_id,
+            "data": json.dumps(snapshot),
+        })
+
+
 def get_snapshot(id):
     """Get snapshot of a dataset.
 
@@ -320,6 +341,23 @@ def get_snapshot(id):
         if not row:
             raise db.exceptions.NoDataFoundException("Can't find dataset snapshot with a specified ID.")
         return dict(row)
+
+
+def find(query, user_id):
+    with db.engine.connect() as connection:
+        result = connection.execute(sqlalchemy.text("""
+            SELECT id::text, name, description, author, created, public, last_edited
+              FROM dataset
+             WHERE name ILIKE :query_like AND author = :author
+        """), {
+            "query_like": '%' + query + '%',
+            "author": user_id
+        })
+        rows = result.fetchall()
+        for row in rows:
+            row = dict(row)
+            row["classes"] = _get_classes(row["id"])
+        return rows
 
 
 def _delete_snapshot(connection, snapshot_id):

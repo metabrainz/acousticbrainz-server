@@ -531,12 +531,12 @@ def load_many_high_level(recordings, map_classes=False):
         # Metadata
         meta_query = text("""
             SELECT hl.id
-                 , hlm.data
+                 , highlevel_meta.data
                  , ll.gid::text
                  , ll.submission_offset::text
               FROM highlevel hl
-              JOIN highlevel_meta hlm
-                ON hl.id = hlm.id
+              JOIN highlevel_meta
+                ON hl.id = highlevel_meta.id
               JOIN lowlevel ll
                 ON ll.id = hl.id
              WHERE (ll.gid, ll.submission_offset)
@@ -560,6 +560,7 @@ def load_many_high_level(recordings, map_classes=False):
         # Model data
         model_query = text("""
             SELECT m.model
+                 , hlmo.id as highlevel_model_id
                  , hlmo.data
                  , version.data as version
                  , ll.gid::text
@@ -583,8 +584,8 @@ def load_many_high_level(recordings, map_classes=False):
             mapping = row['class_mapping']
             if map_classes and mapping:
                 data = map_highlevel_class_names(data, mapping)
-
             data['version'] = row['version']
+            data['highlevel_model_id'] = row['highlevel_model_id']
 
             gid = row['gid']
             submission_offset = row['submission_offset']

@@ -128,9 +128,10 @@ def create_app(debug=None):
 
     # Admin section
     from flask_admin import Admin
-    from webserver.admin import views as admin_views
-    admin = Admin(app, index_view=admin_views.HomeView(name='Admin'))
-    admin.add_view(admin_views.AdminsView(name='Admins'))
+    from webserver.admin.views import home, admins, challenges
+    admin = Admin(app, index_view=home.HomeView(name='Home'))
+    admin.add_view(admins.AdminsView(name='Admins'))
+    admin.add_view(challenges.ChallengesView(name='Challenges'))
 
     @app.before_request
     def prod_https_login_redirect():
@@ -176,18 +177,21 @@ def create_app_sphinx():
 def _register_blueprints(app):
 
     def register_ui(app):
+        # Blueprints
         from webserver.views.index import index_bp
         from webserver.views.data import data_bp
         from webserver.views.stats import stats_bp
         from webserver.views.login import login_bp
         from webserver.views.user import user_bp
         from webserver.views.datasets import datasets_bp
+        from webserver.views.challenges import challenges_bp
         app.register_blueprint(index_bp)
         app.register_blueprint(data_bp)
         app.register_blueprint(stats_bp)
         app.register_blueprint(login_bp, url_prefix='/login')
         app.register_blueprint(user_bp)
         app.register_blueprint(datasets_bp, url_prefix='/datasets')
+        app.register_blueprint(challenges_bp, url_prefix='/challenges')
 
     def register_api(app):
         v1_prefix = os.path.join(API_PREFIX, 'v1')

@@ -1,0 +1,12 @@
+indent: 0
+
+highlevel:
+   compute: 1.
+   svm_models: []
+
+mergeValues:
+    metadata:
+        version:
+            highlevel:
+                essentia_build_sha:
+                models_essentia_git_sha: "v2.1_beta1"

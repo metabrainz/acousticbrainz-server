@@ -49,7 +49,10 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         n_trees = 10
         n_neighbours = 200
         annoy_mock = mock.Mock()
-        annoy_mock.get_nns_by_mbid.return_value = [[1, 2], [], [0.5, 0.5]]
+        annoy_mock.get_nns_by_mbid.return_value = [
+            {"distance": 0.0001, "offset": 2, "recording_mbid": "f2cf852b-644c-4f2b-8c17-d059ead1f675"},
+            {"distance": 0.0002, "offset": 0, "recording_mbid": "a48a4c29-082a-447b-97ea-c33d1e36b160"}
+        ]
         annoy_model.return_value = annoy_mock
 
         resp = self.client.get("/api/v1/similarity/{}/{}".format(metric, self.uuid))
@@ -67,7 +70,10 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         # If index params are not in index_model.BASE_INDICES, they default.
         # If n_neighbours is larger than 1000, it defualts.
         annoy_mock = mock.Mock()
-        annoy_mock.get_nns_by_mbid.return_value = [[1, 2], [], [0.5, 0.5]]
+        annoy_mock.get_nns_by_mbid.return_value = [
+            {"distance": 0.0001, "offset": 2, "recording_mbid": "f2cf852b-644c-4f2b-8c17-d059ead1f675"},
+            {"distance": 0.0002, "offset": 0, "recording_mbid": "a48a4c29-082a-447b-97ea-c33d1e36b160"}
+        ]
         annoy_model.return_value = annoy_mock
         resp = self.client.get("/api/v1/similarity/mfccs/%s?n_trees=-1&distance_type=7&n_neighbours=2000" % self.uuid)
         self.assertEqual(200, resp.status_code)
@@ -135,10 +141,12 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         # including two offsets of the same MBID.
         params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;" \
                  "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2;405a5ff4-7ee2-436b-95c1-90ce8a83b359:3"
+        similars = [{'recording_mbid': "similar_rec1", 'offset': 0, 'distance': 0.1},
+                    {'recording_mbid': "similar_rec2", 'offset': 0, 'distance': 0.1}]
         expected_result = {
-            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
-            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": ["similar_rec1", "similar_rec2"]},
-            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": ["similar_rec1", "similar_rec2"], "3": ["similar_rec1", "similar_rec2"]}
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": similars},
+            "7f27d7a9-27f0-4663-9d20-2c9c40200e6d": {"3": similars},
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": similars, "3": similars}
         }
         annoy_mock = mock.Mock()
         annoy_mock.get_bulk_nns_by_mbid.return_value = expected_result
@@ -161,7 +169,7 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         # upper-case
         params = "c5f4909e-1d7b-4f15-a6f6-1AF376BC01C9"
         expected_result = {
-            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]}
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": similars}
         }
         annoy_mock.get_bulk_nns_by_mbid.return_value = expected_result
 
@@ -181,8 +189,14 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
         recordings = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;7f27d7a9-27f0-4663-9d20-2c9c40200e6d:3;" \
                      "405a5ff4-7ee2-436b-95c1-90ce8a83b359:2"
         expected_result = {
-            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": ["similar_rec1", "similar_rec2"]},
-            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": ["similar_rec1", "similar_rec2"]}
+            "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9": {"0": [
+                {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
+                {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7}]
+            },
+            "405a5ff4-7ee2-436b-95c1-90ce8a83b359": {"2": [
+                {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
+                {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7}]
+            }
         }
         annoy_mock = mock.Mock()
         annoy_mock.get_bulk_nns_by_mbid.return_value = expected_result

@@ -1,5 +1,7 @@
 import os
 
+from flask import current_app
+
 import similarity.metrics
 from similarity.index_model import AnnoyModel
 
@@ -43,7 +45,7 @@ def initialize_indices(n_trees="10", distance_type="angular", load_existing=Fals
 
 def remove_index(metric, n_trees=10, distance_type="angular"):
     """Deletes the static index originally saved when an index is computed."""
-    file_path = os.path.join(os.getcwd(), 'annoy_indices')
+    file_path = current_app.config['SIMILARITY_INDEX_DIR']
     name = '_'.join([metric, distance_type, str(n_trees)]) + '.ann'
     full_path = os.path.join(file_path, name)
     if os.path.exists(full_path):

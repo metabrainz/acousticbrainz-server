@@ -1,5 +1,7 @@
 import os
 
+from flask import current_app
+
 import similarity.exceptions
 import db.similarity
 import db.data
@@ -55,10 +57,12 @@ class AnnoyModel(object):
         self.index.build(self.n_trees)
         self.in_loaded_state = True
 
-    def save(self, location=os.path.join(os.getcwd(), 'annoy_indices'), name=None):
+    def save(self, location=None, name=None):
         # Save and load the index using the metric name.
         if not self.in_loaded_state:
             raise similarity.exceptions.LoadStateException('Index must be built before saving.')
+        if not location:
+            location = current_app.config['SIMILARITY_INDEX_DIR']
         try:
             os.makedirs(location)
         except OSError:
@@ -77,7 +81,7 @@ class AnnoyModel(object):
             IndexNotFoundException: if there is no saved index with the given parameters.
         """
         # Load and build an existing annoy index.
-        file_path = os.path.join(os.getcwd(), 'annoy_indices')
+        file_path = current_app.config['SIMILARITY_INDEX_DIR']
         name = '_'.join([name or self.metric_name, self.distance_type, str(self.n_trees)]) + '.ann'
         full_path = os.path.join(file_path, name)
         try:

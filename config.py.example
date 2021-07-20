@@ -57,6 +57,7 @@ RATELIMIT_WINDOW = 10
 
 DATASET_DIR = "/data/datasets"
 FILE_STORAGE_DIR = "/data/files"
+SIMILARITY_INDEX_DIR = "/data/annoy_indices"
 
 #Feature Flags
 # Choose a server to perform the evaluation on

@@ -24,7 +24,8 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 @click.option("--sample-size", "-s", type=int, default=NORMALIZATION_SAMPLE_SIZE,
               help="Override normalization lowlevel data sample size. Must be >= 1% of lowlevel_json entries.")
 @click.option("--batch-size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Override processing batch size.")
-def init(batch_size, sample_size, force, n_trees, distance_type):
+@click.pass_context
+def init(ctx, batch_size, sample_size, force, n_trees, distance_type):
     """Initialization command for the similarity engine.
     The following steps will occur:
         1. Compute global stats required for similarity
@@ -36,16 +37,9 @@ def init(batch_size, sample_size, force, n_trees, distance_type):
            of the metrics including every recording in
            the similarity.similarity table
     """
-    click.echo("Computing stats...")
-    db.similarity_stats.compute_stats(sample_size, force=force)
-    click.echo("Finished computing stats. Adding all metrics...")
-    db.similarity.add_metrics(batch_size)
-    click.echo("Finished adding metrics. Adding all indices...")
-    click.echo("Initializing indices...")
-    indices = similarity.index_utils.initialize_indices(n_trees=n_trees, distance_type=distance_type)
-    click.echo("Inserting items...")
-    db.similarity.add_indices(indices, batch_size=batch_size)
-    click.echo("Finished adding indices, exiting...")
+    ctx.invoke(compute_stats)
+    ctx.invoke(add_metrics)
+    ctx.invoke(add_indices)
 
 
 @cli.command(name="compute-stats")

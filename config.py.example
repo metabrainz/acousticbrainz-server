@@ -68,7 +68,7 @@ FEATURE_EVAL_FILTERING = True
 FEATURE_EVAL_MODEL_SELECTION = False
 
 # Enable similarity API endpoints and webpages
-FEATURE_SIMILARITY = False
+FEATURE_SIMILARITY = True
 # Allow submission of feedback on the quality of similarity results
 FEATURE_SIMILARITY_FEEDBACK = False
 

@@ -152,13 +152,6 @@ class SimilarityEval extends Component {
                             }
                         </form>
                     </div>
-
-                    <div className="col-md-4">
-                        <iframe src={`https://www.youtube.com/embed?listType=search&amp;list=${this.state.refYoutubeQuery}`}
-                                width="100%" height="260" frameBorder="0" allowFullScreen></iframe>
-                        <iframe src={`https://www.youtube.com/embed?listType=search&amp;list=${this.state.similarYoutubeQuery}`}
-                            id="youtube_iframe" width="100%" height="260" frameBorder="0" allowFullScreen></iframe>
-                    </div>
                 </div>
             )
         } else {

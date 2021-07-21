@@ -21,8 +21,7 @@ ALTER TABLE similarity.eval_params
 CREATE TABLE similarity.eval_results (
   id          SERIAL, -- PK
   query_id    INTEGER, -- FK to lowlevel
-  similar_ids INTEGER[],
-  distances   DOUBLE PRECISION[],
+  results     JSONB,
   params      INTEGER -- FK to eval_params
 );
 

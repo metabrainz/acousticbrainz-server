@@ -6,7 +6,6 @@ from operator import itemgetter
 from flask import Blueprint, jsonify, request
 
 import webserver.views.api.exceptions
-from webserver.utils import validate_offset
 from webserver.decorators import crossdomain
 from webserver.views.api.v1.core import _parse_bulk_params, _get_recording_ids_from_request
 from similarity.index_model import BASE_INDICES, AnnoyModel
@@ -23,64 +22,6 @@ class RemoveDupsType:
     all = "all"
     # don't remove any dups
     none = "none"
-
-
-@bp_similarity.route("/<metric>/<uuid(strict=False):mbid>", methods=["GET"])
-@crossdomain()
-def get_similar_recordings(metric, mbid):
-    """Get the most similar submissions to an (MBID, offset) combination.
-    If there are many submissions for an MBID, one can be specified
-    with an offset parameter ``n``. Documents are sorted by their
-    submission time.
-    You can the get total number of low-level submissions using the ``/<mbid>/count``
-    endpoint.
-
-    **Example response**:
-
-    .. sourcecode:: json
-
-        {"mbid": {"offset": [(most_similar_mbid, offset),
-                                ...,
-                            (least_similar_mbid, offset)]
-                 }
-        }
-
-    :query n: *Optional.* Integer specifying an offset for a document.
-        The first submission has offset n=0. If not specified, this
-        submission will be used as the default value.
-    :query n_neighbours: *Optional.* Integer determines the number of
-        similar recordings that should be returned.
-        Default is 200 recordings.
-    :query threshold: *Optional.* Only return items whose distance from the query recording
-        is less than this (0-1). This may result in the number of returned items being less than
-        n_neighbours if it is set.
-    :query remove_dups: *Optional.* If ``samescore``, remove duplicate submissions that have the
-        same score.  If ``all``, remove all duplicate MBIDs even if they have different scores, returning
-        only the submission with the lowest score. This may result in the number of returned items being
-        less than n_neighbours if it is set.
-    :query metric: *Required.* String specifying the metric name to be
-        used when finding the most similar recordings.
-        The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRIC_NAMES`.
-
-    :resheader Content-Type: *application/json*
-    """
-    offset = validate_offset(request.args.get("n"))
-    metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = _check_index_params(metric)
-    try:
-        index = AnnoyModel(metric, n_trees=n_trees, distance_type=distance_type, load_existing=True)
-    except IndexNotFoundException:
-        raise webserver.views.api.exceptions.APIBadRequest("Index does not exist with specified parameters.")
-
-    try:
-        recordings = index.get_nns_by_mbid(str(mbid), offset, n_neighbours)
-        response = _limit_recordings_by_threshold(recordings, threshold)
-        response = _sort_and_remove_duplicate_submissions(response, remove_dups)
-        return jsonify(response)
-
-    except NoDataFoundException:
-        raise webserver.views.api.exceptions.APIBadRequest("No submission exists for the given (MBID, offset) combination.")
-    except ItemNotFoundException:
-        raise webserver.views.api.exceptions.APIBadRequest("The submission of interest is not indexed.")
 
 
 def _limit_recordings_by_threshold(recordings, threshold):
@@ -171,7 +112,7 @@ def  _check_index_params(metric):
     return metric, distance_type, n_trees, n_neighbours, threshold, remove_dups
 
 
-@bp_similarity.route("/<metric>", methods=["GET"])
+@bp_similarity.route("/<metric>/", methods=["GET"])
 @crossdomain()
 def get_many_similar_recordings(metric):
     """Get the most similar submissions to multiple (MBID, offset) combinations.
@@ -203,6 +144,10 @@ def get_many_similar_recordings(metric):
     present in the database, then it is silently ignored and will not appear
     in the returned data.
 
+    :query recording_ids: *Required.* A list of recording MBIDs to retrieve
+        Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
+        be >= 0
+
     :query n_neighbours: *Optional.* The number of similar recordings that
         should be returned for each item in ``recording_ids`` (1-1000).
         Default is 200 recordings.
@@ -210,10 +155,6 @@ def get_many_similar_recordings(metric):
     :query metric: *Required.* String specifying the metric name to be
         used when finding the most similar recordings.
         The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRIC_NAMES`.
-
-    :query recording_ids: *Required.* A list of recording MBIDs to retrieve
-        Takes the form `mbid[:offset];mbid[:offset]`. Offsets are optional, and should
-        be >= 0
 
     :query threshold: *Optional.* Only return items whose distance from the query recording
         is less than this (0-1). This may result in the number of returned items being less than

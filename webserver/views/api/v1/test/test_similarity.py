@@ -9,6 +9,7 @@ from webserver.views.api.exceptions import APIBadRequest
 from similarity.exceptions import IndexNotFoundException, ItemNotFoundException
 from webserver.testing import DB_TEST_DATA_PATH
 from db.exceptions import NoDataFoundException
+from webserver.views.api.v1.similarity import RemoveDupsType
 
 
 class APISimilarityViewsTestCase(AcousticbrainzTestCase):
@@ -314,29 +315,33 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
             # Same mbid, same distance. First offset will be returned
             {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.1},
             {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 1, 'distance': 0.1},
-            # Same mbid, but the distances are different, both will be kept
+            # Same mbid, but the distances are different, both will be kept if type is `samescore`
             {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
             {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.6},
             # A set of mbids with the same distance interspersed with another mbid.
-            # This will sort by mbid, then dedup so it will add 20f6... first and then
+            # This will be resorted by mbid, then deduped so it will add 20f6... first and then
             # leave one of 405a...
             {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 0.7},
             {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 1, 'distance': 0.7},
             {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7},
             {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 2, 'distance': 0.7},
+            # Same as the 2nd mbid, but with a much larger distance
+            # will get left on `samescore` and `none`, but removed on `all`
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.8},
         ]
 
-        filtered = similarity._sort_and_remove_duplicate_submissions(recordings, True)
+        filtered = similarity._sort_and_remove_duplicate_submissions(recordings, RemoveDupsType.samescore)
         expected = [
             {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.1},
             {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
             {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.6},
             {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7},
             {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 0.7},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.8},
         ]
         self.assertEqual(filtered, expected)
 
-        only_sorted = similarity._sort_and_remove_duplicate_submissions(recordings, False)
+        only_sorted = similarity._sort_and_remove_duplicate_submissions(recordings, RemoveDupsType.none)
         expected = [
             {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.1},
             {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 1, 'distance': 0.1},
@@ -346,8 +351,18 @@ class APISimilarityViewsTestCase(AcousticbrainzTestCase):
             {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 0.7},
             {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 1, 'distance': 0.7},
             {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 2, 'distance': 0.7},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 1, 'distance': 0.8},
         ]
         self.assertEqual(only_sorted, expected)
+
+        filtered = similarity._sort_and_remove_duplicate_submissions(recordings, RemoveDupsType.all)
+        expected = [
+            {'recording_mbid': 'c5f4909e-1d7b-4f15-a6f6-1af376bc01c9', 'offset': 0, 'distance': 0.1},
+            {'recording_mbid': '7f27d7a9-27f0-4663-9d20-2c9c40200e6d', 'offset': 0, 'distance': 0.5},
+            {'recording_mbid': '20f6a7d7-cbd4-4609-9804-e734b3aec8c7', 'offset': 0, 'distance': 0.7},
+            {'recording_mbid': '405a5ff4-7ee2-436b-95c1-90ce8a83b359', 'offset': 0, 'distance': 0.7},
+        ]
+        self.assertEqual(filtered, expected)
 
 
 class SimilarityValidationTest(AcousticbrainzTestCase):
@@ -395,15 +410,18 @@ class SimilarityValidationTest(AcousticbrainzTestCase):
             self.assertIsNone(threshold)
 
     def test_check_index_params_remove_dups(self):
-        with self.app.test_request_context(query_string={'remove_dups': 'true'}):
+        with self.app.test_request_context(query_string={'remove_dups': 'all'}):
             metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
-            self.assertTrue(remove_dups)
+            self.assertEqual(remove_dups, 'all')
+        with self.app.test_request_context(query_string={'remove_dups': 'Samescore'}):
+            metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
+            self.assertEqual(remove_dups, 'samescore')
         with self.app.test_request_context(query_string={}):
             metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
-            self.assertFalse(remove_dups)
+            self.assertEqual(remove_dups, 'none')
         with self.app.test_request_context(query_string={'remove_dups': 'x'}):
             metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
-            self.assertFalse(remove_dups)
+            self.assertEqual(remove_dups, 'none')
         with self.app.test_request_context(query_string={'remove_dups': ''}):
             metric, distance_type, n_trees, n_neighbours, threshold, remove_dups = similarity._check_index_params('mfccs')
-            self.assertFalse(remove_dups)
+            self.assertEqual(remove_dups, 'none')

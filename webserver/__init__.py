@@ -169,6 +169,7 @@ def create_app_sphinx():
     blueprints/views are needed to build documentation.
     """
     app = CustomFlask(import_name=__name__, use_flask_uuid=True)
+    app.config["FEATURE_SIMILARITY"] = True
     _register_blueprints(app)
     return app
 

@@ -15,6 +15,15 @@ from db.exceptions import NoDataFoundException
 
 bp_similarity = Blueprint('api_v1_similarity', __name__)
 
+class RemoveDupsType:
+    """'Enum' to determine which kind of deduplication to do when returning similar recordings"""
+    # only remove a dup if the mbid is the same and the distance is the same
+    samescore = "samescore"
+    # remove all dup mbids even if the distance is different, keeping the closest
+    all = "all"
+    # don't remove any dups
+    none = "none"
+
 
 @bp_similarity.route("/<metric>/<uuid(strict=False):mbid>", methods=["GET"])
 @crossdomain()
@@ -45,9 +54,10 @@ def get_similar_recordings(metric, mbid):
     :query threshold: *Optional.* Only return items whose distance from the query recording
         is less than this (0-1). This may result in the number of returned items being less than
         n_neighbours if it is set.
-    :query remove_dups: *Optional.* If ``true``, remove duplicate submissions that have the
-        same score.  This may result in the number of returned items being less than
-        n_neighbours if it is set.
+    :query remove_dups: *Optional.* If ``samescore``, remove duplicate submissions that have the
+        same score.  If ``all``, remove all duplicate MBIDs even if they have different scores, returning
+        only the submission with the lowest score. This may result in the number of returned items being
+        less than n_neighbours if it is set.
     :query metric: *Required.* String specifying the metric name to be
         used when finding the most similar recordings.
         The metrics available are shown here :py:const:`~similarity.metrics.BASE_METRIC_NAMES`.
@@ -85,24 +95,33 @@ def _limit_recordings_by_threshold(recordings, threshold):
     return [r for r in recordings if r['distance'] <= threshold]
 
 
-def _sort_and_remove_duplicate_submissions(recordings, remove_dups=False):
+def _sort_and_remove_duplicate_submissions(recordings, remove_dups=RemoveDupsType.none):
     """Sort recordings by distance, recording_mbid, and then offset.
     Optionally remove recordings that have the same distance, even if the offset is different
 
     Arguments:
         recordings: a list of dictionaries {"recording_mbid": x, "offset": y, "distance": z}
-        remove_dups: if True, remove items from recordings if the distance and recording_mbid
-                     are the same as the previous item
+        remove_dups: if `samescore`, remove items from recordings if the distance and recording_mbid
+                     are the same as the previous item. If `all`, remove all items with a duplicate
+                     recording_id even if the distance is different. If `none`, don't remove any items
     """
     recordings = sorted(recordings, key=itemgetter('distance', 'recording_mbid', 'offset'))
     last_distance = None
     last_mbid = None
+    seen_mbids = set()
     result = []
     for recording in recordings:
         distance = recording['distance']
         mbid = recording['recording_mbid']
-        if not remove_dups or mbid != last_mbid or distance != last_distance:
+        if remove_dups == RemoveDupsType.all and mbid in seen_mbids:
+            # Remove all dups, and we've seen this one before - skip it
+            pass
+        elif remove_dups == RemoveDupsType.samescore and mbid == last_mbid and distance == last_distance:
+            # Remove only dups with the same score and this one is the same as the previous - skip it
+            pass
+        else:
             result.append(recording)
+            seen_mbids.add(mbid)
         last_distance = distance
         last_mbid = mbid
     return result
@@ -144,10 +163,10 @@ def  _check_index_params(metric):
         threshold = None
 
     remove_dups = request.args.get("remove_dups")
-    if remove_dups == "true":
-        remove_dups = True
+    if remove_dups and remove_dups.lower() in [RemoveDupsType.all, RemoveDupsType.samescore, RemoveDupsType.none]:
+        remove_dups = remove_dups.lower()
     else:
-        remove_dups = False
+        remove_dups = RemoveDupsType.none
 
     return metric, distance_type, n_trees, n_neighbours, threshold, remove_dups
 
@@ -200,9 +219,10 @@ def get_many_similar_recordings(metric):
         is less than this (0-1). This may result in the number of returned items being less than
         n_neighbours if it is set.
 
-    :query remove_dups: *Optional.* If ``true``, remove duplicate submissions that have the
-        same score.  This may result in the number of returned items being less than
-        n_neighbours if it is set.
+    :query remove_dups: *Optional.* If ``samescore``, remove duplicate submissions that have the
+        same score.  If ``all``, remove all duplicate MBIDs even if they have different scores, returning
+        only the submission with the lowest score. This may result in the number of returned items being
+        less than n_neighbours if it is set.
 
     :resheader Content-Type: *application/json*
     """

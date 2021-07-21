@@ -1,6 +1,6 @@
 from flask import current_app
 from wtforms import BooleanField, SelectField, StringField, TextAreaField, \
-    SelectMultipleField, widgets, ValidationError
+    SelectMultipleField, FieldList, FormField, widgets, ValidationError
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -105,3 +105,13 @@ class DatasetEvaluationForm(FlaskForm):
             raise ValidationError("All values must be numerical")
         if len(data) > MAX_NUMBER_PARAMETERS:
             raise ValidationError("Cannot have more than {} elements".format(MAX_NUMBER_PARAMETERS))
+
+
+class SimilarRecordingEvalForm(FlaskForm):
+    choices = [("", "Select"), ("more similar", "More Similar"), ("accurate", "Accurate"), ("less similar", "Less Similar")]
+    feedback = SelectField("Feedback", choices=choices)
+    suggestion = TextAreaField("Suggestion")
+
+
+class SimilarityEvaluationForm(FlaskForm):
+    eval_list = FieldList(FormField(SimilarRecordingEvalForm), min_entries=10, max_entries=10)

@@ -57,6 +57,7 @@ RATELIMIT_WINDOW = 10
 
 DATASET_DIR = "/data/datasets"
 FILE_STORAGE_DIR = "/data/files"
+SIMILARITY_INDEX_DIR = "/data/annoy_indices"
 
 #Feature Flags
 # Choose a server to perform the evaluation on
@@ -65,6 +66,11 @@ FEATURE_EVAL_LOCATION = False
 FEATURE_EVAL_FILTERING = True
 # Choose settings used for model training
 FEATURE_EVAL_MODEL_SELECTION = False
+
+# Enable similarity API endpoints and webpages
+FEATURE_SIMILARITY = True
+# Allow submission of feedback on the quality of similarity results
+FEATURE_SIMILARITY_FEEDBACK = False
 
 DEBUG_TB_INTERCEPT_REDIRECTS = False
 

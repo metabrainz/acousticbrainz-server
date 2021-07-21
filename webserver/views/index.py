@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 from flask import Blueprint, render_template, request, redirect, url_for
-from db.stats import get_last_submitted_recordings, get_stats_summary
+from db.submission_stats import get_last_submitted_recordings, get_stats_summary
 from flask_login import login_required, current_user
 
 from webserver import flash
-import db.stats
+import db.submission_stats
 import db.user as db_user
 import db.exceptions
 
@@ -16,7 +16,7 @@ def index():
     stats, last_collected = get_stats_summary()
     last_collected_timestamp = 0
     if last_collected:
-        last_collected_timestamp = db.stats._make_timestamp(last_collected)
+        last_collected_timestamp = db.submission_stats._make_timestamp(last_collected)
     return render_template("index/index.html", stats=stats, last_collected=last_collected,
                            last_submissions=get_last_submitted_recordings(),
                            last_collected_timestamp=last_collected_timestamp)

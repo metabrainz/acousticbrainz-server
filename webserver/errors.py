@@ -21,7 +21,7 @@ def init_error_handlers(app):
     def unauthorized(error):
         # always returning JSON because this is only raised from API endpoints
         return jsonify_error(error)
-    
+
     @app.errorhandler(403)
     def forbidden(error):
         return render_template('errors/403.html', error=error), 403

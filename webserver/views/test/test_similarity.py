@@ -78,12 +78,11 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
     def test_get_similar_service_index(self, annoy_model, _get_extended_info, submit_eval_results):
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
         metric = 'mfccs'
-        recordings = [('0dad432b-16cc-4bf0-8961-fd31d124b01b', 0), ('0dad432b-16cc-4bf0-8961-fd31d124b01b', 1)]
-        distances = [0.5, 1.2]
-        ids = [0, 1]
-        expected_result = [ids, recordings, distances]
         annoy_mock = mock.Mock()
-        annoy_mock.get_nns_by_mbid.return_value = expected_result
+        annoy_mock.get_nns_by_mbid.return_value = [
+            {"distance": 0.5, "offset": 0, "recording_mbid": "0dad432b-16cc-4bf0-8961-fd31d124b01b"},
+            {"distance": 1.2, "offset": 1, "recording_mbid": "0dad432b-16cc-4bf0-8961-fd31d124b01b"}
+        ]
         annoy_model.return_value = annoy_mock
 
         _get_extended_info.side_effect = [{"mock_info": "info1"}, {"mock_info": "info2"}]
@@ -95,10 +94,11 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
 
         expected = {"metadata": [{"mock_info": "info1"}, {"mock_info": "info2"}],
                     "metric": {"category": category, "description": description},
-                    "submitted": False}
+                    "submitted": True}
 
         resp = self.client.get(url_for('similarity.get_similar_service', mbid=mbid, metric=metric))
         self.assertEqual(200, resp.status_code)
+        self.assertEqual(expected, resp.json)
 
     @mock.patch("db.similarity.add_evaluation")
     def test_add_evaluations(self, add_evaluation):

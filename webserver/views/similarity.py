@@ -71,13 +71,12 @@ def get_similar_service(mbid, metric):
         category, metric, description = db.similarity.get_metric_info(metric)
         # Annoy model currently uses default parameters
         index = AnnoyModel(metric, load_existing=True)
-        similar_recordings_map = index.get_bulk_nns_by_mbid([(mbid, offset)], n_similar)
+        similar_recordings = index.get_nns_by_mbid(mbid, offset, n_similar)
     except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException,
             similarity.exceptions.IndexNotFoundException) as e:
         flash("We're sorry, this index is not currently available for this recording: {}".format(repr(e)))
         return redirect(url_for("similarity.metrics", mbid=mbid, n=offset))
 
-    similar_recordings = similar_recordings_map.get(mbid, {}).get(str(offset), [])
     metadata = [_get_extended_info(rec["recording_mbid"], rec["offset"]) for rec in similar_recordings]
     metric = {"category": category, "description": description}
 

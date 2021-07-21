@@ -172,6 +172,12 @@ class AnnoyModel(object):
         recordings = db.data.get_mbids_by_ids(ids)
         return ids, recordings, distances
 
+    def get_nns_by_mbid(self, mbid, offset, num_neighbours):
+        # Find corresponding lowlevel.id to (mbid, offset) combination,
+        # then call get_nns_by_id
+        lookup = self.get_bulk_nns_by_mbid([(mbid, offset)], num_neighbours)
+        return lookup[mbid][str(offset)]
+
     def get_bulk_nns_by_mbid(self, recordings, num_neighbours):
         """Get most similar recordings for each (MBID, offset) tuple provided.
         Similar recordings list returned is ordered with the most similar at

@@ -220,7 +220,7 @@ def _parse_bulk_params(params):
     Where offset is a number >=0. Offsets are optional.
     mbid must be a UUID.
 
-    If an offset is not specified non-numeric, or negativeit is replaced with 0.
+    If an offset is not specified non-numeric, or negative it is replaced with 0.
     If an mbid is not valid, an APIBadRequest Exception is
     raised listing the bad MBID and no further processing is done.
 

@@ -214,7 +214,7 @@ def check_bad_request_between_recordings():
     return recordings
 
 
-@bp_similarity.route("/<metric>/between", methods=["GET"])
+@bp_similarity.route("/<metric>/between/", methods=["GET"])
 @crossdomain()
 def get_similarity_between(metric):
     """Get the distance measure for similarity between two MBIDs.

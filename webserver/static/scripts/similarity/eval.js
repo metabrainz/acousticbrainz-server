@@ -28,7 +28,7 @@ class SimilarityEval extends Component {
     componentDidMount() {
         this._isMounted = true
         var so = this
-        $.get(`/similarity/service/${this.state.refMbid}/${this.state.metric}?n=${this.state.refOffset}`, function(result) {
+        $.get(`/similarity/service/similar/${this.state.metric}/${this.state.refMbid}?n=${this.state.refOffset}`, function(result) {
             if (this._isMounted) {
                 result.metadata.forEach(function(rec) {
                     so._initFormData[rec.lowlevel_id] = {"feedback": "", "suggestion": ""}
@@ -73,7 +73,7 @@ class SimilarityEval extends Component {
             var so = this
             $.ajax({
                 method: 'POST',
-                url: `/similarity/service/${this.state.refMbid}/${this.state.metric}/evaluate?n=${this.state.refOffset}`,
+                url: `/similarity/service/evaluate/${this.state.metric}/${this.state.refMbid}?n=${this.state.refOffset}`,
                 data: JSON.stringify({
                     form: this.state.formData,
                     metadata: this.state.similarMetadata
@@ -102,7 +102,7 @@ class SimilarityEval extends Component {
     render() {
         if (this._metadataLoaded) {
             const similarRecordings = this.state.similarMetadata.map(
-                rec => <EvalRecording key={rec.lowlevelId} 
+                rec => <EvalRecording key={`${rec.recording_mid}-${rec.offset}`}
                                       rec={rec}
                                       form={this.state.formData}
                                       hideForm={this.state.hideForm}
@@ -145,13 +145,10 @@ class SimilarityEval extends Component {
                             </table>
                             {error}
                             {
-                                this.state.hideForm ? 
-                                <div>
-                                    <p><strong>Thank you for your feedback!</strong></p>
-                                </div> :
+                                !this.state.hideForm ?
                                 <button className="btn btn-default btn-primary btn-feedback"
                                         type="submit">Submit Feedback
-                                </button>
+                                </button> : <></>
                             }
                         </form>
                     </div>

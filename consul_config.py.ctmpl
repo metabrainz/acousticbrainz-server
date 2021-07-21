@@ -59,6 +59,8 @@ FEATURE_EVAL_FILTERING = {{template "KEY" "feature/eval_filtering"}}
 FEATURE_EVAL_MODEL_SELECTION = {{template "KEY" "feature/eval_model_selection"}}
 # Enable similarity API endpoints and webpages
 FEATURE_SIMILARITY = {{template "KEY" "feature/similarity"}}
+# Allow submission of feedback on the quality of similarity results
+FEATURE_SIMILARITY_FEEDBACK = {{template "KEY" "feature/similarity_feedback"}}
 
 RATELIMIT_PER_IP = {{template "KEY" "ratelimit_per_ip"}} # number of requests per ip
 RATELIMIT_WINDOW = {{template "KEY" "ratelimit_window"}} # window size in seconds

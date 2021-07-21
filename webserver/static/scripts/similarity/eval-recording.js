@@ -7,11 +7,6 @@ function EvalRecording(props) {
             <td>
                 <a href={`/${props.rec.mbid}?n=${props.rec.submission_offset}`} target="_blank">{props.rec.artist} - {props.rec.title}</a>
                 <br/>
-                {
-                    props.rec.youtube_query !== props.similarYoutubeQuery ?
-                    <a href="javascript:;" onClick={() => props.handleYoutubeChange(props.rec.youtube_query)}>(show YouTube)</a> :
-                    null
-                }
             </td>
             <td className="feedback-request" hidden={props.hideForm}>
                 <select data-lowlevel={props.rec.lowlevel_id} 

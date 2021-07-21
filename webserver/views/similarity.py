@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app
 from flask_login import current_user, login_required
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, ServiceUnavailable
 
 from webserver.utils import validate_offset
 from webserver.decorators import auth_required
@@ -25,7 +25,7 @@ def metrics(mbid):
     if id is None:
         raise NotFound
 
-    ref_metadata = _get_extended_info(mbid, offset, id)
+    ref_metadata = _get_extended_info(mbid, offset)
     return render_template(
         'similarity/metrics.html',
         ref_metadata=ref_metadata,
@@ -44,7 +44,7 @@ def get_similar(mbid, metric):
         query_id = db.data.get_ids_by_mbids([(mbid, offset)])[0]
         if query_id is None:
             raise db.exceptions.NoDataFoundException()
-        ref_metadata = _get_extended_info(mbid, offset, query_id)
+        ref_metadata = _get_extended_info(mbid, offset)
         return render_template(
             "similarity/eval.html",
             metric=metric,
@@ -55,7 +55,7 @@ def get_similar(mbid, metric):
         raise NotFound(e)
 
 
-@similarity_bp.route("/service/<uuid:mbid>/<string:metric>")
+@similarity_bp.route("/service/similar/<string:metric>/<uuid:mbid>")
 @auth_required
 def get_similar_service(mbid, metric):
     """Get similar recordings in terms of the specified metric
@@ -71,31 +71,28 @@ def get_similar_service(mbid, metric):
         category, metric, description = db.similarity.get_metric_info(metric)
         # Annoy model currently uses default parameters
         index = AnnoyModel(metric, load_existing=True)
-        # TODO: We no longer return ids in this endpoint
-        result_ids, similar_recordings, distances = index.get_nns_by_mbid(mbid, offset, n_similar)
+        similar_recordings_map = index.get_bulk_nns_by_mbid([(mbid, offset)], n_similar)
     except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException,
             similarity.exceptions.IndexNotFoundException) as e:
         flash("We're sorry, this index is not currently available for this recording: {}".format(repr(e)))
         return redirect(url_for("similarity.metrics", mbid=mbid, n=offset))
 
-    # If it doesn't exist already, submit to eval_results
-    params = (metric, index.n_trees, index.distance_type)
-    eval_id = db.similarity.submit_eval_results(query_id, result_ids, distances, params)
-    # Check if current user has already submitted this eval form
-    user_id = current_user.id
-    submitted = db.similarity.check_for_eval_submission(user_id, eval_id)
-
-    metadata = [_get_extended_info(rec[0], rec[1], id, eval_id=eval_id) for rec, id in zip(similar_recordings, result_ids)]
+    similar_recordings = similar_recordings_map.get(mbid, {}).get(str(offset), [])
+    metadata = [_get_extended_info(rec["recording_mbid"], rec["offset"]) for rec in similar_recordings]
     metric = {"category": category, "description": description}
 
-    ret = {"metadata": metadata, "metric": metric, "submitted": submitted}
+    # TODO: For now, mark submitted as true so that the interface doesn't show the eval form
+    ret = {"metadata": metadata, "metric": metric, "submitted": True}
     return jsonify(ret)
 
 
-@similarity_bp.route("/service/<uuid:mbid>/<string:metric>/evaluate", methods=['POST'])
+@similarity_bp.route("/service/evaluate/<string:metric>/<uuid:mbid>", methods=['POST'])
 @auth_required
 def add_evaluations(mbid, metric):
     offset = validate_offset(request.args.get("n"))
+
+    if not current_app.config.get('FEATURE_SIMILARITY_FEEDBACK', False):
+        raise ServiceUnavailable()
 
     form = request.json["form"]
     if not form:
@@ -111,10 +108,11 @@ def add_evaluations(mbid, metric):
             'error': "Request does not contain metadata for similar recordings."
         }), 400
 
+    # TODO: We should _only_ receive messages from logged in users - we already have @auth_required
     user_id = current_user.id if current_user.is_authenticated else None
     for rec in metadata:
         # *NOTE*: result_id is the lowlevel.id of one similar recording in metadata, and
-        # eval_id is eval_results.id that identifies an evaluationi query for similar recordings.
+        # eval_id is eval_results.id that identifies an evaluation query for similar recordings.
         eval_id = rec['eval_id']
         result_id = rec['lowlevel_id']
         eval = form[str(result_id)]
@@ -130,14 +128,11 @@ def add_evaluations(mbid, metric):
     return jsonify({'success': True}), 200
 
 
-def _get_extended_info(mbid, offset, id, eval_id=None):
+def _get_extended_info(mbid, offset):
     info = _get_recording_info(mbid, None)
     if not info:
         raise NotFound('No info for the recording {}'.format(mbid))
     info['mbid'] = mbid
     info['submission_offset'] = offset
     info['youtube_query'] = _get_youtube_query(info)
-    info['lowlevel_id'] = id
-    if eval_id:
-        info['eval_id'] = eval_id
     return info

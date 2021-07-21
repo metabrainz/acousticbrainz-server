@@ -155,12 +155,6 @@ class AnnoyModel(object):
             num_neighbours: positive integer, number of similar recordings
             to be returned in the query.
 
-            eval_info: boolean, determines whether or not eval info (lowlevel.ids and distances)
-            should be returned for each similar recording.
-
-            return_distances: boolean, determines where or not distance between the
-            query recording and each similar recording should be included.
-
         Returns:
             A list of the form [<lowlevel.ids>, <recordings>, <distances>]
             where <lowlevel.ids> is a list of lowlevel.ids [id_1, ..., id_n],
@@ -177,12 +171,6 @@ class AnnoyModel(object):
         distances = items[1]
         recordings = db.data.get_mbids_by_ids(ids)
         return ids, recordings, distances
-
-    def get_nns_by_mbid(self, mbid, offset, num_neighbours):
-        # Find corresponding lowlevel.id to (mbid, offset) combination,
-        # then call get_nns_by_id
-        lookup = self.get_bulk_nns_by_mbid([(mbid, offset)], num_neighbours)
-        return lookup[mbid][str(offset)]
 
     def get_bulk_nns_by_mbid(self, recordings, num_neighbours):
         """Get most similar recordings for each (MBID, offset) tuple provided.

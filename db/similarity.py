@@ -479,7 +479,7 @@ def submit_eval_results(query_id, result_ids, distances, params):
     the parameters used to the similarity.eval_results table.
 
     Args:
-        query_ids: lowlevel.id which is the subject of a
+        query_id: lowlevel.id which is the subject of a
                    query for similarity.
         result_ids: A list of lowlevel.ids), referencing the resultant
                    recordings.

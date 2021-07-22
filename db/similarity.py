@@ -12,9 +12,6 @@ import json
 from sqlalchemy import text
 from collections import defaultdict
 
-PROCESS_BATCH_SIZE = 10000
-
-
 def get_all_metrics():
     """Get name, category, and description for each of the metrics
     in the similarity.similarity_metrics table.
@@ -72,7 +69,7 @@ def get_similarity_ids():
         return [r['id'] for r in result.fetchall()]
 
 
-def add_index(index, num_ids, ids, batch_size=None):
+def add_index(index, num_ids, ids, batch_size):
     """Incrementally adds all items to an index, then builds
     and saves the index. *Note*: index must already be initialized.
 
@@ -88,7 +85,6 @@ def add_index(index, num_ids, ids, batch_size=None):
         batch_size (int): the size of each batch of recording
         vectors being added in each increment.
     """
-    batch_size = batch_size or PROCESS_BATCH_SIZE
     num_added = 0
 
     # Fill empty rows in the database with placeholders

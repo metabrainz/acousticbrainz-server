@@ -10,7 +10,8 @@ import db.similarity
 import db.similarity_stats
 
 NORMALIZATION_SAMPLE_SIZE = 10000
-PROCESS_BATCH_SIZE = 10000
+ADD_METRICS_BATCH_SIZE = 10000
+ADD_INDEX_BATCH_SIZE = 100000
 
 cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
 
@@ -23,7 +24,7 @@ cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_fla
 @click.option("--force", "-f", default=False, help="Remove existing stats before computing.")
 @click.option("--sample-size", "-s", type=int, default=NORMALIZATION_SAMPLE_SIZE,
               help="Override normalization lowlevel data sample size. Must be >= 1% of lowlevel_json entries.")
-@click.option("--batch-size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Override processing batch size.")
+@click.option("--batch-size", "-b", type=int, default=ADD_METRICS_BATCH_SIZE, help="Override processing batch size.")
 @click.pass_context
 def init(ctx, batch_size, sample_size, force, n_trees, distance_type):
     """Initialization command for the similarity engine.
@@ -37,9 +38,9 @@ def init(ctx, batch_size, sample_size, force, n_trees, distance_type):
            of the metrics including every recording in
            the similarity.similarity table
     """
-    ctx.invoke(compute_stats)
-    ctx.invoke(add_metrics)
-    ctx.invoke(add_indices)
+    ctx.invoke(compute_stats, sample_size=sample_size, force=force)
+    ctx.invoke(add_metrics, batch_size=batch_size)
+    ctx.invoke(add_indices, batch_size=batch_size, n_trees=n_trees, distance_type=distance_type)
 
 
 @cli.command(name="compute-stats")
@@ -69,7 +70,7 @@ def compute_stats(sample_size, force):
 
 
 @cli.command(name="add-metrics")
-@click.option("--batch-size", "-b", type=int, default=None, help="Override processing batch size.")
+@click.option("--batch-size", "-b", type=int, default=ADD_METRICS_BATCH_SIZE, help="Override processing batch size.")
 def add_metrics(batch_size):
     """Computes all 12 base metrics for each recording
     in the lowlevel table, inserting these values in
@@ -94,7 +95,7 @@ def add_metrics(batch_size):
 @click.option("--n_trees", "-n", type=int, default=10, help="Number of trees for building index. \
                                                             Tradeoff: more trees gives more precision, \
                                                             but takes longer to build.")
-@click.option("--batch_size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Size of batches")
+@click.option("--batch_size", "-b", type=int, default=ADD_INDEX_BATCH_SIZE, help="Size of batches")
 def add_index(metric, batch_size, n_trees, distance_type):
     """Creates an annoy index for the specified metric using the given params.
     This operates by creating a special case of `db.similarity.add_indices`,
@@ -118,7 +119,7 @@ def add_index(metric, batch_size, n_trees, distance_type):
 @click.option("--n-trees", "-n", type=int, default=10, help="Number of trees for building index. \
                                                             Tradeoff: more trees gives more precision, \
                                                             but takes longer to build.")
-@click.option("--batch_size", "-b", type=int, default=PROCESS_BATCH_SIZE, help="Size of batches")
+@click.option("--batch_size", "-b", type=int, default=ADD_INDEX_BATCH_SIZE, help="Size of batches")
 def add_indices(batch_size, n_trees, distance_type):
     """Creates an annoy index then adds all recordings to the index,
     for each of the base metrics.

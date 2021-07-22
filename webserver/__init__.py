@@ -169,7 +169,6 @@ def create_app_sphinx():
     blueprints/views are needed to build documentation.
     """
     app = CustomFlask(import_name=__name__, use_flask_uuid=True)
-    app.config["FEATURE_SIMILARITY"] = True
     _register_blueprints(app)
     return app
 
@@ -190,8 +189,7 @@ def _register_blueprints(app):
         app.register_blueprint(login_bp, url_prefix='/login')
         app.register_blueprint(user_bp)
         app.register_blueprint(datasets_bp, url_prefix='/datasets')
-        if app.config.get("FEATURE_SIMILARITY", False):
-            app.register_blueprint(similarity_bp, url_prefix='/similarity')
+        app.register_blueprint(similarity_bp, url_prefix='/similarity')
 
     def register_api(app):
         v1_prefix = os.path.join(API_PREFIX, 'v1')
@@ -202,8 +200,7 @@ def _register_blueprints(app):
         app.register_blueprint(bp_core, url_prefix=v1_prefix)
         app.register_blueprint(bp_datasets, url_prefix=v1_prefix + '/datasets')
         app.register_blueprint(bp_dataset_eval, url_prefix=v1_prefix + '/datasets/evaluation')
-        if app.config.get("FEATURE_SIMILARITY", False):
-            app.register_blueprint(bp_similarity, url_prefix=v1_prefix + '/similarity')
+        app.register_blueprint(bp_similarity, url_prefix=v1_prefix + '/similarity')
 
         from webserver.views.api.legacy import api_legacy_bp
         app.register_blueprint(api_legacy_bp)

@@ -1,5 +1,5 @@
 git+https://github.com/metabrainz/brainzutils-python.git@v1.18.1
-annoy==1.16.0
+annoy==1.17.0
 Flask-Admin==1.5.6
 Flask-Login==0.5.0
 Flask-SQLAlchemy==2.4.1

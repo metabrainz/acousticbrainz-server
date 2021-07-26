@@ -80,6 +80,12 @@ RUN chown acousticbrainz:acousticbrainz /code
 # Last version of pip that supports python2
 RUN pip install pip==20.3.4
 
+# By default annoy compiles its C++ code using gcc's -march=native flag. This means that if it compiles
+# on a recent Intel machine (e.g. in github actions) it might use extensions that aren't available
+# on our production machines (AVX512). Force it to a lower arch that is compatible over all of our
+# productions servers (skylake, zen1, zen2)
+ENV ANNOY_COMPILER_ARGS=-D_CRT_SECURE_NO_WARNINGS,-DANNOYLIB_MULTITHREADED_BUILD,-march=haswell,-mno-rdrnd,-O3,-ffast-math,-fno-associative-math,-std=c++14
+
 # Python dependencies
 RUN mkdir /code/docs/ && chown acousticbrainz:acousticbrainz /code/docs/
 COPY --chown=acousticbrainz:acousticbrainz docs/requirements.txt /code/docs/requirements.txt

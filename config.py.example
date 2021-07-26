@@ -58,6 +58,8 @@ RATELIMIT_WINDOW = 10
 DATASET_DIR = "/data/datasets"
 FILE_STORAGE_DIR = "/data/files"
 SIMILARITY_INDEX_DIR = "/data/annoy_indices"
+# How many threads to use when building an annoy index
+SIMILARITY_BUILD_NUM_JOBS = 1
 
 #Feature Flags
 # Choose a server to perform the evaluation on

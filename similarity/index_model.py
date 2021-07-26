@@ -54,7 +54,8 @@ class AnnoyModel(object):
     def build(self):
         """Build and load the index using the specified number of trees. An index
         must be built before it can be queried."""
-        self.index.build(self.n_trees)
+        n_jobs = current_app.config['SIMILARITY_BUILD_NUM_JOBS']
+        self.index.build(n_trees=self.n_trees, n_jobs=n_jobs)
         self.in_loaded_state = True
 
     def save(self, location=None, name=None):

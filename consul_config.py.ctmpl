@@ -48,7 +48,9 @@ LOG_SENTRY = {
 
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
 FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
-SIMILARITY_INDEX_DIR = '''{{template "KEY" "similarity_index_dir"}}'''
+SIMILARITY_INDEX_DIR = '''{{template "KEY" "similarity/index_dir"}}'''
+# How many threads to use when building an annoy index
+SIMILARITY_BUILD_NUM_JOBS = {{template "KEY" "similarity/build_n_jobs"}}
 
 #Feature Flags
 # Choose a server to perform the evaluation on

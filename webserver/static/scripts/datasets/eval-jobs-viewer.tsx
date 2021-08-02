@@ -1,16 +1,16 @@
-const PropTypes = require("prop-types");
 /*
  This is a viewer for dataset evaluation jobs.
 
  Attribute "data-dataset-id" which references existing dataset by its ID need
  to be specified on container element.
  */
-const React = require("react");
-const ReactDOM = require("react-dom");
+import React, {Component} from "react";
+import ReactDOM from "react-dom";
 
 const CONTAINER_ELEMENT_ID = "eval-viewer-container";
-const container = document.getElementById(CONTAINER_ELEMENT_ID);
+const container = document.getElementById(CONTAINER_ELEMENT_ID)!;
 
+// TODO: enum
 const SECTION_JOB_LIST = "dataset_details";
 const SECTION_JOB_DETAILS = "class_details";
 
@@ -20,16 +20,30 @@ const JOB_STATUS_RUNNING = "running";
 const JOB_STATUS_FAILED = "failed";
 const JOB_STATUS_DONE = "done";
 
-class EvaluationJobsViewer extends React.Component {
-    state = {
-        active_section: SECTION_JOB_LIST,
-        isAuthorViewing: false,
-        jobs: null,
-    };
+interface EvaluationJobsViewerState {
+    active_section: string;
+    isAuthorViewing: boolean;
+    // TODO: This is a list of data from
+    //   /datasets/service/${container.dataset.datasetId}/evaluation/json
+    jobs?: any[];
+    active_job_index?: number;
+}
+
+class EvaluationJobsViewer extends Component<{}, EvaluationJobsViewerState> {
+    constructor(props: Readonly<{}>) {
+        super(props);
+        this.state = {
+            active_section: SECTION_JOB_LIST,
+            isAuthorViewing: false,
+            jobs: undefined,
+        };
+    }
+
 
     componentDidMount() {
-        let user = null;
-        $.get("/user-info", function (data) {
+        let user: {created: string, id: number, musicbrainz_id: string} | null = null;
+        // TODO: User info should be global props
+        $.get("/user-info", (data) => {
             user = data.user;
             console.debug("Received user info:", user);
         });
@@ -46,7 +60,7 @@ class EvaluationJobsViewer extends React.Component {
         }
         $.get(
             `/datasets/service/${container.dataset.datasetId}/evaluation/json`,
-            function (data) {
+            (data) => {
                 let isAuthorViewing = false;
                 if (user !== null) {
                     isAuthorViewing = user.id === data.dataset.author.id;
@@ -58,7 +72,7 @@ class EvaluationJobsViewer extends React.Component {
                 console.debug("Received jobs:", data);
                 console.debug("Is author viewing:", isAuthorViewing);
                 this.handleHashChange();
-            }.bind(this)
+            }
         );
 
         // Hash is used to store ID of the job that is currently viewed.
@@ -69,7 +83,7 @@ class EvaluationJobsViewer extends React.Component {
         window.removeEventListener("hashchange", this.handleHashChange);
     }
 
-    handleHashChange = (e) => {
+    handleHashChange = () => {
         // Hash is used to store ID of the currently viewed job.
         if (this.state.jobs) {
             const hash = window.location.hash.substr(1);
@@ -97,12 +111,14 @@ class EvaluationJobsViewer extends React.Component {
         }
     };
 
-    handleViewDetails = (index) => {
+    handleViewDetails = (index: number) => {
         this.setState({
             active_section: SECTION_JOB_DETAILS,
             active_job_index: index,
         });
-        window.location.hash = `#${this.state.jobs[index].id}`;
+        if (this.state.jobs) {
+            window.location.hash = `#${this.state.jobs[index].id}`;
+        }
     };
 
     handleReturn = () => {
@@ -113,7 +129,11 @@ class EvaluationJobsViewer extends React.Component {
         window.location.hash = "";
     };
 
-    handleJobDelete = (jobID, index) => {
+    handleJobDelete = (jobID: string, index: number) => {
+        const { jobs } = this.state;
+        if (!jobs) {
+            return;
+        }
         $.ajax({
             type: "DELETE",
             url: `/datasets/service/${container.dataset.datasetId}/${jobID}`,
@@ -134,7 +154,6 @@ class EvaluationJobsViewer extends React.Component {
         });
 
         // Removing job from the list
-        const { jobs } = this.state;
         jobs.splice(index, 1);
         this.setState({ jobs });
     };
@@ -151,20 +170,22 @@ class EvaluationJobsViewer extends React.Component {
                     />
                 );
             } // SECTION_JOB_DETAILS
-            const active_job = this.state.jobs[this.state.active_job_index];
-            return (
-                <JobDetails
-                    id={active_job.id}
-                    created={active_job.created}
-                    updated={active_job.updated}
-                    status={active_job.status}
-                    statusMsg={active_job.status_msg}
-                    result={active_job.result}
-                    showDelete={this.state.isAuthorViewing}
-                    outdated={active_job.outdated}
-                    onReturn={this.handleReturn}
-                />
-            );
+            if (this.state.active_job_index) {
+                const active_job = this.state.jobs[this.state.active_job_index];
+                return (
+                    <JobDetails
+                        id={active_job.id}
+                        created={active_job.created}
+                        updated={active_job.updated}
+                        status={active_job.status}
+                        statusMsg={active_job.status_msg}
+                        result={active_job.result}
+                        showDelete={this.state.isAuthorViewing}
+                        outdated={active_job.outdated}
+                        onReturn={this.handleReturn}
+                    />
+                );
+            }
         }
         return <strong>Loading job list...</strong>;
     }
@@ -172,19 +193,22 @@ class EvaluationJobsViewer extends React.Component {
 
 // Classes used with SECTION_JOB_LIST:
 
-class JobList extends React.Component {
-    static propTypes = {
-        jobs: PropTypes.array.isRequired,
-        showDelete: PropTypes.bool.isRequired,
-        onViewDetails: PropTypes.func.isRequired,
-        onDelete: PropTypes.func.isRequired,
-    };
+interface JobListProps {
+    jobs: any[],
+    showDelete: boolean,
+    onViewDetails: (index: number) => void,
+    onDelete: (jobID: string, index: number) => void,
+}
+
+class JobList extends Component<JobListProps> {
+    constructor(props: Readonly<JobListProps>) {
+        super(props);
+    }
 
     render() {
         if (this.props.jobs.length > 0) {
-            const items = [];
-            this.props.jobs.forEach(
-                function (cls, index) {
+            const items: JSX.Element[] = [];
+            this.props.jobs.forEach((cls: any, index: number) => {
                     const modelDownloadUrl = `/datasets/${container.dataset.datasetId}/${cls.id}/download_model`;
                     items.push(
                         <JobRow
@@ -199,7 +223,7 @@ class JobList extends React.Component {
                             onDelete={this.props.onDelete}
                         />
                     );
-                }.bind(this)
+                }
             );
             return (
                 <table className="table table-hover job-list">
@@ -224,30 +248,25 @@ class JobList extends React.Component {
     }
 }
 
-class JobRow extends React.Component {
-    static propTypes = {
-        index: PropTypes.number.isRequired,
-        id: PropTypes.string.isRequired,
-        created: PropTypes.string.isRequired,
-        status: PropTypes.string.isRequired,
-        modelDownloadUrl: PropTypes.string,
-        outdated: PropTypes.string.isRequired,
-        showDelete: PropTypes.bool.isRequired,
-        onViewDetails: PropTypes.func.isRequired,
-        onDelete: PropTypes.func.isRequired,
-    };
+interface JobRowProps {
+    index: number;
+    id: string;
+    created: string;
+    status: string;
+    modelDownloadUrl?: string;
+    outdated: string;
+    showDelete: boolean;
+    onViewDetails: (index: number) => void;
+    onDelete: (id: string, index: number) => void;
+}
 
-    handleViewDetails = (event) => {
-        event.preventDefault();
-        this.props.onViewDetails(this.props.index);
-    };
-
-    handleDelete = () => {
-        this.props.onDelete(this.props.id, this.props.index);
-    };
+class JobRow extends Component<JobRowProps> {
+    constructor(props: Readonly<JobRowProps>) {
+        super(props);
+    }
 
     render() {
-        let status = "";
+        let status
         switch (this.props.status) {
             case JOB_STATUS_PENDING:
                 status = <span className="label label-info">In queue</span>;
@@ -270,20 +289,26 @@ class JobRow extends React.Component {
                 }
                 break;
         }
-        let download = "";
-        if (this.props.status === JOB_STATUS_DONE && this.props.modelDownloadUrl) {
-            download = <a href={this.props.modelDownloadUrl}>Download model</a>
+        let download;
+        if (
+            this.props.status === JOB_STATUS_DONE &&
+            this.props.modelDownloadUrl
+        ) {
+            download = <a href={this.props.modelDownloadUrl}>Download model</a>;
         }
-        let controls = "";
+        let controls;
         if (this.props.showDelete) {
             if (this.props.status === JOB_STATUS_PENDING) {
-                controls = <JobDeleteButton onDelete={this.handleDelete} />;
+                controls = <JobDeleteButton onDelete={this.props.onDelete} />;
             }
         }
         return (
             <tr className="job">
                 <td className="id">
-                    <a href="#" onClick={this.handleViewDetails}>
+                    <a href="#" onClick={(e) => {
+                        e.preventDefault();
+                        this.props.onViewDetails(this.props.index);
+                    }}>
                         {this.props.id}
                     </a>
                 </td>
@@ -298,27 +323,19 @@ class JobRow extends React.Component {
     }
 }
 
-class JobDeleteButton extends React.Component {
-    static propTypes = {
-        onDelete: PropTypes.func.isRequired,
-    };
+interface JobDeleteButtonProps {
+    onDelete: (a: string, b: number) => void;
+}
 
-    state = { showConfirmation: false };
+interface JobDeleteButtonState {
+    showConfirmation: boolean;
+}
 
-    delete = (event) => {
-        event.preventDefault();
-        this.props.onDelete();
-    };
-
-    confirm = (event) => {
-        event.preventDefault();
-        this.setState({ showConfirmation: true });
-    };
-
-    cancel = (event) => {
-        event.preventDefault();
-        this.setState({ showConfirmation: false });
-    };
+class JobDeleteButton extends React.Component<JobDeleteButtonProps, JobDeleteButtonState> {
+    constructor(props: Readonly<JobDeleteButtonProps>) {
+        super(props);
+        this.state = { showConfirmation: false };
+    }
 
     render() {
         if (!this.state.showConfirmation) {
@@ -327,7 +344,10 @@ class JobDeleteButton extends React.Component {
                     href="#"
                     className="btn btn-danger btn-xs"
                     title="Delete this evaluation job"
-                    onClick={this.confirm}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        this.setState({ showConfirmation: true });
+                    }}
                 >
                     Delete
                 </a>
@@ -339,14 +359,20 @@ class JobDeleteButton extends React.Component {
                 <a
                     href="#"
                     className="btn btn-danger btn-xs"
-                    onClick={this.delete}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        this.props.onDelete('s', 1);
+                    }}
                 >
                     Delete
                 </a>
                 <a
                     href="#"
                     className="btn btn-default btn-xs"
-                    onClick={this.cancel}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        this.setState({ showConfirmation: true });
+                    }}
                 >
                     Cancel
                 </a>
@@ -357,20 +383,25 @@ class JobDeleteButton extends React.Component {
 
 // Classes used with SECTION_JOB_DETAILS:
 
-class JobDetails extends React.Component {
-    static propTypes = {
-        id: PropTypes.string.isRequired,
-        created: PropTypes.string.isRequired,
-        updated: PropTypes.string.isRequired,
-        status: PropTypes.string.isRequired,
-        outdated: PropTypes.string.isRequired,
-        statusMsg: PropTypes.string,
-        result: PropTypes.object,
-        onReturn: PropTypes.func.isRequired,
-    };
+interface JobDetailsProps {
+    id: string;
+    created: string;
+    updated: string;
+    status: string;
+    outdated: string;
+    statusMsg?: string;
+    result: any;
+    onReturn: () => void;
+    showDelete: boolean;
+}
+
+class JobDetails extends Component<JobDetailsProps> {
+    constructor(props: Readonly<JobDetailsProps>) {
+        super(props);
+    }
 
     render() {
-        let status = "";
+        let status;
         switch (this.props.status) {
             case JOB_STATUS_PENDING:
                 status = (
@@ -387,7 +418,7 @@ class JobDetails extends React.Component {
                 );
                 break;
             case JOB_STATUS_FAILED:
-                var errorMsg = "";
+                let errorMsg;
                 if (this.props.statusMsg) {
                     errorMsg = (
                         <p>
@@ -451,15 +482,19 @@ class JobDetails extends React.Component {
     }
 }
 
-class Results extends React.Component {
-    static propTypes = {
-        accuracy: PropTypes.number.isRequired,
-        table: PropTypes.string.isRequired,
-    };
+interface ResultsProps {
+    accuracy: number;
+    table: any;
+}
+
+class Results extends Component<ResultsProps> {
+    constructor(props: Readonly<ResultsProps>) {
+        super(props);
+    }
 
     render() {
-        const classes = [];
-        this.props.table.classes.forEach(function (cls) {
+        const classes: JSX.Element[] = [];
+        this.props.table.classes.forEach(function (cls: any) {
             classes.push(<th className="active">{cls}</th>);
         });
         const header = (
@@ -471,11 +506,11 @@ class Results extends React.Component {
             </tr>
         );
 
-        const rows = [];
+        const rows: JSX.Element[] = [];
         const so = this;
-        this.props.table.rows.forEach(function (cls, index) {
-            const predicted = [];
-            cls.predicted.forEach(function (inner_cls, inner_index) {
+        this.props.table.rows.forEach(function (cls: any, index: number) {
+            const predicted: JSX.Element[] = [];
+            cls.predicted.forEach(function (inner_cls: any, inner_index: number) {
                 let className = "";
                 if (inner_index == index) {
                     if (inner_cls.percentage > 0) {

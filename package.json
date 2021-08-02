@@ -16,6 +16,7 @@
     "dependencies": {
         "bootstrap": "3.4.1",
         "css-loader": "^3.5.2",
+        "core-js": "^3.9.1",
         "highcharts": "^8.0.4",
         "jquery": "^3.5.1",
         "less": "^3.11.1",
@@ -30,10 +31,17 @@
         "webpack-cli": "^3.2.1"
     },
     "devDependencies": {
-        "@babel/core": "^7.9.0",
-        "@babel/plugin-proposal-class-properties": "^7.8.3",
-        "@babel/preset-env": "^7.9.5",
-        "@babel/preset-react": "^7.9.4",
+        "@babel/core": "^7.14.0",
+        "@babel/plugin-proposal-class-properties": "^7.13.0",
+        "@babel/plugin-transform-runtime": "^7.13.15",
+        "@babel/preset-env": "^7.14.1",
+        "@babel/preset-react": "^7.13.13",
+        "@babel/preset-typescript": "^7.9.0",
+        "@types/jquery": "^3.5.6",
+        "@types/react": "^17.0.15",
+        "@types/react-dom": "^17.0.9",
+        "@typescript-eslint/eslint-plugin": "^4.28.5",
+        "@typescript-eslint/parser": "^4.28.5",
         "babel-eslint": "^10.1.0",
         "babel-loader": "^8.1.0",
         "clean-webpack-plugin": "^3.0.0",
@@ -45,10 +53,13 @@
         "eslint-plugin-prettier": "^3.1.3",
         "eslint-plugin-react": "^7.20.0",
         "eslint-plugin-react-hooks": "^2.5.1",
+        "fork-ts-checker-webpack-plugin": "^6.3.1",
+        "less-plugin-clean-css": "^1.5.1",
         "optimize-css-assets-webpack-plugin": "^5.0.3",
-        "prettier": "^2.0.5",
+        "prettier": "^2.3.2",
         "terser-webpack-plugin": "^2.3.6",
-        "webpack-manifest-plugin": "^2.2.0"
+        "typescript": "^4.3.5",
+        "webpack-manifest-plugin": "^3.1.1"
     },
     "private": true
 }

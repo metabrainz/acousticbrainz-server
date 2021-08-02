@@ -1,4 +1,3 @@
-const PropTypes = require("prop-types");
 /*
  This is a dataset editor. It works in two modes:
  - create (creates new dataset from scratch)
@@ -12,11 +11,11 @@ const PropTypes = require("prop-types");
  attribute references existing dataset by its ID. When Dataset component is
  mounted, it pull existing dataset for editing from the server.
  */
-const React = require("react");
-const ReactDOM = require("react-dom");
+import React, {ChangeEvent, Component, FormEvent} from "react";
+import ReactDOM from "react-dom";
 
 const CONTAINER_ELEMENT_ID = "dataset-editor";
-const container = document.getElementById(CONTAINER_ELEMENT_ID);
+const container = document.getElementById(CONTAINER_ELEMENT_ID)!;
 
 const MODE_CREATE = "create";
 const MODE_EDIT = "edit";
@@ -46,14 +45,22 @@ const SECTION_CLASS_DETAILS = "class_details";
    - SECTION_CLASS_DETAILS (editing specific class; this also requires
      active_class_index variable to be set in Dataset state)
  */
-class Dataset extends React.Component {
-    constructor(props) {
+interface DatasetState {
+    autoAddRecording: boolean;
+    mode: string;
+    active_section: string,
+    active_class_index?: number;
+    data?: any;
+}
+
+class Dataset extends Component<{}, DatasetState> {
+    constructor(props: Readonly<{}>) {
         super(props);
         this.state = {
             autoAddRecording: false,
-            mode: container.dataset.mode,
+            mode: container.dataset.mode!,
             active_section: SECTION_DATASET_DETAILS,
-            data: null,
+            data: undefined,
         };
     }
 
@@ -74,9 +81,9 @@ class Dataset extends React.Component {
             }
             $.get(
                 `/datasets/service/${container.dataset.editId}/json`,
-                function (result) {
+                (result) => {
                     this.setState({ data: result });
-                }.bind(this)
+                }
             );
         } else {
             if (this.state.mode !== MODE_CREATE) {
@@ -96,14 +103,14 @@ class Dataset extends React.Component {
         }
     }
 
-    handleDetailsUpdate = (name, description) => {
+    handleDetailsUpdate = (name: string, description: string) => {
         const nextStateData = this.state.data;
         nextStateData.name = name;
         nextStateData.description = description;
         this.setState({ data: nextStateData });
     };
 
-    handlePrivacyUpdate = (event) => {
+    handlePrivacyUpdate = (event: any) => {
         const nextStateData = this.state.data;
         nextStateData.public = event.target.checked;
         this.setState({ data: nextStateData });
@@ -126,20 +133,20 @@ class Dataset extends React.Component {
         this.setState({ data: nextStateData });
     };
 
-    handleClassEdit = (index) => {
+    handleClassEdit = (index: number) => {
         this.setState({
             active_section: SECTION_CLASS_DETAILS,
             active_class_index: index,
         });
     };
 
-    handleClassDelete = (index) => {
+    handleClassDelete = (index: number) => {
         const { data } = this.state;
         data.classes.splice(index, 1);
         this.setState({ data });
     };
 
-    handleClassUpdate = (index, name, description, recordings) => {
+    handleClassUpdate = (index: number, name: string, description: string, recordings: any) => {
         const { data } = this.state;
         data.classes[index].name = name;
         data.classes[index].description = description;
@@ -147,7 +154,7 @@ class Dataset extends React.Component {
         this.setState({ data });
     };
 
-    handleAutoAddRecordingUpdate = (autoAddRecording) => {
+    handleAutoAddRecordingUpdate = (autoAddRecording: boolean) => {
         this.setState({ autoAddRecording });
     };
 
@@ -186,22 +193,23 @@ class Dataset extends React.Component {
                     </div>
                 );
             } // SECTION_CLASS_DETAILS
-            const active_class = this.state.data.classes[
-                this.state.active_class_index
-            ];
-            return (
-                <ClassDetails
-                    id={this.state.active_class_index}
-                    name={active_class.name}
-                    description={active_class.description}
-                    recordings={active_class.recordings}
-                    datasetName={this.state.data.name}
-                    autoAddRecording={this.state.autoAddRecording}
-                    onAutoAddRecordingUpdate={this.handleAutoAddRecordingUpdate}
-                    onReturn={this.handleReturn}
-                    onClassUpdate={this.handleClassUpdate}
-                />
-            );
+            if (this.state.active_class_index) {
+                const active_class =
+                    this.state.data.classes[this.state.active_class_index];
+                return (
+                    <ClassDetails
+                        id={this.state.active_class_index}
+                        name={active_class.name}
+                        description={active_class.description}
+                        recordings={active_class.recordings}
+                        datasetName={this.state.data.name}
+                        autoAddRecording={this.state.autoAddRecording}
+                        onAutoAddRecordingUpdate={this.handleAutoAddRecordingUpdate}
+                        onReturn={this.handleReturn}
+                        onClassUpdate={this.handleClassUpdate}
+                    />
+                );
+            }
         }
         return <strong>Loading...</strong>;
     }
@@ -209,22 +217,16 @@ class Dataset extends React.Component {
 
 // Classes used with SECTION_DATASET_DETAILS:
 
-class DatasetDetails extends React.Component {
-    static propTypes = {
-        name: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        onDetailsUpdate: PropTypes.func.isRequired,
-    };
+interface DatasetDetailsProps {
+    name: string;
+    description: string;
+    onDetailsUpdate: (name: string, description: string) => void;
+}
 
-    handleDescriptionUpdate = (event) => {
-        const description = event.target.value;
-        this.props.onDetailsUpdate(this.props.name, description);
-    };
-
-    handleNameUpdate = (event) => {
-        const name = event.target.value;
-        this.props.onDetailsUpdate(name, this.props.description);
-    };
+class DatasetDetails extends Component<DatasetDetailsProps> {
+    constructor(props: Readonly<DatasetDetailsProps>) {
+        super(props);
+    }
 
     render() {
         return (
@@ -234,47 +236,59 @@ class DatasetDetails extends React.Component {
                     <input
                         type="text"
                         placeholder="Name"
-                        required="required"
+                        required={true}
                         value={this.props.name}
                         size={this.props.name.length}
-                        onChange={this.handleNameUpdate}
+                        onChange={(e) => {
+                            this.props.onDetailsUpdate(e.target.value, this.props.description);
+                        }}
                     />
                 </h2>
                 <textarea
                     placeholder="Description (optional)"
                     value={this.props.description}
-                    onChange={this.handleDescriptionUpdate}
+                    onChange={(e) => {
+                        this.props.onDetailsUpdate(this.props.name, e.target.value);
+                    }}
                 />
             </div>
         );
     }
 }
 
-class DatasetControlButtons extends React.Component {
-    static propTypes = {
-        mode: PropTypes.string.isRequired,
-        data: PropTypes.object.isRequired,
-    };
+interface DatasetControlButtonsProps {
+    mode: string;
+    data: any;
+}
 
-    state = {
-        enabled: true,
-        errorMsg: null,
-    };
+interface DatasetControlButtonsState {
+    enabled: boolean;
+    errorMsg?: any;
+}
 
-    handleSubmit = (e) => {
+
+class DatasetControlButtons extends Component<DatasetControlButtonsProps, DatasetControlButtonsState> {
+    constructor(props: Readonly<DatasetControlButtonsProps>) {
+        super(props);
+        this.state = {
+            enabled: true,
+            errorMsg: undefined,
+        };
+    }
+
+    handleSubmit = (e: any) => {
         e.preventDefault();
         this.setState({
             enabled: false,
-            errorMsg: null,
+            errorMsg: undefined,
         });
-        let submitEndpoint = null;
+        let submitEndpoint;
         if (this.props.mode === MODE_CREATE) {
             submitEndpoint = "/datasets/service/create";
         } else {
             // MODE_EDIT
             submitEndpoint = `/datasets/service/${container.dataset.editId}/edit`;
         }
-        const so = this;
         $.ajax({
             type: "POST",
             url: submitEndpoint,
@@ -287,11 +301,11 @@ class DatasetControlButtons extends React.Component {
             }),
             dataType: "json",
             contentType: "application/json; charset=utf-8",
-            success(data, textStatus, jqXHR) {
+            success: (data, textStatus, jqXHR) => {
                 window.location.replace(`/datasets/${data.dataset_id}`);
             },
-            error(jqXHR, textStatus, errorThrown) {
-                so.setState({
+            error: (jqXHR, textStatus, errorThrown) => {
+                this.setState({
                     enabled: true,
                     errorMsg: jqXHR.responseJSON,
                 });
@@ -299,18 +313,14 @@ class DatasetControlButtons extends React.Component {
         });
     };
 
-    handleCancel = (e) => {
-        e.preventDefault();
-        history.back();
-    };
-
     render() {
         let buttonText = "Submit";
         if (this.props.mode === MODE_EDIT) {
             buttonText = "Update";
         }
+        let error;
         if (this.state.errorMsg) {
-            var error = (
+            error = (
                 <p className="text-danger">
                     <strong>
                         An error occurred while submitting this dataset:
@@ -319,7 +329,7 @@ class DatasetControlButtons extends React.Component {
                 </p>
             );
         } else {
-            var error = "";
+            error = "";
         }
         return (
             <div className="form-group">
@@ -327,13 +337,16 @@ class DatasetControlButtons extends React.Component {
                 <button
                     onClick={this.handleSubmit}
                     type="button"
-                    disabled={this.state.enabled ? "" : "disabled"}
+                    disabled={!this.state.enabled}
                     className="btn btn-default btn-primary"
                 >
                     {buttonText}
                 </button>
                 <button
-                    onClick={this.handleCancel}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        history.back();
+                    }}
                     type="button"
                     className="btn btn-default"
                 >
@@ -344,18 +357,22 @@ class DatasetControlButtons extends React.Component {
     }
 }
 
-class ClassList extends React.Component {
-    static propTypes = {
-        classes: PropTypes.array.isRequired,
-        onClassCreate: PropTypes.func.isRequired,
-        onClassEdit: PropTypes.func.isRequired,
-        onClassDelete: PropTypes.func.isRequired,
-    };
+interface ClassListProps {
+    classes: any[];
+    onClassCreate: () => void;
+    onClassEdit: (index: number) => void;
+    onClassDelete: (index: number) => void;
+}
+
+class ClassList extends Component<ClassListProps> {
+
+    constructor(props:Readonly<ClassListProps>) {
+        super(props);
+    }
 
     render() {
-        const items = [];
-        this.props.classes.forEach(
-            function (cls, index) {
+        const items: JSX.Element[] = [];
+        this.props.classes.forEach((cls: any, index: number) => {
                 items.push(
                     <Class
                         key={index}
@@ -367,7 +384,7 @@ class ClassList extends React.Component {
                         onClassDelete={this.props.onClassDelete}
                     />
                 );
-            }.bind(this)
+            }
         );
         return (
             <div>
@@ -389,28 +406,22 @@ class ClassList extends React.Component {
     }
 }
 
-class Class extends React.Component {
-    static propTypes = {
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        recordingCounter: PropTypes.number.isRequired,
-        onClassDelete: PropTypes.func.isRequired,
-        onClassEdit: PropTypes.func.isRequired,
-    };
+interface ClassProps {
+    id: number;
+    name: string;
+    description: string;
+    recordingCounter: number;
+    onClassDelete: (index: number) => void;
+    onClassEdit: (index: number) => void;
+}
 
-    handleDelete = (event) => {
-        event.preventDefault();
-        this.props.onClassDelete(this.props.id);
-    };
-
-    handleEdit = (event) => {
-        event.preventDefault();
-        this.props.onClassEdit(this.props.id);
-    };
+class Class extends Component<ClassProps> {
+    constructor(props: Readonly<ClassProps>) {
+        super(props);
+    }
 
     render() {
-        let { name } = this.props;
+        let name: string | JSX.Element = this.props.name;
         if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
         let recordingsCounterText = `${this.props.recordingCounter.toString()} `;
         if (this.props.recordingCounter === 1)
@@ -418,7 +429,13 @@ class Class extends React.Component {
         else recordingsCounterText += "recordings";
         return (
             <div className="col-md-3 class">
-                <a href="#" onClick={this.handleEdit} className="thumbnail">
+                <a href="#"
+                   onClick={(e) => {
+                     e.preventDefault();
+                     this.props.onClassEdit(this.props.id);
+                   }}
+                   className="thumbnail"
+                >
                     <div className="name">{name}</div>
                     <div className="counter">{recordingsCounterText}</div>
                 </a>
@@ -427,7 +444,10 @@ class Class extends React.Component {
                         type="button"
                         className="close pull-right"
                         title="Remove class"
-                        onClick={this.handleDelete}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            this.props.onClassDelete(this.props.id);
+                        }}
                     >
                         &times;
                     </button>
@@ -439,20 +459,24 @@ class Class extends React.Component {
 
 // Classes used with SECTION_CLASS_DETAILS:
 
-class ClassDetails extends React.Component {
-    static propTypes = {
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        recordings: PropTypes.array.isRequired,
-        datasetName: PropTypes.string.isRequired,
-        onReturn: PropTypes.func.isRequired,
-        onClassUpdate: PropTypes.func.isRequired,
-        autoAddRecording: PropTypes.bool.isRequired,
-        onAutoAddRecordingUpdate: PropTypes.func.isRequired,
-    };
+interface ClassDetailsProps {
+    id: number;
+    name: string;
+    description: string;
+    recordings: any[];
+    datasetName: string;
+    onReturn: () => void;
+    onClassUpdate: (id: number, name: string, description: string, recordings: any[]) => void;
+    autoAddRecording: boolean;
+    onAutoAddRecordingUpdate: (autoAddRecording: boolean) => void;
+}
 
-    handleNameUpdate = (event) => {
+class ClassDetails extends Component<ClassDetailsProps> {
+    constructor(props: Readonly<ClassDetailsProps>) {
+        super(props);
+    }
+
+    handleNameUpdate = (event: ChangeEvent<HTMLInputElement>) => {
         const name = event.target.value;
         this.props.onClassUpdate(
             this.props.id,
@@ -462,7 +486,7 @@ class ClassDetails extends React.Component {
         );
     };
 
-    handleDescriptionUpdate = (event) => {
+    handleDescriptionUpdate = (event: ChangeEvent<HTMLTextAreaElement>) => {
         const description = event.target.value;
         this.props.onClassUpdate(
             this.props.id,
@@ -472,7 +496,7 @@ class ClassDetails extends React.Component {
         );
     };
 
-    handleRecordingsUpdate = (recordings) => {
+    handleRecordingsUpdate = (recordings: any) => {
         this.props.onClassUpdate(
             this.props.id,
             this.props.name,
@@ -496,7 +520,7 @@ class ClassDetails extends React.Component {
                     <input
                         type="text"
                         placeholder="Class name"
-                        required="required"
+                        required={true}
                         id="class-name"
                         onChange={this.handleNameUpdate}
                         size={this.props.name.length}
@@ -516,7 +540,7 @@ class ClassDetails extends React.Component {
                 <Recordings
                     recordings={this.props.recordings}
                     onRecordingsUpdate={this.handleRecordingsUpdate}
-                    autoAddRecording={this.props.autoAddRecording}
+                    autoAddRecordings={this.props.autoAddRecording}
                     onAutoAddRecordingUpdate={
                         this.props.onAutoAddRecordingUpdate
                     }
@@ -526,21 +550,25 @@ class ClassDetails extends React.Component {
     }
 }
 
-class Recordings extends React.Component {
-    static propTypes = {
-        recordings: PropTypes.array.isRequired,
-        onRecordingsUpdate: PropTypes.func.isRequired,
-        autoAddRecording: PropTypes.bool.isRequired,
-        onAutoAddRecordingUpdate: PropTypes.func.isRequired,
-    };
+interface RecordingsProps {
+    recordings: any[];
+    onRecordingsUpdate: (recordings: any) => void;
+    autoAddRecordings: boolean;
+    onAutoAddRecordingUpdate: (autoAddRecording: boolean) => void;
+}
 
-    handleRecordingSubmit = (mbid) => {
+class Recordings extends Component<RecordingsProps> {
+    constructor(props: Readonly<RecordingsProps>) {
+        super(props);
+    }
+
+    handleRecordingSubmit = (mbid: string) => {
         const { recordings } = this.props;
         recordings.push(mbid);
         this.props.onRecordingsUpdate(recordings);
     };
 
-    handleRecordingDelete = (mbid) => {
+    handleRecordingDelete = (mbid: string) => {
         const { recordings } = this.props;
         const index = recordings.indexOf(mbid);
         if (index > -1) {
@@ -560,7 +588,7 @@ class Recordings extends React.Component {
                 <RecordingAddForm
                     recordings={this.props.recordings}
                     onRecordingSubmit={this.handleRecordingSubmit}
-                    autoAddRecording={this.props.autoAddRecording}
+                    autoAddRecordings={this.props.autoAddRecordings}
                     onAutoAddRecordingUpdate={
                         this.props.onAutoAddRecordingUpdate
                     }
@@ -570,61 +598,71 @@ class Recordings extends React.Component {
     }
 }
 
-const RECORDING_MBID_RE = /^(https?:\/\/(?:beta\.)?musicbrainz\.org\/recording\/)?([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i;
+const RECORDING_MBID_RE =
+    /^(https?:\/\/(?:beta\.)?musicbrainz\.org\/recording\/)?([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/i;
 
-recordingAddFormGetInitialState = () => {
-    return {
-        mbid: "",
-        validUUID: false,
-        duplicate: false,
-        validInput: false,
-    };
-};
 
-class RecordingAddForm extends React.Component {
-    static propTypes = {
-        recordings: PropTypes.array.isRequired,
-        onRecordingSubmit: PropTypes.func.isRequired,
-        autoAddRecording: PropTypes.bool.isRequired,
-        onAutoAddRecordingUpdate: PropTypes.func.isRequired,
-    };
+interface RecordingAddFormProps {
+    recordings: any[];
+    onRecordingSubmit: (mbid: string) => void;
+    autoAddRecordings: boolean;
+    onAutoAddRecordingUpdate: (autoAddRecording: boolean) => void;
+}
 
-    constructor(props) {
+interface RecordingAddFormState {
+    mbid: string;
+    validUUID: boolean;
+    duplicate: boolean;
+    validInput: boolean;
+}
+
+class RecordingAddForm extends Component<RecordingAddFormProps, RecordingAddFormState> {
+    constructor(props: Readonly<RecordingAddFormProps>) {
         super(props);
-        this.state = recordingAddFormGetInitialState();
+        this.state = {
+            mbid: "",
+            validUUID: false,
+            duplicate: false,
+            validInput: false,
+        }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps: Readonly<RecordingAddFormProps>, prevState: Readonly<RecordingAddFormState>) {
         if (
             this.state.validUUID &&
             !this.state.duplicate &&
-            this.props.autoAddRecording
+            this.props.autoAddRecordings
         ) {
             this.addMbid();
         }
     }
 
     addMbid() {
-        let mbid = RECORDING_MBID_RE.exec(this.state.mbid)[2];
+        let mbid = RECORDING_MBID_RE.exec(this.state.mbid)![2];
         if (!mbid) {
             return;
         }
         mbid = mbid.toLowerCase();
         this.props.onRecordingSubmit(mbid);
-        this.setState(recordingAddFormGetInitialState());
+        this.setState({
+            mbid: "",
+            validUUID: false,
+            duplicate: false,
+            validInput: false,
+        });
     }
 
-    handleSubmit = (event) => {
+    handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         this.addMbid();
     };
 
-    handleChange = (event) => {
+    handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const mbidField = event.target.value;
         const isValidUUID = RECORDING_MBID_RE.test(mbidField);
         let isDuplicate = true;
         if (isValidUUID) {
-            let mbid = RECORDING_MBID_RE.exec(mbidField)[2];
+            let mbid = RECORDING_MBID_RE.exec(mbidField)![2];
             mbid = mbid.toLowerCase();
             isDuplicate = this.props.recordings.indexOf(mbid) !== -1;
         }
@@ -636,8 +674,8 @@ class RecordingAddForm extends React.Component {
         });
     };
 
-    changeAutoAddRecording = (event) => {
-        this.props.onAutoAddRecordingUpdate(!this.props.autoAddRecording);
+    changeAutoAddRecording = () => {
+        this.props.onAutoAddRecordingUpdate(!this.props.autoAddRecordings);
     };
 
     render() {
@@ -672,7 +710,7 @@ class RecordingAddForm extends React.Component {
                     />
                     <span className="input-group-btn">
                         <button
-                            disabled={this.state.validInput ? "" : "disabled"}
+                            disabled={!this.state.validInput}
                             className="btn btn-default btn-sm"
                             type="submit"
                         >
@@ -685,10 +723,10 @@ class RecordingAddForm extends React.Component {
                         <input
                             id="autoadd-check"
                             type="checkbox"
-                            checked={
-                                this.props.autoAddRecording ? "checked" : ""
-                            }
-                            onChange={this.changeAutoAddRecording}
+                            checked={this.props.autoAddRecordings}
+                            onChange={() => {
+                                this.props.onAutoAddRecordingUpdate(!this.props.autoAddRecordings);
+                            }}
                         />
                         &nbsp;
                         <label htmlFor="autoadd-check">
@@ -702,25 +740,27 @@ class RecordingAddForm extends React.Component {
     }
 }
 
-class RecordingList extends React.Component {
-    static propTypes = {
-        recordings: PropTypes.array.isRequired,
-        onRecordingDelete: PropTypes.func.isRequired,
-    };
+interface RecordingListProps {
+    recordings: any[];
+    onRecordingDelete: (mbid: string) => void;
+}
+
+class RecordingList extends Component<RecordingListProps> {
+    constructor(props: Readonly<RecordingListProps>) {
+        super(props);
+    }
 
     render() {
-        const items = [];
-        this.props.recordings.forEach(
-            function (recording) {
-                items.push(
-                    <Recording
-                        key={recording}
-                        mbid={recording}
-                        onRecordingDelete={this.props.onRecordingDelete}
-                    />
-                );
-            }.bind(this)
-        );
+        const items: JSX.Element[] = [];
+        this.props.recordings.forEach((recording) => {
+            items.push(
+                <Recording
+                    key={recording}
+                    mbid={recording}
+                    onRecordingDelete={this.props.onRecordingDelete}
+                />
+            );
+        });
         if (items.length > 0) {
             return (
                 <table className="recordings table table-condensed table-hover">
@@ -743,43 +783,47 @@ const RECORDING_STATUS_LOADING = "loading"; // loading info from the server
 const RECORDING_STATUS_ERROR = "error"; // failed to load info about recording
 const RECORDING_STATUS_LOADED = "loaded"; // info has been loaded
 
-class Recording extends React.Component {
-    static propTypes = {
-        mbid: PropTypes.string.isRequired,
-        onRecordingDelete: PropTypes.func.isRequired,
-    };
+interface RecordingProps {
+    mbid: string;
+    onRecordingDelete: (mbid: string) => void;
+}
 
-    state = {
-        status: RECORDING_STATUS_LOADING,
-    };
+interface RecordingState {
+    status: string;
+    error?: string;
+    details?: any;
+}
+
+class Recording extends Component<RecordingProps, RecordingState> {
+    constructor(props: Readonly<RecordingProps>) {
+        super(props);
+        this.state = {
+            status: RECORDING_STATUS_LOADING,
+        };
+    }
 
     componentDidMount() {
         $.ajax({
             type: "GET",
             url: `/datasets/metadata/recording/${this.props.mbid}`,
-            success: function (data) {
+            success: (data) => {
                 this.setState({
                     details: data.recording,
                     status: RECORDING_STATUS_LOADED,
                 });
-            }.bind(this),
-            error: function () {
+            },
+            error: () => {
                 this.setState({
                     error: "Recording not found!",
                     status: RECORDING_STATUS_ERROR,
                 });
-            }.bind(this),
+            }
         });
     }
 
-    handleDelete = (event) => {
-        event.preventDefault();
-        this.props.onRecordingDelete(this.props.mbid);
-    };
-
     render() {
-        let details = "";
-        let rowClassName = "";
+        let details;
+        let rowClassName;
         switch (this.state.status) {
             case RECORDING_STATUS_LOADED:
                 details = (
@@ -808,7 +852,10 @@ class Recording extends React.Component {
                         type="button"
                         className="close"
                         title="Remove recording"
-                        onClick={this.handleDelete}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            this.props.onRecordingDelete(this.props.mbid);
+                        }}
                     >
                         &times;
                     </button>

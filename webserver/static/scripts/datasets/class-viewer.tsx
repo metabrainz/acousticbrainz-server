@@ -1,4 +1,3 @@
-const PropTypes = require("prop-types");
 /*
  This is a viewer for classes in existing datasets.
 
@@ -6,11 +5,11 @@ const PropTypes = require("prop-types");
  to be specified on container element. When Dataset component is mounted, it
  fetches existing dataset from the server.
  */
-const React = require("react");
-const ReactDOM = require("react-dom");
+import React, {Component} from "react";
+import ReactDOM from "react-dom";
 
 const CONTAINER_ELEMENT_ID = "dataset-class-viewer";
-const container = document.getElementById(CONTAINER_ELEMENT_ID);
+const container = document.getElementById(CONTAINER_ELEMENT_ID)!;
 
 const SECTION_DATASET_DETAILS = "dataset_details";
 const SECTION_CLASS_DETAILS = "class_details";
@@ -35,11 +34,22 @@ const SECTION_CLASS_DETAILS = "class_details";
    - SECTION_CLASS_DETAILS (specific class; this also requires
      active_class_index variable to be set in Dataset state)
  */
-class Dataset extends React.Component {
-    state = {
-        active_section: SECTION_DATASET_DETAILS,
-        data: null,
-    };
+
+interface DatasetState {
+    active_section: any;
+    active_class_index?: number;
+    data: any;
+}
+
+class Dataset extends Component<{}, DatasetState> {
+    constructor(props: Readonly<{}>) {
+        super(props);
+        this.state = {
+            active_section: SECTION_DATASET_DETAILS,
+            data: null,
+            active_class_index: undefined
+        };
+    }
 
     componentDidMount() {
         // Do not confuse property called "dataset" with our own datasets. See
@@ -54,13 +64,13 @@ class Dataset extends React.Component {
         }
         $.get(
             `/datasets/service/${container.dataset.datasetId}/json`,
-            function (result) {
+            (result) => {
                 this.setState({ data: result });
-            }.bind(this)
+            }
         );
     }
 
-    handleViewDetails = (index) => {
+    handleViewDetails = (index: number) => {
         this.setState({
             active_section: SECTION_CLASS_DETAILS,
             active_class_index: index,
@@ -76,7 +86,7 @@ class Dataset extends React.Component {
 
     render() {
         if (this.state.data) {
-            if (this.state.active_section == SECTION_DATASET_DETAILS) {
+            if (this.state.active_section === SECTION_DATASET_DETAILS) {
                 // TODO: Move ClassList into DatasetDetails
                 return (
                     <ClassList
@@ -85,19 +95,20 @@ class Dataset extends React.Component {
                     />
                 );
             } // SECTION_CLASS_DETAILS
-            const active_class = this.state.data.classes[
-                this.state.active_class_index
-            ];
-            return (
-                <ClassDetails
-                    id={this.state.active_class_index}
-                    name={active_class.name}
-                    description={active_class.description}
-                    recordings={active_class.recordings}
-                    datasetName={this.state.data.name}
-                    onReturn={this.handleReturn}
-                />
-            );
+            if (this.state.active_class_index) {
+                const active_class =
+                    this.state.data.classes[this.state.active_class_index];
+                return (
+                    <ClassDetails
+                        id={this.state.active_class_index}
+                        name={active_class.name}
+                        description={active_class.description}
+                        recordings={active_class.recordings}
+                        datasetName={this.state.data.name}
+                        onReturn={this.handleReturn}
+                    />
+                );
+            }
         }
         return <strong>Loading...</strong>;
     }
@@ -105,16 +116,16 @@ class Dataset extends React.Component {
 
 // Classes used with SECTION_DATASET_DETAILS:
 
-class ClassList extends React.Component {
-    static propTypes = {
-        classes: PropTypes.array.isRequired,
-        onViewClass: PropTypes.func.isRequired,
-    };
+interface ClassListProps {
+    classes: any[];
+    onViewClass: (cls: number) => void;
+}
 
+class ClassList extends Component<ClassListProps> {
     render() {
-        const items = [];
+        const items: JSX.Element[] = [];
         this.props.classes.forEach(
-            function (cls, index) {
+            (cls, index) => {
                 items.push(
                     <Class
                         id={index}
@@ -125,7 +136,7 @@ class ClassList extends React.Component {
                         onViewClass={this.props.onViewClass}
                     />
                 );
-            }.bind(this)
+            }
         );
         return (
             <div>
@@ -136,20 +147,15 @@ class ClassList extends React.Component {
     }
 }
 
-class Class extends React.Component {
-    static propTypes = {
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        recordingCounter: PropTypes.number.isRequired,
-        onViewClass: PropTypes.func.isRequired,
-    };
+interface ClassProps {
+    id: number;
+    name: string | JSX.Element;
+    description: string
+    recordingCounter: number;
+    onViewClass: (cls: number) => void;
+}
 
-    handleViewDetails = (event) => {
-        event.preventDefault();
-        this.props.onViewClass(this.props.id);
-    };
-
+class Class extends Component<ClassProps> {
     render() {
         let { name } = this.props;
         if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
@@ -161,7 +167,10 @@ class Class extends React.Component {
             <div className="col-md-3 class">
                 <a
                     href="#"
-                    onClick={this.handleViewDetails}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        this.props.onViewClass(this.props.id);
+                    }}
                     className="thumbnail"
                 >
                     <div className="name">{name}</div>
@@ -174,16 +183,16 @@ class Class extends React.Component {
 
 // Classes used with SECTION_CLASS_DETAILS:
 
-class ClassDetails extends React.Component {
-    static propTypes = {
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        recordings: PropTypes.array.isRequired,
-        datasetName: PropTypes.string.isRequired,
-        onReturn: PropTypes.func.isRequired,
-    };
+interface ClassDetailsProps {
+    id: number;
+    name: string;
+    description: string;
+    recordings: string[],
+    datasetName: string;
+    onReturn: () => void,
+}
 
+class ClassDetails extends Component<ClassDetailsProps> {
     render() {
         return (
             <div className="class-details">
@@ -210,13 +219,13 @@ class ClassDetails extends React.Component {
     }
 }
 
-class RecordingList extends React.Component {
-    static propTypes = {
-        recordings: PropTypes.array.isRequired,
-    };
+interface RecordingListProps {
+    recordings: string[];
+}
 
+class RecordingList extends Component<RecordingListProps> {
     render() {
-        const items = [];
+        const items: JSX.Element[] = [];
         this.props.recordings.forEach(function (recording) {
             items.push(<Recording key={recording} mbid={recording} />);
         });
@@ -237,40 +246,52 @@ class RecordingList extends React.Component {
     }
 }
 
+// TODO: Turn into enum
 const RECORDING_STATUS_LOADING = "loading"; // loading info from the server
 const RECORDING_STATUS_ERROR = "error"; // failed to load info about recording
 const RECORDING_STATUS_LOADED = "loaded"; // info has been loaded
 
-class Recording extends React.Component {
-    static propTypes = {
-        mbid: PropTypes.string.isRequired,
-    };
+interface RecordingProps {
+    mbid: string;
+}
 
-    state = {
-        status: RECORDING_STATUS_LOADING,
-    };
+interface RecordingState {
+    status: string;
+    details?: any;
+    error?: string;
+}
+
+class Recording extends Component<RecordingProps, RecordingState> {
+    constructor(props: Readonly<RecordingProps>) {
+        super(props);
+        this.state = {
+            status: RECORDING_STATUS_LOADING,
+            details: undefined,
+            error: undefined
+        };
+    }
 
     componentDidMount() {
         $.ajax({
             type: "GET",
             url: `/datasets/metadata/dataset/${container.dataset.datasetId}/${this.props.mbid}`,
-            success: function (data) {
+            success: (data) => {
                 this.setState({
                     details: data.recording,
                     status: RECORDING_STATUS_LOADED,
                 });
-            }.bind(this),
-            error: function () {
+            },
+            error: () => {
                 this.setState({
                     error: "Recording not found!",
                     status: RECORDING_STATUS_ERROR,
                 });
-            }.bind(this),
+            },
         });
     }
 
     render() {
-        let details = "";
+        let details: JSX.Element;
         let rowClassName = "";
         switch (this.state.status) {
             case RECORDING_STATUS_LOADED:
@@ -282,7 +303,7 @@ class Recording extends React.Component {
                 rowClassName = "";
                 break;
             case RECORDING_STATUS_ERROR:
-                details = this.state.error;
+                details = <em>{this.state.error}</em>;
                 rowClassName = "warning";
                 break;
             case RECORDING_STATUS_LOADING:

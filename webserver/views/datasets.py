@@ -22,7 +22,7 @@ import db.user
 from db.dataset import slugify
 from utils import dataset_validator
 from webserver import flash, forms
-from webserver.decorators import auth_required
+from webserver.decorators import service_session_login_required
 from webserver.external import musicbrainz
 from webserver.views.api.exceptions import APIUnauthorized
 
@@ -256,6 +256,10 @@ def eval_info(dataset_id):
 
 @datasets_bp.route("/service/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
 def eval_job(dataset_id, job_id):
+    """Delete a dataset evaluation job.
+    In the case that the user isn't logged in, or the request dataset doesn't belong to
+    the current logged in user, we return 404 (instead of 401) in order to prevent
+    leaking the existence of the dataset"""
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
     job = db.dataset_eval.get_job(job_id)
@@ -282,6 +286,7 @@ def eval_job(dataset_id, job_id):
 
 
 @datasets_bp.route("/service/<uuid:dataset_id>/evaluation/json")
+@service_session_login_required
 def eval_jobs(dataset_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
@@ -301,6 +306,7 @@ def eval_jobs(dataset_id):
 
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluate", methods=('GET', 'POST'))
+@login_required
 def evaluate(dataset_id):
     """Endpoint for submitting dataset for evaluation."""
     ds = get_dataset(dataset_id)
@@ -354,6 +360,10 @@ def evaluate(dataset_id):
 
 @datasets_bp.route("/service/<uuid:dataset_id>/json")
 def view_json(dataset_id):
+    """Get the JSON of a dataset.
+    In the case that the user isn't logged in, or the request dataset doesn't belong to
+    the current logged in user, we return 404 (instead of 401) in order to prevent
+    leaking the existence of the dataset"""
     dataset = get_dataset(dataset_id)
     dataset_clean = {
         "name": dataset["name"],
@@ -377,7 +387,7 @@ def create():
 
 
 @datasets_bp.route("/service/create", methods=("POST", ))
-@auth_required
+@service_session_login_required
 def create_service():
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -491,7 +501,7 @@ def edit(dataset_id):
 
 
 @datasets_bp.route("/service/<uuid:dataset_id>/edit", methods=("POST", ))
-@auth_required
+@service_session_login_required
 def edit_service(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:

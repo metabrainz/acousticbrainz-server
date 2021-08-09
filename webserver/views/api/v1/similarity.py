@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import collections
 from operator import itemgetter
 
+from brainzutils.ratelimit import ratelimit
 from flask import Blueprint, jsonify, request
 
 import webserver.views.api.exceptions
@@ -114,6 +115,7 @@ def  _check_index_params(metric):
 
 @bp_similarity.route("/<metric>/", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_many_similar_recordings(metric):
     """Get the most similar submissions to multiple (MBID, offset) combinations.
 
@@ -216,6 +218,7 @@ def check_bad_request_between_recordings():
 
 @bp_similarity.route("/<metric>/between/", methods=["GET"])
 @crossdomain()
+@ratelimit()
 def get_similarity_between(metric):
     """Get the distance measure for similarity between two MBIDs.
     The distance measure will correspond to the index of the

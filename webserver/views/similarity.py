@@ -3,8 +3,8 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import current_user, login_required
 from werkzeug.exceptions import NotFound, ServiceUnavailable
 
+from webserver.decorators import service_session_login_required
 from webserver.utils import validate_offset
-from webserver.decorators import auth_required
 from webserver.views.data import _get_recording_info, _get_youtube_query
 from similarity.index_model import AnnoyModel
 import similarity.exceptions
@@ -56,7 +56,7 @@ def get_similar(mbid, metric):
 
 
 @similarity_bp.route("/service/similar/<string:metric>/<uuid:mbid>")
-@auth_required
+@service_session_login_required
 def get_similar_service(mbid, metric):
     """Get similar recordings in terms of the specified metric
     to the specified (MBID, offset) combination. Each item in
@@ -86,10 +86,8 @@ def get_similar_service(mbid, metric):
 
 
 @similarity_bp.route("/service/evaluate/<string:metric>/<uuid:mbid>", methods=['POST'])
-@auth_required
+@service_session_login_required
 def add_evaluations(mbid, metric):
-    offset = validate_offset(request.args.get("n"))
-
     if not current_app.config.get('FEATURE_SIMILARITY_FEEDBACK', False):
         raise ServiceUnavailable()
 
@@ -107,7 +105,6 @@ def add_evaluations(mbid, metric):
             'error': "Request does not contain metadata for similar recordings."
         }), 400
 
-    # TODO: We should _only_ receive messages from logged in users - we already have @auth_required
     user_id = current_user.id if current_user.is_authenticated else None
     for rec in metadata:
         # *NOTE*: result_id is the lowlevel.id of one similar recording in metadata, and

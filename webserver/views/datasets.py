@@ -12,6 +12,7 @@ from collections import defaultdict
 import six
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file, current_app
 from flask_login import login_required, current_user
+from flask_wtf import FlaskForm
 from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
 
 import db.dataset
@@ -536,12 +537,13 @@ def delete(dataset_id):
     if ds["author"] != current_user.id:
         raise Forbidden("You can't delete this dataset.")
 
-    if request.method == "POST":
+    form = FlaskForm()
+    if form.validate_on_submit():
         db.dataset.delete(ds["id"])
         flash.success("Dataset has been deleted.")
         return redirect(url_for("user.profile", musicbrainz_id=current_user.musicbrainz_id))
     else:  # GET
-        return render_template("datasets/delete.html", dataset=ds)
+        return render_template("datasets/delete.html", dataset=ds, form=form)
 
 
 def _get_recording_info_for_mbid(mbid):

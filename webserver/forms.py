@@ -1,6 +1,6 @@
 from flask import current_app
 from wtforms import BooleanField, SelectField, StringField, TextAreaField, \
-    SelectMultipleField, FieldList, FormField, widgets, ValidationError
+    SelectMultipleField, FieldList, FormField, widgets, ValidationError, RadioField
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -22,6 +22,11 @@ PREPROCESSING_VALUES = [(val, val) for val in dataset_eval.DEFAULT_PARAMETER_PRE
 
 # Maximum number of C and gamma values
 MAX_NUMBER_PARAMETERS = 10
+
+
+class GdprForm(FlaskForm):
+    preference = RadioField(choices=[('agree', 'OK, I agree'), ('disagree', "No, I don't want to use AcousticBrainz")],
+                            default='', validate_choice=False)
 
 
 class MultiCheckboxField(SelectMultipleField):

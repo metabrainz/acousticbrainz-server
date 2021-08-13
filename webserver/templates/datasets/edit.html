@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-  <div id="dataset-editor" data-mode="{{ mode }}"
+  <div id="dataset-editor" data-mode="{{ mode }}" data-csrftoken="{{ csrf_token() }}"
       {{ 'data-edit-id='+dataset_id if dataset_id }}></div>
 {% endblock %}
 

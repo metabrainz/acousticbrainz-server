@@ -52,6 +52,7 @@ class Dataset extends React.Component {
         this.state = {
             autoAddRecording: false,
             mode: container.dataset.mode,
+            csrftoken: container.dataset.csrftoken,
             active_section: SECTION_DATASET_DETAILS,
             data: null,
         };
@@ -182,6 +183,7 @@ class Dataset extends React.Component {
                         <DatasetControlButtons
                             mode={this.state.mode}
                             data={this.state.data}
+                            csrftoken={this.state.csrftoken}
                         />
                     </div>
                 );
@@ -253,6 +255,7 @@ class DatasetDetails extends React.Component {
 class DatasetControlButtons extends React.Component {
     static propTypes = {
         mode: PropTypes.string.isRequired,
+        csrftoken: PropTypes.string.isRequired,
         data: PropTypes.object.isRequired,
     };
 
@@ -278,6 +281,7 @@ class DatasetControlButtons extends React.Component {
         $.ajax({
             type: "POST",
             url: submitEndpoint,
+            headers: {"X-CSRFToken": this.props.csrftoken},
             data: JSON.stringify({
                 id: this.props.data.id, // used only with MODE_EDIT
                 name: this.props.data.name,

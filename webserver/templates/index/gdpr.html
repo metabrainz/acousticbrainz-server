@@ -16,8 +16,10 @@
     </p>
     <p>For further details please see our <a href="https://metabrainz.org/gdpr">GDPR compliance statement.</a></p>
     <form method="POST">
-        <input type="radio" id="gdpr-agree" name="gdpr-options" value="agree" required> <label for="gdpr-agree">OK, I agree</label><br/>
-        <input type="radio" id="gdpr-disagree" name="gdpr-options" value="disagree" required> <label for="gdpr-disagree">No, I don't want to use AcousticBrainz</label><br/>
+      {{ form.hidden_tag() }}
+      {% for field in form.preference %}
+        {{ field }} {{ field.label }}<br/>
+      {% endfor %}
       {% if request.args.get('next') %}
         <input type="hidden" name="next" value="{{ request.args.get('next') }}"/>
       {% endif %}

@@ -7,6 +7,7 @@ from webserver import flash
 import db.submission_stats
 import db.user as db_user
 import db.exceptions
+from webserver.forms import GdprForm
 
 index_bp = Blueprint('index', __name__)
 
@@ -25,10 +26,9 @@ def index():
 @index_bp.route('/agree-to-terms', methods=['GET', 'POST'])
 @login_required
 def gdpr_notice():
-    if request.method == 'GET':
-        return render_template('index/gdpr.html', next=request.args.get('next'))
-    elif request.method == 'POST':
-        if request.form.get('gdpr-options') == 'agree':
+    form = GdprForm()
+    if form.validate_on_submit():
+        if form.preference.data == 'agree':
             try:
                 db_user.agree_to_gdpr(current_user.musicbrainz_id)
             except db.exceptions.DatabaseException:
@@ -37,11 +37,13 @@ def gdpr_notice():
             if next:
                 return redirect(next)
             return redirect(url_for('index.index'))
-        elif request.form.get('gdpr-options') == 'disagree':
+        elif form.preference.data == 'disagree':
             return redirect(url_for('login.logout', next=request.args.get('next')))
         else:
             flash.error('You must agree to or decline our terms')
-            return render_template('index/gdpr.html', next=request.args.get('next'))
+            return render_template('index/gdpr.html', form=form, next=request.args.get('next'))
+    else:
+        return render_template('index/gdpr.html', form=form, next=request.args.get('next'))
 
 
 @index_bp.route("/download")

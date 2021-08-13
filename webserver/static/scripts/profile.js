@@ -2,6 +2,7 @@ const $ = require("jquery");
 
 $(document).ready(function () {
     const apiKey = $("#api-key");
+    const csrftoken = $("#csrftoken").val();
     if (apiKey) {
         // Only when key is displayed (user is viewing their own page)
 
@@ -19,6 +20,7 @@ $(document).ready(function () {
                 $.ajax({
                     type: "POST",
                     url: "/user/generate-api-key",
+                    headers: {"X-CSRFToken": csrftoken},
                     success(data) {
                         apiKey.html(data.key);
                         apiKey.show();
@@ -26,7 +28,7 @@ $(document).ready(function () {
                     },
                     error(jqXHR, textStatus, errorThrown) {
                         let msg = "Failed to generate new API key!";
-                        if (jqXHR.status == 429) {
+                        if (jqXHR.status === 429) {
                             msg += `\n${JSON.parse(jqXHR.responseText).error}`;
                         }
                         alert(msg);

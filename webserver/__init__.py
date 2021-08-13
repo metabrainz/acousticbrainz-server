@@ -10,6 +10,8 @@ import os
 import time
 import urlparse
 
+from flask_wtf import CSRFProtect
+
 API_PREFIX = '/api/'
 
 # Check to see if we're running under a docker deployment. If so, don't second guess
@@ -108,6 +110,9 @@ def create_app(debug=None):
     from webserver.errors import init_error_handlers
     init_error_handlers(app)
 
+    # CSRF
+    csrf = CSRFProtect(app)
+
     # Static files
     import static_manager
 
@@ -201,6 +206,14 @@ def _register_blueprints(app):
         app.register_blueprint(bp_datasets, url_prefix=v1_prefix + '/datasets')
         app.register_blueprint(bp_dataset_eval, url_prefix=v1_prefix + '/datasets/evaluation')
         app.register_blueprint(bp_similarity, url_prefix=v1_prefix + '/similarity')
+
+        # During readthedocs creation we don't have the csrf extension,
+        # so only exclude these endpoints if it's enabled
+        if 'csrf' in app.extensions:
+            app.extensions['csrf'].exempt(bp_core)
+            app.extensions['csrf'].exempt(bp_datasets)
+            app.extensions['csrf'].exempt(bp_dataset_eval)
+            app.extensions['csrf'].exempt(bp_similarity)
 
         from webserver.views.api.legacy import api_legacy_bp
         app.register_blueprint(api_legacy_bp)

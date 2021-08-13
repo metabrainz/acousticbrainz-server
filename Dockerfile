@@ -136,6 +136,7 @@ RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs
 COPY ./docker/cron/crontab /etc/cron.d/acousticbrainz
+RUN chmod 0644 /etc/cron.d/acousticbrainz
 COPY ./docker/cron/cron-config.service /etc/service/cron-config/run
 COPY docker/cron/consul-template-cron-config.conf /etc/consul-template-cron-config.conf
 RUN touch /etc/service/cron/down

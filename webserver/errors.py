@@ -32,6 +32,11 @@ def init_error_handlers(app):
             return jsonify_error(error)
         return render_template('errors/404.html', error=error), 404
 
+    @app.errorhandler(429)
+    def too_many_requests(error):
+        # always returning JSON because this is only raised from API endpoints
+        return jsonify_error(error, 429)
+
     @app.errorhandler(500)
     def internal_server_error(error):
         if request.path.startswith(webserver.API_PREFIX):

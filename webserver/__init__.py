@@ -207,16 +207,18 @@ def _register_blueprints(app):
         app.register_blueprint(bp_dataset_eval, url_prefix=v1_prefix + '/datasets/evaluation')
         app.register_blueprint(bp_similarity, url_prefix=v1_prefix + '/similarity')
 
+        from webserver.views.api.legacy import api_legacy_bp
+        app.register_blueprint(api_legacy_bp)
+
         # During readthedocs creation we don't have the csrf extension,
         # so only exclude these endpoints if it's enabled
         if 'csrf' in app.extensions:
+            app.extensions['csrf'].exempt(api_legacy_bp)
             app.extensions['csrf'].exempt(bp_core)
             app.extensions['csrf'].exempt(bp_datasets)
             app.extensions['csrf'].exempt(bp_dataset_eval)
             app.extensions['csrf'].exempt(bp_similarity)
 
-        from webserver.views.api.legacy import api_legacy_bp
-        app.register_blueprint(api_legacy_bp)
 
     register_ui(app)
     register_api(app)

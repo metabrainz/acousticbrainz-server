@@ -22,18 +22,30 @@ def init(client_id, client_secret, session_key='musicbrainz'):
     _session_key = session_key
 
 
+def musicbrainz_auth_session_decoder(message):
+    """Decode the json oauth response from MusicBrainz, returning {} if the response isn't valid json"""
+    try:
+        return json.loads(message.decode("utf-8"))
+    except ValueError:
+        return {}
+
+
 def get_user():
     """Function should fetch user data from database, or, if necessary, create it, and return it."""
-    s = _musicbrainz.get_auth_session(data={
-        'code': _fetch_data('code'),
-        'grant_type': 'authorization_code',
-        'redirect_uri': url_for('login.musicbrainz_post', _external=True)
-    }, decoder=lambda b: json.loads(b.decode("utf-8")))
-    data = s.get('oauth2/userinfo').json()
-    user = db.user.get_or_create(data.get('sub'))
-    if user:
-        return User.from_dbrow(user)
-    else:
+    try:
+        s = _musicbrainz.get_auth_session(data={
+            'code': _fetch_data('code'),
+            'grant_type': 'authorization_code',
+            'redirect_uri': url_for('login.musicbrainz_post', _external=True)
+        }, decoder=musicbrainz_auth_session_decoder)
+        data = s.get('oauth2/userinfo').json()
+        user = db.user.get_or_create(data.get('sub'))
+        if user:
+            return User.from_dbrow(user)
+        else:
+            return None
+    except KeyError:
+        # get_auth_session raises a KeyError if it was unable to get the required data from `code`
         return None
 
 

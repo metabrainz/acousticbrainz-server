@@ -221,9 +221,11 @@ def _parse_bulk_params(params):
     Where offset is a number >=0. Offsets are optional.
     mbid must be a UUID.
 
-    If an offset is not specified non-numeric, or negative it is replaced with 0.
+    If an offset is not specified, is non-numeric, or negative it is replaced with 0.
     If an mbid is not valid, an APIBadRequest Exception is
     raised listing the bad MBID and no further processing is done.
+    If an mbid is missing (e.g. a parameter string of ';;') then the empty mbid is silently skipped,
+    even if an offset is provided.
 
     The mbid is normalised to all lower-case, with hyphens between sections.
 
@@ -237,6 +239,8 @@ def _parse_bulk_params(params):
     for recording in params.split(";"):
         parts = str(recording).split(":")
         mbid = parts[0]
+        if not mbid:
+            continue
         if len(parts) == 1:
             offset = None
         elif len(parts) == 2:

@@ -607,3 +607,11 @@ class GetBulkValidationTest(unittest.TestCase):
         expected = [("C5F4909E-1D7B-4F15-A6F6-1AF376BC01C9", "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0),
                     ("7F27D7A927F046639D202C9C40200E6D", "7f27d7a9-27f0-4663-9d20-2c9c40200e6d", 0)]
         self.assertEqual(expected, validated)
+
+    def test_validate_bulk_params_emptyvalue(self):
+        # If there is an extra ; in the string, causing an empty mbid, skip it
+        params = "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9;;:x"
+        validated = core._parse_bulk_params(params)
+
+        expected = [("c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", "c5f4909e-1d7b-4f15-a6f6-1af376bc01c9", 0)]
+        self.assertEqual(expected, validated)

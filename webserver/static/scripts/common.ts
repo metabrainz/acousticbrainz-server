@@ -2,6 +2,6 @@
 import global from "./global.ts";
 
 // @ts-ignore
-global.$ = global.jQuery = require("jquery");
+global.$ = require("jquery");
 
 require("bootstrap");

@@ -1,8 +1,2 @@
-let glo;
-if (typeof global === "undefined") {
-    glo = window;
-} else {
-    glo = global;
-}
-
+const glo = typeof global === "undefined" ? window : global;
 export default glo;

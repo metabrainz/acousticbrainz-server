@@ -12,7 +12,6 @@ interface SimilarityEvalState {
     refMbid: any;
     refOffset: any;
     formData: any;
-    refYoutubeQuery: string;
     similarYoutubeQuery: string;
     metric: string;
     metricDescription?: string;
@@ -38,7 +37,6 @@ class SimilarityEval extends Component<
         this.state = {
             refMbid: container!.dataset.refMbid,
             refOffset: container!.dataset.refOffset,
-            refYoutubeQuery: container!.dataset.refYoutubeQuery!,
             metric: container!.dataset.metric!,
             metricDescription: undefined,
             metricCategory: undefined,
@@ -81,13 +79,15 @@ class SimilarityEval extends Component<
     }
 
     handleChange = (event: any) => {
-        const formData = { ...this.state.formData };
-        const item = {
-            ...formData[event.currentTarget.getAttribute("data-lowlevel")],
-        };
-        item[event.target.name] = event.target.value;
-        formData[event.currentTarget.getAttribute("data-lowlevel")] = item;
-        this.setState({ formData });
+        this.setState((state) => {
+            const formData = { ...state.formData };
+            const item = {
+                ...formData[event.currentTarget.getAttribute("data-lowlevel")],
+            };
+            item[event.target.name] = event.target.value;
+            formData[event.currentTarget.getAttribute("data-lowlevel")] = item;
+            return { formData };
+        });
     };
 
     handleYoutubeChange = (query: string) => {

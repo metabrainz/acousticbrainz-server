@@ -17,6 +17,7 @@ function EvalRecording(props: EvalRecordingProps) {
                 <a
                     href={`/${props.rec.mbid}?n=${props.rec.submission_offset}`}
                     target="_blank"
+                    rel="noreferrer"
                 >
                     {props.rec.artist} - {props.rec.title}
                 </a>

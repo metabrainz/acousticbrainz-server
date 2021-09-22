@@ -13,6 +13,8 @@ module.exports = {
   globals: {
     Atomics: "readonly",
     SharedArrayBuffer: "readonly",
+    JSX: true,
+    "$": true
   },
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -41,7 +43,26 @@ module.exports = {
     "jsx-a11y/label-has-associated-control": ['error', {
       "assert":"either"
     }],
-    "react/static-property-placement": ["error", "static public field"]
+    "react/static-property-placement": ["error", "static public field"],
+    // We use console messages for some debugging, which is still required for now
+    "no-console": "off",
+    // we use alert for some messages
+    "no-alert": "off",
+    "no-restricted-globals": "off",
+    // Some files have private methods which start with _
+    "no-underscore-dangle": "off",
+    // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-use-before-define.md#how-to-use
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": ["error"],
+    // We group multiple classes that implement a single functionality together
+    "max-classes-per-file": "off",
+    // Table columns without a title
+    "jsx-a11y/control-has-associated-label": "off",
+    // TODO: <a> tags without an href, until we add in proper routing
+    "jsx-a11y/anchor-is-valid": "off",
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    // TODO: disable default on switch until we use enums
+    "default-case": "off"
   },
   settings: {
     "import/resolver": {

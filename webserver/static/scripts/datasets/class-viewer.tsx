@@ -5,7 +5,7 @@
  to be specified on container element. When Dataset component is mounted, it
  fetches existing dataset from the server.
  */
-import React, {Component} from "react";
+import React, { Component } from "react";
 import ReactDOM from "react-dom";
 
 const CONTAINER_ELEMENT_ID = "dataset-class-viewer";
@@ -13,6 +13,207 @@ const container = document.getElementById(CONTAINER_ELEMENT_ID)!;
 
 const SECTION_DATASET_DETAILS = "dataset_details";
 const SECTION_CLASS_DETAILS = "class_details";
+
+// Components used with SECTION_DATASET_DETAILS:
+
+interface ClassProps {
+    id: number;
+    name: string | JSX.Element;
+    description: string;
+    recordingCounter: number;
+    onViewClass: (cls: number) => void;
+}
+
+function Class(props: ClassProps) {
+    let { name } = props;
+    if (!name) name = <em>Unnamed class #{props.id + 1}</em>;
+    let recordingsCounterText = `${props.recordingCounter.toString()} `;
+    if (props.recordingCounter === 1) {
+        recordingsCounterText += "recording";
+    } else {
+        recordingsCounterText += "recordings";
+    }
+    return (
+        <div className="col-md-3 class">
+            <a
+                href="#"
+                onClick={(e) => {
+                    e.preventDefault();
+                    props.onViewClass(props.id);
+                }}
+                className="thumbnail"
+            >
+                <div className="name">{name}</div>
+                <div className="counter">{recordingsCounterText}</div>
+            </a>
+        </div>
+    );
+}
+
+interface ClassListProps {
+    classes: any[];
+    onViewClass: (cls: number) => void;
+}
+
+function ClassList(props: ClassListProps) {
+    const items = props.classes.map((cls, index) => {
+        return (
+            <Class
+                id={index}
+                key={index} // eslint-disable-line react/no-array-index-key
+                name={cls.name}
+                description={cls.description}
+                recordingCounter={cls.recordings.length}
+                onViewClass={props.onViewClass}
+            />
+        );
+    });
+    return (
+        <div>
+            <h3>Classes</h3>
+            <div className="class-list row">{items}</div>
+        </div>
+    );
+}
+
+// Components used with SECTION_CLASS_DETAILS:
+
+// TODO: Turn into enum
+const RECORDING_STATUS_LOADING = "loading"; // loading info from the server
+const RECORDING_STATUS_ERROR = "error"; // failed to load info about recording
+const RECORDING_STATUS_LOADED = "loaded"; // info has been loaded
+
+interface RecordingProps {
+    mbid: string;
+}
+
+interface RecordingState {
+    status: string;
+    details?: any;
+    error?: string;
+}
+
+class Recording extends Component<RecordingProps, RecordingState> {
+    constructor(props: Readonly<RecordingProps>) {
+        super(props);
+        this.state = {
+            status: RECORDING_STATUS_LOADING,
+            details: undefined,
+            error: undefined,
+        };
+    }
+
+    componentDidMount() {
+        $.ajax({
+            type: "GET",
+            url: `/datasets/metadata/dataset/${container.dataset.datasetId}/${this.props.mbid}`,
+            success: (data) => {
+                this.setState({
+                    details: data.recording,
+                    status: RECORDING_STATUS_LOADED,
+                });
+            },
+            error: () => {
+                this.setState({
+                    error: "Recording not found!",
+                    status: RECORDING_STATUS_ERROR,
+                });
+            },
+        });
+    }
+
+    render() {
+        let details: JSX.Element;
+        let rowClassName = "";
+        switch (this.state.status) {
+            case RECORDING_STATUS_LOADED:
+                details = (
+                    <a
+                        href={`/${this.props.mbid}`}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        {this.state.details.title} - {this.state.details.artist}
+                    </a>
+                );
+                rowClassName = "";
+                break;
+            case RECORDING_STATUS_ERROR:
+                details = <em>{this.state.error}</em>;
+                rowClassName = "warning";
+                break;
+            case RECORDING_STATUS_LOADING:
+            default:
+                details = <em className="text-muted">loading information</em>;
+                rowClassName = "active";
+                break;
+        }
+        return (
+            <tr className={rowClassName}>
+                <td className="mbid-col">{this.props.mbid}</td>
+                <td className="details-col">{details}</td>
+            </tr>
+        );
+    }
+}
+
+interface RecordingListProps {
+    recordings: string[];
+}
+
+function RecordingList(props: RecordingListProps) {
+    const items = props.recordings.map((recording) => (
+        <Recording key={recording} mbid={recording} />
+    ));
+    if (items.length > 0) {
+        return (
+            <table className="recordings table table-condensed table-hover">
+                <thead>
+                    <tr>
+                        <th>MusicBrainz ID</th>
+                        <th>Recording</th>
+                    </tr>
+                </thead>
+                <tbody>{items}</tbody>
+            </table>
+        );
+    }
+    return <p className="text-muted">No recordings.</p>;
+}
+
+interface ClassDetailsProps {
+    id: number;
+    name: string;
+    description: string;
+    recordings: string[];
+    datasetName: string;
+    onReturn: () => void;
+}
+
+function ClassDetails(props: ClassDetailsProps) {
+    return (
+        <div className="class-details">
+            <h3>
+                <a
+                    href="#"
+                    onClick={props.onReturn}
+                    title="Back to dataset details"
+                >
+                    {props.datasetName}
+                </a>
+                &nbsp;/&nbsp;
+                {props.name}
+            </h3>
+            <p>
+                <a href="#" onClick={props.onReturn}>
+                    <strong>&larr; Back to class list</strong>
+                </a>
+            </p>
+            <p>{props.description}</p>
+            <RecordingList recordings={props.recordings} />
+        </div>
+    );
+}
 
 /*
  Dataset is the primary class in the dataset viewer. Its state contains
@@ -47,7 +248,7 @@ class Dataset extends Component<{}, DatasetState> {
         this.state = {
             active_section: SECTION_DATASET_DETAILS,
             data: null,
-            active_class_index: undefined
+            active_class_index: undefined,
         };
     }
 
@@ -111,213 +312,6 @@ class Dataset extends Component<{}, DatasetState> {
             }
         }
         return <strong>Loading...</strong>;
-    }
-}
-
-// Classes used with SECTION_DATASET_DETAILS:
-
-interface ClassListProps {
-    classes: any[];
-    onViewClass: (cls: number) => void;
-}
-
-class ClassList extends Component<ClassListProps> {
-    render() {
-        const items: JSX.Element[] = [];
-        this.props.classes.forEach(
-            (cls, index) => {
-                items.push(
-                    <Class
-                        id={index}
-                        key={index}
-                        name={cls.name}
-                        description={cls.description}
-                        recordingCounter={cls.recordings.length}
-                        onViewClass={this.props.onViewClass}
-                    />
-                );
-            }
-        );
-        return (
-            <div>
-                <h3>Classes</h3>
-                <div className="class-list row">{items}</div>
-            </div>
-        );
-    }
-}
-
-interface ClassProps {
-    id: number;
-    name: string | JSX.Element;
-    description: string
-    recordingCounter: number;
-    onViewClass: (cls: number) => void;
-}
-
-class Class extends Component<ClassProps> {
-    render() {
-        let { name } = this.props;
-        if (!name) name = <em>Unnamed class #{this.props.id + 1}</em>;
-        let recordingsCounterText = `${this.props.recordingCounter.toString()} `;
-        if (this.props.recordingCounter == 1)
-            recordingsCounterText += "recording";
-        else recordingsCounterText += "recordings";
-        return (
-            <div className="col-md-3 class">
-                <a
-                    href="#"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        this.props.onViewClass(this.props.id);
-                    }}
-                    className="thumbnail"
-                >
-                    <div className="name">{name}</div>
-                    <div className="counter">{recordingsCounterText}</div>
-                </a>
-            </div>
-        );
-    }
-}
-
-// Classes used with SECTION_CLASS_DETAILS:
-
-interface ClassDetailsProps {
-    id: number;
-    name: string;
-    description: string;
-    recordings: string[],
-    datasetName: string;
-    onReturn: () => void,
-}
-
-class ClassDetails extends Component<ClassDetailsProps> {
-    render() {
-        return (
-            <div className="class-details">
-                <h3>
-                    <a
-                        href="#"
-                        onClick={this.props.onReturn}
-                        title="Back to dataset details"
-                    >
-                        {this.props.datasetName}
-                    </a>
-                    &nbsp;/&nbsp;
-                    {this.props.name}
-                </h3>
-                <p>
-                    <a href="#" onClick={this.props.onReturn}>
-                        <strong>&larr; Back to class list</strong>
-                    </a>
-                </p>
-                <p>{this.props.description}</p>
-                <RecordingList recordings={this.props.recordings} />
-            </div>
-        );
-    }
-}
-
-interface RecordingListProps {
-    recordings: string[];
-}
-
-class RecordingList extends Component<RecordingListProps> {
-    render() {
-        const items: JSX.Element[] = [];
-        this.props.recordings.forEach(function (recording) {
-            items.push(<Recording key={recording} mbid={recording} />);
-        });
-        if (items.length > 0) {
-            return (
-                <table className="recordings table table-condensed table-hover">
-                    <thead>
-                        <tr>
-                            <th>MusicBrainz ID</th>
-                            <th>Recording</th>
-                        </tr>
-                    </thead>
-                    <tbody>{items}</tbody>
-                </table>
-            );
-        }
-        return <p className="text-muted">No recordings.</p>;
-    }
-}
-
-// TODO: Turn into enum
-const RECORDING_STATUS_LOADING = "loading"; // loading info from the server
-const RECORDING_STATUS_ERROR = "error"; // failed to load info about recording
-const RECORDING_STATUS_LOADED = "loaded"; // info has been loaded
-
-interface RecordingProps {
-    mbid: string;
-}
-
-interface RecordingState {
-    status: string;
-    details?: any;
-    error?: string;
-}
-
-class Recording extends Component<RecordingProps, RecordingState> {
-    constructor(props: Readonly<RecordingProps>) {
-        super(props);
-        this.state = {
-            status: RECORDING_STATUS_LOADING,
-            details: undefined,
-            error: undefined
-        };
-    }
-
-    componentDidMount() {
-        $.ajax({
-            type: "GET",
-            url: `/datasets/metadata/dataset/${container.dataset.datasetId}/${this.props.mbid}`,
-            success: (data) => {
-                this.setState({
-                    details: data.recording,
-                    status: RECORDING_STATUS_LOADED,
-                });
-            },
-            error: () => {
-                this.setState({
-                    error: "Recording not found!",
-                    status: RECORDING_STATUS_ERROR,
-                });
-            },
-        });
-    }
-
-    render() {
-        let details: JSX.Element;
-        let rowClassName = "";
-        switch (this.state.status) {
-            case RECORDING_STATUS_LOADED:
-                details = (
-                    <a href={`/${this.props.mbid}`} target="_blank">
-                        {this.state.details.title} - {this.state.details.artist}
-                    </a>
-                );
-                rowClassName = "";
-                break;
-            case RECORDING_STATUS_ERROR:
-                details = <em>{this.state.error}</em>;
-                rowClassName = "warning";
-                break;
-            case RECORDING_STATUS_LOADING:
-            default:
-                details = <em className="text-muted">loading information</em>;
-                rowClassName = "active";
-                break;
-        }
-        return (
-            <tr className={rowClassName}>
-                <td className="mbid-col">{this.props.mbid}</td>
-                <td className="details-col">{details}</td>
-            </tr>
-        );
     }
 }
 

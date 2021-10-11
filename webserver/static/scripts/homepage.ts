@@ -1,4 +1,4 @@
-$(function () {
+$(() => {
     const last_collected = $("#last_collected");
     const lc_time = last_collected.data("timestamp");
     if (lc_time > 0) {

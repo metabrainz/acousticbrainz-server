@@ -1,22 +1,43 @@
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const ManifestPlugin = require('webpack-manifest-plugin');
+const { WebpackManifestPlugin } = require("webpack-manifest-plugin");
+const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 module.exports = function (env) {
     const production = env === 'production';
+    const plugins = [
+        new WebpackManifestPlugin(),
+        new MiniCssExtractPlugin({
+            filename: production ? '[name].[chunkhash].css' : '[name].css',
+            chunkFilename: production ? '[name].[chunkhash].css' : '[name].css'
+        }),
+        new ForkTsCheckerWebpackPlugin({
+            typescript: {
+                diagnosticOptions: {
+                    semantic: true,
+                    syntactic: true,
+                },
+                mode: "write-references",
+            },
+            eslint: {
+                files: "scripts/**/*.{ts,tsx,js,jsx}",
+                options: { fix: !production },
+            },
+        }),
+        new CleanWebpackPlugin()
+    ]
     return {
         context: path.resolve(__dirname, 'webserver', 'static'),
         entry: {
-            common: ['./scripts/common.js'],
-            datasets: ['./scripts/datasets.js'],
-            similarity: ['./scripts/similarity.js'],
-            global: ['./scripts/global.js'],
-            homepage: ['./scripts/homepage.js'],
-            profile: ['./scripts/profile.js'],
-            stats: ['./scripts/stats.js'],
+            common: ['./scripts/common.ts'],
+            datasets: ['./scripts/datasets.tsx'],
+            similarity: ['./scripts/similarity.ts'],
+            homepage: ['./scripts/homepage.ts'],
+            profile: ['./scripts/profile.ts'],
+            stats: ['./scripts/stats.ts'],
             main: ['./styles/main.less']
         },
         output: {
@@ -26,18 +47,17 @@ module.exports = function (env) {
             publicPath: '/static/build/'
         },
         mode: production ? 'production' : 'development',
+        resolve: {
+            extensions: ['.js', '.jsx', '.ts', '.tsx']
+        },
         module: {
             rules: [
                 {
-                    test: /\.jsx?$/,
+                    test: /\.(js|ts)x?$/,
                     exclude: /node_modules/,
                     use: [
                         {
-                            loader: 'babel-loader',
-                            options: {
-                                presets: ['@babel/preset-env', '@babel/preset-react'],
-                                plugins: ['@babel/plugin-proposal-class-properties']
-                            }
+                            loader: 'babel-loader'
                         }
                     ],
                 },
@@ -62,13 +82,6 @@ module.exports = function (env) {
         optimization: {
             minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
         },
-        plugins: [
-            new ManifestPlugin(),
-            new MiniCssExtractPlugin({
-                filename: production ? '[name].[chunkhash].css' : '[name].css',
-                chunkFilename: production ? '[name].[chunkhash].css' : '[name].css'
-            }),
-            new CleanWebpackPlugin()
-        ]
+        plugins
     }
 };

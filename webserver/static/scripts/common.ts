@@ -1,7 +1,8 @@
-// @ts-ignore
-import global from "./global.ts";
+import jquery from "jquery";
 
 // @ts-ignore
-global.$ = require("jquery");
+(global ?? window).$ = jquery;
+// @ts-ignore
+(global ?? window).jQuery = jquery;
 
 require("bootstrap");

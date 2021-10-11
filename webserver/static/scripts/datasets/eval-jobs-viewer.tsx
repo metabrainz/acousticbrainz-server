@@ -151,6 +151,7 @@ function JobRow(props: JobRowProps) {
 }
 
 interface JobListProps {
+    datasetId: string;
     jobs: any[];
     showDelete: boolean;
     onViewDetails: (index: number) => void;
@@ -160,7 +161,7 @@ interface JobListProps {
 function JobList(props: JobListProps) {
     if (props.jobs.length > 0) {
         const items = props.jobs.map((cls: any, index: number) => {
-            const modelDownloadUrl = `/datasets/${container.dataset.datasetId}/${cls.id}/download_model`;
+            const modelDownloadUrl = `/datasets/${props.datasetId}/${cls.id}/download_model`;
             return (
                 <JobRow
                     index={index}
@@ -367,6 +368,10 @@ function JobDetails(props: JobDetailsProps) {
     return <div>{header}</div>;
 }
 
+interface EvaluationJobsViewerProps {
+    datasetId: string;
+}
+
 interface EvaluationJobsViewerState {
     active_section: string;
     isAuthorViewing: boolean;
@@ -376,8 +381,11 @@ interface EvaluationJobsViewerState {
     active_job_index?: number;
 }
 
-class EvaluationJobsViewer extends Component<{}, EvaluationJobsViewerState> {
-    constructor(props: Readonly<{}>) {
+class EvaluationJobsViewer extends Component<
+    EvaluationJobsViewerProps,
+    EvaluationJobsViewerState
+> {
+    constructor(props: Readonly<EvaluationJobsViewerProps>) {
         super(props);
         this.state = {
             active_section: SECTION_JOB_LIST,
@@ -398,18 +406,8 @@ class EvaluationJobsViewer extends Component<{}, EvaluationJobsViewerState> {
             console.debug("Received user info:", user);
         });
 
-        // Do not confuse property called "dataset" with our own datasets. See
-        // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
-        // for more info about it.
-        if (!container.dataset.datasetId) {
-            console.error(
-                "ID of existing dataset needs to be specified" +
-                    "in data-dataset-id property."
-            );
-            return;
-        }
         $.get(
-            `/datasets/service/${container.dataset.datasetId}/evaluation/json`,
+            `/datasets/service/${this.props.datasetId}/evaluation/json`,
             (data) => {
                 let isAuthorViewing = false;
                 if (user !== null) {
@@ -484,7 +482,7 @@ class EvaluationJobsViewer extends Component<{}, EvaluationJobsViewerState> {
         }
         $.ajax({
             type: "DELETE",
-            url: `/datasets/service/${container.dataset.datasetId}/${jobID}`,
+            url: `/datasets/service/${this.props.datasetId}/${jobID}`,
             success(data, textStatus, jqXHR) {
                 console.log(
                     `Evaluation job ${jobID} has been removed from the queue.`
@@ -511,6 +509,7 @@ class EvaluationJobsViewer extends Component<{}, EvaluationJobsViewerState> {
             if (this.state.active_section === SECTION_JOB_LIST) {
                 return (
                     <JobList
+                        datasetId={this.props.datasetId}
                         jobs={this.state.jobs}
                         showDelete={this.state.isAuthorViewing}
                         onViewDetails={this.handleViewDetails}
@@ -539,4 +538,4 @@ class EvaluationJobsViewer extends Component<{}, EvaluationJobsViewerState> {
     }
 }
 
-if (container) ReactDOM.render(<EvaluationJobsViewer />, container);
+export default EvaluationJobsViewer;

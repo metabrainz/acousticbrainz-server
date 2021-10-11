@@ -3,19 +3,16 @@
  - create (creates new dataset from scratch)
  - edit (edits existing dataset)
 
- Mode is set by defining "data-mode" attribute on the container element which is
- referenced in CONTAINER_ELEMENT_ID. Value of this attribute is either "create"
- or "edit" (see definitions below: MODE_CREATE and MODE_EDIT).
+ The DatasetEditor class is the main entrypoint. It has 2 props:
+  - mode
+  - datasetId
 
- When mode is set to "edit", attribute "data-edit-id" need to be specified. This
- attribute references existing dataset by its ID. When Dataset component is
- mounted, it pull existing dataset for editing from the server.
+ When mode is set to "edit", the prop "datasetId" needs to be specified. This
+ attribute references existing dataset by its ID. When the DataseEditor component is
+ mounted, it pulls existing dataset for editing from the server.
  */
 import React, { ChangeEvent, Component, FormEvent } from "react";
 import ReactDOM from "react-dom";
-
-const CONTAINER_ELEMENT_ID = "dataset-editor";
-const container = document.getElementById(CONTAINER_ELEMENT_ID)!;
 
 const MODE_CREATE = "create";
 const MODE_EDIT = "edit";
@@ -63,6 +60,7 @@ function DatasetDetails(props: DatasetDetailsProps) {
 
 interface DatasetControlButtonsProps {
     mode: string;
+    datasetId?: string;
     data: any;
 }
 
@@ -94,7 +92,7 @@ class DatasetControlButtons extends Component<
             submitEndpoint = "/datasets/service/create";
         } else {
             // MODE_EDIT
-            submitEndpoint = `/datasets/service/${container.dataset.editId}/edit`;
+            submitEndpoint = `/datasets/service/${this.props.datasetId}/edit`;
         }
         $.ajax({
             type: "POST",
@@ -676,20 +674,23 @@ class ClassDetails extends Component<ClassDetailsProps> {
    - SECTION_CLASS_DETAILS (editing specific class; this also requires
      active_class_index variable to be set in Dataset state)
  */
-interface DatasetState {
+interface DatasetEditorState {
     autoAddRecording: boolean;
-    mode: string;
     active_section: string;
     active_class_index?: number;
     data?: any;
 }
 
-class Dataset extends Component<{}, DatasetState> {
-    constructor(props: Readonly<{}>) {
+interface DatasetEditorProps {
+    mode: string;
+    datasetId?: string;
+}
+
+class DatasetEditor extends Component<DatasetEditorProps, DatasetEditorState> {
+    constructor(props: Readonly<DatasetEditorProps>) {
         super(props);
         this.state = {
             autoAddRecording: false,
-            mode: container.dataset.mode!,
             active_section: SECTION_DATASET_DETAILS,
             data: undefined,
         };
@@ -699,31 +700,20 @@ class Dataset extends Component<{}, DatasetState> {
         // This function is invoked when Dataset component is originally
         // mounted. Here we need to check what mode dataset editor is in, and
         // pull data from the server if mode is MODE_EDIT.
-        // Do not confuse property called "dataset" with our own datasets. See
-        // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
-        // for more info about it.
-        if (this.state.mode === MODE_EDIT) {
-            if (!container.dataset.editId) {
-                console.error(
-                    "ID of existing dataset needs to be specified" +
-                        "in data-edit-id property."
-                );
-                return;
-            }
+        if (this.props.mode === MODE_EDIT) {
             $.get(
-                `/datasets/service/${container.dataset.editId}/json`,
+                `/datasets/service/${this.props.datasetId}/json`,
                 (result) => {
                     this.setState({ data: result });
                 }
             );
         } else {
-            if (this.state.mode !== MODE_CREATE) {
+            if (this.props.mode !== MODE_CREATE) {
                 console.warn(
                     "Unknown dataset editor mode! Using default: MODE_CREATE."
                 );
             }
             this.setState({
-                mode: MODE_CREATE,
                 data: {
                     name: "",
                     description: "",
@@ -829,13 +819,14 @@ class Dataset extends Component<{}, DatasetState> {
                             </label>
                         </p>
                         <DatasetControlButtons
-                            mode={this.state.mode}
+                            mode={this.props.mode}
+                            datasetId={this.props.datasetId}
                             data={this.state.data}
                         />
                     </div>
                 );
             } // SECTION_CLASS_DETAILS
-            if (this.state.active_class_index) {
+            if (this.state.active_class_index !== undefined) {
                 const active_class =
                     this.state.data.classes[this.state.active_class_index];
                 return (
@@ -859,4 +850,4 @@ class Dataset extends Component<{}, DatasetState> {
     }
 }
 
-if (container) ReactDOM.render(<Dataset />, container);
+export default DatasetEditor;

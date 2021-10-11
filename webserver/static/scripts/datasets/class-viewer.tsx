@@ -1,15 +1,8 @@
 /*
  This is a viewer for classes in existing datasets.
-
- Attribute "data-dataset-id" which references existing dataset by its ID need
- to be specified on container element. When Dataset component is mounted, it
- fetches existing dataset from the server.
+ The Dataset class is the main component which is used to show the dataset
  */
 import React, { Component } from "react";
-import ReactDOM from "react-dom";
-
-const CONTAINER_ELEMENT_ID = "dataset-class-viewer";
-const container = document.getElementById(CONTAINER_ELEMENT_ID)!;
 
 const SECTION_DATASET_DETAILS = "dataset_details";
 const SECTION_CLASS_DETAILS = "class_details";
@@ -84,6 +77,7 @@ const RECORDING_STATUS_ERROR = "error"; // failed to load info about recording
 const RECORDING_STATUS_LOADED = "loaded"; // info has been loaded
 
 interface RecordingProps {
+    datasetId: string;
     mbid: string;
 }
 
@@ -106,7 +100,7 @@ class Recording extends Component<RecordingProps, RecordingState> {
     componentDidMount() {
         $.ajax({
             type: "GET",
-            url: `/datasets/metadata/dataset/${container.dataset.datasetId}/${this.props.mbid}`,
+            url: `/datasets/metadata/dataset/${this.props.datasetId}/${this.props.mbid}`,
             success: (data) => {
                 this.setState({
                     details: data.recording,
@@ -158,12 +152,17 @@ class Recording extends Component<RecordingProps, RecordingState> {
 }
 
 interface RecordingListProps {
+    datasetId: string;
     recordings: string[];
 }
 
 function RecordingList(props: RecordingListProps) {
     const items = props.recordings.map((recording) => (
-        <Recording key={recording} mbid={recording} />
+        <Recording
+            datasetId={props.datasetId}
+            key={recording}
+            mbid={recording}
+        />
     ));
     if (items.length > 0) {
         return (
@@ -182,6 +181,7 @@ function RecordingList(props: RecordingListProps) {
 }
 
 interface ClassDetailsProps {
+    datasetId: string;
     id: number;
     name: string;
     description: string;
@@ -210,7 +210,10 @@ function ClassDetails(props: ClassDetailsProps) {
                 </a>
             </p>
             <p>{props.description}</p>
-            <RecordingList recordings={props.recordings} />
+            <RecordingList
+                datasetId={props.datasetId}
+                recordings={props.recordings}
+            />
         </div>
     );
 }
@@ -236,14 +239,18 @@ function ClassDetails(props: ClassDetailsProps) {
      active_class_index variable to be set in Dataset state)
  */
 
+interface DatasetProps {
+    datasetId: string;
+}
+
 interface DatasetState {
     active_section: any;
     active_class_index?: number;
     data: any;
 }
 
-class Dataset extends Component<{}, DatasetState> {
-    constructor(props: Readonly<{}>) {
+class Dataset extends Component<DatasetProps, DatasetState> {
+    constructor(props: Readonly<DatasetProps>) {
         super(props);
         this.state = {
             active_section: SECTION_DATASET_DETAILS,
@@ -253,22 +260,9 @@ class Dataset extends Component<{}, DatasetState> {
     }
 
     componentDidMount() {
-        // Do not confuse property called "dataset" with our own datasets. See
-        // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dataset
-        // for more info about it.
-        if (!container.dataset.datasetId) {
-            console.error(
-                "ID of existing dataset needs to be specified" +
-                    "in data-dataset-id property."
-            );
-            return;
-        }
-        $.get(
-            `/datasets/service/${container.dataset.datasetId}/json`,
-            (result) => {
-                this.setState({ data: result });
-            }
-        );
+        $.get(`/datasets/service/${this.props.datasetId}/json`, (result) => {
+            this.setState({ data: result });
+        });
     }
 
     handleViewDetails = (index: number) => {
@@ -296,11 +290,12 @@ class Dataset extends Component<{}, DatasetState> {
                     />
                 );
             } // SECTION_CLASS_DETAILS
-            if (this.state.active_class_index) {
+            if (this.state.active_class_index !== undefined) {
                 const active_class =
                     this.state.data.classes[this.state.active_class_index];
                 return (
                     <ClassDetails
+                        datasetId={this.props.datasetId}
                         id={this.state.active_class_index}
                         name={active_class.name}
                         description={active_class.description}
@@ -315,4 +310,4 @@ class Dataset extends Component<{}, DatasetState> {
     }
 }
 
-if (container) ReactDOM.render(<Dataset />, container);
+export default Dataset;

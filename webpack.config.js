@@ -33,9 +33,8 @@ module.exports = function (env) {
         context: path.resolve(__dirname, 'webserver', 'static'),
         entry: {
             common: ['./scripts/common.ts'],
-            datasets: ['./scripts/datasets.ts'],
+            datasets: ['./scripts/datasets.tsx'],
             similarity: ['./scripts/similarity.ts'],
-            global: ['./scripts/global.ts'],
             homepage: ['./scripts/homepage.ts'],
             profile: ['./scripts/profile.ts'],
             stats: ['./scripts/stats.ts'],
@@ -48,6 +47,9 @@ module.exports = function (env) {
             publicPath: '/static/build/'
         },
         mode: production ? 'production' : 'development',
+        resolve: {
+            extensions: ['.js', '.jsx', '.ts', '.tsx']
+        },
         module: {
             rules: [
                 {

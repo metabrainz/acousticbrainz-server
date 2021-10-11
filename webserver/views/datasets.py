@@ -3,6 +3,7 @@ from __future__ import division
 
 import StringIO
 import csv
+import datetime
 import json
 import math
 import os
@@ -31,6 +32,15 @@ C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
 gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
+
+
+class JSONDateTimeEncoder(json.JSONEncoder):
+    """A JSONEncoder which turns datetime objects into ISO 8601-formatted strings"""
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
 
 
 def _pagenum_to_offset(pagenum, limit):
@@ -69,6 +79,7 @@ def _make_pager(data, page, url, urlargs):
 
     return dataview, page, total_pages, prevpage, pages, nextpage
 
+
 @datasets_bp.route("/list",  defaults={"status": "all"})
 @datasets_bp.route("/list/<status>")
 def list_datasets(status):
@@ -98,10 +109,20 @@ def list_datasets(status):
 @datasets_bp.route("/<uuid:dataset_id>")
 def view(dataset_id):
     ds = get_dataset(dataset_id)
+    author = db.user.get(ds["author"])
+    page_props = {
+        "dataset_mode": "view",
+        "data": {
+            "datasetId": str(dataset_id),
+            "dataset": ds,
+            "author": author
+        }
+    }
     return render_template(
         "datasets/view.html",
         dataset=ds,
-        author=db.user.get(ds["author"]),
+        author=author,
+        page_props=json.dumps(page_props, cls=JSONDateTimeEncoder)
     )
 
 
@@ -247,10 +268,19 @@ def accuracy():
 @datasets_bp.route("/<uuid:dataset_id>/evaluation")
 def eval_info(dataset_id):
     ds = get_dataset(dataset_id)
+    page_props = {
+        "dataset_mode": "eval-info",
+        "data": {
+            "datasetId": str(dataset_id),
+            "dataset": ds,
+            "author": db.user.get(ds["author"])
+        }
+    }
     return render_template(
         "datasets/eval-info.html",
         dataset=ds,
         author=db.user.get(ds["author"]),
+        page_props=json.dumps(page_props, cls=JSONDateTimeEncoder)
     )
 
 
@@ -373,7 +403,10 @@ def view_json(dataset_id):
 @datasets_bp.route("/create", methods=("GET", ))
 @login_required
 def create():
-    return render_template("datasets/edit.html", mode="create")
+    page_props = {
+        "dataset_mode": "create"
+    }
+    return render_template("datasets/edit.html", page_props=json.dumps(page_props))
 
 
 @datasets_bp.route("/service/create", methods=("POST", ))
@@ -482,12 +515,16 @@ def edit(dataset_id):
     if ds["author"] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
 
-    return render_template(
-        "datasets/edit.html",
-        mode="edit",
-        dataset_id=str(dataset_id),
-        dataset_name=ds["name"],
-    )
+    page_props = {
+        "dataset_mode": "edit",
+        "data": {
+            "datasetId": str(dataset_id)
+        }
+    }
+    return render_template("datasets/edit.html",
+                           mode="edit",
+                           dataset_name=ds["name"],
+                           page_props=json.dumps(page_props, cls=JSONDateTimeEncoder))
 
 
 @datasets_bp.route("/service/<uuid:dataset_id>/edit", methods=("POST", ))

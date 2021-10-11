@@ -88,7 +88,7 @@ interface JobRowProps {
     id: string;
     created: string;
     status: string;
-    modelDownloadUrl?: string;
+    modelDownloadUrl: string | null;
     outdated: string;
     showDelete: boolean;
     onViewDetails: (index: number) => void;
@@ -280,10 +280,9 @@ interface JobDetailsProps {
     updated: string;
     status: string;
     outdated: string;
-    statusMsg?: string;
+    statusMsg: string | null;
     result: any;
     onReturn: () => void;
-    showDelete: boolean;
 }
 
 function JobDetails(props: JobDetailsProps) {
@@ -527,7 +526,6 @@ class EvaluationJobsViewer extends Component<
                         status={active_job.status}
                         statusMsg={active_job.status_msg}
                         result={active_job.result}
-                        showDelete={this.state.isAuthorViewing}
                         outdated={active_job.outdated}
                         onReturn={this.handleReturn}
                     />

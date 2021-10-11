@@ -167,7 +167,6 @@ class DatasetControlButtons extends Component<
 interface ClassProps {
     id: number;
     name: string | JSX.Element;
-    description: string;
     recordingCounter: number;
     onClassDelete: (index: number) => void;
     onClassEdit: (index: number) => void;
@@ -223,7 +222,6 @@ function ClassList(props: ClassListProps) {
                 key={index} // eslint-disable-line react/no-array-index-key
                 id={index}
                 name={cls.name}
-                description={cls.description}
                 recordingCounter={cls.recordings.length}
                 onClassEdit={props.onClassEdit}
                 onClassDelete={props.onClassDelete}

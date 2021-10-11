@@ -12,7 +12,6 @@ const SECTION_CLASS_DETAILS = "class_details";
 interface ClassProps {
     id: number;
     name: string | JSX.Element;
-    description: string;
     recordingCounter: number;
     onViewClass: (cls: number) => void;
 }
@@ -55,7 +54,6 @@ function ClassList(props: ClassListProps) {
                 id={index}
                 key={index} // eslint-disable-line react/no-array-index-key
                 name={cls.name}
-                description={cls.description}
                 recordingCounter={cls.recordings.length}
                 onViewClass={props.onViewClass}
             />
@@ -182,7 +180,6 @@ function RecordingList(props: RecordingListProps) {
 
 interface ClassDetailsProps {
     datasetId: string;
-    id: number;
     name: string;
     description: string;
     recordings: string[];
@@ -296,7 +293,6 @@ class Dataset extends Component<DatasetProps, DatasetState> {
                 return (
                     <ClassDetails
                         datasetId={this.props.datasetId}
-                        id={this.state.active_class_index}
                         name={active_class.name}
                         description={active_class.description}
                         recordings={active_class.recordings}

@@ -303,7 +303,7 @@ def set_model_status(model_name, model_version, model_status):
         query = text(
             """UPDATE model
                   SET status = :model_status
-                WHERE model_name = :model_name
+                WHERE model = :model_name
                   AND model_version = :model_version"""
         )
         connection.execute(query,
@@ -463,7 +463,7 @@ def load_many_low_level(recordings):
         result = connection.execute(query, {'recordings': tuple(recordings)})
 
         recordings_info = defaultdict(dict)
-        for row in result.fetchall():
+        for row in result:
             recordings_info[row['gid']][row['submission_offset']] = row['data']
 
         return dict(recordings_info)
@@ -742,6 +742,144 @@ def parse_features_row(row, features):
             temp[alias_keys[-1]] = default_type
         data[alias_keys[0]].update(current)
     return data
+
+
+def get_mbids_by_ids(ids):
+    # Get (MBID, offset) combinations for a list of lowlevel.ids
+    # Maintains order of the input list
+    with db.engine.begin() as connection:
+        query = text("""
+            SELECT id
+                 , gid
+                 , submission_offset
+              FROM lowlevel
+             WHERE id in :ids
+        """)
+        id_to_recording = {}
+        result = connection.execute(query, {'ids': tuple(ids)})
+        for row in result.fetchall():
+            id_to_recording[row['id']] = (str(row['gid']), row['submission_offset'])
+            recordings = []
+        for id in ids:
+            recordings.append(id_to_recording.get(id, (None, None)))
+        return recordings
+
+
+def get_lowlevel_metric_feature(id, path):
+    # Get lowlevel data only for a specified path.
+    try:
+        id = int(id)
+    except ValueError:
+        raise db.exceptions.BadDataException("The parameter `id` must be an integer.")
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id, %(path)s AS data
+              FROM lowlevel_json
+             WHERE id = :id
+        """ % {"path": path})
+        result = connection.execute(query, {'id': id})
+        if not result.rowcount:
+            # No data for specified id
+            return None
+        row = result.fetchone()
+        return row["data"]
+
+
+def get_lowlevel_by_id(id):
+    # Get lowlevel data for a specific id.
+    try:
+        id = int(id)
+    except ValueError:
+        raise db.exceptions.BadDataException('Parameter `id` must be an integer.')
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id, data
+              FROM lowlevel_json
+             WHERE id = :id
+        """)
+        result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            return None
+        return result.fetchone()["data"]
+
+
+def get_highlevel_models(id):
+    """Get highlevel model data for a specified id.
+
+    Args:
+        id: integer, indicating the highlevel_model.highlevel
+        or the corresponding lowlevel.id for a submission.
+
+    Returns: highlevel models aggregated with their names,
+    a dictionary of the form:
+        {
+            "model_1": {model_document},
+            ...,
+            "model_n": {model_document}
+        }
+    """
+    try:
+        id = int(id)
+    except ValueError:
+        raise db.exceptions.BadDataException("The parameter `id` must be an integer.")
+
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT jsonb_object_agg(model.model, hlm.data) AS data
+              FROM highlevel_model AS hlm
+         LEFT JOIN model
+                ON model.id = hlm.model
+             WHERE highlevel = :id
+               AND model.status = 'show'
+          GROUP BY highlevel
+        """)
+        result = connection.execute(query, {"id": id})
+        if not result.rowcount:
+            return None
+        row = result.fetchone()
+        return row["data"]
+
+
+def get_ids_by_mbids(mbids):
+    """Get lowlevel IDs for a list of submissions
+    Arguments:
+        mbids: A list of (mbid, submission_offset) pairs
+
+    Returns:
+        a list of integer IDs for the submissions referred to by ``mbids``,
+        in the same order that they were provided.
+        If an (mbid, submission_offset) pair doesn't exist in the database, None is used
+        as an ID"""
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT id
+                 , gid::text
+                 , submission_offset
+              FROM lowlevel
+             WHERE (gid, submission_offset) in :mbid_offsets 
+        """)
+        result = connection.execute(query, {"mbid_offsets": tuple(mbids)})
+        mbid_to_id = {}
+        for row in result.fetchall():
+            mbid_to_id[(row['gid'], row['submission_offset'])] = row['id']
+        result = []
+        for mbid, offset in mbids:
+            data = (str(mbid) .lower(), offset)
+            result.append(mbid_to_id.get(data))
+        return result
+
+
+def count_all_lowlevel():
+    """Get total number of low-level submissions"""
+    with db.engine.connect() as connection:
+        query = text("""
+            SELECT COUNT(*)
+            FROM lowlevel
+        """)
+        result = connection.execute(query)
+        return result.fetchone()[0]
 
 
 def count_lowlevel(mbid):

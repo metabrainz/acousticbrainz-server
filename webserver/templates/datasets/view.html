@@ -6,11 +6,17 @@
   <div id="dataset-viewer">
     {% from 'datasets/macros.html' import print_header %}
     {{ print_header(dataset, author, current_user, 'view') }}
-    <div id="dataset-class-viewer" data-dataset-id="{{ dataset['id'] }}"></div>
+    <div id="dataset-react-container"></div>
   </div>
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }}
-  <script src="{{ get_static_path('datasets.js') }}"></script>
+    {{ super() }}
+    <script id="page-react-props" type="application/json">{{ page_props|safe }}</script>
+    <script src="{{ get_static_path('datasets.js') }}"></script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
 {% endblock %}

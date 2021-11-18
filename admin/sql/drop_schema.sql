@@ -1,0 +1,5 @@
+BEGIN;
+
+DROP SCHEMA IF EXISTS similarity        CASCADE;
+
+COMMIT;

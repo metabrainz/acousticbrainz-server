@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from flask import Blueprint, jsonify, request
 from flask_login import current_user
-from webserver.decorators import auth_required
+from webserver.decorators import api_token_or_session_login_required
 from webserver.views.api import exceptions
 from brainzutils.ratelimit import ratelimit
 import db.dataset_eval
@@ -12,7 +12,7 @@ bp_dataset_eval = Blueprint('api_v1_dataset_eval', __name__)
 
 # Don't ratelimit this view since it is being used by JS
 @bp_dataset_eval.route("/jobs", methods=["GET"])
-@auth_required
+@api_token_or_session_login_required
 def get_jobs():
     """Return a list of jobs related to the current user.
        Identify the current user by being logged in or by passing a Token for authentication.
@@ -54,7 +54,7 @@ def get_jobs():
     )
 
 @bp_dataset_eval.route("/jobs/<uuid:job_id>", methods=["GET"])
-@auth_required
+@api_token_or_session_login_required
 @ratelimit()
 def job_details(job_id):
     """Returns the details of a particular job.

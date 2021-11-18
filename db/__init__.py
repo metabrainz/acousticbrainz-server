@@ -11,7 +11,7 @@ engine = None
 
 def init_db_engine(connect_str):
     global engine
-    engine = create_engine(connect_str, poolclass=NullPool)
+    engine = create_engine(connect_str, poolclass=NullPool, executemany_mode='values', executemany_values_page_size=10000)
 
 
 def run_sql_script(sql_file_path):

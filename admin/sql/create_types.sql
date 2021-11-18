@@ -4,3 +4,4 @@ CREATE TYPE version_type AS ENUM ('lowlevel', 'highlevel');
 CREATE TYPE eval_location_type AS ENUM ('local', 'remote');
 CREATE TYPE gid_type AS ENUM ('mbid', 'msid');
 CREATE TYPE dump_type AS ENUM ('full', 'partial');
+CREATE TYPE similarity.eval_type AS ENUM ('less similar', 'accurate', 'more similar');

@@ -57,6 +57,9 @@ RATELIMIT_WINDOW = 10
 
 DATASET_DIR = "/data/datasets"
 FILE_STORAGE_DIR = "/data/files"
+SIMILARITY_INDEX_DIR = "/data/annoy_indices"
+# How many threads to use when building an annoy index
+SIMILARITY_BUILD_NUM_JOBS = 1
 
 #Feature Flags
 # Choose a server to perform the evaluation on
@@ -66,4 +69,10 @@ FEATURE_EVAL_FILTERING = True
 # Choose settings used for model training
 FEATURE_EVAL_MODEL_SELECTION = False
 
+# Allow submission of feedback on the quality of similarity results
+FEATURE_SIMILARITY_FEEDBACK = False
+
 DEBUG_TB_INTERCEPT_REDIRECTS = False
+
+# maximum number of recordings in the dataset for which the download dataset button is shown
+DATASET_DOWNLOAD_RECORDINGS_LIMIT = 5000

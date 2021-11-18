@@ -1,28 +1,49 @@
 from __future__ import absolute_import
 from __future__ import division
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file
-from flask_login import login_required, current_user
-from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
-from webserver.external import musicbrainz
-from webserver import flash, forms
-from webserver.decorators import auth_required
-from utils import dataset_validator
+
+import StringIO
+import csv
+import datetime
+import json
+import math
+import os
+import zipfile
 from collections import defaultdict
-import db.exceptions
+
+import six
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file, current_app
+from flask_login import login_required, current_user
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import generate_csrf
+from werkzeug.exceptions import NotFound, Unauthorized, BadRequest, Forbidden
+
 import db.dataset
 import db.dataset_eval
+import db.exceptions
+import db.data
 import db.user
-import csv
-import math
-import six
-import StringIO
-
+from db.dataset import slugify
+from utils import dataset_validator
+from webserver import flash, forms
+from webserver.decorators import service_session_login_required
+from webserver.external import musicbrainz
 from webserver.views.api.exceptions import APIUnauthorized
+
 # Below values are defined in 'classification_project_template.yaml' file.
 C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
 gamma = '3, 1, -1, -3, -5, -7, -9, -11'
 
 datasets_bp = Blueprint("datasets", __name__)
+
+
+class JSONDateTimeEncoder(json.JSONEncoder):
+    """A JSONEncoder which turns datetime objects into ISO 8601-formatted strings"""
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
 
 def _pagenum_to_offset(pagenum, limit):
     # Page number and limit to list elements
@@ -60,6 +81,7 @@ def _make_pager(data, page, url, urlargs):
 
     return dataview, page, total_pages, prevpage, pages, nextpage
 
+
 @datasets_bp.route("/list",  defaults={"status": "all"})
 @datasets_bp.route("/list/<status>")
 def list_datasets(status):
@@ -89,10 +111,20 @@ def list_datasets(status):
 @datasets_bp.route("/<uuid:dataset_id>")
 def view(dataset_id):
     ds = get_dataset(dataset_id)
+    author = db.user.get(ds["author"])
+    page_props = {
+        "dataset_mode": "view",
+        "data": {
+            "datasetId": str(dataset_id),
+            "dataset": ds,
+            "author": author
+        }
+    }
     return render_template(
         "datasets/view.html",
         dataset=ds,
-        author=db.user.get(ds["author"]),
+        author=author,
+        page_props=json.dumps(page_props, cls=JSONDateTimeEncoder)
     )
 
 
@@ -103,10 +135,35 @@ def download_annotation_csv(dataset_id):
     ds = get_dataset(dataset_id)
     fp = _convert_dataset_to_csv_stringio(ds)
 
-    file_name = "dataset_annotations_%s.csv" % db.dataset._slugify(ds["name"])
+    file_name = "dataset_annotations_%s.csv" % db.dataset.slugify(ds["name"])
 
     return send_file(fp,
                      mimetype='text/csv',
+                     as_attachment=True,
+                     attachment_filename=file_name)
+
+
+@datasets_bp.route("/<uuid:dataset_id>/<uuid:job_id>/download_model")
+@login_required
+def download_dataset_history(dataset_id, job_id):
+    """ Converts dataset dict to csv for user to download
+    """
+    ds = get_dataset(dataset_id)
+    jobs = db.dataset_eval.get_jobs_for_dataset(ds["id"])
+    this_job = [j for j in jobs if j["id"] == job_id]
+    if not this_job:
+        raise NotFound("No such evaluation job")
+    this_job = this_job[0]
+    if this_job.get("status") != db.dataset_eval.STATUS_DONE:
+        raise NotFound("Job hasn't finished")
+    history_path = this_job.get("result", {}).get("history_path")
+    if not history_path or not os.path.exists(history_path):
+        raise NotFound("Cannot find history file")
+
+    file_name = os.path.basename(history_path)
+
+    return send_file(history_path,
+                     mimetype='application/octet-stream',
                      as_attachment=True,
                      attachment_filename=file_name)
 
@@ -151,6 +208,60 @@ def _convert_dataset_to_csv_stringio(dataset):
     return fp
 
 
+@datasets_bp.route("/<uuid:dataset_id>/download_dataset")
+def download_dataset(dataset_id):
+    """Download the full contents of a dataset, including lowlevel files.
+    The dataset is given as a zip file.
+
+    If the number of items in a dataset is more than config.DATASET_DOWNLOAD_RECORDINGS_LIMIT
+    then redirect back to the dataset page and don't download it.
+    """
+    if current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"] <= 0:
+        flash.error("Downloading complete dataset is disabled")
+        return redirect(url_for(".view", dataset_id=dataset_id))
+    ds = get_dataset(dataset_id)
+    if ds["num_recordings"] > current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"]:
+        flash.error("Downloading complete dataset is disabled for datasets with "
+                    "more than %d recordings." % current_app.config["DATASET_DOWNLOAD_RECORDINGS_LIMIT"])
+        return redirect(url_for(".view", dataset_id=dataset_id))
+    dataset_name = slugify(ds["name"])
+    zip_file = generate_zip_from_dataset(ds)
+    return send_file(zip_file,
+                     as_attachment=True,
+                     attachment_filename="acousticbrainz-dataset-{}-{}.zip".format(dataset_id, dataset_name))
+
+
+def generate_zip_from_dataset(ds):
+    """Build a zip archive of all low-level documents that make up this dataset.
+    A folder is made for each class.
+
+    Arguments:
+        ds: the dataset to generate data for
+
+    Returns:
+        A rewound StringIO containing a zip file with the dataset contents
+    """
+
+    dataset_name = slugify(ds["name"])
+    sio = StringIO.StringIO()
+    zipfp = zipfile.ZipFile(sio, "w", allowZip64=True)
+    for data in ds["classes"]:
+        class_name = slugify(data["name"])
+        CHUNK_SIZE = 100
+        recordings = [(mbid, 0) for mbid in data.get("recordings", [])]
+        chunks = [recordings[i: i + CHUNK_SIZE] for i in xrange(0, len(recordings), CHUNK_SIZE)]
+        for chunk in chunks:
+            recordings_json = db.data.load_many_low_level(chunk)
+            for mbid, offset in chunk:
+                data = recordings_json.get(mbid, {}).get(str(offset))
+                if data:
+                    zipfp.writestr(os.path.join(dataset_name, class_name, "{}.json".format(mbid)), json.dumps(data))
+
+    zipfp.close()
+    sio.seek(0)
+    return sio
+
+
 @datasets_bp.route("/accuracy")
 def accuracy():
     return render_template("datasets/accuracy.html")
@@ -159,15 +270,28 @@ def accuracy():
 @datasets_bp.route("/<uuid:dataset_id>/evaluation")
 def eval_info(dataset_id):
     ds = get_dataset(dataset_id)
+    page_props = {
+        "dataset_mode": "eval-info",
+        "data": {
+            "datasetId": str(dataset_id),
+            "dataset": ds,
+            "author": db.user.get(ds["author"])
+        }
+    }
     return render_template(
         "datasets/eval-info.html",
         dataset=ds,
         author=db.user.get(ds["author"]),
+        page_props=json.dumps(page_props, cls=JSONDateTimeEncoder)
     )
 
 
 @datasets_bp.route("/service/<uuid:dataset_id>/<uuid:job_id>", methods=["DELETE"])
 def eval_job(dataset_id, job_id):
+    """Delete a dataset evaluation job.
+    In the case that the user isn't logged in, or the request dataset doesn't belong to
+    the current logged in user, we return 404 (instead of 401) in order to prevent
+    leaking the existence of the dataset"""
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
     job = db.dataset_eval.get_job(job_id)
@@ -194,6 +318,7 @@ def eval_job(dataset_id, job_id):
 
 
 @datasets_bp.route("/service/<uuid:dataset_id>/evaluation/json")
+@service_session_login_required
 def eval_jobs(dataset_id):
     # Getting dataset to check if it exists and current user is allowed to view it.
     ds = get_dataset(dataset_id)
@@ -213,6 +338,7 @@ def eval_jobs(dataset_id):
 
 
 @datasets_bp.route("/<uuid:dataset_id>/evaluate", methods=('GET', 'POST'))
+@login_required
 def evaluate(dataset_id):
     """Endpoint for submitting dataset for evaluation."""
     ds = get_dataset(dataset_id)
@@ -266,6 +392,10 @@ def evaluate(dataset_id):
 
 @datasets_bp.route("/service/<uuid:dataset_id>/json")
 def view_json(dataset_id):
+    """Get the JSON of a dataset.
+    In the case that the user isn't logged in, or the request dataset doesn't belong to
+    the current logged in user, we return 404 (instead of 401) in order to prevent
+    leaking the existence of the dataset"""
     dataset = get_dataset(dataset_id)
     dataset_clean = {
         "name": dataset["name"],
@@ -285,11 +415,18 @@ def view_json(dataset_id):
 @datasets_bp.route("/create", methods=("GET", ))
 @login_required
 def create():
-    return render_template("datasets/edit.html", mode="create")
+    csrf = generate_csrf()
+    page_props = {
+        "dataset_mode": "create",
+        "data": {
+            "csrfToken": csrf
+        }
+    }
+    return render_template("datasets/edit.html", page_props=json.dumps(page_props))
 
 
 @datasets_bp.route("/service/create", methods=("POST", ))
-@auth_required
+@service_session_login_required
 def create_service():
     if request.method == "POST":
         dataset_dict = request.get_json()
@@ -393,17 +530,23 @@ def edit(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
         raise Unauthorized("You can't edit this dataset.")
+    csrf = generate_csrf()
 
-    return render_template(
-        "datasets/edit.html",
-        mode="edit",
-        dataset_id=str(dataset_id),
-        dataset_name=ds["name"],
-    )
+    page_props = {
+        "dataset_mode": "edit",
+        "data": {
+            "datasetId": str(dataset_id),
+            "csrfToken": csrf
+        }
+    }
+    return render_template("datasets/edit.html",
+                           mode="edit",
+                           dataset_name=ds["name"],
+                           page_props=json.dumps(page_props, cls=JSONDateTimeEncoder))
 
 
 @datasets_bp.route("/service/<uuid:dataset_id>/edit", methods=("POST", ))
-@auth_required
+@service_session_login_required
 def edit_service(dataset_id):
     ds = get_dataset(dataset_id)
     if ds["author"] != current_user.id:
@@ -438,12 +581,13 @@ def delete(dataset_id):
     if ds["author"] != current_user.id:
         raise Forbidden("You can't delete this dataset.")
 
-    if request.method == "POST":
+    form = FlaskForm()
+    if form.validate_on_submit():
         db.dataset.delete(ds["id"])
         flash.success("Dataset has been deleted.")
         return redirect(url_for("user.profile", musicbrainz_id=current_user.musicbrainz_id))
     else:  # GET
-        return render_template("datasets/delete.html", dataset=ds)
+        return render_template("datasets/delete.html", dataset=ds, form=form)
 
 
 def _get_recording_info_for_mbid(mbid):

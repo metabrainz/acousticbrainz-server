@@ -148,7 +148,7 @@ def load_includes_from_eval(jobid):
 def get_model_from_eval(jobid):
     job = db.dataset_eval.get_job(jobid)
     dataset = db.dataset.get(job["dataset_id"])
-    model_name = db.dataset._slugify(dataset["name"])
+    model_name = db.dataset.slugify(dataset["name"])
     model_version = "v1" # TODO: This has to be a parameter (from profile?)
 
     model_id = db.data._get_model_id(model_name, model_version)

@@ -1,10 +1,43 @@
-acousticbrainz-server
-=====================
+<h1 align="center">
+  <br>
+  <a href="https://acousticbrainz.org"><img src="https://github.com/metabrainz/metabrainz-logos/blob/master/logos/AcousticBrainz/SVG/AcousticBrainz_logo.svg" alt="AcousticBrainz"></a>
+</h1>
+<h4 align="center">Server Components for the AcousticBrainz project</h4>
+<p align="center">
+    <a href="https://github.com/metabrainz/acousticbrainz-server/commits/master">
+    <img src="https://img.shields.io/github/last-commit/metabrainz/acousticbrainz-server.svg?style=flat-square&logo=github&logoColor=white"
+         alt="GitHub last commit"></a>
+    <a href="https://github.com/metabrainz/acousticbrainz-server.org/pulls">
+    <img src="https://img.shields.io/github/issues-pr-raw/metabrainz/acousticbrainz-server?style=flat-square&logo=github&logoColor=white"
+         alt="GitHub pull requests"></a>
+</p>
+<p align="center">
+  <a href="https://acousticbrainz.org">Website</a> •
+  <a href="https://acousticbrainz.readthedocs.io">Documentation</a> •
+  <a href="https://tickets.metabrainz.org/projects/AB/issues">Bug tracker</a>
+</p>
 
-The server components for the AcousticBrainz project.
+---
 
-Please report issues here: http://tickets.musicbrainz.org/browse/AB
+## About
 
+The AcousticBrainz project aims to crowd source acoustic information for all music in the world and to make it available to the public. This acoustic information describes the acoustic characteristics of music and includes low-level spectral information and information for genres, moods, keys, scales and much more. The goal of AcousticBrainz is to provide music technology researchers and open source hackers with a massive database of information about music. 
+
+AcousticBrainz is a joint effort between [Music Technology Group](https://www.upf.edu/web/mtg/) at [Universitat Pompeu Fabra](http://www.upf.edu) in Barcelona and the [MusicBrainz](http://musicbrainz.org) project.
+
+AcousticBrainz organizes the data on a recording basis, indexed by the [MusicBrainz ID](https://musicbrainz.org/doc/MusicBrainz_Identifier) for [recordings](https://musicbrainz.org/doc/Recording). If you know the MBID for a recording, you can easily fetch from AcousticBrainz. For details on how to do this, visit our [API documentation](https://acousticbrainz.org/data).
+
+Changes and other important announcements about the AcousticBrainz project will be
+announced on [our blog](https://blog.metabrainz.org/).
+
+## Contributing
+
+If you are interested in helping out, consider
+[donating](https://metabrainz.org/donate) to the MetaBrainz Foundation.
+
+If you are interested in contributing code or documentation,
+please have a look at the [issue tracker](https://tickets.metabrainz.org/browse/AB)
+or come visit us in the #metabrainz IRC channel on irc.libera.chat.
 
 ## Installation and Running
 

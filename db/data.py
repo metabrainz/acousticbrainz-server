@@ -133,7 +133,7 @@ def clean_metadata(data):
     return data
 
 
-def submit_low_level_data(mbid, data, gid_type):
+def submit_low_level_data(mbid, data, gid_type, max_duplicate_submissions=None):
     """Function for submitting low-level data.
 
     Args:
@@ -141,6 +141,9 @@ def submit_low_level_data(mbid, data, gid_type):
             that is being submitted.
         data: Low-level data about the recording.
         gid_type: the ID type [musicbrainzid(mbid) or messybrainzid(msid)]
+        max_duplicate_submissions: if set, the maximum number of duplicate submissions for a single
+          mbid to accept in the database. If the mbid has more than this number of submissions,
+          don't add it to the database and return without an error.
     """
     mbid = str(mbid)
     data = clean_metadata(data)
@@ -176,7 +179,7 @@ def submit_low_level_data(mbid, data, gid_type):
         )
 
     # The data looks good, lets see about saving it
-    write_low_level(mbid, data, gid_type)
+    write_low_level(mbid, data, gid_type, max_duplicate_submissions)
 
 
 def insert_version(connection, data, version_type):
@@ -203,7 +206,7 @@ def insert_version(connection, data, version_type):
     return row[0]
 
 
-def write_low_level(mbid, data, is_mbid):
+def write_low_level(mbid, data, is_mbid, max_duplicate_submissions=None):
     def _get_by_data_sha256(connection, data_sha256):
         query = text("""
             SELECT id
@@ -253,6 +256,9 @@ def write_low_level(mbid, data, is_mbid):
 
         try:
             submission_offset = get_next_submission_offset(connection, mbid)
+            if max_duplicate_submissions is not None and submission_offset >= max_duplicate_submissions:
+                return
+
             ll_id = _insert_lowlevel(connection, mbid, build_sha1, is_lossless_submit, is_mbid, submission_offset)
             version_id = insert_version(connection, version, VERSION_TYPE_LOWLEVEL)
             _insert_lowlevel_json(connection, ll_id, data_json, data_sha256, version_id)

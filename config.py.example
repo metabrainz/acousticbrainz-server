@@ -53,6 +53,11 @@ RATELIMIT_WINDOW = 10
 #    'level': 'ERROR',
 # }
 
+# Data rejection settings
+# If we receive more than this number of submissions for a single MBID, don't
+# accept any more. Set to None to disable.
+MAX_NUMBER_DUPLICATE_SUBMISSIONS = 10
+
 # MISCELLANEOUS
 
 DATASET_DIR = "/data/datasets"

@@ -31,8 +31,8 @@ class DataDBTestCase(AcousticbrainzTestCase):
         clean.side_effect = lambda x: x
         sanity.return_value = None
 
-        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
-        write.assert_called_with(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID)
+        db.data.submit_low_level_data(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID, 1)
+        write.assert_called_with(self.test_mbid, self.test_lowlevel_data, gid_types.GID_TYPE_MBID, 1)
 
     @mock.patch("db.data.sanity_check_data")
     @mock.patch("db.data.write_low_level")
@@ -47,11 +47,11 @@ class DataDBTestCase(AcousticbrainzTestCase):
             "metadata": {"tags": {"musicbrainz_recordingid": [self.test_mbid]}, "audio_properties": {"lossless": True}}}
 
         db.data.submit_low_level_data(self.test_mbid, input, gid_types.GID_TYPE_MBID)
-        write.assert_called_with(self.test_mbid, output, gid_types.GID_TYPE_MBID)
+        write.assert_called_with(self.test_mbid, output, gid_types.GID_TYPE_MBID, None)
 
         input = {"metadata": {"tags": {"musicbrainz_trackid": [self.test_mbid]}, "audio_properties": {"lossless": 1}}}
         db.data.submit_low_level_data(self.test_mbid, input, gid_types.GID_TYPE_MSID)
-        write.assert_called_with(self.test_mbid, output, gid_types.GID_TYPE_MSID)
+        write.assert_called_with(self.test_mbid, output, gid_types.GID_TYPE_MSID, None)
 
     @mock.patch("db.data.sanity_check_data")
     @mock.patch("db.data.write_low_level")
@@ -100,6 +100,25 @@ class DataDBTestCase(AcousticbrainzTestCase):
 
             db.data.write_low_level(self.test_mbid_two, three, gid_types.GID_TYPE_MBID)
             self.assertEqual(1, db.data.get_next_submission_offset(connection, self.test_mbid_two))
+
+    def test_write_lowlevel_max_duplicate_submissions(self):
+        # The same MBID submitted more times than the max duplicate submissions
+        with db.engine.connect() as connection:
+            one = {"data": "one",
+                   "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+            two = {"data": "two",
+                   "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+            three = {"data": "three",
+                     "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
+
+            max_duplicate_submissions = 2
+            db.data.write_low_level(self.test_mbid, one, gid_types.GID_TYPE_MBID, max_duplicate_submissions)
+            db.data.write_low_level(self.test_mbid, two, gid_types.GID_TYPE_MBID, max_duplicate_submissions)
+            count = db.data.count_lowlevel(self.test_mbid)
+            self.assertEqual(2, count)
+            db.data.write_low_level(self.test_mbid, three, gid_types.GID_TYPE_MBID, max_duplicate_submissions)
+            count = db.data.count_lowlevel(self.test_mbid)
+            self.assertEqual(2, count)
 
     def test_write_load_low_level(self):
         """Writing and loading a dict returns the same data"""

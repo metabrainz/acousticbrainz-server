@@ -1,11 +1,11 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app
-from flask_login import current_user, login_required
+from flask import Blueprint, render_template, request, jsonify, current_app
+from flask_login import current_user
 from werkzeug.exceptions import NotFound, ServiceUnavailable
 
 from webserver.decorators import service_session_login_required
 from webserver.utils import validate_offset
-from webserver.views.data import _get_recording_info, _get_youtube_query
+from webserver.views.data import _get_recording_info
 from similarity.index_model import AnnoyModel
 import similarity.exceptions
 import db.similarity
@@ -35,7 +35,6 @@ def metrics(mbid):
 
 
 @similarity_bp.route("/<uuid:mbid>/<string:metric>")
-@login_required
 def get_similar(mbid, metric):
     offset = validate_offset(request.args.get("n"))
 
@@ -56,7 +55,6 @@ def get_similar(mbid, metric):
 
 
 @similarity_bp.route("/service/similar/<string:metric>/<uuid:mbid>")
-@service_session_login_required
 def get_similar_service(mbid, metric):
     """Get similar recordings in terms of the specified metric
     to the specified (MBID, offset) combination. Each item in
@@ -74,8 +72,8 @@ def get_similar_service(mbid, metric):
         similar_recordings = index.get_nns_by_mbid(mbid, offset, n_similar)
     except (db.exceptions.NoDataFoundException, similarity.exceptions.ItemNotFoundException,
             similarity.exceptions.IndexNotFoundException) as e:
-        flash("We're sorry, this index is not currently available for this recording: {}".format(repr(e)))
-        return redirect(url_for("similarity.metrics", mbid=mbid, n=offset))
+        ret = {"error": "No similarity calculated for this recording yet"}
+        return jsonify(ret), 404
 
     metadata = [_get_extended_info(rec["recording_mbid"], rec["offset"]) for rec in similar_recordings]
     metric = {"category": category, "description": description}
@@ -130,5 +128,4 @@ def _get_extended_info(mbid, offset):
         raise NotFound('No info for the recording {}'.format(mbid))
     info['mbid'] = mbid
     info['submission_offset'] = offset
-    info['youtube_query'] = _get_youtube_query(info)
     return info

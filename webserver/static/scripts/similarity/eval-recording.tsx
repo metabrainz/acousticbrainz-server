@@ -5,8 +5,6 @@ interface EvalRecordingProps {
     rec: any;
     hideForm: any;
     handleChange: any;
-    // handleYoutubeChange: any;
-    // similarYoutubeQuery: any;
 }
 
 function EvalRecording(props: EvalRecordingProps) {

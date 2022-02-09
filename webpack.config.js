@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { WebpackManifestPlugin } = require("webpack-manifest-plugin");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
@@ -13,6 +14,10 @@ module.exports = function (env) {
         new MiniCssExtractPlugin({
             filename: production ? '[name].[chunkhash].css' : '[name].css',
             chunkFilename: production ? '[name].[chunkhash].css' : '[name].css'
+        }),
+        new webpack.ProvidePlugin({
+            $: 'jquery',
+            jQuery: 'jquery',
         }),
         new ForkTsCheckerWebpackPlugin({
             typescript: {
@@ -32,7 +37,7 @@ module.exports = function (env) {
     return {
         context: path.resolve(__dirname, 'webserver', 'static'),
         entry: {
-            common: ['./scripts/common.ts'],
+            bootstrap: ['./scripts/bootstrap.ts'],
             datasets: ['./scripts/datasets.tsx'],
             similarity: ['./scripts/similarity.ts'],
             homepage: ['./scripts/homepage.ts'],
@@ -81,6 +86,15 @@ module.exports = function (env) {
         },
         optimization: {
             minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
+            splitChunks: {
+                cacheGroups: {
+                commons: {
+                    name: 'common',
+                    chunks: 'initial',
+                    minChunks: 2,
+                },
+                },
+            },
         },
         plugins
     }

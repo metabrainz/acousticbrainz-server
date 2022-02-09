@@ -95,29 +95,31 @@ class DatasetControlButtons extends Component<
             // MODE_EDIT
             submitEndpoint = `/datasets/service/${this.props.datasetId}/edit`;
         }
-        $.ajax({
-            type: "POST",
-            url: submitEndpoint,
-            headers: { "X-CSRFToken": this.props.csrfToken },
-            data: JSON.stringify({
+        console.log(`ENDPOINT ${submitEndpoint}`);
+        fetch(submitEndpoint, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": this.props.csrfToken,
+                "Content-Type": "application/json; charset=utf-8",
+            },
+            body: JSON.stringify({
                 id: this.props.data.id, // used only with MODE_EDIT
                 name: this.props.data.name,
                 description: this.props.data.description,
                 classes: this.props.data.classes,
                 public: this.props.data.public,
             }),
-            dataType: "json",
-            contentType: "application/json; charset=utf-8",
-            success: (data, textStatus, jqXHR) => {
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw Error();
+                } else {
+                    return res.json();
+                }
+            })
+            .then((data) => {
                 window.location.replace(`/datasets/${data.dataset_id}`);
-            },
-            error: (jqXHR, textStatus, errorThrown) => {
-                this.setState({
-                    enabled: true,
-                    errorMsg: jqXHR.responseJSON,
-                });
-            },
-        });
+            });
     };
 
     render() {
@@ -273,22 +275,26 @@ class Recording extends Component<RecordingProps, RecordingState> {
     }
 
     componentDidMount() {
-        $.ajax({
-            type: "GET",
-            url: `/datasets/metadata/recording/${this.props.mbid}`,
-            success: (data) => {
+        fetch(`/datasets/metadata/recording/${this.props.mbid}`)
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error();
+                } else {
+                    return res.json();
+                }
+            })
+            .then((data: any) => {
                 this.setState({
                     details: data.recording,
                     status: RECORDING_STATUS_LOADED,
                 });
-            },
-            error: () => {
+            })
+            .catch(() => {
                 this.setState({
                     error: "Recording not found!",
                     status: RECORDING_STATUS_ERROR,
                 });
-            },
-        });
+            });
     }
 
     render() {
@@ -702,12 +708,11 @@ class DatasetEditor extends Component<DatasetEditorProps, DatasetEditorState> {
         // mounted. Here we need to check what mode dataset editor is in, and
         // pull data from the server if mode is MODE_EDIT.
         if (this.props.mode === MODE_EDIT) {
-            $.get(
-                `/datasets/service/${this.props.datasetId}/json`,
-                (result) => {
-                    this.setState({ data: result });
-                }
-            );
+            fetch(`/datasets/service/${this.props.datasetId}/json`)
+                .then((res) => res.json())
+                .then((data) => {
+                    this.setState({ data });
+                });
         } else {
             if (this.props.mode !== MODE_CREATE) {
                 console.warn(

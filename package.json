@@ -15,8 +15,8 @@
     },
     "dependencies": {
         "bootstrap": "3.4.1",
-        "css-loader": "^3.5.2",
         "core-js": "^3.9.1",
+        "css-loader": "^3.5.2",
         "highcharts": "^8.0.4",
         "jquery": "^3.5.1",
         "less": "^3.11.1",

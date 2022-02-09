@@ -96,22 +96,28 @@ class Recording extends Component<RecordingProps, RecordingState> {
     }
 
     componentDidMount() {
-        $.ajax({
-            type: "GET",
-            url: `/datasets/metadata/dataset/${this.props.datasetId}/${this.props.mbid}`,
-            success: (data) => {
+        fetch(
+            `/datasets/metadata/dataset/${this.props.datasetId}/${this.props.mbid}`
+        )
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error();
+                } else {
+                    return res.json();
+                }
+            })
+            .then((data: any) => {
                 this.setState({
                     details: data.recording,
                     status: RECORDING_STATUS_LOADED,
                 });
-            },
-            error: () => {
+            })
+            .catch(() => {
                 this.setState({
                     error: "Recording not found!",
                     status: RECORDING_STATUS_ERROR,
                 });
-            },
-        });
+            });
     }
 
     render() {
@@ -257,9 +263,11 @@ class Dataset extends Component<DatasetProps, DatasetState> {
     }
 
     componentDidMount() {
-        $.get(`/datasets/service/${this.props.datasetId}/json`, (result) => {
-            this.setState({ data: result });
-        });
+        fetch(`/datasets/service/${this.props.datasetId}/json`)
+            .then((res) => res.json())
+            .then((result) => {
+                this.setState({ data: result });
+            });
     }
 
     handleViewDetails = (index: number) => {

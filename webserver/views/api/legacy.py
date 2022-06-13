@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from brainzutils.ratelimit import ratelimit
 from db.data import count_lowlevel, submit_low_level_data
 from db.exceptions import NoDataFoundException, BadDataException
@@ -64,8 +64,10 @@ def submit_low_level(mbid):
     except ValueError as e:
         raise exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
+    max_duplicate_submissions = current_app.config.get('MAX_NUMBER_DUPLICATE_SUBMISSIONS', None)
+
     try:
-        submit_low_level_data(mbid, data, 'mbid')
+        submit_low_level_data(mbid, data, 'mbid', max_duplicate_submissions)
     except BadDataException as e:
         raise exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})

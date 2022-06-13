@@ -3,10 +3,9 @@ from __future__ import absolute_import
 import json
 import uuid
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 
 import db.data
-from webserver.utils import validate_offset
 import webserver.views.api.exceptions
 from db.data import submit_low_level_data, count_lowlevel
 from db.exceptions import NoDataFoundException, BadDataException
@@ -151,8 +150,10 @@ def submit_low_level(mbid):
     except ValueError as e:
         raise webserver.views.api.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
+    max_duplicate_submissions = current_app.config.get('MAX_NUMBER_DUPLICATE_SUBMISSIONS', None)
+
     try:
-        submit_low_level_data(str(mbid), data, 'mbid')
+        submit_low_level_data(str(mbid), data, 'mbid', max_duplicate_submissions)
     except BadDataException as e:
         raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})

@@ -60,7 +60,7 @@ def full_db(location, threads, rotate, dump_id):
 @click.option("--rotate", "-r", is_flag=True)
 @click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
-@click.option("--max-files", help="Split dump into files with this many items each")
+@click.option("--max-files", type=int, default=1000000, help="Split dump into files with this many items each")
 def json(location, rotate, no_lowlevel, no_highlevel, max_files):
     if no_lowlevel and no_highlevel:
         current_app.logger.info("wut? check your options, mate!")
@@ -188,4 +188,4 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
 def full_dataset_dump(location, threads):
     current_app.logger.info("Creating full datasets dump...")
     path = dump.dump_dataset_tables(location, threads)
-    current_app.logger.info("Done! Created:", path)
+    current_app.logger.info("Done! Created: %s", path)

@@ -42,43 +42,23 @@ class AcousticbrainzTestCase(TestCase):
         self.init_db()
 
     def init_db(self):
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_schema.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_types.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_tables.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_primary_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_foreign_keys.sql'))
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'create_indexes.sql'))
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'populate_metrics_table.sql'))
 
     def drop_tables(self):
-        with db.engine.connect() as connection:
-            # TODO(roman): See if there's a better way to drop all tables.
-            connection.execute('DROP TABLE IF EXISTS highlevel_model      CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS highlevel_meta       CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS highlevel            CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS model                CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS lowlevel_json        CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS lowlevel             CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS version              CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS statistics           CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS incremental_dumps    CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset_snapshot     CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset_eval_jobs    CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset_class_member CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset_class        CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset              CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset_eval_sets    CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS "user"               CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS api_key              CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS challenge            CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS dataset_eval_challenge CASCADE;')
-            connection.execute('DROP TABLE IF EXISTS feedback               CASCADE;')
+        self.drop_schema()
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_tables.sql'))
+
+    def drop_schema(self):
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_schema.sql'))
 
     def drop_types(self):
-        with db.engine.connect() as connection:
-            connection.execute('DROP TYPE IF EXISTS eval_job_status CASCADE;')
-            connection.execute('DROP TYPE IF EXISTS model_status CASCADE;')
-            connection.execute('DROP TYPE IF EXISTS version_type CASCADE;')
-            connection.execute('DROP TYPE IF EXISTS eval_location_type CASCADE;')
-            connection.execute('DROP TYPE IF EXISTS gid_type CASCADE;')
+        db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_types.sql'))
 
     def data_filename(self, mbid):
         """ Get the expected filename of a test datafile given its mbid """

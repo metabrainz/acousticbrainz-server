@@ -36,21 +36,6 @@ def load_user(user_id):
     else:
         return None
 
-@login_manager.request_loader
-def load_user(request):
-    key = request.headers.get("Authorization")
-    user = None
-    if key:
-        parts = key.split(" ")
-        if len(parts) == 2 and parts[0] == "Token":
-            user = db.user.get_by_api_key(parts[1])
-        else:
-            raise Unauthorized
-    if user:
-        return User.from_dbrow(user)
-    else:
-        return None
-
 
 def login_forbidden(f):
     @wraps(f)

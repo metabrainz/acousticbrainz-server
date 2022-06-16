@@ -5,14 +5,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
 # This value must be incremented after schema changes on replicated tables!
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 engine = None
 
 def init_db_engine(connect_str):
     global engine
-    engine = create_engine(connect_str, poolclass=NullPool)
+    engine = create_engine(connect_str, poolclass=NullPool, executemany_mode='values', executemany_values_page_size=10000)
 
 
 def run_sql_script(sql_file_path):

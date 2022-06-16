@@ -5,6 +5,7 @@
 {% block content %}
   <h2 class="page-title">{{ user.musicbrainz_id }}</h2>
   {% if own_page %}
+    <input type="hidden" id="csrftoken" value="{{ csrf_token() }}" />
     <p class="text-muted"><em>This is you!</em></p>
 
     <h3>API key</h3>

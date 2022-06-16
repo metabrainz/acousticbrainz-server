@@ -1,5 +1,12 @@
 FROM metabrainz/python:3.7 AS acousticbrainz-base
 
+# remove expired let's encrypt certificate and install new ones
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /usr/share/ca-certificates/mozilla/DST_Root_CA_X3.crt \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Dockerize
 ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
@@ -36,6 +43,7 @@ RUN wget -q -O - https://deb.nodesource.com/setup_12.x | bash - && apt-get updat
                        python-numpy-dev \
                        python-numpy \
                        swig2.0 \
+                       zstd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /code
@@ -48,6 +56,12 @@ RUN useradd --create-home --shell /bin/bash --uid 901 --gid 901 acousticbrainz
 RUN chown acousticbrainz:acousticbrainz /code
 
 RUN pip install pip==21.1.2
+
+# By default annoy compiles its C++ code using gcc's -march=native flag. This means that if it compiles
+# on a recent Intel machine (e.g. in github actions) it might use extensions that aren't available
+# on our production machines (AVX512). Force it to a lower arch that is compatible over all of our
+# productions servers (skylake, zen1, zen2)
+ENV ANNOY_COMPILER_ARGS=-D_CRT_SECURE_NO_WARNINGS,-DANNOYLIB_MULTITHREADED_BUILD,-march=haswell,-mno-rdrnd,-O3,-ffast-math,-fno-associative-math,-std=c++14
 
 # Python dependencies
 RUN mkdir /code/docs/ && chown acousticbrainz:acousticbrainz /code/docs/
@@ -99,6 +113,7 @@ RUN touch /etc/service/dataset_eval/down
 
 # Add cron jobs
 COPY ./docker/cron/crontab /etc/cron.d/acousticbrainz
+RUN chmod 0644 /etc/cron.d/acousticbrainz
 COPY ./docker/cron/cron-config.service /etc/service/cron-config/run
 COPY docker/cron/consul-template-cron-config.conf /etc/consul-template-cron-config.conf
 RUN touch /etc/service/cron/down

@@ -24,10 +24,14 @@ def musicbrainz():
 def musicbrainz_post():
     """Callback endpoint."""
     if provider.validate_post_login():
-        login_user(provider.get_user())
-        next = session.get('next')
-        if next:
-            return redirect(next)
+        user = provider.get_user()
+        if user:
+            login_user(user)
+            next = session.get('next')
+            if next:
+                return redirect(next)
+        else:
+            flash.error("Login failed.")
     else:
         flash.error("Login failed.")
     return redirect(url_for('index.index'))

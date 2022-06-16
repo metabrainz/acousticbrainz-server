@@ -1,5 +1,5 @@
 from flask import Blueprint, Response, render_template
-from db.stats import get_statistics_history
+from db.submission_stats import get_statistics_history
 from operator import itemgetter
 import json
 

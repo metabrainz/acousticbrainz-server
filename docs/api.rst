@@ -24,6 +24,14 @@ Datasets
    :include-empty-docstring:
    :undoc-static:
 
+Similarity
+^^^^^^^^^^
+
+.. autoflask:: webserver:create_app_sphinx()
+   :blueprints: api_v1_similarity
+   :include-empty-docstring:
+   :undoc-static:
+
 Rate limiting
 ^^^^^^^^^^^^^
 
@@ -63,4 +71,4 @@ Constants that are relevant to using the API:
 
 .. autodata:: webserver.views.api.v1.core.MAX_ITEMS_PER_BULK_REQUEST
 .. autodata:: webserver.views.api.v1.core.LOWLEVEL_INDIVIDUAL_FEATURES
-
+.. autodata:: similarity.metrics.BASE_METRIC_NAMES

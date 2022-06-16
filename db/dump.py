@@ -11,6 +11,7 @@ from __future__ import print_function
 
 from __future__ import absolute_import
 from flask import current_app
+import ujson
 
 import utils.path
 import db
@@ -29,7 +30,7 @@ from sqlalchemy import text
 
 
 # the number of rows to dump for json dumps in one batch
-DUMP_CHUNK_SIZE = 1000
+DUMP_CHUNK_SIZE = 10000
 
 # Create multiple files of no more than this many rows for the
 # big tables (lowlevel_json, highlevel_model) for the database dump
@@ -56,6 +57,7 @@ _TABLES = {
         "lossless",
         "submitted",
         "gid_type",
+        "submission_offset",
     ),
     "lowlevel_json": (
         "id",
@@ -69,6 +71,7 @@ _TABLES = {
         "model_version",
         "date",
         "status",
+        "class_mapping",
     ),
     "highlevel": (
         "id",
@@ -94,9 +97,10 @@ _TABLES = {
         "stats",
         "collected",
     ),
-    "incremental_dumps": (
+    "data_dump": (
         "id",
         "created",
+        "dump_type",
     ),
 }
 
@@ -172,50 +176,14 @@ PARTITIONED_TABLES = (
     "highlevel_model",
 )
 
-
-def dump_db(location, threads=None, incremental=False, dump_id=None):
-    """Create database dump in a specified location.
-
-    Args:
-        location: Directory where archive will be created.
-        threads: Maximum number of threads to run during compression.
-        incremental: False if resulting data dump should be complete, True if
-            it needs to be incremental.
-        dump_id: If you need to reproduce previously created incremental dump,
-            its identifier (integer) can be specified there.
-
-    Returns:
-        Path to created dump.
-    """
-    utils.path.create_path(location)
-    time_now = datetime.today()
-
-    if incremental:
-        dump_id, start_t, end_t = prepare_incremental_dump(dump_id)
-        archive_name = "acousticbrainz-dump-incr-%s" % dump_id
-    else:
-        start_t, end_t = None, None  # full
-        archive_name = "acousticbrainz-dump-%s" % time_now.strftime("%Y%m%d-%H%M%S")
-
-    archive_path = os.path.join(location, archive_name + ".tar.xz")
-    _dump_tables(
-        archive_path=archive_path,
-        threads=threads,
-        dataset_dump=False,
-        time_now=time_now,
-        start_t=start_t,
-        end_t=end_t,
-    )
-    return archive_path
-
-
-def _copy_table_into_multiple_files(cursor, table_name, query, tar, archive_name):
+def _copy_table_into_multiple_files(cursor, table_name, query, rows_per_file, tar, archive_name):
     """Copies data from a table into multiple files and add them to the archive
 
     Args:
         cursor: a psycopg2 cursor
         table_name: the name of the table to be copied.
         query: the select query for getting data from the table, with appropriate LIMIT and OFFSET parameters.
+        rows_per_file: how many rows from query to add to a single file
         tar: the TarFile object to which the table dumps must be added
         archive_name: the name of the archive
     """
@@ -230,10 +198,10 @@ def _copy_table_into_multiple_files(cursor, table_name, query, tar, archive_name
         path = os.path.join(location, table_name, file_name)
         with open(path, "a") as f:
             logging.info(" - Copying table {table_name} to {file_name}...".format(table_name=table_name, file_name=file_name))
-            current_query = query.format(limit=ROWS_PER_FILE, offset=offset)
+            current_query = query.format(limit=rows_per_file, offset=offset)
             copy_query = "COPY ({query}) TO STDOUT".format(query=current_query)
             cursor.copy_expert(copy_query, f)
-            offset += ROWS_PER_FILE
+            offset += rows_per_file
             if f.tell() > 0:
                 more_rows_added = True
         if more_rows_added:
@@ -259,14 +227,13 @@ def _copy_table(cursor, location, table_name, query):
         copy_query = 'COPY ({query}) TO STDOUT'.format(query=query)
         cursor.copy_expert(copy_query, f)
 
-
 def _add_file_to_tar_and_delete(location, archive_name, tar, filename):
     """Add a file in `location` to an open TarFile at location `archive_name` and then
     delete the file from disk."""
+    logging.info(" - adding archive {filename} to tar".format(filename=filename))
     tar.add(os.path.join(location, filename),
             arcname=os.path.join(archive_name, "abdump", filename))
     os.remove(os.path.join(location, filename))
-
 
 def _copy_dataset_tables(location, tar, archive_name, start_time=None, end_time=None):
     """ Copy datasets tables into separate files within a specified location (directory).
@@ -357,7 +324,7 @@ def _copy_tables(location, tar, archive_name, start_time=None, end_time=None):
         # lowlevel_json
         query = "SELECT %s FROM lowlevel_json WHERE id IN (SELECT id FROM lowlevel %s) ORDER BY id LIMIT {limit} OFFSET {offset}" \
                 % (", ".join(_TABLES["lowlevel_json"]), generate_where("submitted"))
-        _copy_table_into_multiple_files(cursor, "lowlevel_json", query, tar, archive_name)
+        _copy_table_into_multiple_files(cursor, "lowlevel_json", query, ROWS_PER_FILE, tar, archive_name)
 
         # model
         query = "SELECT %s FROM model %s" \
@@ -377,19 +344,21 @@ def _copy_tables(location, tar, archive_name, start_time=None, end_time=None):
         _add_file_to_tar_and_delete(location, archive_name, tar, "highlevel_meta")
 
         # highlevel_model
+        # These rows are quite small and there are lots of them, so add 10x as many lines as the lowlevel_json table
         query = "SELECT %s FROM highlevel_model WHERE highlevel IN (SELECT id FROM highlevel %s) ORDER BY id LIMIT {limit} OFFSET {offset}" \
                 % (", ".join(_TABLES["highlevel_model"]), generate_where("submitted"))
-        _copy_table_into_multiple_files(cursor, "highlevel_model", query, tar, archive_name)
+        _copy_table_into_multiple_files(cursor, "highlevel_model", query, ROWS_PER_FILE * 10, tar, archive_name)
 
         # statistics
         _copy_table(cursor, location, "statistics", "SELECT %s FROM statistics %s" %
                     (", ".join(_TABLES["statistics"]), generate_where("collected")))
         _add_file_to_tar_and_delete(location, archive_name, tar, "statistics")
 
-        # incremental_dumps
-        _copy_table(cursor, location, "incremental_dumps", "SELECT %s FROM incremental_dumps %s" %
-                    (", ".join(_TABLES["incremental_dumps"]), generate_where("created")))
-        _add_file_to_tar_and_delete(location, archive_name, tar, "incremental_dumps")
+        # data_dump
+        with open(os.path.join(location, "data_dump"), "w") as f:
+            logging.info(" - Copying table data_dump...")
+            cursor.copy_to(f, "(SELECT %s FROM data_dump %s)" %
+                           (", ".join(_TABLES["data_dump"]), generate_where("created")))
     finally:
         connection.close()
 
@@ -437,9 +406,9 @@ def update_sequences():
     current_app.logger.info('Updating model_id_seq...')
     update_sequence('model_id_seq', 'model')
 
-    # incremental_dumps_id_seq
-    current_app.logger.info('Updating incremental_dumps_id_seq...')
-    update_sequence('incremental_dumps_id_seq', 'incremental_dumps')
+    # data_dump_id_seq
+    current_app.logger.info('Updating data_dump_id_seq...')
+    update_sequence('data_dump_id_seq', 'data_dump')
 
     # user_id_seq
     current_app.logger.info('Updating user_id_seq...')
@@ -455,9 +424,9 @@ def update_sequences():
 
 
 def import_db_dump(archive_path, tables):
-    """Import data from .tar.xz archive into the database."""
-    pxz_command = ["pxz", "--decompress", "--stdout", archive_path]
-    pxz = subprocess.Popen(pxz_command, stdout=subprocess.PIPE)
+    """Import data from .tar.zstd archive into the database."""
+    zstd_command = ["zstd", "--decompress", "--stdout", archive_path]
+    zstd = subprocess.Popen(zstd_command, stdout=subprocess.PIPE)
 
     table_names = tables.keys()
     latest_file_num_imported = {}
@@ -465,7 +434,7 @@ def import_db_dump(archive_path, tables):
     try:
         cursor = connection.cursor()
 
-        with tarfile.open(fileobj=pxz.stdout, mode="r|") as tar:
+        with tarfile.open(fileobj=zstd.stdout, mode="r|") as tar:
             for member in tar:
                 file_name = member.name.split("/")[-1]
 
@@ -497,20 +466,21 @@ def import_db_dump(archive_path, tables):
     finally:
         connection.close()
 
-    pxz.stdout.close()
-    pxz.wait()
+    zstd.stdout.close()
+    zstd.wait()
 
     logging.info('Updating sequences...')
     update_sequences()
     logging.info('Done!')
 
 
-def dump_lowlevel_json(location, incremental=False, dump_id=None, num_files_per_archive=float("inf")):
+def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
     """Create JSON dump with low level data.
 
     Args:
         location: Directory where archive will be created.
-        incremental: False if resulting JSON dump should be complete, True if
+        full (bool): True if you want to dump the entire db from the beginning of time, False if
+                only need to dump new data since the last dump.
             it needs to be incremental.
         dump_id: If you need to reproduce previously created incremental dump,
             its identifier (integer) can be specified there.
@@ -521,42 +491,20 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None, num_files_per_
         Path to created low level JSON dump.
     """
 
-    if incremental:
-        dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
-        archive_dirname = "acousticbrainz-lowlevel-json-incr-%s" % dump_id
-        filename_pattern = archive_dirname + "-%d"
-    else:
+    if full:
         start_time, end_time = None, None  # full
         archive_dirname = "acousticbrainz-lowlevel-json-%s" % \
                        datetime.today().strftime("%Y%m%d")
         filename_pattern = archive_dirname + "-%d"
+    else:
+        logging.info("Not supporting incremental dumps")
+        return
 
     dump_path = os.path.join(location, archive_dirname)
     utils.path.create_path(dump_path)
 
     file_num = 0
-    connection = db.engine.raw_connection()
-    try:
-
-        cursor = connection.cursor(name="server_side_cursor")
-        mbid_occurences = defaultdict(int)
-
-        # Need to count how many duplicate MBIDs are there before start_time
-        if start_time:
-            results = connection.execute(sqlalchemy.text("""
-                SELECT gid, COUNT(id)
-                  FROM lowlevel
-                 WHERE submitted <= :start_time
-              GROUP BY gid
-                """), {
-                "start_time": start_time,
-            })
-            for mbid, count in results.fetchall():
-                mbid_occurences[mbid] = count
-
-        if not end_time:
-            end_time = datetime.now()
-
+    with db.engine.begin() as connection:
         if start_time or end_time:
             start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
             end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
@@ -567,235 +515,292 @@ def dump_lowlevel_json(location, incremental=False, dump_id=None, num_files_per_
         else:
             where = ""
 
-        data = None
-        total_dumped = 0  # total number of recordings dumped
-        dump_done = False  # flag to check if all recordings have been dumped
-
-        temp_dir = tempfile.mkdtemp()
-
-        cursor.execute("""
-            SELECT gid::text, llj.data::text
+        ll_ids = connection.execute(sqlalchemy.text("""
+            SELECT id
               FROM lowlevel ll
-              JOIN lowlevel_json llj
-                ON ll.id = llj.id
                 %s
-          ORDER BY ll.gid
-        """ % where)
+          ORDER BY submitted""" % where
+        ))
 
-        while not dump_done:
-
+        data = None
+        total_dumped = 0
+        dump_done = False
+        while True:
             # create a new file and dump recordings there
             filename = filename_pattern % file_num
-            file_path = os.path.join(dump_path, "%s.tar.bz2" % filename)
-            with tarfile.open(file_path, "w:bz2") as tar:
+            file_path = os.path.join(dump_path, "%s.tar.zstd" % filename)
+            with open(file_path, "w") as archive:
+                zstd_command = ["zstd", "--compress", "-10", "-T8"]
+                zstd = subprocess.Popen(zstd_command, stdin=subprocess.PIPE, stdout=archive)
 
-                dumped_count = 0
+                # Creating the archive
+                with tarfile.open(fileobj=zstd.stdin, mode="w|") as tar:
+                    temp_dir = tempfile.mkdtemp()
+                    dumped_count = 0
+                    while dumped_count < max_count:
+                        if data is None:
+                            id_list = ll_ids.fetchmany(size=DUMP_CHUNK_SIZE)
+                            if not id_list:
+                                dump_done = True
+                                break
+                            id_list = tuple([i['id'] for i in id_list])
 
-                while dumped_count < num_files_per_archive:
-                    row = cursor.fetchone()
-                    if not row:
-                        dump_done = True
-                        break
-                    mbid, json_data = row
+                            data = connection.execute(sqlalchemy.text("""
+                                SELECT gid::text
+                                    , submission_offset
+                                    , llj.data::text
+                                FROM lowlevel ll
+                                JOIN lowlevel_json llj
+                                    ON ll.id = llj.id
+                                WHERE ll.id IN :id_list
+                                """), {
+                                    'id_list': id_list,
+                                })
 
-                    json_filename = mbid + "-%d.json" % mbid_occurences[mbid]
-                    dump_tempfile = os.path.join(temp_dir, json_filename)
-                    with open(dump_tempfile, "w") as f:
-                        f.write(json.dumps(json_data))
-                    tar.add(dump_tempfile, arcname=os.path.join(
-                        filename, "lowlevel", mbid[0:2], mbid[2:4], json_filename))
-                    os.unlink(dump_tempfile)
+                        while dumped_count < max_count:
+                            row = data.fetchone()
+                            if not row:
+                                data = None
+                                break
+                            mbid, submission_offset, json_data = row
 
-                    mbid_occurences[mbid] += 1
-                    dumped_count += 1
+                            json_filename = mbid + "-%d.json" % submission_offset
+                            dump_tempfile = os.path.join(temp_dir, json_filename)
+                            with open(dump_tempfile, "w") as f:
+                                f.write(ujson.dumps(json_data))
+                            tar.add(dump_tempfile, arcname=os.path.join(
+                                filename, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
+                            os.unlink(dump_tempfile)
 
-                # Copying legal text
-                tar.add(DUMP_LICENSE_FILE_PATH,
-                        arcname=os.path.join(filename, "COPYING"))
+                            dumped_count += 1
 
-                logging.info("Dumped %s recordings in file number %d." % (dumped_count, file_num))
-                file_num += 1
-                total_dumped += dumped_count
+                    # Copying legal text
+                    tar.add(DUMP_LICENSE_FILE_PATH,
+                            arcname=os.path.join(filename, "COPYING"))
 
-        shutil.rmtree(temp_dir)  # Cleanup
+                    shutil.rmtree(temp_dir)  # Cleanup
 
-    finally:
-        connection.close()
+                    logging.info("Dumped %s recordings in file number %d." % (dumped_count, file_num))
+                    file_num += 1
+                    total_dumped += dumped_count
+
+                zstd.stdin.close()
+                zstd.wait()
+
+                if dump_done:
+                    break
 
     logging.info("Dumped a total of %d recordings in %d files." % (total_dumped, file_num))
     return dump_path
 
 
-def dump_highlevel_json(location, incremental=False, dump_id=None):
+def dump_highlevel_json(location, full=False, dump_id=None, max_count=500000):
     """Create JSON dump with high-level data.
 
     Args:
         location: Directory where archive will be created.
-        incremental: False if resulting JSON dump should be complete, False if
-            it needs to be incremental.
+        full (bool): True if you want to dump the entire db from the beginning of time, False if
+                only need to dump new data since the last dump.
         dump_id: If you need to reproduce previously created incremental dump,
             its identifier (integer) can be specified there.
 
     Returns:
         Path to created high-level JSON dump.
     """
-    utils.path.create_path(location)
 
-    if incremental:
-        dump_id, start_time, end_time = prepare_incremental_dump(dump_id)
-        archive_name = "acousticbrainz-highlevel-json-incr-%s" % dump_id
-    else:
+    if full:
         start_time, end_time = None, None  # full
-        archive_name = "acousticbrainz-highlevel-json-%s" % \
+        archive_dirname = "acousticbrainz-highlevel-json-%s" % \
                        datetime.today().strftime("%Y%m%d")
+        filename_pattern = archive_dirname + "-%d"
+    else:
+        logging.info("Not supporting incremental dumps")
+        return
 
-    archive_path = os.path.join(location, archive_name + ".tar.bz2")
-    with tarfile.open(archive_path, "w:bz2") as tar:
-
-        with db.engine.connect() as connection:
-            mbid_occurences = defaultdict(int)
-
-            # Need to count how many duplicate MBIDs are there before start_time
-            if start_time:
-                result = connection.execute(sqlalchemy.text("""
-                    SELECT mbid, count(id)
-                      FROM highlevel
-                     WHERE submitted <= :start_time
-                  GROUP BY mbid
-                    """), {
-                        'start_time': start_time,
-                    })
-                counts = result.fetchall()
-                for mbid, count in counts:
-                    mbid_occurences[mbid] = count
-
-            if start_time or end_time:
-                start_cond = "hl.submitted > '%s'" % str(start_time) if start_time else ""
-                end_cond = "hl.submitted <= '%s'" % str(end_time) if end_time else ""
-                if start_time and end_time:
-                    where = "WHERE %s AND %s" % (start_cond, end_cond)
-                else:
-                    where = "WHERE %s%s" % (start_cond, end_cond)
+    dump_path = os.path.join(location, archive_dirname)
+    utils.path.create_path(dump_path)
+    
+    file_num = 0
+    with db.engine.begin() as connection:
+        if start_time or end_time:
+            start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
+            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
+            if start_time and end_time:
+                where = "WHERE %s AND %s" % (start_cond, end_cond)
             else:
-                where = ""
+                where = "WHERE %s%s" % (start_cond, end_cond)
+        else:
+            where = ""
 
-            result = connection.execute(sqlalchemy.text("""
-                    SELECT hl.id AS id
-                         , hl.mbid AS mbid
-                         , hlm.data AS metadata
-                      FROM highlevel hl
-                 LEFT JOIN highlevel_meta hlm
-                        ON hl.id = hlm.id
-                        {where_clause}
-                  ORDER BY hl.mbid
-                """.format(where_clause=where)))
+        ll_ids = connection.execute(sqlalchemy.text("""
+            SELECT id
+              FROM lowlevel ll
+          ORDER BY submitted"""
+        ))
 
-            with db.engine.connect() as connection_inner:
-                temp_dir = tempfile.mkdtemp()
+        total_dumped = 0
+        dump_done = False
+        while True:
+            # create a new file and dump recordings there
+            filename = filename_pattern % file_num
+            file_path = os.path.join(dump_path, "%s.tar.zstd" % filename)
+            with open(file_path, "w") as archive:
+                zstd_command = ["zstd", "--compress", "-10", "-T8"]
+                zstd = subprocess.Popen(zstd_command, stdin=subprocess.PIPE, stdout=archive)
 
-                dumped_count = 0
+                # Creating the archive
+                with tarfile.open(fileobj=zstd.stdin, mode="w|") as tar:
+                    temp_dir = tempfile.mkdtemp()
+                    dumped_count = 0
 
-                while True:
-                    data_list = result.fetchmany(size=DUMP_CHUNK_SIZE)
-                    if not data_list:
-                        break
+                    # Note that in the case that DUMP_CHUNK_SIZE isn't an even multiple of max_count,
+                    # the dump will have the next multiple of chunk size items, not exactly max_count items.
+                    while dumped_count < max_count:
+                        data_list = ll_ids.fetchmany(size=DUMP_CHUNK_SIZE)
+                        if not data_list:
+                            dump_done = True
+                            break
 
-                    # get data for the all the hlids in the current chunk
-                    result_inner = connection_inner.execute(sqlalchemy.text("""
-                            SELECT m.model AS model
-                                 , hlmo.data AS model_data
-                                 , version.data AS version
-                                 , hlmo.highlevel AS id
-                              FROM highlevel_model hlmo
-                              JOIN model m
-                                ON m.id = hlmo.model
-                              JOIN version
-                                ON version.id = hlmo.version
-                             WHERE hlmo.highlevel IN :ids
-                               AND m.status = 'show'
+                        metadata_result = connection.execute(sqlalchemy.text("""
+                            SELECT ll.submission_offset
+                                , hl.id AS id
+                                , hl.mbid AS mbid
+                                , hlm.data AS metadata
+                            FROM highlevel hl
+                        LEFT JOIN highlevel_meta hlm
+                                ON hl.id = hlm.id
+                        LEFT JOIN lowlevel ll
+                                ON hl.id = ll.id
+                            WHERE hl.id IN :ids
                         """), {
-                            'ids': tuple(i['id'] for i in data_list)
-                        })
+                                'ids': tuple(i['id'] for i in data_list)
+                            })
+                        metadata = {}
+                        for row in metadata_result:
+                            submission_offset = row['submission_offset']
+                            mbid = str(row['mbid'])
+                            hlid = row['id']
+                            metadata[hlid] = row
+
+                        # get data for the all the hlids in the current chunk
+                        data_result = connection.execute(sqlalchemy.text("""
+                                SELECT m.model AS model
+                                    , hlmo.data AS model_data
+                                    , version.data AS version
+                                    , hlmo.highlevel AS id
+                                FROM highlevel_model hlmo
+                                JOIN model m
+                                    ON m.id = hlmo.model
+                                JOIN version
+                                    ON version.id = hlmo.version
+                                WHERE hlmo.highlevel IN :ids
+                            """), {
+                                'ids': tuple(i['id'] for i in data_list)
+                            })
 
 
-                    # consolidate the different models for each hlid into dicts
-                    highlevel_models = defaultdict(dict)
-                    for row in result_inner.fetchall():
-                        model, model_data, version, hlid = row['model'], row['model_data'], row['version'], row['id']
-                        model_data['version'] = version
-                        highlevel_models[hlid][model] = model_data
+                        # consolidate the different models for each hlid into dicts
+                        highlevel_models = defaultdict(dict)
+                        for row in data_result.fetchall():
+                            model, model_data, version, hlid = row['model'], row['model_data'], row['version'], row['id']
+                            model_data['version'] = version
+                            highlevel_models[hlid][model] = model_data
+
+                        # create final json for each hlid and dump it
+                        for row in metadata.values():
+                            submission_offset = row['submission_offset']
+                            mbid = str(row['mbid'])
+                            hlid = row['id']
+                            hl_data = {
+                                'metadata': row['metadata'],
+                                'highlevel': highlevel_models[hlid],
+                            }
+
+                            json_filename = '{mbid}-{no}.json'.format(mbid=mbid, no=submission_offset)
+                            dump_tempfile = os.path.join(temp_dir, json_filename)
+                            with open(dump_tempfile, "w") as f:
+                                f.write(ujson.dumps(hl_data, sort_keys=True))
+                            tar.add(dump_tempfile, arcname=os.path.join(
+                                filename, "highlevel", mbid[0:1], mbid[0:2], json_filename))
+                            os.unlink(dump_tempfile)
+
+                            dumped_count += 1
+                    # Copying legal text
+                    tar.add(DUMP_LICENSE_FILE_PATH,
+                            arcname=os.path.join(filename, "COPYING"))
+
+                    shutil.rmtree(temp_dir)  # Cleanup
+
+                    logging.info("Dumped %s recordings." % dumped_count)
+                    file_num += 1
+                    total_dumped += dumped_count
+
+                if dump_done:
+                    break
+
+    logging.info("Dumped a total of %d recordings in %d files." % (total_dumped, file_num))
+    return dump_path
 
 
-                    # create final json for each hlid and dump it
-                    for row in data_list:
-                        mbid = str(row['mbid'])
-                        hlid = row['id']
-                        hl_data = {
-                            'metadata': row['metadata'],
-                            'highlevel': highlevel_models[hlid],
-                        }
-
-                        json_filename = '{mbid}-{no}.json'.format(mbid=mbid, no=mbid_occurences[mbid])
-                        dump_tempfile = os.path.join(temp_dir, json_filename)
-                        with open(dump_tempfile, "w") as f:
-                            f.write(json.dumps(hl_data, sort_keys=True))
-                        tar.add(dump_tempfile, arcname=os.path.join(
-                            archive_name, "highlevel", mbid[0:1], mbid[0:2], json_filename))
-                        os.unlink(dump_tempfile)
-
-                        mbid_occurences[mbid] += 1
-                        dumped_count += 1
-
-        # Copying legal text
-        tar.add(DUMP_LICENSE_FILE_PATH,
-                arcname=os.path.join(archive_name, "COPYING"))
-
-        shutil.rmtree(temp_dir)  # Cleanup
-
-        logging.info("Dumped %s recordings." % dumped_count)
-
-    return archive_path
-
-
-def list_incremental_dumps():
-    """Get information about all created incremental dumps.
+def list_dumps():
+    """Get information about all created dumps.
 
     Returns:
         List of (id, created) pairs ordered by dump identifier, or None if
-        there are no incremental dumps yet.
+        there are no dumps yet.
     """
     with db.engine.connect() as connection:
-        result = connection.execute("SELECT id, created FROM incremental_dumps ORDER BY id DESC")
+        result = connection.execute("SELECT id, created, dump_type FROM data_dump ORDER BY id DESC")
         return result.fetchall()
 
 
-def prepare_incremental_dump(dump_id=None):
+def get_dump_info(dump_id):
+    with db.engine.connect() as connection:
+        result = connection.execute(text("""
+            SELECT id, created, dump_type
+              FROM data_dump
+             WHERE id = :dump_id
+        """), {
+            "dump_id": dump_id,
+        })
+        if result.rowcount > 0:
+            return dict(result.fetchone())
+        else:
+            return None
+
+
+def prepare_dump(dump_id=None, full=False):
     if dump_id:  # getting existing
-        existing_dumps = list_incremental_dumps()
+        existing_dumps = list_dumps()
         start_t, end_t = None, None
         if existing_dumps:
             for i, dump_info in enumerate(existing_dumps):
-                if dump_info[0] == dump_id:
-                    end_t = dump_info[1]
-                    # Getting info about the dump before that specified
-                    start_t = existing_dumps[i+1][1] if i+1 < len(existing_dumps) else None
+                if dump_info["id"] == dump_id:
+                    end_t = dump_info["created"]
+                    if dump_info["dump_type"] == "full":
+                        start_t = None
+                        full = True
+                    else:
+                        # Getting info about the dump before that specified
+                        start_t = existing_dumps[i+1]["created"] if i+1 < len(existing_dumps) else None
+                        full = False
                     break
         if not start_t and not end_t:
-            raise Exception("Cannot find incremental dump with a specified ID."
+            raise Exception("Cannot find dump with a specified ID."
                             " Please check if it exists or create a new one.")
 
     else:  # creating new
-        start_t = _get_incremental_dump_timestamp()
+        start_t = _get_dump_timestamp() if not full else None
         if start_t and not _any_new_data(start_t):
-            raise NoNewData("No new data since the last incremental dump!")
-        dump_id, end_t = _create_new_inc_dump_record()
+            raise NoNewData("No new data since the last dump!")
+        dump_id, end_t = _create_new_dump_record(full=full)
 
-    return dump_id, start_t, end_t
+    return dump_id, start_t, end_t, full
 
 
 def _any_new_data(from_time):
     """Checks if there's any new data since specified time in tables that
-    support incremental dumps.
+    support dumps.
 
     Returns:
         True if there is new data in one of tables that support incremental
@@ -809,36 +814,65 @@ def _any_new_data(from_time):
     return lowlevel_count > 0 or highlevel_count > 0
 
 
-def _create_new_inc_dump_record():
-    """Creates new record for incremental dump and returns its ID and creation time."""
+def _create_new_dump_record(full=False):
+    """Creates new record for dump and returns its ID and creation time."""
+    dump_type = "full" if full else "partial"
     with db.engine.connect() as connection:
-        result = connection.execute("INSERT INTO incremental_dumps (created) VALUES (now()) RETURNING id, created")
+        result = connection.execute(text("""
+            INSERT INTO data_dump (created, dump_type)
+                 VALUES (now(), :dump_type)
+              RETURNING id, created
+            """), {
+                "dump_type": dump_type,
+            })
         row = result.fetchone()
-    logging.info("Created new incremental dump record (ID: %s)." % row[0])
+    logging.info("Created new %s dump record (ID: %s)." % (dump_type, row[0]))
     return row
 
 
-def _get_incremental_dump_timestamp(dump_id=None):
+def _get_dump_timestamp(dump_id=None):
     with db.engine.connect() as connection:
         if dump_id:
-            result = connection.execute("SELECT created FROM incremental_dumps WHERE id = %s", (dump_id,))
+            result = connection.execute("SELECT created FROM data_dump WHERE id = %s", (dump_id,))
         else:
-            result = connection.execute("SELECT created FROM incremental_dumps ORDER BY id DESC")
+            result = connection.execute("SELECT created FROM data_dump ORDER BY id DESC")
         row = result.fetchone()
     return row[0] if row else None
+
+
+def _get_last_full_dump_timestamp(dump_id):
+    with db.engine.connect() as connection:
+        result = connection.execute(text("""
+            SELECT created
+              FROM data_dump
+             WHERE id < :dump_id
+               AND dump_type = 'full'
+          ORDER BY id DESC
+             LIMIT 1
+        """), {
+            "dump_id": dump_id,
+        })
+        if result.rowcount > 0:
+            return result.fetchone()[0]
+        else:
+            raise NoPreviousFullDump
 
 
 class NoNewData(Exception):
     pass
 
 
-def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, end_t=None):
+class NoPreviousFullDump(Exception):
+    pass
+
+
+def _dump_tables(archive_path, threads, copy_tables_method, time_now, start_t=None, end_t=None):
     """Copies the metadata and the tables to the archive.
 
     Args:
         archive_path (str): Complete path of the archive that will be created.
         threads (int): Maximal number of threads to run during compression.
-        dataset_dump (bool): If true, only dataset tables are copied to the archive.
+        copy_tables_method (function): The function to use to create a dump of tables.
         time_now (datetime): Current time.
         start_t (datetime): Start time of the frame that will be used for data selection. (in incremental dumps)
         end_t (datetime): End time of the frame that will be used for data selection.
@@ -846,13 +880,13 @@ def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, en
     archive_name = os.path.basename(archive_path).split('.')[0]
     with open(archive_path, "w") as archive:
 
-        pxz_command = ["pxz", "--compress"]
+        zstd_command = ["zstd", "--compress"]
         if threads is not None:
-            pxz_command.append("-T %s" % threads)
-        pxz = subprocess.Popen(pxz_command, stdin=subprocess.PIPE, stdout=archive)
+            zstd_command.append("-T%s" % threads)
+        zstd = subprocess.Popen(zstd_command, stdin=subprocess.PIPE, stdout=archive)
 
         # Creating the archive
-        with tarfile.open(fileobj=pxz.stdin, mode="w|") as tar:
+        with tarfile.open(fileobj=zstd.stdin, mode="w|") as tar:
             # TODO: Get rid of temporary directories and write directly to tar file if that's possible
             temp_dir = tempfile.mkdtemp()
 
@@ -872,15 +906,12 @@ def _dump_tables(archive_path, threads, dataset_dump, time_now, start_t=None, en
 
             archive_tables_dir = os.path.join(temp_dir, "abdump", "abdump")
             utils.path.create_path(archive_tables_dir)
-            if dataset_dump:
-                _copy_dataset_tables(archive_tables_dir, tar, archive_name, start_t, end_t)
-            else:
-                _copy_tables(archive_tables_dir, tar, archive_name, start_t, end_t)
+            copy_tables_method(archive_tables_dir, tar, archive_name, start_t, end_t)
 
             shutil.rmtree(temp_dir)
 
-        pxz.stdin.close()
-        pxz.wait()
+        zstd.stdin.close()
+        zstd.wait()
 
 
 def dump_dataset_tables(location, threads=None):
@@ -896,21 +927,55 @@ def dump_dataset_tables(location, threads=None):
     time_now = datetime.today()
     archive_name = "acousticbrainz-dataset-dump-%s" % time_now.strftime("%Y%m%d-%H%M%S")
 
-    archive_path = os.path.join(location, archive_name + ".tar.xz")
+    archive_path = os.path.join(location, archive_name + ".tar.zstd")
     _dump_tables(
         archive_path=archive_path,
         threads=threads,
-        dataset_dump=True,
+        copy_tables_method=_copy_dataset_tables,
+        time_now=time_now,
+    )
+    return archive_path
+
+
+def dump_public_tables(location, threads=None, full=True, dump_id=None):
+    """Create full dump of public data tables in a specified location.
+
+    Args:
+        location: Directory where archive will be created.
+        threads: Maximum number of threads to run during compression
+    Returns:
+        Path to created dump.
+    """
+    utils.path.create_path(location)
+
+    if dump_id:
+        dump_id, start_time, end_time, full = prepare_dump(dump_id=dump_id)
+    else:
+        dump_id, start_time, end_time, full = prepare_dump(full=full)
+
+    if full:
+        archive_name = "acousticbrainz-dump-full-%s-%s" % (dump_id, end_time.strftime("%Y%m%d-%H%M%S"))
+    else:
+        full_dump_timestamp = _get_last_full_dump_timestamp(dump_id)
+        archive_name = "acousticbrainz-dump-incr-%s-%s" % (dump_id, full_dump_timestamp.strftime("%Y%m%d-%H%M%S"))
+
+    time_now = datetime.today()
+
+    archive_path = os.path.join(location, archive_name + ".tar.zstd")
+    _dump_tables(
+        archive_path=archive_path,
+        threads=threads,
+        copy_tables_method=_copy_tables,
         time_now=time_now,
     )
     return archive_path
 
 
 def import_dump(archive_path):
-    """Imports a database dump from .tar.xz archive into the database."""
+    """Imports a database dump from .tar.zstd archive into the database."""
     import_db_dump(archive_path, _TABLES)
 
 
 def import_datasets_dump(archive_path):
-    """Import datasets from .tar.xz archive into the database."""
+    """Import datasets from .tar.zstd archive into the database."""
     import_db_dump(archive_path, _DATASET_TABLES)

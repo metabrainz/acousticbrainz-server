@@ -1,0 +1,28 @@
+{%- extends 'base.html' -%}
+
+{%- block title -%}
+    Similar recordings to - "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }} - AcousticBrainz
+{%- endblock -%}
+
+{%- block content -%}
+
+    <h2 class="page-title">Recording "{{ ref_metadata['title'] }}" by {{ ref_metadata['artist'] }}</h2>
+
+    <h4>Please select a metric to measure similarity.</h4>
+
+    <div class="row">
+        {% for category, metrics in metrics.items() %}
+        <div class="col-md-{{ col_width }}">
+            <h3>{{ category | capitalize }}</h3>
+            <ul>
+            {% for name, description in metrics %}
+                <li><a href="{{ url_for('similarity.get_similar', mbid=ref_metadata['mbid'], n=ref_metadata['submission_offset'], metric=name) }}">
+                    {{ description }}
+                </a></li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+
+{%- endblock -%}

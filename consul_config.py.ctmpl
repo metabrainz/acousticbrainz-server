@@ -48,8 +48,22 @@ LOG_SENTRY = {
 
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
 FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
+SIMILARITY_INDEX_DIR = '''{{template "KEY" "similarity/index_dir"}}'''
+# How many threads to use when building an annoy index
+SIMILARITY_BUILD_NUM_JOBS = {{template "KEY" "similarity/build_n_jobs"}}
 
-FEATURE_EVAL_LOCATION = False
+#Feature Flags
+# Choose a server to perform the evaluation on
+FEATURE_EVAL_LOCATION = {{template "KEY" "feature/eval_location"}}
+# Choose dataset preprocessing processes
+FEATURE_EVAL_FILTERING = {{template "KEY" "feature/eval_filtering"}}
+# Choose settings used for model training
+FEATURE_EVAL_MODEL_SELECTION = {{template "KEY" "feature/eval_model_selection"}}
+# Allow submission of feedback on the quality of similarity results
+FEATURE_SIMILARITY_FEEDBACK = {{template "KEY" "feature/similarity_feedback"}}
 
 RATELIMIT_PER_IP = {{template "KEY" "ratelimit_per_ip"}} # number of requests per ip
 RATELIMIT_WINDOW = {{template "KEY" "ratelimit_window"}} # window size in seconds
+
+# maximum number of recordings in the dataset for which the download dataset button is shown
+DATASET_DOWNLOAD_RECORDINGS_LIMIT = {{template "KEY" "dataset_download_recordings_limit"}}

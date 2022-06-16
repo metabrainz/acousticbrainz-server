@@ -21,7 +21,7 @@ def init_error_handlers(app):
     def unauthorized(error):
         # always returning JSON because this is only raised from API endpoints
         return jsonify_error(error)
-    
+
     @app.errorhandler(403)
     def forbidden(error):
         return render_template('errors/403.html', error=error), 403
@@ -31,6 +31,11 @@ def init_error_handlers(app):
         if request.path.startswith(webserver.API_PREFIX):
             return jsonify_error(error)
         return render_template('errors/404.html', error=error), 404
+
+    @app.errorhandler(429)
+    def too_many_requests(error):
+        # always returning JSON because this is only raised from API endpoints
+        return jsonify_error(error, 429)
 
     @app.errorhandler(500)
     def internal_server_error(error):

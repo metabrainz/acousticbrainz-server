@@ -10,11 +10,11 @@
 {% endblock %}
 
 {% block content %}
-  <div id="dataset-editor" data-mode="{{ mode }}"
-      {{ 'data-edit-id='+dataset_id if dataset_id }}></div>
+  <div id="dataset-react-container"></div>
 {% endblock %}
 
 {%- block scripts -%}
-  {{ super() }}
-  <script src="{{ get_static_path('datasets.js') }}"></script>
+    {{ super() }}
+    <script id="page-react-props" type="application/json">{{ page_props|safe }}</script>
+    <script src="{{ get_static_path('datasets.js') }}"></script>
 {%- endblock -%}

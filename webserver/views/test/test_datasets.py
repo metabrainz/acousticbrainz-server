@@ -100,12 +100,7 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self.assertIsNone(dataset_eval.get_job(job_id))
 
     def test_create(self):
-        resp = self.client.get(url_for("datasets.create"))
-        self.assertStatus(resp, 302)
-
-        # With logged in user
         self.temporary_login(self.test_user_id)
-
         resp = self.client.get(url_for("datasets.create"))
         self.assert200(resp)
 

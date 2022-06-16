@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import json
 import uuid
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 
 import db.data
 import webserver.views.api.exceptions
@@ -41,6 +41,7 @@ AVAILABLE_FEATURES = {
     "rhythm.onset_rate": ["llj.data->'rhythm'->'onset_rate'", None],
     "tonal.chords_key": ["llj.data->'tonal'->'chords_key'", None],
     "tonal.chords_scale": ["llj.data->'tonal'->'chords_scale'", None],
+    "tonal.chords_changes_rate": ["llj.data->'tonal'->'chords_changes_rate'", None],
     "tonal.key_key": ["llj.data->'tonal'->'key_key'", None],
     "tonal.key_scale": ["llj.data->'tonal'->'key_scale'", None],
     "tonal.key_strength": ["llj.data->'tonal'->'key_strength'", None],
@@ -149,8 +150,10 @@ def submit_low_level(mbid):
     except ValueError as e:
         raise webserver.views.api.exceptions.APIBadRequest("Cannot parse JSON document: %s" % e)
 
+    max_duplicate_submissions = current_app.config.get('MAX_NUMBER_DUPLICATE_SUBMISSIONS', None)
+
     try:
-        submit_low_level_data(str(mbid), data, 'mbid')
+        submit_low_level_data(str(mbid), data, 'mbid', max_duplicate_submissions)
     except BadDataException as e:
         raise webserver.views.api.exceptions.APIBadRequest("%s" % e)
     return jsonify({"message": "ok"})
@@ -219,9 +222,11 @@ def _parse_bulk_params(params):
     Where offset is a number >=0. Offsets are optional.
     mbid must be a UUID.
 
-    If an offset is not specified non-numeric, or negativeit is replaced with 0.
+    If an offset is not specified, is non-numeric, or negative it is replaced with 0.
     If an mbid is not valid, an APIBadRequest Exception is
     raised listing the bad MBID and no further processing is done.
+    If an mbid is missing (e.g. a parameter string of ';;') then the empty mbid is silently skipped,
+    even if an offset is provided.
 
     The mbid is normalised to all lower-case, with hyphens between sections.
 
@@ -235,6 +240,8 @@ def _parse_bulk_params(params):
     for recording in params.split(";"):
         parts = str(recording).split(":")
         mbid = parts[0]
+        if not mbid:
+            continue
         if len(parts) == 1:
             offset = None
         elif len(parts) == 2:

@@ -1,6 +1,7 @@
 import string
 import random
 from six.moves import range
+import webserver.views.api.exceptions
 
 
 def generate_string(length):
@@ -16,3 +17,19 @@ def reformat_date(value, fmt="%b %d, %Y"):
 
 def reformat_datetime(value, fmt="%b %d, %Y, %H:%M %Z"):
     return value.strftime(fmt)
+
+
+def validate_offset(offset):
+    """Validate the offset.
+
+    If the offset is None, return 0, otherwise interpret it as a number. If it is
+    not a number, raise 400.
+    """
+    if offset:
+        try:
+            offset = int(offset)
+        except ValueError:
+            raise webserver.views.api.exceptions.APIBadRequest("Offset must be an integer value")
+    else:
+        offset = 0
+    return offset

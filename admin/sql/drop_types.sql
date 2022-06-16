@@ -6,5 +6,6 @@ DROP TYPE IF EXISTS version_type                   CASCADE;
 DROP TYPE IF EXISTS eval_location_type             CASCADE;
 DROP TYPE IF EXISTS gid_type                       CASCADE;
 DROP TYPE IF EXISTS similarity.eval_type           CASCADE;
+DROP TYPE IF EXISTS dump_type                      CASCADE;
 
 COMMIT;

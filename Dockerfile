@@ -43,6 +43,7 @@ RUN wget -q -O - https://deb.nodesource.com/setup_12.x | bash - && apt-get updat
                        python-numpy-dev \
                        python-numpy \
                        swig2.0 \
+                       zstd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /code

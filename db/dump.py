@@ -55,6 +55,7 @@ _TABLES = {
         "lossless",
         "submitted",
         "gid_type",
+        "submission_offset",
     ),
     "lowlevel_json": (
         "id",
@@ -68,6 +69,7 @@ _TABLES = {
         "model_version",
         "date",
         "status",
+        "class_mapping",
     ),
     "highlevel": (
         "id",

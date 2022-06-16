@@ -45,8 +45,8 @@ def full_db(location, threads, rotate, dump_id):
         if dump_info["dump_type"] != "full":
             raise Exception("Dump ID: %d does not correspond to a full dump!" % dump_id)
 
-    path = dump.dump_db(location, threads, full=True, dump_id=dump_id)
-    current_app.logger.info("Done! Created:", path)
+    path = dump.dump_public_tables(location, threads, full=True, dump_id=dump_id)
+    current_app.logger.info("Done! Created: %s", path)
 
     if rotate:
         current_app.logger.info("Removing old dumps (except two latest)...")
@@ -54,45 +54,44 @@ def full_db(location, threads, rotate, dump_id):
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-@cli.command(name='json')
+@cli.command()
 @click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
               help="Directory where dumps need to be created")
 @click.option("--rotate", "-r", is_flag=True)
 @click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
-@click.option("--dump-id", "-id", type=int)
-def json(location, rotate, no_lowlevel, no_highlevel, dump_id):
+@click.option("--max-files", help="Split dump into files with this many items each")
+def json(location, rotate, no_lowlevel, no_highlevel, max_files):
     if no_lowlevel and no_highlevel:
         current_app.logger.info("wut? check your options, mate!")
         return
 
-    dump_id, _, _, _ = dump.prepare_dump(dump_id=int(dump_id) if dump_id else None, full=True)
     if not no_lowlevel:
-        _json_lowlevel(location, rotate, dump_id)
+        _json_lowlevel(location, rotate, max_files)
 
     if not no_highlevel:
-        _json_highlevel(location, rotate, dump_id)
+        _json_highlevel(location, rotate, max_files)
 
 
-def _json_lowlevel(location, rotate, dump_id):
+def _json_lowlevel(location, rotate, max_files):
     current_app.logger.info("Creating low-level JSON data dump...")
-    path = dump.dump_lowlevel_json(location, full=True, dump_id=dump_id)
-    current_app.logger.info("Done! Created: %s" % path)
+    path = dump.dump_lowlevel_json(location, full=True, dump_id=None, max_count=max_files)
+    current_app.logger.info("Done! Created: %s", path)
 
     if rotate:
         current_app.logger.info("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-lowlevel-json-full-[0-9]+.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-def _json_highlevel(location, rotate, dump_id):
+def _json_highlevel(location, rotate, max_files):
     current_app.logger.info("Creating high-level JSON data dump...")
-    path = dump.dump_highlevel_json(location, full=True, dump_id=dump_id)
-    current_app.logger.info("Done! Created: %s" % path)
+    path = dump.dump_highlevel_json(location, full=True, dump_id=None, max_count=max_files)
+    current_app.logger.info("Done! Created: %s", path)
 
     if rotate:
         current_app.logger.info("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-highlevel-json-full-[0-9]+.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.bz2",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
@@ -109,21 +108,21 @@ def incremental(location, id, threads):
     _incremental_json_highlevel(location, dump_id)
 
 
-def _incremental_db(location, id, threads):
+def _incremental_db(location, dump_id, threads):
     current_app.logger.info("Creating incremental database dump...")
-    path = dump.dump_db(location, threads, full=False, dump_id=id)
+    path = dump.dump_db(location, threads, full=False, dump_id=dump_id)
     current_app.logger.info("Done! Created: %s\n" % path)
 
 
-def _incremental_json_lowlevel(location, id):
+def _incremental_json_lowlevel(location, dump_id):
     current_app.logger.info("Creating incremental low-level JSON data dump...")
-    path = dump.dump_lowlevel_json(location, full=False, dump_id=id)
+    path = dump.dump_lowlevel_json(location, full=False, dump_id=dump_id)
     current_app.logger.info("Done! Created: %s\n" % path)
 
 
-def _incremental_json_highlevel(location, id):
+def _incremental_json_highlevel(location, dump_id):
     current_app.logger.info("Creating incremental high-level JSON data dump...")
-    path = dump.dump_highlevel_json(location, full=False, dump_id=id)
+    path = dump.dump_highlevel_json(location, full=False, dump_id=dump_id)
     current_app.logger.info("Done! Created: %s\n" % path)
 
 
@@ -134,6 +133,8 @@ def incremental_info(all=False):
 
     By default outputs information for the latest dump.
     """
+    current_app.logger.info("Incremental dumps are disabled")
+    return
     info = dump.list_incremental_dumps()
     if info:
         if all:

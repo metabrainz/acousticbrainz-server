@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS lowlevel_json          CASCADE;
 DROP TABLE IF EXISTS lowlevel               CASCADE;
 DROP TABLE IF EXISTS version                CASCADE;
 DROP TABLE IF EXISTS statistics             CASCADE;
-DROP TABLE IF EXISTS incremental_dumps      CASCADE;
+DROP TABLE IF EXISTS data_dump              CASCADE;
 DROP TABLE IF EXISTS dataset_snapshot       CASCADE;
 DROP TABLE IF EXISTS dataset_eval_jobs      CASCADE;
 DROP TABLE IF EXISTS dataset_class_member   CASCADE;

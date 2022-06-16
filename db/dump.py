@@ -10,6 +10,7 @@ include information from the previous dumps).
 from __future__ import print_function
 
 from flask import current_app
+import ujson
 
 import utils.path
 import db
@@ -565,7 +566,7 @@ def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
                             json_filename = mbid + "-%d.json" % submission_offset
                             dump_tempfile = os.path.join(temp_dir, json_filename)
                             with open(dump_tempfile, "w") as f:
-                                f.write(json.dumps(json_data))
+                                f.write(ujson.dumps(json_data))
                             tar.add(dump_tempfile, arcname=os.path.join(
                                 filename, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
                             os.unlink(dump_tempfile)
@@ -692,7 +693,6 @@ def dump_highlevel_json(location, full=False, dump_id=None, max_count=500000):
                                 JOIN version
                                     ON version.id = hlmo.version
                                 WHERE hlmo.highlevel IN :ids
-                                  AND m.status = 'show'
                             """), {
                                 'ids': tuple(i['id'] for i in data_list)
                             })
@@ -718,7 +718,7 @@ def dump_highlevel_json(location, full=False, dump_id=None, max_count=500000):
                             json_filename = '{mbid}-{no}.json'.format(mbid=mbid, no=submission_offset)
                             dump_tempfile = os.path.join(temp_dir, json_filename)
                             with open(dump_tempfile, "w") as f:
-                                f.write(json.dumps(hl_data, sort_keys=True))
+                                f.write(ujson.dumps(hl_data, sort_keys=True))
                             tar.add(dump_tempfile, arcname=os.path.join(
                                 filename, "highlevel", mbid[0:1], mbid[0:2], json_filename))
                             os.unlink(dump_tempfile)

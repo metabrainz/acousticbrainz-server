@@ -3,6 +3,7 @@
 Values are stored in `statistics` table and are referenced by <name, timestamp>
 pair.
 """
+from __future__ import absolute_import
 from brainzutils import cache
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -71,7 +72,7 @@ def get_last_submitted_recordings():
                     "title": r[2],
                 } for r in last_submissions if r[1] and r[2]
             ]
-        cache.set(cache_key, last_submissions, time=LAST_MBIDS_CACHE_TIMEOUT)
+        cache.set(cache_key, last_submissions, expirein=LAST_MBIDS_CACHE_TIMEOUT)
 
     return last_submissions
 
@@ -129,9 +130,9 @@ def add_stats_to_cache():
     with db.engine.connect() as connection:
         stats = _count_submissions_to_date(connection, now)
         cache.set(STATS_CACHE_KEY, stats,
-                  time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+                  expirein=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
         cache.set(STATS_CACHE_LAST_UPDATE_KEY, now,
-                  time=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
+                  expirein=STATS_CACHE_TIMEOUT, namespace=STATS_CACHE_NAMESPACE)
 
 
 def get_stats_summary():

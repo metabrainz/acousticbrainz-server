@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import copy
 import json
 import os.path
 
-import mock
+from unittest import mock
+import six
 import sqlalchemy
 
 import db.data
@@ -986,7 +988,7 @@ class DataUtilTestCase(AcousticbrainzTestCase):
         }
         self.assertIsNone(db.data.sanity_check_data(d))
         del d['metadata']['tags']['file_name']
-        self.assertEquals(db.data.sanity_check_data(d), ['metadata', 'tags', 'file_name'])
+        self.assertEqual(db.data.sanity_check_data(d), ['metadata', 'tags', 'file_name'])
 
     def test_clean_metadata(self):
         d = {
@@ -1044,5 +1046,6 @@ class DataUtilTestCase(AcousticbrainzTestCase):
         mapped = db.data.map_highlevel_class_names(highlevel, mapping)
 
         self.assertEqual(mapped["value"], "Jazz")
-        self.assertItemsEqual(mapped["all"], ["Blues", "Classical", "Country", "Disco", "Hiphop",
-                                              "Jazz", "Metal", "Pop", "Reggae", "Rock"])
+        six.assertCountEqual(self, mapped["all"],
+                             ["Blues", "Classical", "Country", "Disco",
+                              "Hiphop", "Jazz", "Metal", "Pop", "Reggae", "Rock"])

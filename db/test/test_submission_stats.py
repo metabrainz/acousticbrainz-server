@@ -1,12 +1,15 @@
+from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 import unittest
 import uuid
-import mock
+from unittest import mock
 import datetime
 import pytz
+from operator import itemgetter
 from sqlalchemy import text
 
 from db import gid_types
+from six.moves import range
 import db.submission_stats
 import db.data
 import db
@@ -38,23 +41,23 @@ class SubmissionStatsTestCase(unittest.TestCase):
         self.assertIsNone(last_collected)
         expected = {"lowlevel-lossy": 0, "lowlevel-lossy-unique": 0, "lowlevel-lossless": 0,
                     "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
-        self.assertEquals(expected, stats)
+        self.assertEqual(expected, stats)
 
         # No cache and yes database, return db
         from_cache.return_value = (None, None)
         load_stats.return_value = [{"collected": "date", "stats": "stats"}]
 
         stats, last_collected = db.submission_stats.get_stats_summary()
-        self.assertEquals("date", last_collected)
-        self.assertEquals("stats", stats)
+        self.assertEqual("date", last_collected)
+        self.assertEqual("stats", stats)
 
         # if cache, return cache
         from_cache.return_value = ("cachedate", "cachestats")
         load_stats.return_value = [{"collected": "date", "stats": "stats"}]
 
         stats, last_collected = db.submission_stats.get_stats_summary()
-        self.assertEquals("cachedate", last_collected)
-        self.assertEquals("cachestats", stats)
+        self.assertEqual("cachedate", last_collected)
+        self.assertEqual("cachestats", stats)
 
     @mock.patch("brainzutils.cache.get")
     def test_get_stats_from_cache(self, cacheget):
@@ -88,8 +91,8 @@ class SubmissionStatsTestCase(unittest.TestCase):
         count.assert_called_once_with(connection, datetimenow)
         connect.assert_called_once_with()
         dt.datetime.now.assert_called_once_with(pytz.utc)
-        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=3600, namespace="statistics"),
-                    mock.call("recent-stats-last-updated", datetimenow, time=3600, namespace="statistics")]
+        setcalls = [mock.call("recent-stats", {"stats": "here"}, expirein=3600, namespace="statistics"),
+                    mock.call("recent-stats-last-updated", datetimenow, expirein=3600, namespace="statistics")]
         cacheset.assert_has_calls(setcalls)
 
 
@@ -177,7 +180,7 @@ class SubmissionStatsDatabaseTestCase(AcousticbrainzTestCase):
 
     def test_get_most_recent_stats_date(self):
         """Get the most recent date that we have for stats"""
-        date = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
         stats = {'lowlevel-lossless': 2,
                  'lowlevel-lossless-unique': 2,
                  'lowlevel-lossy': 0,
@@ -194,11 +197,11 @@ class SubmissionStatsDatabaseTestCase(AcousticbrainzTestCase):
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                   "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 25, "lowlevel-total-unique": 16}
-        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
                   "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
-        date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
             db.submission_stats._write_stats(connection, date1, stats1)
             db.submission_stats._write_stats(connection, date2, stats2)
@@ -238,11 +241,11 @@ class SubmissionStatsDatabaseTestCase(AcousticbrainzTestCase):
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                   "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 25, "lowlevel-total-unique": 16}
-        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
                   "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
-        date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         data = [
             {"collected": date1, "stats": stats1},
             {"collected": date2, "stats": stats2}
@@ -256,17 +259,17 @@ class SubmissionStatsDatabaseTestCase(AcousticbrainzTestCase):
             {'data': [[1452384000000, 6], [1452470400000, 10]], 'name': 'Lossy (unique)'},
             {'data': [[1452384000000, 25], [1452470400000, 35]], 'name': 'Total (all)'},
             {'data': [[1452384000000, 16], [1452470400000, 20]], 'name': 'Total (unique)'}]
-        self.assertEqual(sorted(expected_formatted), sorted(formatted))
+        self.assertEqual(sorted(expected_formatted, key=itemgetter('name')), sorted(formatted, key=itemgetter('name')))
 
     def test_get_statistics_data_limit(self):
         stats1 = {"lowlevel-lossy": 10, "lowlevel-lossy-unique": 6,
                   "lowlevel-lossless": 15, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 25, "lowlevel-total-unique": 16}
-        date1 = datetime.datetime(2016, 01, 10, 00, 00, tzinfo=pytz.utc)
+        date1 = datetime.datetime(2016, 1, 10, 00, 00, tzinfo=pytz.utc)
         stats2 = {"lowlevel-lossy": 15, "lowlevel-lossy-unique": 10,
                   "lowlevel-lossless": 20, "lowlevel-lossless-unique": 10,
                   "lowlevel-total": 35, "lowlevel-total-unique": 20}
-        date2 = datetime.datetime(2016, 01, 11, 00, 00, tzinfo=pytz.utc)
+        date2 = datetime.datetime(2016, 1, 11, 00, 00, tzinfo=pytz.utc)
         with db.engine.connect() as connection:
             db.submission_stats._write_stats(connection, date1, stats1)
             db.submission_stats._write_stats(connection, date2, stats2)
@@ -286,8 +289,8 @@ class SubmissionStatsDatabaseTestCase(AcousticbrainzTestCase):
             self.assertIsNone(earliest_date)
 
             # otherwise, the first submitted date
-            date1 = datetime.datetime(2016, 01, 07, 10, 20, 39, tzinfo=pytz.utc)
-            date2 = datetime.datetime(2016, 01, 07, 12, 30, 20, tzinfo=pytz.utc)
+            date1 = datetime.datetime(2016, 1, 7, 10, 20, 39, tzinfo=pytz.utc)
+            date2 = datetime.datetime(2016, 1, 7, 12, 30, 20, tzinfo=pytz.utc)
             add_empty_lowlevel(uuid.uuid4(), True, date1)
             add_empty_lowlevel(uuid.uuid4(), True, date2)
 
@@ -364,7 +367,7 @@ class SubmissionStatsHighchartsTestCase(AcousticbrainzTestCase):
         for h in history:
             self.assertEqual(len(h["data"]), 2)
         # Example of date conversion
-        self.assertEqual(history[0], {"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"})
+        self.assertTrue({"data": [[1452384000000, 15], [1452470400000, 20]], "name": "Lossless (all)"} in history)
 
     @mock.patch("db.submission_stats._get_stats_from_cache")
     def test_stats_cache(self, get_stats_from_cache):

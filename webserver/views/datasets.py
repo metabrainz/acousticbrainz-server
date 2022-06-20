@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 
-import StringIO
+from six import StringIO
+from io import BytesIO, TextIOWrapper
 import csv
 import datetime
 import json
@@ -11,6 +12,7 @@ import zipfile
 from collections import defaultdict
 
 import six
+from six.moves import range
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, send_file, current_app
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
@@ -23,11 +25,13 @@ import db.exceptions
 import db.data
 import db.user
 from db.dataset import slugify
+
 from utils import dataset_validator
 from webserver import flash, forms
 from webserver.decorators import service_session_login_required
 from webserver.external import musicbrainz
 from webserver.views.api.exceptions import APIUnauthorized
+
 
 # Below values are defined in 'classification_project_template.yaml' file.
 C = '-5, -3, -1, 1, 3, 5, 7, 9, 11'
@@ -134,10 +138,13 @@ def download_annotation_csv(dataset_id):
     """
     ds = get_dataset(dataset_id)
     fp = _convert_dataset_to_csv_stringio(ds)
+    bio = BytesIO()
+    bio.write(fp.getvalue().encode())
+    bio.seek(0)
 
     file_name = "dataset_annotations_%s.csv" % db.dataset.slugify(ds["name"])
 
-    return send_file(fp,
+    return send_file(bio,
                      mimetype='text/csv',
                      as_attachment=True,
                      attachment_filename=file_name)
@@ -184,23 +191,23 @@ def _convert_dataset_to_csv_stringio(dataset):
     #   - dataset description, class names, class descriptions
     # TODO: On upgrade to python 3, check that stringio accepts the correct data
     #       (may have to change to bytesio if we encode this data)
-    fp = StringIO.StringIO()
+    fp = StringIO()
     writer = csv.writer(fp)
 
     # write dataset description only if it is set
     if dataset["description"]:
         description = dataset["description"]
-        writer.writerow(["description", description.encode("utf-8")])
+        writer.writerow(["description", description])
 
     for ds_class in dataset["classes"]:
         # write class description only if it is set
         if ds_class["description"]:
             ds_class_description = ds_class["description"]
-            ds_class_desc_head = "description:" + ds_class["name"].encode("utf-8")
-            writer.writerow([ds_class_desc_head, ds_class_description.encode("utf-8")])
+            ds_class_desc_head = "description:" + ds_class["name"]
+            writer.writerow([ds_class_desc_head, ds_class_description])
 
     for ds_class in dataset["classes"]:
-        class_name = ds_class["name"].encode("utf-8")
+        class_name = ds_class["name"]
         for rec in ds_class["recordings"]:
             writer.writerow([rec, class_name])
 
@@ -249,7 +256,7 @@ def generate_zip_from_dataset(ds):
         class_name = slugify(data["name"])
         CHUNK_SIZE = 100
         recordings = [(mbid, 0) for mbid in data.get("recordings", [])]
-        chunks = [recordings[i: i + CHUNK_SIZE] for i in xrange(0, len(recordings), CHUNK_SIZE)]
+        chunks = [recordings[i: i + CHUNK_SIZE] for i in range(0, len(recordings), CHUNK_SIZE)]
         for chunk in chunks:
             recordings_json = db.data.load_many_low_level(chunk)
             for mbid, offset in chunk:
@@ -455,7 +462,12 @@ def create_service():
 def import_csv():
     form = forms.DatasetCSVImportForm()
     if form.validate_on_submit():
-        description, classes = _parse_dataset_csv(request.files[form.file.name])
+        # Decode the rows as UTF-8.
+        # The utf-8-sig codec removes a UTF-8 BOM if it exists at the start of a file.
+        # In that case, col1 in the first row could start with 0xfeff, so remove it.
+        # For all other items it will decode as regular UTF-8
+        file = TextIOWrapper(request.files[form.file.name], encoding='utf-8-sig')
+        description, classes = _parse_dataset_csv(file)
         dataset_dict = {
             "name": form.name.data,
             "description": description if description else form.description.data,
@@ -481,6 +493,11 @@ def _parse_dataset_csv(file):
       description,<dataset_description>
       description:<classname>,<class_description>
 
+    Note:
+        The caller should open the stream in the 'utf-8-sig' encoding to remove
+        the UTF-8 BOM before passing it to this method. This method no longer
+        handles BOM.
+
     Arguments:
         file: path to the csv file containing the dataset
     Returns: a tuple of (dataset description, [classes]), where classes is a list of dictionaries
@@ -493,12 +510,8 @@ def _parse_dataset_csv(file):
         if len(class_row) != 2:
             raise BadRequest("Bad dataset! Each row must contain one <MBID, class name> pair.")
 
-        # Decode the rows as UTF-8.
-        # The utf-8-sig codec removes a UTF-8 BOM if it exists at the start of a file.
-        # In that case, col1 in the first row could start with 0xfeff, so remove it.
-        # For all other items it will decode as regular UTF-8
-        col1 = class_row[0].decode("utf-8-sig")
-        col2 = class_row[1].decode("utf-8-sig")
+        col1 = class_row[0]
+        col2 = class_row[1]
 
         if col1 == "description":
             # row is the dataset description
@@ -674,7 +687,7 @@ def prepare_table_from_cm(confusion_matrix):
     for actual in all_classes:
         # Counting how many tracks were associated with that class during classification
         predicted_class_size = 0
-        for predicted in confusion_matrix[actual].values():
+        for predicted in list(confusion_matrix[actual].values()):
             predicted_class_size += predicted
 
         row = {

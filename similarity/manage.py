@@ -13,7 +13,7 @@ NORMALIZATION_SAMPLE_SIZE = 10000
 ADD_METRICS_BATCH_SIZE = 10000
 ADD_INDEX_BATCH_SIZE = 100000
 
-cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
+cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app)
 
 
 @cli.command(name="init")

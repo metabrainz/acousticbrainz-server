@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from flask import Blueprint, Response, render_template
 from db.submission_stats import get_statistics_history
 from operator import itemgetter

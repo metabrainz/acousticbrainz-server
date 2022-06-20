@@ -216,7 +216,7 @@ def get_batch_data(connection, max_id, batch_size):
             ON model.id = hlm.model
          WHERE llj.id IN (
                SELECT id
-               FROM lowlevel where id > :max_id order by id limit :batch_size)
+               FROM lowlevel WHERE id > :max_id ORDER BY id LIMIT :batch_size)
       GROUP BY (llj.id)
       """)
 

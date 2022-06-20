@@ -8,7 +8,7 @@ import db.api_key
 import webserver.views.api.exceptions
 
 import json
-import mock
+from unittest import mock
 
 
 class APIDatasetEvaluationViewsTestCase(AcousticbrainzTestCase):

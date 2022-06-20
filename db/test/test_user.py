@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 import db.user
 import db.api_key

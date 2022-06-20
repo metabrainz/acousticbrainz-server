@@ -1,4 +1,4 @@
-name: AcousticBrainz Unit Tests
+name: AcousticBrainz Unit Tests - Python 3
 
 on:
   push:

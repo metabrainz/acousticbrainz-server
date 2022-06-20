@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from flask import Blueprint, render_template, request, redirect, url_for
 from db.submission_stats import get_last_submitted_recordings, get_stats_summary
 from flask_login import login_required, current_user

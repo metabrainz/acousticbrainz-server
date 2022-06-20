@@ -13,7 +13,7 @@ def get_recording_by_id(mbid):
             recording = musicbrainzngs.get_recording_by_id(mbid, includes=['artists', 'releases', 'media'])['recording']
         except ResponseError as e:
             raise DataUnavailable(e)
-    cache.set(mbid, recording, time=CACHE_TIMEOUT)
+    cache.set(mbid, recording, expirein=CACHE_TIMEOUT)
     return recording
 
 

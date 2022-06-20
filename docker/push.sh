@@ -12,15 +12,20 @@
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../"
 
-git describe --tags --dirty --always > .git-version
+GIT_COMMIT_SHA=$(git describe --tags --dirty --always)
+echo "$GIT_COMMIT_SHA" > .git-version
+
+function build_and_push_image {
+  echo "Building AcousticBrainz web image with tag $2..."
+  docker build -f "$1"  -t metabrainz/acousticbrainz:$2 \
+        --target acousticbrainz-prod \
+        --build-arg GIT_COMMIT_SHA="$GIT_COMMIT_SHA" . && \
+  echo "Done!" && \
+  echo "Pushing image to dockerhub metabrainz/acousticbrainz-web:$2..." && \
+  docker push metabrainz/acousticbrainz:$2 && \
+  echo "Done!"
+}
 
 TAG=${1:-beta}
-
-echo "Building AcousticBrainz web image with tag $TAG..."
-docker build -t metabrainz/acousticbrainz:$TAG \
-        --target acousticbrainz-prod \
-        --build-arg GIT_COMMIT_SHA=$(git describe --tags --dirty --always) . && \
-echo "Done!" && \
-echo "Pushing image to dockerhub metabrainz/acousticbrainz-web:$TAG..." && \
-docker push metabrainz/acousticbrainz:$TAG && \
-echo "Done!"
+build_and_push_image "Dockerfile" "${TAG}"
+build_and_push_image "Dockerfile.py2" "${TAG}-py2"

@@ -6,7 +6,7 @@ import datetime
 import os
 import json
 
-import mock
+from unittest import mock
 from flask import url_for
 
 import webserver.forms as forms
@@ -335,15 +335,15 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset_utf8.csv')
 
         # Before starting, check that the bom hasn't been removed from this test file by an errant text editor
-        self.assertEqual(open(test_csv_file).read(3), utf8_bom)
+        self.assertEqual(open(test_csv_file, mode='rb').read(3), utf8_bom)
 
-        with open(test_csv_file) as csv_data:
+        with open(test_csv_file, encoding='utf-8-sig') as csv_data:
             test_dataset_description, test_classes = ws_datasets._parse_dataset_csv(csv_data)
 
-            expected_classes = [{"name": u"róck music",
+            expected_classes = [{"name": "róck music",
                                  "description": "",
-                                 "recordings": [u"bé686320-8057-4ca2-b484-e01434a3a2b1"]}]
-            self.assertEqual(test_dataset_description, u"a datasét")
+                                 "recordings": ["bé686320-8057-4ca2-b484-e01434a3a2b1"]}]
+            self.assertEqual(test_dataset_description, "a datasét")
             self.assertEqual(test_classes, expected_classes)
 
     def test_dataset_to_csv(self):
@@ -372,20 +372,20 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self.assertEqual(dataset_csv, expected)
 
         # Non-ascii text
-        self.test_data["classes"][0]["name"] = u"class dieciséis"
-        self.test_data["classes"][0]["description"] = u"descripción"
-        self.test_data["description"] = u"¿Qué pasa?"
-        expected_list = [u"description,¿Qué pasa?",
-                         u"description:class dieciséis,descripción",
-                         u"e8afe383-1478-497e-90b1-7885c7f37f6e,class dieciséis",
-                         u"0dad432b-16cc-4bf0-8961-fd31d124b01b,class dieciséis",
-                         u"e8afe383-1478-497e-90b1-7885c7f37f6e,Class #2",
-                         u"0dad432b-16cc-4bf0-8961-fd31d124b01b,Class #2"]
+        self.test_data["classes"][0]["name"] = "class dieciséis"
+        self.test_data["classes"][0]["description"] = "descripción"
+        self.test_data["description"] = "¿Qué pasa?"
+        expected_list = ["description,¿Qué pasa?",
+                         "description:class dieciséis,descripción",
+                         "e8afe383-1478-497e-90b1-7885c7f37f6e,class dieciséis",
+                         "0dad432b-16cc-4bf0-8961-fd31d124b01b,class dieciséis",
+                         "e8afe383-1478-497e-90b1-7885c7f37f6e,Class #2",
+                         "0dad432b-16cc-4bf0-8961-fd31d124b01b,Class #2"]
         fp = ws_datasets._convert_dataset_to_csv_stringio(self.test_data)
         dataset_csv = fp.getvalue()
         expected = terminator.join(expected_list) + terminator
         # The result of the conversion is a bytes, so convert it back to unicode
-        self.assertEqual(dataset_csv.decode("utf-8"), expected)
+        self.assertEqual(dataset_csv, expected)
 
     @mock.patch("db.dataset.create_from_dict")
     def test_import_csv_invalid_form(self, mock_create_from_dict):
@@ -394,7 +394,7 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self.temporary_login(self.test_user_id)
         test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
         # Missing name field
-        with open(test_csv_file) as csv_data:
+        with open(test_csv_file, 'rb') as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
                                     data={'file': (csv_data, 'dataset.csv')},
                                     content_type='multipart/form-data')
@@ -411,7 +411,7 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self.temporary_login(self.test_user_id)
         test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
 
-        with open(test_csv_file) as csv_data:
+        with open(test_csv_file, 'rb') as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
                                     data={'name': 'dataset', 'file': (csv_data, 'dataset.csv')},
                                     content_type='multipart/form-data')
@@ -431,7 +431,7 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self.temporary_login(self.test_user_id)
         test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
 
-        with open(test_csv_file) as csv_data:
+        with open(test_csv_file, 'rb') as csv_data:
             resp = self.client.post(url_for('datasets.import_csv'),
                                     data={'name': 'dataset', 'public': 'y',  'file': (csv_data, 'dataset.csv')},
                                     content_type='multipart/form-data')
@@ -456,7 +456,7 @@ class DatasetsViewsTestCase(AcousticbrainzTestCase):
         self.temporary_login(self.test_user_id)
         test_csv_file = os.path.join(WEB_TEST_DATA_PATH, 'test_dataset.csv')
 
-        with open(test_csv_file) as csv_data:
+        with open(test_csv_file, 'rb') as csv_data:
             # Because the 'public' flag is a checkbox, unticking it has the result of
             # not sending the field with the request, therefore it's not in data, below
             resp = self.client.post(url_for('datasets.import_csv'),

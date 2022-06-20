@@ -1,5 +1,6 @@
 import string
 import random
+from six.moves import range
 import webserver.views.api.exceptions
 
 

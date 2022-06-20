@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
-import mock
+from unittest import mock
+import six
 
 import db.exceptions
 from webserver.testing import AcousticbrainzTestCase
@@ -70,20 +71,20 @@ class LegacyViewsTestCase(AcousticbrainzTestCase):
         resp = self.client.get(url_for('api.count', mbid=mbid))
         expected = {'mbid': mbid, 'count': 0}
         self.assertEqual(resp.status_code, 200)
-        self.assertItemsEqual(resp.json, expected)
+        six.assertCountEqual(self, resp.json, expected)
 
         self.load_low_level_data(mbid)
         expected = {'mbid': mbid, 'count': 1}
         resp = self.client.get(url_for('api.count', mbid=mbid))
         self.assertEqual(resp.status_code, 200)
-        self.assertItemsEqual(resp.json, expected)
+        six.assertCountEqual(self, resp.json, expected)
 
         # upper-case and format
         mbid = '0DAD432B-16CC-4BF0-8961-FD31D124B01B'
         resp = self.client.get(url_for('api.count', mbid=mbid.upper()))
         self.assertEqual(resp.status_code, 200)
         # mbid stays lower-case in the response
-        self.assertItemsEqual(resp.json, expected)
+        six.assertCountEqual(self, resp.json, expected)
         mbid = '0DAD432B16CC4BF08961FD31D124B01B'
         resp = self.client.get(url_for('api.count', mbid=mbid.upper()))
         self.assertEqual(resp.status_code, 200)

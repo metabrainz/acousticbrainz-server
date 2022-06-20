@@ -22,7 +22,7 @@ import similarity.manage
 
 ADMIN_SQL_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'admin', 'sql')
 
-cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
+cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s: [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %I:%M:%S')
 
@@ -41,7 +41,7 @@ def init_db(archive, force, skip_create_db=False):
     4. Indexes are created.
     5. Similarity metrics metadata is populated.
 
-    Data dump needs to be a .tar.xz archive produced by export command.
+    Data dump needs to be a .tar.zstd archive produced by export command.
 
     More information about populating a PostgreSQL database efficiently can be
     found at http://www.postgresql.org/docs/current/static/populate.html.

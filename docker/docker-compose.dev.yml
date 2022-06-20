@@ -42,7 +42,7 @@ services:
   hl_extractor:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.py2
       target: acousticbrainz-dev
     command: python2 worker_manage.py hl_extractor
     volumes:
@@ -53,7 +53,7 @@ services:
   dataset_evaluator:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.py2
       target: acousticbrainz-dev
     command: python2 worker_manage.py dataset_evaluator
     volumes:

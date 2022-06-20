@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import db
 import db.exceptions
 from webserver.testing import AcousticbrainzTestCase
@@ -6,7 +7,7 @@ from utils import dataset_validator
 from sqlalchemy import text
 import uuid
 import copy
-import mock
+from unittest import mock
 
 
 class DatasetTestCase(AcousticbrainzTestCase):

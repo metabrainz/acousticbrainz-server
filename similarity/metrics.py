@@ -149,7 +149,9 @@ class HighLevelMetric(BaseMetric):
 
 
 class BinaryCollectiveMetric(HighLevelMetric):
-    models = None
+    # a list of tuples, first element is model name, 2nd element is the class to use
+    # e.g ('mood_acoustic', 'acoustic'), ('voice_instrumental', 'instrumental')
+    models = []
 
     def transform(self, data):
         if not data:
@@ -157,14 +159,12 @@ class BinaryCollectiveMetric(HighLevelMetric):
 
         vector = []
         try:
-            for model in self.models:
+            for model, cls in self.models:
                 if model in data.keys():
                     model_data = data[model]['all']
                     assert len(model_data) == 2
-                    for key, value in model_data.items():
-                        if not key.startswith('not'):
-                            vector.append(value)
-                            break
+                    assert cls in model_data
+                    vector.append(model_data[cls])
                 else:
                     vector.append(0)
             return vector
@@ -179,11 +179,11 @@ class MoodsMetric(BinaryCollectiveMetric):
     name = 'moods'
     description = 'Moods'
     models = [
-        'mood_happy',
-        'mood_sad',
-        'mood_aggressive',
-        'mood_relaxed',
-        'mood_party'
+        ('mood_happy', 'happy'),
+        ('mood_sad', 'sad'),
+        ('mood_aggressive', 'aggressive'),
+        ('mood_relaxed', 'relaxed'),
+        ('mood_party', 'party')
     ]
 
 
@@ -191,9 +191,9 @@ class InstrumentsMetric(BinaryCollectiveMetric):
     name = 'instruments'
     description = 'Instruments'
     models = [
-        'mood_acoustic',
-        'mood_electronic',
-        'voice_instrumental'
+        ('mood_acoustic', 'acoustic'),
+        ('mood_electronic', 'electronic'),
+        ('voice_instrumental', 'instrumental')
     ]
 
 
@@ -206,7 +206,9 @@ class SingleClassifierMetric(HighLevelMetric):
             raise ValueError('Invalid data value: {}'.format(data))
 
         if self.model in data.keys():
-            return data[self.model]['all'].values()
+            # In order to prevent dictionary ordering problems, always explicitly order by class name
+            results = data[self.model]['all']
+            return [results[cls] for cls in sorted(results.keys())]
         else:
             return [0] * self.length()
 

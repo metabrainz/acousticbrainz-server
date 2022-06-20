@@ -1,6 +1,5 @@
 from __future__ import absolute_import
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
-from flask_login import current_user
+from flask import Blueprint, render_template, redirect, url_for, request
 from webserver.external import musicbrainz
 from werkzeug.exceptions import NotFound, BadRequest
 from six.moves.urllib.parse import quote_plus

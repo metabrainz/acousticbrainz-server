@@ -46,6 +46,11 @@ LOG_SENTRY = {
    'release': os.getenv('GIT_SHA', None),
 }
 
+# Data rejection settings
+# If we receive more than this number of submissions for a single MBID, don't
+# accept any more. Set to None to disable.
+MAX_NUMBER_DUPLICATE_SUBMISSIONS = '''{{template "KEY" "max_duplicate_submissions"}}'''
+
 DATASET_DIR = '''{{template "KEY" "dataset_dir"}}'''
 FILE_STORAGE_DIR = '''{{template "KEY" "file_storage_dir"}}'''
 SIMILARITY_INDEX_DIR = '''{{template "KEY" "similarity/index_dir"}}'''

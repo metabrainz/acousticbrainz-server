@@ -355,10 +355,9 @@ def _copy_tables(location, tar, archive_name, start_time=None, end_time=None):
         _add_file_to_tar_and_delete(location, archive_name, tar, "statistics")
 
         # data_dump
-        with open(os.path.join(location, "data_dump"), "w") as f:
-            logging.info(" - Copying table data_dump...")
-            cursor.copy_to(f, "(SELECT %s FROM data_dump %s)" %
-                           (", ".join(_TABLES["data_dump"]), generate_where("created")))
+        _copy_table(cursor, location, "data_dump", "(SELECT %s FROM data_dump %s)" %
+                    (", ".join(_TABLES["data_dump"]), generate_where("created")))
+        _add_file_to_tar_and_delete(location, archive_name, tar, "data_dump")
     finally:
         connection.close()
 
@@ -455,12 +454,12 @@ def import_db_dump(archive_path, tables):
                         assert(table_name not in latest_file_num_imported or latest_file_num_imported[table_name] < file_num)
                         latest_file_num_imported[table_name] = file_num
                         logging.info(" - Importing data from file %s into %s table..." % (file_name, table_name))
-                        cursor.copy_from(tar.extractfile(member), '"%s"' % table_name,
+                        cursor.copy_from(tar.extractfile(member), table_name,
                                          columns=_TABLES[table_name])
 
                     elif file_name in table_names:
                         logging.info(" - Importing data into %s table..." % file_name)
-                        cursor.copy_from(tar.extractfile(member), '"%s"' % file_name,
+                        cursor.copy_from(tar.extractfile(member), file_name,
                                          columns=tables[file_name])
         connection.commit()
     finally:

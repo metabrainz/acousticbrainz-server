@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import unittest
 
-import mock
+from unittest import mock
 from flask import url_for
 from flask_login import login_required, AnonymousUserMixin
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound

@@ -1,6 +1,6 @@
 import os
 import json
-import mock
+from unittest import mock
 
 import db
 from webserver.testing import AcousticbrainzTestCase, DB_TEST_DATA_PATH

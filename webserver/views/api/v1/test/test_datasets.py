@@ -11,7 +11,7 @@ from contextlib import contextmanager
 import db
 
 import json
-import mock
+from unittest import mock
 import uuid
 
 

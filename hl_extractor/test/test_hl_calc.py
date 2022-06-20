@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 import unittest
 
-import mock
+from unittest import mock
 import yaml
 
 from hl_extractor import hl_calc

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import mock
+from unittest import mock
 from flask import url_for
 
 from webserver.external import musicbrainz

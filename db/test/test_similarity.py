@@ -1,7 +1,7 @@
 import copy
 import json
 import os.path
-import mock
+from unittest import mock
 
 import db
 import db.data

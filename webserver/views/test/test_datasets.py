@@ -6,7 +6,7 @@ import datetime
 import os
 import json
 
-import mock
+from unittest import mock
 from flask import url_for
 
 import webserver.forms as forms

@@ -12,7 +12,7 @@ import webserver
 from six.moves import filter
 
 
-cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app_flaskgroup)
+cli = FlaskGroup(add_default_commands=False, create_app=webserver.create_app)
 
 
 @cli.command(name='full')

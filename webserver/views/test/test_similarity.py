@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import json
 
-import mock
+from unittest import mock
 from flask import url_for
 
 from db import user

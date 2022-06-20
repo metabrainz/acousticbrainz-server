@@ -1,3 +1,4 @@
+from brainzutils import sentry
 from brainzutils.flask import CustomFlask
 from brainzutils.ratelimit import set_rate_limits, inject_x_rate_headers
 from flask import request, url_for, redirect
@@ -18,10 +19,6 @@ API_PREFIX = '/api/'
 deploy_env = os.environ.get('DEPLOY_ENV', '')
 CONSUL_CONFIG_FILE_RETRY_COUNT = 10
 
-
-def create_app_flaskgroup(script_info):
-    """Factory function that accepts script_info and creates a Flask application"""
-    return create_app(debug=True)
 
 
 def load_config(app):
@@ -58,9 +55,9 @@ def create_app(debug=None):
         app.init_debug_toolbar()
 
     # Logging
-    app.init_loggers(file_config=app.config.get('LOG_FILE'),
-                     sentry_config=app.config.get('LOG_SENTRY')
-                     )
+    sentry_config = app.config.get('LOG_SENTRY')
+    if sentry_config:
+        sentry.init_sentry(**sentry_config)
 
     # Database connection
     from db import init_db_engine
@@ -69,17 +66,13 @@ def create_app(debug=None):
     # Cache
     if 'REDIS_HOST' in app.config and\
        'REDIS_PORT' in app.config and\
-       'REDIS_NAMESPACE' in app.config and\
-       'REDIS_NS_VERSIONS_LOCATION' in app.config:
-        if not os.path.exists(app.config['REDIS_NS_VERSIONS_LOCATION']):
-            os.makedirs(app.config['REDIS_NS_VERSIONS_LOCATION'])
+       'REDIS_NAMESPACE' in app.config:
 
         from brainzutils import cache
         cache.init(
             host=app.config['REDIS_HOST'],
             port=app.config['REDIS_PORT'],
-            namespace=app.config['REDIS_NAMESPACE'],
-            ns_versions_loc=app.config['REDIS_NS_VERSIONS_LOCATION'])
+            namespace=app.config['REDIS_NAMESPACE'])
     else:
         raise Exception('One or more redis cache configuration options are missing from config.py')
 

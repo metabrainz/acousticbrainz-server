@@ -3,7 +3,7 @@ import copy
 import json
 import os.path
 
-import mock
+from unittest import mock
 import six
 import sqlalchemy
 
@@ -988,7 +988,7 @@ class DataUtilTestCase(AcousticbrainzTestCase):
         }
         self.assertIsNone(db.data.sanity_check_data(d))
         del d['metadata']['tags']['file_name']
-        self.assertEquals(db.data.sanity_check_data(d), ['metadata', 'tags', 'file_name'])
+        self.assertEqual(db.data.sanity_check_data(d), ['metadata', 'tags', 'file_name'])
 
     def test_clean_metadata(self):
         d = {

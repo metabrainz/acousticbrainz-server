@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 
-import StringIO
+from six import StringIO
+from io import TextIOWrapper
 import csv
 import datetime
 import json

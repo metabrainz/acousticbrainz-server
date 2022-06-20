@@ -7,7 +7,7 @@ from utils import dataset_validator
 from sqlalchemy import text
 import uuid
 import copy
-import mock
+from unittest import mock
 
 
 class DatasetTestCase(AcousticbrainzTestCase):

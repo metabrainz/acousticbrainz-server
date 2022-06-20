@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 import unittest
 import uuid
-import mock
+from unittest import mock
 import datetime
 import pytz
 from operator import itemgetter
@@ -41,23 +41,23 @@ class SubmissionStatsTestCase(unittest.TestCase):
         self.assertIsNone(last_collected)
         expected = {"lowlevel-lossy": 0, "lowlevel-lossy-unique": 0, "lowlevel-lossless": 0,
                     "lowlevel-lossless-unique": 0, "lowlevel-total": 0, "lowlevel-total-unique": 0}
-        self.assertEquals(expected, stats)
+        self.assertEqual(expected, stats)
 
         # No cache and yes database, return db
         from_cache.return_value = (None, None)
         load_stats.return_value = [{"collected": "date", "stats": "stats"}]
 
         stats, last_collected = db.submission_stats.get_stats_summary()
-        self.assertEquals("date", last_collected)
-        self.assertEquals("stats", stats)
+        self.assertEqual("date", last_collected)
+        self.assertEqual("stats", stats)
 
         # if cache, return cache
         from_cache.return_value = ("cachedate", "cachestats")
         load_stats.return_value = [{"collected": "date", "stats": "stats"}]
 
         stats, last_collected = db.submission_stats.get_stats_summary()
-        self.assertEquals("cachedate", last_collected)
-        self.assertEquals("cachestats", stats)
+        self.assertEqual("cachedate", last_collected)
+        self.assertEqual("cachestats", stats)
 
     @mock.patch("brainzutils.cache.get")
     def test_get_stats_from_cache(self, cacheget):
@@ -91,8 +91,8 @@ class SubmissionStatsTestCase(unittest.TestCase):
         count.assert_called_once_with(connection, datetimenow)
         connect.assert_called_once_with()
         dt.datetime.now.assert_called_once_with(pytz.utc)
-        setcalls = [mock.call("recent-stats", {"stats": "here"}, time=3600, namespace="statistics"),
-                    mock.call("recent-stats-last-updated", datetimenow, time=3600, namespace="statistics")]
+        setcalls = [mock.call("recent-stats", {"stats": "here"}, expirein=3600, namespace="statistics"),
+                    mock.call("recent-stats-last-updated", datetimenow, expirein=3600, namespace="statistics")]
         cacheset.assert_has_calls(setcalls)
 
 

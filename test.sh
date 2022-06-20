@@ -8,16 +8,8 @@
 # ./test.sh -s             stop test containers without removing
 # ./test.sh -d             clean test containers
 
-# Set PY2 environment variable to a non empty value to run tests with Python 2, otherwise tests are run with Python 3.
-
 COMPOSE_FILE_LOC=("-f" "docker/docker-compose.test.yml")
 COMPOSE_PROJECT_NAME_ORIGINAL=acousticbrainz_test
-TESTS_TO_RUN="db webserver utils"
-
-if [[ -n "$PY2" ]]; then
-    COMPOSE_FILE_LOC+=("-f" "docker/docker-compose.test.py2.yml")
-    TESTS_TO_RUN="db utils hl_extractor dataset_eval"
-fi
 
 # Project name is sanitized by Compose, so we need to do the same thing.
 # See https://github.com/docker/compose/issues/2119.
@@ -99,6 +91,15 @@ if [ "$1" == "-b" ]; then
     exit 0
 fi
 
+if [ "$1" == "-r" ]; then
+    echo "Run"
+    docker-compose "${COMPOSE_FILE_LOC[@]}" \
+                   -p $COMPOSE_PROJECT_NAME \
+                   run --rm --user "`id -u`:`id -g`" \
+                   acousticbrainz bash
+    exit $?
+fi
+
 if [ "$1" == "-s" ]; then
     echo "Stopping containers"
     stop
@@ -138,11 +139,13 @@ if [ $DB_EXISTS -eq 1 -a $DB_RUNNING -eq 1 ]; then
     setup
     docker-compose "${COMPOSE_FILE_LOC[@]}" \
                    -p $COMPOSE_PROJECT_NAME \
-                   run --rm acousticbrainz pytest -s "$TESTS_TO_RUN" "$@"
+                   run --rm --user "`id -u`:`id -g`" \
+                   acousticbrainz pytest -s "$@"
     dcdown
 else
     # Else, we have containers, just run tests
     docker-compose "${COMPOSE_FILE_LOC[@]}" \
                    -p $COMPOSE_PROJECT_NAME \
-                   run --rm acousticbrainz pytest -s "$TESTS_TO_RUN" "$@"
+                   run --rm --user "`id -u`:`id -g`" \
+                   acousticbrainz pytest -s "$@"
 fi

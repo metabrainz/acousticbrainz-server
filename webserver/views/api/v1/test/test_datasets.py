@@ -361,7 +361,7 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
 
         # We need to check the called arguments separately because the order of recordings lists can
         # be changed by the view function before calling the db add method.
-        actual = add_class.call_args.args
+        actual = add_class.call_args[0]
         self.assertEqual(dsid, actual[0])
         self.assertEqual(expected["name"], actual[1]["name"])
         self.assertEqual(expected["description"], actual[1]["description"])
@@ -523,7 +523,7 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
         # be changed by the view function before calling the db add method.
         add_recordings.assert_called_with(dsid, "Class #1", mock.ANY)
         # get the last argument from the argument list with which the mock was latest called
-        actual_recordings = add_recordings.call_args.args[-1]
+        actual_recordings = add_recordings.call_args[0][-1]
         self.assertCountEqual(actual_recordings, set(submit["recordings"]))
 
         self.assertEqual(resp.status_code, 200)
@@ -597,7 +597,7 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
         # be changed by the view function before calling the db delete method.
         delete_recordings.assert_called_with(dsid, "Class #2", mock.ANY)
         # get the last argument from the argument list with which the mock was latest called
-        actual_recordings = delete_recordings.call_args.args[-1]
+        actual_recordings = delete_recordings.call_args[0][-1]
         self.assertCountEqual(actual_recordings, submit["recordings"])
 
         expected = {"success": True, "message": "Recordings deleted."}
@@ -628,7 +628,7 @@ class APIDatasetViewsTestCase(AcousticbrainzTestCase):
         # be changed by the view function before calling the db delete method.
         delete_recordings.assert_called_with(dsid, "Class #1", mock.ANY)
         # get the last argument from the argument list with which the mock was latest called
-        actual_recordings = delete_recordings.call_args.args[-1]
+        actual_recordings = delete_recordings.call_args[0][-1]
         self.assertCountEqual(actual_recordings, set(submit["recordings"]))
 
         expected = {"success": True, "message": "Recordings deleted."}

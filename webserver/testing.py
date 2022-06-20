@@ -60,6 +60,23 @@ class AcousticbrainzTestCase(TestCase):
     def drop_types(self):
         db.run_sql_script(os.path.join(ADMIN_SQL_DIR, 'drop_types.sql'))
 
+    def assertRedirects(self, response, location, message=None, permanent=False):
+        """Override Flask testing's assertRedirects, which doesn't know about the new
+        redirect behaviour from RFC 9110 (https://github.com/pallets/werkzeug/pull/2354)"""
+        if permanent:
+            valid_status_codes = (301, 308)
+        else:
+            valid_status_codes = (301, 302, 303, 305, 307, 308)
+
+        valid_status_code_str = ', '.join(str(code) for code in valid_status_codes)
+        not_redirect = "HTTP Status %s expected but got %d" % (valid_status_code_str, response.status_code)
+
+        self.assertIn(response.status_code, valid_status_codes, message or not_redirect)
+        location_mismatch = "Expected redirect location %s but got %s" % (response.location, location)
+        self.assertTrue(response.location.endswith(location), message or location_mismatch)
+
+    assert_redirects = assertRedirects
+
     def data_filename(self, mbid):
         """ Get the expected filename of a test datafile given its mbid """
         return os.path.join(DB_TEST_DATA_PATH, mbid + '.json')

@@ -67,7 +67,7 @@ def create_dataset():
     :>json boolean success: ``True`` on successful creation.
     :>json string dataset_id: ID (UUID) of newly created dataset.
     """
-    dataset_dict = request.get_json()
+    dataset_dict = request.get_json(silent=True)
     if not dataset_dict:
         raise api_exceptions.APIBadRequest("Data must be submitted in JSON format.")
     if "public" not in dataset_dict:

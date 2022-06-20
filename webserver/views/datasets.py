@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from six import StringIO
-from io import TextIOWrapper
+from io import BytesIO, TextIOWrapper
 import csv
 import datetime
 import json
@@ -138,10 +138,13 @@ def download_annotation_csv(dataset_id):
     """
     ds = get_dataset(dataset_id)
     fp = _convert_dataset_to_csv_stringio(ds)
+    bio = BytesIO()
+    bio.write(fp.getvalue().encode())
+    bio.seek(0)
 
     file_name = "dataset_annotations_%s.csv" % db.dataset.slugify(ds["name"])
 
-    return send_file(fp,
+    return send_file(bio,
                      mimetype='text/csv',
                      as_attachment=True,
                      attachment_filename=file_name)

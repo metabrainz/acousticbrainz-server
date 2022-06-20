@@ -74,6 +74,10 @@ class DatasetControlButtons extends Component<
     DatasetControlButtonsProps,
     DatasetControlButtonsState
 > {
+    static defaultProps = {
+        datasetId: null,
+    };
+
     constructor(props: Readonly<DatasetControlButtonsProps>) {
         super(props);
         this.state = {
@@ -688,6 +692,10 @@ interface DatasetEditorProps {
 }
 
 class DatasetEditor extends Component<DatasetEditorProps, DatasetEditorState> {
+    static defaultProps = {
+        datasetId: null,
+    };
+
     constructor(props: Readonly<DatasetEditorProps>) {
         super(props);
         this.state = {

@@ -37,8 +37,6 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
         get_recording_by_id.side_effect = FakeMusicBrainz.get_recording_by_id
         mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
         metric = 'mfccs'
-        resp = self.client.get(url_for('similarity.get_similar', mbid=mbid, metric=metric))
-        self.assertEqual(302, resp.status_code)
 
         # Logged in without submitted recording, 404
         self.temporary_login(self.test_user_id)
@@ -54,23 +52,6 @@ class SimilarityViewsTestCase(AcousticbrainzTestCase):
         metric = 'x'
         resp = self.client.get(url_for('similarity.get_similar', mbid=mbid, metric=metric))
         self.assertEqual(404, resp.status_code)
-
-    def test_get_similar_service(self):
-        # Without login, 401
-        mbid = '0dad432b-16cc-4bf0-8961-fd31d124b01b'
-        metric = 'mfccs'
-        resp = self.client.get(url_for('similarity.get_similar_service', mbid=mbid, metric=metric))
-        self.assertEqual(401, resp.status_code)
-
-        # Logged in, no submitted recording causes redirect
-        self.temporary_login(self.test_user_id)
-        resp = self.client.get(url_for('similarity.get_similar_service', mbid=mbid, metric=metric))
-        self.assertEqual(302, resp.status_code)
-
-        # Submitted recording, no Annoy index causes redirects
-        self.load_low_level_data(mbid)
-        resp = self.client.get(url_for('similarity.get_similar_service', mbid=mbid, metric=metric))
-        self.assertEqual(302, resp.status_code)
 
     @mock.patch("db.similarity.submit_eval_results")
     @mock.patch("webserver.views.similarity._get_extended_info")

@@ -24,29 +24,32 @@ class SimilarityStatsDatabaseTestCase(AcousticbrainzTestCase):
     def test_compute_stats(self, get_random_sample_lowlevel, insert_similarity_stats):
         # Check that insert_similarity_stats is called correctly
         sample_size = 2
-        get_random_sample_lowlevel.return_value = [[(1.0, 3.0), (1.0, 3.0), (2.0, 5.0), (2.0, 5.0)],
-                                                   [(2.0, 6.0), (2.0, 6.0), (4.0, 10.0), (4.0, 10.0)]]
+        get_random_sample_lowlevel.return_value = [{"mfccs": (1.0, 3.0), "mfccsw": (1.0, 3.0), "gfccs": (2.0, 5.0), "gfccsw": (2.0, 5.0)},
+                                                   {"mfccs": (2.0, 6.0), "mfccsw": (2.0, 6.0), "gfccs": (4.0, 10.0), "gfccsw": (4.0, 10.0)}]
         db.similarity_stats.compute_stats(sample_size)
 
         # Same feature path for weighted and unweighted MFCC/GFCC
-        features = ["data->'lowlevel'->'gfcc'->'mean'",
-                    "data->'lowlevel'->'gfcc'->'mean'",
-                    "data->'lowlevel'->'mfcc'->'mean'",
-                    "data->'lowlevel'->'mfcc'->'mean'"]
+        features = {
+            "gfccs": "data->'lowlevel'->'gfcc'->'mean'",
+            "gfccsw": "data->'lowlevel'->'gfcc'->'mean'",
+            "mfccs": "data->'lowlevel'->'mfcc'->'mean'",
+            "mfccsw": "data->'lowlevel'->'mfcc'->'mean'"}
         get_random_sample_lowlevel.assert_called_with(sample_size, features)
 
-        means = [[1.5, 4.5], [1.5, 4.5], [3.0, 7.5], [3.0, 7.5]]
-        stddevs = [[0.5, 1.5], [0.5, 1.5], [1.0, 2.5], [1.0, 2.5]]
-        metric_names = ["gfccsw", "gfccs", "mfccs", "mfccsw"]
-        insert_similarity_stats.assert_called_with(metric_names, means, stddevs)
+        expected = {"mfccs": {"mean": [1.5, 4.5], "stdev": [0.5, 1.5]},
+                    "mfccsw": {"mean": [1.5, 4.5], "stdev": [0.5, 1.5]},
+                    "gfccs": {"mean": [3.0, 7.5], "stdev": [1.0, 2.5]},
+                    "gfccsw": {"mean": [3.0, 7.5], "stdev": [1.0, 2.5]}}
+        insert_similarity_stats.assert_called_with(expected)
 
     def test_get_random_sample_lowlevel(self):
         # Without any lowlevel submissions, sample cannot be collected
         sample_size = 10
-        features = ["data->'lowlevel'->'gfcc'->'mean'",
-                    "data->'lowlevel'->'gfcc'->'mean'",
-                    "data->'lowlevel'->'mfcc'->'mean'",
-                    "data->'lowlevel'->'mfcc'->'mean'"]
+        features = {
+            "gfccs": "data->'lowlevel'->'gfcc'->'mean'",
+            "gfccsw": "data->'lowlevel'->'gfcc'->'mean'",
+            "mfccs": "data->'lowlevel'->'mfcc'->'mean'",
+            "mfccsw": "data->'lowlevel'->'mfcc'->'mean'"}
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.similarity_stats.get_random_sample_lowlevel(sample_size, features)
 

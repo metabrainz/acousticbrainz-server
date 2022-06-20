@@ -46,17 +46,21 @@ def compute_stats(sample_size, force=False):
     # Build features and metrics lists
     metrics = similarity.utils.init_metrics()
     metric_names = []
-    features = []
+    metric_paths = {}
     for metric in metrics:
         if hasattr(metric, 'means') and hasattr(metric, 'stddevs'):
             # Stats should be computed if attributes are present
+            metric_paths[metric.name] = metric.path
             metric_names.append(metric.name)
-            features.append(metric.path)
 
-    entries = get_random_sample_lowlevel(sample_size, features)
-    means = np.mean(entries, axis=0).tolist()
-    stddevs = np.std(entries, axis=0).tolist()
-    insert_similarity_stats(metric_names, means, stddevs)
+    entries = get_random_sample_lowlevel(sample_size, metric_paths)
+    features = {}
+    for name in metric_names:
+        data = [row[name] for row in entries]
+        mean = np.mean(data, axis=0).tolist()
+        stdev = np.std(data, axis=0).tolist()
+        features[name] = {"mean": mean, "stdev": stdev}
+    insert_similarity_stats(features)
 
 
 def get_random_sample_lowlevel(sample_size, features):
@@ -69,9 +73,12 @@ def get_random_sample_lowlevel(sample_size, features):
         should be collected, at random. Must be >= 1% of the entries
         in lowlevel_json.
 
-        features: A list of feature paths that should be collected
-        in each row of the sample.
-            path form: "data->'lowlevel'->'gfcc'->'mean'"
+        features: A dictionary of postgres json query paths that should be collected
+        in each row of the sample. The key of the dictionary is what the column alias
+        should be, e.g.
+        {
+            "mean": "data->'lowlevel'->'gfcc'->'mean'"
+        }
 
     Returns:
         A list of tuples (mfcc_vector, gfcc_vector) for each random
@@ -91,25 +98,22 @@ def get_random_sample_lowlevel(sample_size, features):
             SELECT %(features)s
               FROM lowlevel_json
 TABLESAMPLE SYSTEM ((:sample_size * 100) / :count)
-        """ % {"features": ', '.join(features)})
+        """ % {"features": ', '.join(["{path} as {alias}".format(path=path, alias=alias) for alias, path in features.items()])})
 
         result = connection.execute(sample_query, {"sample_size": sample_size,
                                                    "count": float(count)})
         if not result.rowcount:
             raise db.exceptions.NoDataFoundException('Statistics cannot be calculated without lowlevel submissions.')
-        return result.fetchall()
+        return [dict(row) for row in result.fetchall()]
 
 
-def insert_similarity_stats(metrics, means, stddevs):
+def insert_similarity_stats(features):
     """Inserts computed mean and stddev for MFCC and GFCC
     into similarity.similarity_stats table.
 
     Args:
-        metrics: a list of metric names that should be inserted.
-        means: a list of vectors, each representing mean for a
-        metric.
-        stddevs: a list of vectors, each representing stddev for
-        a metric.
+        features: a dictionary of featurename: data
+          where data is a dictionary with keys "mean" and "stdev"
     """
     # TODO: Make this dynamic rather than hardcoded for only mfccs/gfcss.
     with db.engine.connect() as connection:
@@ -122,14 +126,14 @@ def insert_similarity_stats(metrics, means, stddevs):
         ON CONFLICT
          DO NOTHING
         """)
-        connection.execute(query, {"gfccsw_means": means[0],
-                                   "gfccsw_stddevs": stddevs[0],
-                                   "gfccs_means": means[1],
-                                   "gfccs_stddevs": stddevs[1],
-                                   "mfccs_means": means[2],
-                                   "mfccs_stddevs": stddevs[2],
-                                   "mfccsw_means": means[3],
-                                   "mfccsw_stddevs": stddevs[3]})
+        connection.execute(query, {"gfccsw_means": features["gfccsw"]["mean"],
+                                   "gfccsw_stddevs": features["gfccsw"]["stdev"],
+                                   "gfccs_means": features["gfccs"]["mean"],
+                                   "gfccs_stddevs": features["gfccs"]["stdev"],
+                                   "mfccs_means": features["mfccs"]["mean"],
+                                   "mfccs_stddevs": features["mfccs"]["stdev"],
+                                   "mfccsw_means": features["mfccsw"]["mean"],
+                                   "mfccsw_stddevs": features["mfccsw"]["stdev"]})
 
 
 def delete_similarity_stats():

@@ -10,6 +10,7 @@ include information from the previous dumps).
 from __future__ import print_function
 
 from __future__ import absolute_import
+import csv
 from flask import current_app
 import ujson
 
@@ -177,6 +178,29 @@ PARTITIONED_TABLES = (
     "lowlevel_json",
     "highlevel_model",
 )
+
+LOWLEVEL_FEATURES_TONAL = {
+    "key_key": "'tonal'->>'key_key'",
+    "key_scale": "'tonal'->>'key_scale'",
+    "tuning_frequency": "'tonal'->>'tuning_frequency'",
+    "tuning_equal_tempered_deviation": "'tonal'->>'tuning_equal_tempered_deviation'",
+}
+
+LOWLEVEL_FEATURES_LOWLEVEL = {
+    "average_loudness": "'lowlevel'->>'average_loudness'",
+    "dynamic_complexity": "'lowlevel'->>'dynamic_complexity'",
+    "mfcc_zero_mean": "'lowlevel'->'mfcc'->'mean'->>0",
+}
+
+LOWLEVEL_FEATURES_RHYTHM = {
+    "bpm": "'rhythm'->>'bpm'",
+    "bpm_histogram_first_peak_bpm_mean": "'rhythm'->'bpm_histogram_first_peak_bpm'->>'mean'",
+    "bpm_histogram_first_peak_bpm_median": "'rhythm'->'bpm_histogram_first_peak_bpm'->>'median'",
+    "bpm_histogram_second_peak_bpm_mean": "'rhythm'->'bpm_histogram_second_peak_bpm'->>'mean'",
+    "bpm_histogram_second_peak_bpm_median": "'rhythm'->'bpm_histogram_second_peak_bpm'->>'median'",
+    "danceability": "'rhythm'->>'danceability'",
+    "onset_rate": "'rhythm'->>'onset_rate'",
+}
 
 def _copy_table_into_multiple_files(cursor, table_name, query, rows_per_file, tar, archive_name):
     """Copies data from a table into multiple files and add them to the archive
@@ -473,6 +497,91 @@ def import_db_dump(archive_path, tables):
     logging.info('Updating sequences...')
     update_sequences()
     logging.info('Done!')
+
+
+def dump_lowlevel_features(location, feature_type):
+    """Create a CSV dump with selected low level data.
+
+        Args:
+        location: Directory where archive will be created.
+        feature_type: The type of features to dump (one of tonal, lowlevel, or rhythm)
+
+    Returns:
+        Path to created low level CSV dump.
+    """
+
+    feature_list = {
+        "tonal": LOWLEVEL_FEATURES_TONAL,
+        "lowlevel": LOWLEVEL_FEATURES_LOWLEVEL,
+        "rhythm": LOWLEVEL_FEATURES_RHYTHM
+    }
+    if feature_type not in feature_list:
+        print("Unknown feature type")
+        return
+    else:
+        features = feature_list[feature_type]
+
+    archive_dirname = "acousticbrainz-lowlevel-features-%s" % (datetime.today().strftime("%Y%m%d"),)
+    dump_path = os.path.join(location, archive_dirname)
+    utils.path.create_path(dump_path)
+
+    total_dumped = 0
+    with db.engine.begin() as connection:
+        query = sqlalchemy.text("""
+            SELECT id
+              FROM lowlevel ll
+          ORDER BY submitted""")
+        ll_ids = connection.execute(query)
+
+        dump_done = False
+        fieldnames = ["mbid", "submission_offset"] + list(features.keys())
+        file_name = archive_dirname + "-" + feature_type
+        file_path = os.path.join(dump_path, "%s.tar.zst" % file_name)
+        with open(file_path, "w") as archive:
+            zstd_command = ["zstd", "--compress", "-10"]
+            zstd = subprocess.Popen(zstd_command, stdin=subprocess.PIPE, stdout=archive)
+
+            with tarfile.open(fileobj=zstd.stdin, mode="w|") as tar:
+                temp_dir = tempfile.mkdtemp()
+                with open(os.path.join(temp_dir, "features.csv"), "w") as fp:
+                    writer = csv.DictWriter(fp, fieldnames=fieldnames)
+                    writer.writeheader()
+                    while not dump_done:
+                        id_list = ll_ids.fetchmany(size=DUMP_CHUNK_SIZE)
+                        if not id_list:
+                            dump_done = True
+                            break
+                        id_list = tuple([i['id'] for i in id_list])
+
+                        features_select = ', '.join(['llj.data->%s AS "%s"' % (path, alias) for alias, path in features.items()])
+
+                        data = connection.execute(sqlalchemy.text("""
+                            SELECT gid::text as mbid
+                                , submission_offset
+                                , %s
+                            FROM lowlevel ll
+                            JOIN lowlevel_json llj
+                                ON ll.id = llj.id
+                            WHERE ll.id IN :id_list
+                            """ % features_select), {
+                                'id_list': id_list,
+                            })
+
+                        for row in data:
+                            d = dict(row)
+                            writer.writerow(d)
+                            total_dumped += 1
+                tar.add(os.path.join(temp_dir, "features.csv"),
+                        arcname=os.path.join(archive_dirname, file_name + ".csv"))
+
+                tar.add(DUMP_LICENSE_FILE_PATH,
+                        arcname=os.path.join(archive_dirname, "COPYING"))
+
+            zstd.stdin.close()
+            zstd.wait()
+
+    logging.info("Dumped a total of %d recordings" % (total_dumped,))
+    return dump_path
 
 
 def dump_lowlevel_json(location, threads=None, sample=False, num_files_per_archive=float("inf")):

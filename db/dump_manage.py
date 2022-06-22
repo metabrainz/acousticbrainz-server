@@ -59,6 +59,17 @@ def full_db(location, threads, rotate, dump_id):
 @cli.command()
 @click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
               help="Directory where dumps need to be created")
+@click.option("--feature-type", "-t", help="Feature type")
+def features(location, feature_type):
+    """Generate a CSV dump of select low-level features"""
+    current_app.logger.info("Creating low-level CSV feature dump...")
+    path = dump.dump_lowlevel_features(location, feature_type)
+    current_app.logger.info("Done! Created: %s", path)
+
+
+@cli.command()
+@click.option("--location", "-l", default=os.path.join(os.getcwd(), 'export'), show_default=True,
+              help="Directory where dumps need to be created")
 @click.option("--rotate", "-r", is_flag=True)
 @click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")

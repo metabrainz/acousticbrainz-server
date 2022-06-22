@@ -62,38 +62,38 @@ def full_db(location, threads, rotate, dump_id):
 @click.option("--rotate", "-r", is_flag=True)
 @click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
-@click.option("--max-files", type=int, default=1000000, help="Split dump into files with this many items each")
-def json(location, rotate, no_lowlevel, no_highlevel, max_files):
+@click.option("--files-per-archive", type=float, default=float("inf"), help="Split dump into files with this many items each")
+def json(location, rotate, no_lowlevel, no_highlevel, files_per_archive):
     if no_lowlevel and no_highlevel:
         current_app.logger.info("wut? check your options, mate!")
         return
 
     if not no_lowlevel:
-        _json_lowlevel(location, rotate, max_files)
+        _json_lowlevel(location, rotate, files_per_archive)
 
     if not no_highlevel:
-        _json_highlevel(location, rotate, max_files)
+        _json_highlevel(location, rotate, files_per_archive)
 
 
-def _json_lowlevel(location, rotate, max_files):
+def _json_lowlevel(location, rotate, files_per_archive):
     current_app.logger.info("Creating low-level JSON data dump...")
-    path = dump.dump_lowlevel_json(location, full=True, dump_id=None, max_count=max_files)
+    path = dump.dump_lowlevel_json(location, num_files_per_archive=files_per_archive)
     current_app.logger.info("Done! Created: %s", path)
 
     if rotate:
         current_app.logger.info("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.zstd",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-def _json_highlevel(location, rotate, max_files):
+def _json_highlevel(location, rotate, files_per_archive):
     current_app.logger.info("Creating high-level JSON data dump...")
-    path = dump.dump_highlevel_json(location, full=True, dump_id=None, max_count=max_files)
+    path = dump.dump_highlevel_json(location, num_files_per_archive=files_per_archive)
     current_app.logger.info("Done! Created: %s", path)
 
     if rotate:
         current_app.logger.info("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.bz2",
+        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.zstd",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 

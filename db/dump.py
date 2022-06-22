@@ -473,16 +473,11 @@ def import_db_dump(archive_path, tables):
     logging.info('Done!')
 
 
-def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
+def dump_lowlevel_json(location, num_files_per_archive=float("inf")):
     """Create JSON dump with low level data.
 
     Args:
         location: Directory where archive will be created.
-        full (bool): True if you want to dump the entire db from the beginning of time, False if
-                only need to dump new data since the last dump.
-            it needs to be incremental.
-        dump_id: If you need to reproduce previously created incremental dump,
-            its identifier (integer) can be specified there.
         num_files_per_archive: The maximum number of recordings to dump in one file.
                    Infinite if not specified.
 
@@ -490,35 +485,19 @@ def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
         Path to created low level JSON dump.
     """
 
-    if full:
-        start_time, end_time = None, None  # full
-        archive_dirname = "acousticbrainz-lowlevel-json-%s" % \
-                       datetime.today().strftime("%Y%m%d")
-        filename_pattern = archive_dirname + "-%d"
-    else:
-        logging.info("Not supporting incremental dumps")
-        return
+    archive_dirname = "acousticbrainz-lowlevel-json-%s" % \
+                    datetime.today().strftime("%Y%m%d")
+    filename_pattern = archive_dirname + "-%d"
 
     dump_path = os.path.join(location, archive_dirname)
     utils.path.create_path(dump_path)
 
     file_num = 0
     with db.engine.begin() as connection:
-        if start_time or end_time:
-            start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
-            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
-            if start_time and end_time:
-                where = "WHERE %s AND %s" % (start_cond, end_cond)
-            else:
-                where = "WHERE %s%s" % (start_cond, end_cond)
-        else:
-            where = ""
-
         ll_ids = connection.execute(sqlalchemy.text("""
             SELECT id
               FROM lowlevel ll
-                %s
-          ORDER BY submitted""" % where
+          ORDER BY submitted"""
         ))
 
         data = None
@@ -536,7 +515,7 @@ def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
                 with tarfile.open(fileobj=zstd.stdin, mode="w|") as tar:
                     temp_dir = tempfile.mkdtemp()
                     dumped_count = 0
-                    while dumped_count < max_count:
+                    while dumped_count < num_files_per_archive:
                         if data is None:
                             id_list = ll_ids.fetchmany(size=DUMP_CHUNK_SIZE)
                             if not id_list:
@@ -556,7 +535,7 @@ def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
                                     'id_list': id_list,
                                 })
 
-                        while dumped_count < max_count:
+                        while dumped_count < num_files_per_archive:
                             row = data.fetchone()
                             if not row:
                                 data = None
@@ -595,44 +574,27 @@ def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
     return dump_path
 
 
-def dump_highlevel_json(location, full=False, dump_id=None, max_count=500000):
+def dump_highlevel_json(location, num_files_per_archive=float("inf")):
     """Create JSON dump with high-level data.
 
     Args:
         location: Directory where archive will be created.
-        full (bool): True if you want to dump the entire db from the beginning of time, False if
-                only need to dump new data since the last dump.
-        dump_id: If you need to reproduce previously created incremental dump,
-            its identifier (integer) can be specified there.
+        num_files_per_archive: The maximum number of recordings to dump in one file.
+                   Infinite if not specified.
 
     Returns:
         Path to created high-level JSON dump.
     """
 
-    if full:
-        start_time, end_time = None, None  # full
-        archive_dirname = "acousticbrainz-highlevel-json-%s" % \
-                       datetime.today().strftime("%Y%m%d")
-        filename_pattern = archive_dirname + "-%d"
-    else:
-        logging.info("Not supporting incremental dumps")
-        return
+    archive_dirname = "acousticbrainz-highlevel-json-%s" % \
+                    datetime.today().strftime("%Y%m%d")
+    filename_pattern = archive_dirname + "-%d"
 
     dump_path = os.path.join(location, archive_dirname)
     utils.path.create_path(dump_path)
     
     file_num = 0
     with db.engine.begin() as connection:
-        if start_time or end_time:
-            start_cond = "submitted > '%s'" % str(start_time) if start_time else ""
-            end_cond = "submitted <= '%s'" % str(end_time) if end_time else ""
-            if start_time and end_time:
-                where = "WHERE %s AND %s" % (start_cond, end_cond)
-            else:
-                where = "WHERE %s%s" % (start_cond, end_cond)
-        else:
-            where = ""
-
         ll_ids = connection.execute(sqlalchemy.text("""
             SELECT id
               FROM lowlevel ll
@@ -654,9 +616,9 @@ def dump_highlevel_json(location, full=False, dump_id=None, max_count=500000):
                     temp_dir = tempfile.mkdtemp()
                     dumped_count = 0
 
-                    # Note that in the case that DUMP_CHUNK_SIZE isn't an even multiple of max_count,
-                    # the dump will have the next multiple of chunk size items, not exactly max_count items.
-                    while dumped_count < max_count:
+                    # Note that in the case that DUMP_CHUNK_SIZE isn't an even multiple of num_files_per_archive,
+                    # the dump will have the next multiple of chunk size items, not exactly num_files_per_archive items.
+                    while dumped_count < num_files_per_archive:
                         data_list = ll_ids.fetchmany(size=DUMP_CHUNK_SIZE)
                         if not data_list:
                             dump_done = True

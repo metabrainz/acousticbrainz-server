@@ -567,15 +567,17 @@ def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
                             dump_tempfile = os.path.join(temp_dir, json_filename)
                             with open(dump_tempfile, "w") as f:
                                 f.write(json_data)
+                            # Use archive_dirname here (i.e. acousticbrainz-lowlevel-json-20220616) without a -n part suffix
+                            # so that uncompressing multiple parts of the same dump will go into the same place
                             tar.add(dump_tempfile, arcname=os.path.join(
-                                filename, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
+                                archive_dirname, "lowlevel", mbid[0:2], mbid[2:3], json_filename))
                             os.unlink(dump_tempfile)
 
                             dumped_count += 1
 
                     # Copying legal text
                     tar.add(DUMP_LICENSE_FILE_PATH,
-                            arcname=os.path.join(filename, "COPYING"))
+                            arcname=os.path.join(archive_dirname, "COPYING"))
 
                     shutil.rmtree(temp_dir)  # Cleanup
 
@@ -720,13 +722,13 @@ def dump_highlevel_json(location, full=False, dump_id=None, max_count=500000):
                             with open(dump_tempfile, "w") as f:
                                 f.write(ujson.dumps(hl_data, sort_keys=True))
                             tar.add(dump_tempfile, arcname=os.path.join(
-                                filename, "highlevel", mbid[0:1], mbid[0:2], json_filename))
+                                archive_dirname, "highlevel", mbid[0:2], mbid[2:3], json_filename))
                             os.unlink(dump_tempfile)
 
                             dumped_count += 1
                     # Copying legal text
                     tar.add(DUMP_LICENSE_FILE_PATH,
-                            arcname=os.path.join(filename, "COPYING"))
+                            arcname=os.path.join(archive_dirname, "COPYING"))
 
                     shutil.rmtree(temp_dir)  # Cleanup
 

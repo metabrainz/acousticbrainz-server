@@ -566,7 +566,7 @@ def dump_lowlevel_json(location, full=False, dump_id=None, max_count=500000):
                             json_filename = mbid + "-%d.json" % submission_offset
                             dump_tempfile = os.path.join(temp_dir, json_filename)
                             with open(dump_tempfile, "w") as f:
-                                f.write(ujson.dumps(json_data))
+                                f.write(json_data)
                             tar.add(dump_tempfile, arcname=os.path.join(
                                 filename, "lowlevel", mbid[0:1], mbid[0:2], json_filename))
                             os.unlink(dump_tempfile)

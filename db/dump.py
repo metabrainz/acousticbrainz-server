@@ -28,6 +28,8 @@ from collections import defaultdict
 from datetime import datetime
 from sqlalchemy import text
 
+# The number of items in a sample dataset
+SAMPLE_DATASET_SIZE = 100000
 
 # the number of rows to dump for json dumps in one batch
 DUMP_CHUNK_SIZE = 10000
@@ -473,12 +475,13 @@ def import_db_dump(archive_path, tables):
     logging.info('Done!')
 
 
-def dump_lowlevel_json(location, threads=None, num_files_per_archive=float("inf")):
+def dump_lowlevel_json(location, threads=None, sample=False, num_files_per_archive=float("inf")):
     """Create JSON dump with low level data.
 
     Args:
         location: Directory where archive will be created.
         threads: Number of threads to use for zstd compression
+        sample: if True, generate a sample dump
         num_files_per_archive: The maximum number of recordings to dump in one file.
                    Infinite if not specified.
 
@@ -486,8 +489,10 @@ def dump_lowlevel_json(location, threads=None, num_files_per_archive=float("inf"
         Path to created low level JSON dump.
     """
 
-    archive_dirname = "acousticbrainz-lowlevel-json-%s" % \
-                    datetime.today().strftime("%Y%m%d")
+    archive_type = "lowlevel"
+    if sample:
+        archive_type += "-sample"
+    archive_dirname = "acousticbrainz-%s-json-%s" % (archive_type, datetime.today().strftime("%Y%m%d"))
     filename_pattern = archive_dirname + "-%d"
 
     dump_path = os.path.join(location, archive_dirname)
@@ -495,11 +500,16 @@ def dump_lowlevel_json(location, threads=None, num_files_per_archive=float("inf"
 
     file_num = 0
     with db.engine.begin() as connection:
-        ll_ids = connection.execute(sqlalchemy.text("""
+        query_args = {}
+        limit = ""
+        if sample:
+            query_args = {"limit": SAMPLE_DATASET_SIZE}
+            limit = " LIMIT :limit"
+        query = sqlalchemy.text("""
             SELECT id
               FROM lowlevel ll
-          ORDER BY submitted"""
-        ))
+          ORDER BY submitted""" + limit)
+        ll_ids = connection.execute(query, query_args)
 
         data = None
         total_dumped = 0
@@ -579,12 +589,13 @@ def dump_lowlevel_json(location, threads=None, num_files_per_archive=float("inf"
     return dump_path
 
 
-def dump_highlevel_json(location, threads=None, num_files_per_archive=float("inf")):
+def dump_highlevel_json(location, threads=None, sample=False, num_files_per_archive=float("inf")):
     """Create JSON dump with high-level data.
 
     Args:
         location: Directory where archive will be created.
         threads: Number of threads to use for zstd compression
+        sample: if True, generate a sample dump
         num_files_per_archive: The maximum number of recordings to dump in one file.
                    Infinite if not specified.
 
@@ -592,8 +603,10 @@ def dump_highlevel_json(location, threads=None, num_files_per_archive=float("inf
         Path to created high-level JSON dump.
     """
 
-    archive_dirname = "acousticbrainz-highlevel-json-%s" % \
-                    datetime.today().strftime("%Y%m%d")
+    archive_type = "highlevel"
+    if sample:
+        archive_type += "-sample"
+    archive_dirname = "acousticbrainz-%s-json-%s" % (archive_type, datetime.today().strftime("%Y%m%d"))
     filename_pattern = archive_dirname + "-%d"
 
     dump_path = os.path.join(location, archive_dirname)
@@ -601,11 +614,17 @@ def dump_highlevel_json(location, threads=None, num_files_per_archive=float("inf
     
     file_num = 0
     with db.engine.begin() as connection:
-        ll_ids = connection.execute(sqlalchemy.text("""
+        query_args = {}
+        limit = ""
+        if sample:
+            query_args = {"limit": SAMPLE_DATASET_SIZE}
+            limit = " LIMIT :limit"
+        query = sqlalchemy.text("""
             SELECT id
               FROM lowlevel ll
-          ORDER BY submitted"""
-        ))
+          ORDER BY submitted""" + limit)
+        ll_ids = connection.execute(query, query_args)
+
 
         total_dumped = 0
         dump_done = False

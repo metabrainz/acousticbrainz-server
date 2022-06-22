@@ -449,7 +449,7 @@ def update_sequences():
 
 
 def import_db_dump(archive_path, tables):
-    """Import data from .tar.zstd archive into the database."""
+    """Import data from .tar.zst archive into the database."""
     zstd_command = ["zstd", "--decompress", "--stdout", archive_path]
     zstd = subprocess.Popen(zstd_command, stdout=subprocess.PIPE)
 
@@ -626,7 +626,7 @@ def dump_lowlevel_json(location, threads=None, sample=False, num_files_per_archi
         while True:
             # create a new file and dump recordings there
             filename = filename_pattern % file_num
-            file_path = os.path.join(dump_path, "%s.tar.zstd" % filename)
+            file_path = os.path.join(dump_path, "%s.tar.zst" % filename)
             with open(file_path, "w") as archive:
                 # Manual testing shows that -10 compression level gives a good tradeoff between
                 # compression speed and final file size with AB data
@@ -740,7 +740,7 @@ def dump_highlevel_json(location, threads=None, sample=False, num_files_per_arch
         while True:
             # create a new file and dump recordings there
             filename = filename_pattern % file_num
-            file_path = os.path.join(dump_path, "%s.tar.zstd" % filename)
+            file_path = os.path.join(dump_path, "%s.tar.zst" % filename)
             with open(file_path, "w") as archive:
                 # Manual testing shows that -10 compression level gives a good tradeoff between
                 # compression speed and final file size with AB data
@@ -1028,7 +1028,7 @@ def dump_dataset_tables(location, threads=None):
     time_now = datetime.today()
     archive_name = "acousticbrainz-dataset-dump-%s" % time_now.strftime("%Y%m%d-%H%M%S")
 
-    archive_path = os.path.join(location, archive_name + ".tar.zstd")
+    archive_path = os.path.join(location, archive_name + ".tar.zst")
     _dump_tables(
         archive_path=archive_path,
         threads=threads,
@@ -1062,7 +1062,7 @@ def dump_public_tables(location, threads=None, full=True, dump_id=None):
 
     time_now = datetime.today()
 
-    archive_path = os.path.join(location, archive_name + ".tar.zstd")
+    archive_path = os.path.join(location, archive_name + ".tar.zst")
     _dump_tables(
         archive_path=archive_path,
         threads=threads,
@@ -1073,10 +1073,10 @@ def dump_public_tables(location, threads=None, full=True, dump_id=None):
 
 
 def import_dump(archive_path):
-    """Imports a database dump from .tar.zstd archive into the database."""
+    """Imports a database dump from .tar.zst archive into the database."""
     import_db_dump(archive_path, _TABLES)
 
 
 def import_datasets_dump(archive_path):
-    """Import datasets from .tar.zstd archive into the database."""
+    """Import datasets from .tar.zst archive into the database."""
     import_db_dump(archive_path, _DATASET_TABLES)

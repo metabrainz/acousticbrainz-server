@@ -95,7 +95,7 @@ def _json_lowlevel(location, rotate, threads, sample, files_per_archive):
 
     if rotate:
         current_app.logger.info("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.zstd",
+        remove_old_archives(location, "acousticbrainz-lowlevel-json-[0-9]+.tar.zst",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
@@ -106,7 +106,7 @@ def _json_highlevel(location, rotate, threads, sample, files_per_archive):
 
     if rotate:
         current_app.logger.info("Removing old dumps (except two latest)...")
-        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.zstd",
+        remove_old_archives(location, "acousticbrainz-highlevel-json-[0-9]+.tar.zst",
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 

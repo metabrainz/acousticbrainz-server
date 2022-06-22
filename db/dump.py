@@ -473,11 +473,12 @@ def import_db_dump(archive_path, tables):
     logging.info('Done!')
 
 
-def dump_lowlevel_json(location, num_files_per_archive=float("inf")):
+def dump_lowlevel_json(location, threads=None, num_files_per_archive=float("inf")):
     """Create JSON dump with low level data.
 
     Args:
         location: Directory where archive will be created.
+        threads: Number of threads to use for zstd compression
         num_files_per_archive: The maximum number of recordings to dump in one file.
                    Infinite if not specified.
 
@@ -508,7 +509,11 @@ def dump_lowlevel_json(location, num_files_per_archive=float("inf")):
             filename = filename_pattern % file_num
             file_path = os.path.join(dump_path, "%s.tar.zstd" % filename)
             with open(file_path, "w") as archive:
-                zstd_command = ["zstd", "--compress", "-10", "-T8"]
+                # Manual testing shows that -10 compression level gives a good tradeoff between
+                # compression speed and final file size with AB data
+                zstd_command = ["zstd", "--compress", "-10"]
+                if threads:
+                    zstd_command.append("-T%s" % threads)
                 zstd = subprocess.Popen(zstd_command, stdin=subprocess.PIPE, stdout=archive)
 
                 # Creating the archive
@@ -574,11 +579,12 @@ def dump_lowlevel_json(location, num_files_per_archive=float("inf")):
     return dump_path
 
 
-def dump_highlevel_json(location, num_files_per_archive=float("inf")):
+def dump_highlevel_json(location, threads=None, num_files_per_archive=float("inf")):
     """Create JSON dump with high-level data.
 
     Args:
         location: Directory where archive will be created.
+        threads: Number of threads to use for zstd compression
         num_files_per_archive: The maximum number of recordings to dump in one file.
                    Infinite if not specified.
 
@@ -608,7 +614,11 @@ def dump_highlevel_json(location, num_files_per_archive=float("inf")):
             filename = filename_pattern % file_num
             file_path = os.path.join(dump_path, "%s.tar.zstd" % filename)
             with open(file_path, "w") as archive:
-                zstd_command = ["zstd", "--compress", "-10", "-T8"]
+                # Manual testing shows that -10 compression level gives a good tradeoff between
+                # compression speed and final file size with AB data
+                zstd_command = ["zstd", "--compress", "-10"]
+                if threads:
+                    zstd_command.append("-T%s" % threads)
                 zstd = subprocess.Popen(zstd_command, stdin=subprocess.PIPE, stdout=archive)
 
                 # Creating the archive

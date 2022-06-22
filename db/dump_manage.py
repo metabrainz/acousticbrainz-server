@@ -62,22 +62,23 @@ def full_db(location, threads, rotate, dump_id):
 @click.option("--rotate", "-r", is_flag=True)
 @click.option("--no-lowlevel", "-nl", is_flag=True, help="Don't dump low-level data.")
 @click.option("--no-highlevel", "-nh", is_flag=True, help="Don't dump high-level data.")
+@click.option("--threads", "-t", type=int, default=1, help="Number of threads to use for compression (default=1)")
 @click.option("--files-per-archive", type=float, default=float("inf"), help="Split dump into files with this many items each")
-def json(location, rotate, no_lowlevel, no_highlevel, files_per_archive):
+def json(location, rotate, no_lowlevel, no_highlevel, threads, files_per_archive):
     if no_lowlevel and no_highlevel:
         current_app.logger.info("wut? check your options, mate!")
         return
 
     if not no_lowlevel:
-        _json_lowlevel(location, rotate, files_per_archive)
+        _json_lowlevel(location, rotate, threads, files_per_archive)
 
     if not no_highlevel:
-        _json_highlevel(location, rotate, files_per_archive)
+        _json_highlevel(location, rotate, threads, files_per_archive)
 
 
-def _json_lowlevel(location, rotate, files_per_archive):
+def _json_lowlevel(location, rotate, threads, files_per_archive):
     current_app.logger.info("Creating low-level JSON data dump...")
-    path = dump.dump_lowlevel_json(location, num_files_per_archive=files_per_archive)
+    path = dump.dump_lowlevel_json(location, threads, num_files_per_archive=files_per_archive)
     current_app.logger.info("Done! Created: %s", path)
 
     if rotate:
@@ -86,9 +87,9 @@ def _json_lowlevel(location, rotate, files_per_archive):
                             is_dir=False, sort_key=lambda x: os.path.getmtime(x))
 
 
-def _json_highlevel(location, rotate, files_per_archive):
+def _json_highlevel(location, rotate, threads, files_per_archive):
     current_app.logger.info("Creating high-level JSON data dump...")
-    path = dump.dump_highlevel_json(location, num_files_per_archive=files_per_archive)
+    path = dump.dump_highlevel_json(location, threads, num_files_per_archive=files_per_archive)
     current_app.logger.info("Done! Created: %s", path)
 
     if rotate:

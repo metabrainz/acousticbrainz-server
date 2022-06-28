@@ -96,7 +96,7 @@ RUN touch /etc/service/uwsgi/down
 
 # Standalone version of uwsgi that doesn't require consul
 COPY ./docker/uwsgistandalone/uwsgi.service /etc/service/uwsgistandalone/run
-COPY ./docker/uwsgistandalone/uwsgi.ini /etc/uwsgi/uwsgi.ini
+COPY ./docker/uwsgistandalone/uwsgi.ini /etc/uwsgi/uwsgi-standalone.ini
 RUN touch /etc/service/uwsgistandalone/down
 
 # hl_extractor service files

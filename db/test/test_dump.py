@@ -33,7 +33,7 @@ class DatabaseDumpTestCase(AcousticbrainzTestCase):
         self.assertGreater(id2, id1)
 
     def test_dump_lowlevel_json(self):
-        path = dump.dump_lowlevel_json(self.temp_dir, full=True)
+        path = dump.dump_lowlevel_json(self.temp_dir)
         for f in os.listdir(path):
             self.assertTrue(os.path.isfile(os.path.join(path, f)))
 

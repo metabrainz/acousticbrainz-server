@@ -94,6 +94,11 @@ COPY ./docker/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 COPY ./docker/uwsgi/consul-template-uwsgi.conf /etc/consul-template-uwsgi.conf
 RUN touch /etc/service/uwsgi/down
 
+# Standalone version of uwsgi that doesn't require consul
+COPY ./docker/uwsgistandalone/uwsgi.service /etc/service/uwsgistandalone/run
+COPY ./docker/uwsgistandalone/uwsgi.ini /etc/uwsgi/uwsgi.ini
+RUN touch /etc/service/uwsgistandalone/down
+
 # hl_extractor service files
 COPY ./docker/hl_extractor/hl_extractor.service /etc/service/hl_extractor/run
 COPY docker/hl_extractor/consul-template-hl-extractor.conf /etc/consul-template-hl-extractor.conf

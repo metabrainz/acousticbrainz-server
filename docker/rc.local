@@ -7,6 +7,12 @@
 # All services contain a name and an environment (e.g. acousticbrainz-web-prod).
 # Set DEPLOY_ENV to 'prod' or 'beta' to indicate this
 
+if [ "${CONTAINER_ROLE}" = "acousticbrainz-standalone" ]
+then
+    rm -f /etc/service/uwsgistandalone/down
+    exit 0
+fi
+
 if [ "${CONTAINER_ROLE}" = "acousticbrainz-web-${DEPLOY_ENV}" ]
 then
     rm -f /etc/service/uwsgi/down

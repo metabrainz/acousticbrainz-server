@@ -7,9 +7,7 @@ or raw information from all tables in TSV format).
 2. Incremental dumps (similar to the first one, but some dumped tables don't
 include information from the previous dumps).
 """
-from __future__ import print_function
 
-from __future__ import absolute_import
 import csv
 from flask import current_app
 import ujson

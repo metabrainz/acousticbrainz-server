@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from flask import Blueprint, jsonify, request
 from flask_login import current_user
 from webserver.decorators import api_token_or_session_login_required

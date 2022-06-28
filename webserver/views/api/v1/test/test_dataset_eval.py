@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from werkzeug.exceptions import InternalServerError
 from webserver.testing import AcousticbrainzTestCase
 import db.exceptions

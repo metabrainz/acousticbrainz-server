@@ -1,6 +1,3 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
 from flask import current_app
 from flask.cli import FlaskGroup
 from db import dump
@@ -175,7 +172,7 @@ def remove_old_archives(location, pattern, is_dir=False, sort_key=None):
     """
     entries = [os.path.join(location, e) for e in os.listdir(location)]
     pattern = re.compile(pattern)
-    entries = filter(lambda x: pattern.search(x), entries)
+    entries = [x for x in entries if pattern.search(x)]
 
     if is_dir:
         entries = list(filter(os.path.isdir, entries))

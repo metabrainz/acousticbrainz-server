@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import sqlalchemy
 from flask import current_app
 from sqlalchemy import create_engine

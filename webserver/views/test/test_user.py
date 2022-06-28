@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from werkzeug.http import http_date
 from webserver.testing import AcousticbrainzTestCase
 import db.user

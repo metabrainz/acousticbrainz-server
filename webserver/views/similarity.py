@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import current_user
 from werkzeug.exceptions import NotFound, ServiceUnavailable

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from unittest import mock
 
 from webserver.testing import AcousticbrainzTestCase
@@ -168,9 +167,9 @@ class DatasetEvalTestCase(AcousticbrainzTestCase):
                                           filter_type=None)
 
         result = {
-            u"accuracy": 1,
-            u"parameters": {},
-            u"confusion_matrix": {},
+            "accuracy": 1,
+            "parameters": {},
+            "confusion_matrix": {},
         }
         dataset_eval.set_job_result(
             job_id=job_id,

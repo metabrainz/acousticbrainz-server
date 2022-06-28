@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import copy
 import json
 import os.path
@@ -131,7 +130,7 @@ class DataDBTestCase(AcousticbrainzTestCase):
 
     def test_write_lowlevel_invalid_data(self):
         """Trying to submit data with invalid utf8 sequences raises an error"""
-        one = {"data": u"\uc544\uc774\uc720 (IU)\udc93",
+        one = {"data": "\uc544\uc774\uc720 (IU)\udc93",
                "metadata": {"audio_properties": {"lossless": True}, "version": {"essentia_build_sha": "x"}}}
 
         with self.assertRaises(db.exceptions.BadDataException):

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 from db import dump
 from db.dump import _TABLES

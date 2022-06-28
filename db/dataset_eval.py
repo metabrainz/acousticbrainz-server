@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import db
 import db.exceptions
 import db.dataset

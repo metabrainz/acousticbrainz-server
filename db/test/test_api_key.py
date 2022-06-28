@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 import db.exceptions
 import db.api_key

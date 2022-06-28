@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from flask import Blueprint, request, jsonify, current_app
 from brainzutils.ratelimit import ratelimit
 from db.data import count_lowlevel, submit_low_level_data

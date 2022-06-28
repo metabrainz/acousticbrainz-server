@@ -1,4 +1,3 @@
-# coding=utf-8
 import unittest
 
 import six
@@ -39,9 +38,9 @@ class DatasetValidatorTestCase(unittest.TestCase):
         # utf-8 characters in the uuid field
         with self.assertRaises(dataset_validator.ValidationException) as out:
             dataset_validator.validate_recordings_add_delete({"class_name": "Test",
-                                                              "recordings": [u"bé686320-8057-4ca2-b484-e01434a3a2b1"]})
+                                                              "recordings": ["bé686320-8057-4ca2-b484-e01434a3a2b1"]})
         self.assertEqual(six.ensure_text(out.exception.error),
-                         u'"bé686320-8057-4ca2-b484-e01434a3a2b1" is not a valid recording MBID in class "Test".')
+                         '"bé686320-8057-4ca2-b484-e01434a3a2b1" is not a valid recording MBID in class "Test".')
 
         # all ok
         dataset_validator.validate_recordings_add_delete({"class_name": "Test", "recordings": ["cc355a8a-1cf0-4eda-a693-fd38dc1dd4e2"]})

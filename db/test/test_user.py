@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
 from webserver.testing import AcousticbrainzTestCase
 import db.user
 import db.api_key
@@ -14,7 +12,7 @@ class UserTestCase(AcousticbrainzTestCase):
 
     def test_create_unicode(self):
         # Testing Unicode
-        user_id = db.user.create(u"Пользователь")
+        user_id = db.user.create("Пользователь")
         self.assertIsNotNone(user_id)
 
     def test_get(self):
@@ -79,7 +77,7 @@ class UserTestCase(AcousticbrainzTestCase):
 
     def test_get_or_create_unicode(self):
         # Testing Unicode
-        musicbrainz_id = u"Пользователь"
+        musicbrainz_id = "Пользователь"
         user = db.user.get_or_create(musicbrainz_id)
         self.assertIsNotNone(user)
 
@@ -95,7 +93,7 @@ class UserTestCase(AcousticbrainzTestCase):
         self.assertEqual(admins[0]["musicbrainz_id"], musicbrainz_id)
 
     def test_set_admin(self):
-        musicbrainz_id = u"Another Пользователь"
+        musicbrainz_id = "Another Пользователь"
         with self.assertRaises(db.exceptions.NoDataFoundException):
             db.user.set_admin(musicbrainz_id, admin=True)
 

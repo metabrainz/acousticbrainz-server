@@ -11,22 +11,67 @@
         we no longer provide client tools to submit data.</p>
       <p>If you are interested in computing acoustic features on your own music, you can still download the command-line essentia extractor and run it yourself:</p>
       <ul>
-        <li><a href="http://ftp.acousticbrainz.org/pub/acousticbrainz/essentia-extractor-v2.1_beta2-linux-i686.tar.gz">linux i386 extractor static binary</a></li>
-        <li><a href="http://ftp.acousticbrainz.org/pub/acousticbrainz/essentia-extractor-v2.1_beta2-linux-x86_64.tar.gz">linux x86_64 extractor static binary</a></li>
-        <li><a href="http://ftp.acousticbrainz.org/pub/acousticbrainz/essentia-extractor-v2.1_beta2-2-gbb40004-osx.tar.gz">mac 64 bit extractor static binary for 10.7 and higher</a></li>
-        <li><a href="http://ftp.acousticbrainz.org/pub/acousticbrainz/essentia-extractor-v2.1_beta2-1-ge3940c0-win-i686.zip">win 32 bit extractor static binary</a></li>
+        <li><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/extractors/essentia-extractor-v2.1_beta2-linux-i686.tar.gz">linux i386 extractor static binary</a></li>
+        <li><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainzextractors//essentia-extractor-v2.1_beta2-linux-x86_64.tar.gz">linux x86_64 extractor static binary</a></li>
+        <li><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/extractors/essentia-extractor-v2.1_beta2-2-gbb40004-osx.tar.gz">mac 64 bit extractor static binary for 10.7 and higher</a></li>
+        <li><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/extractors/essentia-extractor-v2.1_beta2-1-ge3940c0-win-i686.zip">win 32 bit extractor static binary</a></li>
       </ul>
-      <p><a href="http://ftp.acousticbrainz.org/pub/acousticbrainz/sha1sum">SHA1 sums</a></p>
+      <p><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/extractors/sha1sum">SHA1 sums</a></p>
       <p>Newer versions of the essentia extractor are also available on the 
         <a href="https://mtg.github.io/essentia-labs/news/2015/12/22/static-binaries-for-extractors/">essentia website</a></p>
     </div>
 
     <div class="col-lg-6">
       <h3>Data Downloads</h3>
-      <p>2022-06-20: We are in the process of finalising data dumps of the complete AcousticBrainz database.
-        These dumps will be announced here and 
+        <p>2022-07-06: We provide downloadable archives of all submissions made to AcousticBrainz (29,460,584 submissions)</p>
+        <h4>Low-level and High-level json dumps</h4>
+        <p><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/dumps/acousticbrainz-highlevel-json-20220623/">High-level downloads</a><br>
+        <a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/dumps/acousticbrainz-lowlevel-json-20220623/">Low-level downloads</a>
+        </p>
+        <p>
+            Dumps are split into 30 archives, each with 1 million data files. Archives are compressed with
+            <a href="https://facebook.github.io/zstd/">zstandard</a> compression. Filenames inside the archives are structured
+            such that they will all uncompress into the same location.
+        </p>
+        <p>
+            Files in each archive are named according to the following structure:
+            <div class="well"><code>type/mb/i/mbid-n.json</code></div>
+            Where <code>type</code> is one of <i>lowlevel</i> or <i>highlevel</i>,
+            <code>mbid</code> is a uuid of a MusicBrainz Recording Identifier, <code>m</code>,
+            <code>b</code>, <code>i</code> and <code>d</code> are the first, second,
+            third and fourth characters of the MusicBrainz
+            Identifier, and <code>n</code> indicates the ordinal submission offset of duplicate
+            data files present for the same MusicBrainz Identifier. There will always
+            be a file with submission offset <i>0</i>.
+        </p>
+        <p>
+            The format of the json files in each archive are described in the <a href="{{ url_for('data.data') }}">data page</a>.
+        </p>
+        <h4>Sample json dumps</h4>
+        <p><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/dumps/acousticbrainz-sample-json-20220623/">Sample downloads</a></p>
+        <p>The same as the above full dumps, but only containing 100,000 items for small-scale testing.</p>
+        <h4>Low-level feature dumps</h4>
+        <p><a href="https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/dumps/acousticbrainz-lowlevel-features-20220623/">Feature downloads</a></p>
+        <p>Smaller CSV files containing some basic features that may be useful for some tasks. Split into three different files based on feature type.
+        Each file contains 29,460,584 rows of data.
+        <ul>
+            <li><strong>lowlevel:</strong> average_loudness, dynamic_complexity, mfcc_zero_mean</li>
+            <li><strong>rhythm:</strong> bpm, bpm_histogram_first_peak_bpm_mean, bpm_histogram_first_peak_bpm_median,
+                bpm_histogram_second_peak_bpm_mean, bpm_histogram_second_peak_bpm_median,
+                danceability, onset_rate</li>
+            <li><strong>tonal:</strong> key_key, key_scale, tuning_frequency, tuning_equal_tempered_deviation</li>
+        </ul>
+        See the <a href="https://essentia.upf.edu/streaming_extractor_music.html">essentia documentation for streaming_extractor_music</a> for
+        a description of what each of these features are.</p>
+        <h4>Pending: Data files for acoustic similarity</h4>
+        <p>2022-07-06: We will provide a downloadable archive of the data files used in the
+        <a href="https://acousticbrainz.readthedocs.io/similarity.html">recording similarity API</a>.</p>
+        <h4>Pending: Low-level and High-level dump of deduplicated items</h4>
+        <p>2022-07-06: We will provide new json and feature dumps of the database after de-duplicating to only one instance of each recording MBID
+        (approximately 7 million items)</p>
+        <p>Pending dumps will be announced here and
         <a href="https://community.metabrainz.org/c/acousticbrainz/5">on the AcousticBrainz forum</a> in the coming weeks.
-      </p>
+        </p>
     </div>
 
   </div>

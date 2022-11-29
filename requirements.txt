@@ -8,9 +8,9 @@ Flask-WTF == 1.0.1
 musicbrainzngs==0.7.1
 ndg-httpsclient==0.5.1
 psycopg2-binary==2.9.3
-numpy==1.21.6
+numpy==1.23.5
 pytz==2019.3
-pyyaml==5.3.1
+pyyaml==5.4.1
 rauth == 0.7.3
 setproctitle == 1.1.10
 six==1.16.0
@@ -27,5 +27,5 @@ requests==2.23.0
 SQLAlchemy==1.4.37
 mbdata==26.0.1
 sqlalchemy-dst==1.0.1
-ujson==2.0.3
+ujson==5.5.0
 -r docs/requirements.txt

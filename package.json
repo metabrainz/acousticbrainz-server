@@ -15,9 +15,9 @@
     },
     "dependencies": {
         "bootstrap": "3.4.1",
-        "css-loader": "^3.5.2",
         "core-js": "^3.9.1",
-        "highcharts": "^8.0.4",
+        "css-loader": "^3.5.2",
+        "highcharts": "^10.3.2",
         "jquery": "^3.5.1",
         "less": "^3.11.1",
         "less-loader": "^5.0.0",
@@ -27,7 +27,7 @@
         "react-dom": "^16.13.1",
         "style-loader": "^1.1.4",
         "terser": "^4.6.11",
-        "webpack": "^4.43.0",
+        "webpack": "^4.46.0",
         "webpack-cli": "^3.2.1"
     },
     "devDependencies": {

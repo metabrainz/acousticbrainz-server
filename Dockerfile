@@ -1,4 +1,4 @@
-FROM metabrainz/python:3.7 AS acousticbrainz-base
+FROM metabrainz/python:3.9-focal-20220315 AS acousticbrainz-base
 
 # Dockerize
 ENV DOCKERIZE_VERSION v0.6.1
@@ -9,33 +9,15 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 # Hadolint DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Node
-RUN wget -q -O - https://deb.nodesource.com/setup_12.x | bash - && apt-get update \
+RUN wget -q -O - https://deb.nodesource.com/setup_16.x | bash - && apt-get update \
     && apt-get install -y --no-install-recommends \
-                       build-essential \
                        ca-certificates \
                        git \
-                       ipython \
-                       libavcodec-dev \
-                       libavformat-dev \
-                       libavutil-dev \
-                       libavresample-dev \
-                       libffi-dev \
-                       libfftw3-dev \
                        libpq-dev \
-                       libsamplerate0-dev \
-                       libqt4-dev \
                        libssl-dev \
-                       libtag1-dev \
-                       libxml2-dev \
-                       libxslt1-dev \
-                       libyaml-dev \
                        nodejs \
                        pkg-config \
-                       pxz \
-                       python-dev \
-                       python-numpy-dev \
-                       python-numpy \
-                       swig2.0 \
+                       xz-utils \
                        zstd \
     && rm -rf /var/lib/apt/lists/*
 

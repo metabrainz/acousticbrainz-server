@@ -38,7 +38,8 @@ module.exports = function (env) {
             homepage: ['./scripts/homepage.ts'],
             profile: ['./scripts/profile.ts'],
             stats: ['./scripts/stats.ts'],
-            main: ['./styles/main.less']
+            highlight: ['./scripts/highlight.ts'],
+            main: ['./styles/main.less'],
         },
         output: {
             chunkFilename: production ? '[name].[chunkhash].js' : '[name].js',
